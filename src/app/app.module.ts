@@ -3,14 +3,14 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import {
-  QQMAT_TELEPHONE_INPUT_CONFIG_PROVIDER,
-  QQMatTelephoneInputConfig,
-} from 'mat-tel-input';
 import { Observable, of } from 'rxjs';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { MatSelectModule } from '@angular/material/select';
+import {
+  QQMAT_TELEPHONE_INPUT_CONFIG_PROVIDER,
+  QQMatTelephoneInputConfig,
+} from 'projects/smallpearl/mat-tel-input/src/lib';
 
 const WebTelInputConfig: QQMatTelephoneInputConfig = {
   // To cache last value from our API request so that we don't have to
