@@ -9,7 +9,7 @@
   border-bottom: 1px solid gray;
   border-radius: 4px;
 }
-select {
+mat-select {
   display: inline-block;
   border: none;
   outline: none;
@@ -17,7 +17,7 @@ select {
   background: none;
   width: 30%;
 }
-select:focus {
+mat-select:focus {
   border: none;
   outline: none;
   background: none;

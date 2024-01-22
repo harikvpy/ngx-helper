@@ -1,0 +1,13 @@
+/* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
+@import './styles/colors.scss';
+
+@include mat.core();
+
+@include mat.all-component-themes($qq-theme);
+// Without this, only the material defined components (heading 1-5, title, subtitle, etc)
+// get styled. With this, the typography property is applied to
+// all HTML elements (p, div, span, etc). Thanks to https://stackoverflow.com/a/74614277/744769.
+@include mat.all-component-typographies($qq-theme);
+
+@import './styles/mystyles.scss';

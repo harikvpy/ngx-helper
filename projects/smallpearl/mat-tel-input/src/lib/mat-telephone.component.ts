@@ -16,7 +16,7 @@ import {
   OnInit,
   Optional,
   Self,
-  ViewChild
+  ViewChild,
 } from '@angular/core';
 import {
   AbstractControl,
@@ -28,14 +28,20 @@ import {
   NgControl,
   ReactiveFormsModule,
   UntypedFormControl,
-  Validators
+  Validators,
 } from '@angular/forms';
-import { MAT_FORM_FIELD, MatFormField, MatFormFieldControl } from '@angular/material/form-field';
+import {
+  MAT_FORM_FIELD,
+  MatFormField,
+  MatFormFieldControl,
+} from '@angular/material/form-field';
 import { PhoneNumberType, PhoneNumberUtil } from 'google-libphonenumber';
-import { BehaviorSubject, NEVER, Subject } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { BehaviorSubject, NEVER, ReplaySubject, Subject } from 'rxjs';
+import { catchError, map, takeUntil, tap } from 'rxjs/operators';
 import { COUNTRY_CODES } from './country-codes';
 import { QQMAT_TELEPHONE_INPUT_CONFIG_PROVIDER } from './providers';
+import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
+import { MatSelectChange, MatSelectModule } from '@angular/material/select';
 
 interface CountryInfo {
   name: string;
@@ -54,6 +60,7 @@ export class ISOTelNumber {
   standalone: true,
   selector: 'qq-mat-telephone-input',
   template: `
+    <!--
     <div
       rol="group"
       class="tel-input-wrapper"
@@ -62,28 +69,82 @@ export class ISOTelNumber {
       (focusin)="onFocusIn($event)"
       (focusout)="onFocusOut($event)"
     >
-      <select #countryCodeSelector title="Country Code" formControlName="country" (change)="onCountryChange($event)">
-        <option *ngFor="let c of countries" value="{{ c.code }}" [attr.data-descr]="c.name + '.' + c.callingCode">
+      <select
+        #countryCodeSelector
+        title="Country Code"
+        formControlName="country"
+        (change)="onCountryChange($event)"
+      >
+        <option
+          *ngFor="let c of filteredCountries | async"
+          value="{{ c.code }}"
+          [attr.data-descr]="c.name + '.' + c.callingCode"
+        >
           {{ c.name }} +{{ c.callingCode }}
         </option>
       </select>
-      <input #nationalNumberInput formControlName="national" type="tel" (input)="onNationalNumberChange($event)" />
+      <input
+        #nationalNumberInput
+        formControlName="national"
+        type="tel"
+        (input)="onNationalNumberChange($event)"
+      />
+    </div>
+-->
+    <div class="tel-input-wrapper" [formGroup]="parts">
+      <mat-select
+        #countryCodeSelector
+        formControlName="country"
+        (selectionChange)="onCountryChange($event)"
+      >
+        <mat-option>
+          <ngx-mat-select-search
+            [placeholderLabel]="searchText"
+            [noEntriesFoundLabel]="noEntriesFoundLabel"
+            [formControl]="countryFilterCtrl"
+          ></ngx-mat-select-search>
+        </mat-option>
+        <mat-option
+          *ngFor="let c of filteredCountries | async"
+          value="{{ c.code }}"
+          [attr.data-descr]="c.name + '.' + c.callingCode"
+        >
+          {{ c.name }} +{{ c.callingCode }}
+        </mat-option>
+      </mat-select>
+      <input
+        style="padding-left: 4px"
+        #nationalNumberInput
+        formControlName="national"
+        type="tel"
+        (input)="onNationalNumberChange($event)"
+      />
     </div>
   `,
   styleUrls: ['./tel-input.scss'],
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MatSelectModule,
+    NgxMatSelectSearchModule,
+  ],
   providers: [
-    { provide: MatFormFieldControl, useExisting: QQMatTelephoneInputComponent }
+    { provide: MatFormFieldControl, useExisting: QQMatTelephoneInputComponent },
     // {
     //   provide: NG_VALUE_ACCESSOR,
     //   useExisting: forwardRef(() => QQWebTelInputComponent),
     //   multi: true,
     // },
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class QQMatTelephoneInputComponent
-  implements OnInit, OnDestroy, ControlValueAccessor, MatFormFieldControl<ISOTelNumber>
+  implements
+    OnInit,
+    OnDestroy,
+    ControlValueAccessor,
+    MatFormFieldControl<ISOTelNumber>
 {
   static nextId = 0;
 
@@ -102,7 +163,11 @@ export class QQMatTelephoneInputComponent
       const countries = new Array<CountryInfo>();
       const searchStrLower = searchStr.toLocaleLowerCase();
       this.countries.forEach((country) => {
-        if (`${country.callingCode} ${country.code} ${country.name}`.toLocaleLowerCase().includes(searchStrLower)) {
+        if (
+          `${country.callingCode} ${country.code} ${country.name}`
+            .toLocaleLowerCase()
+            .includes(searchStrLower)
+        ) {
           countries.push(country);
         }
       });
@@ -111,6 +176,10 @@ export class QQMatTelephoneInputComponent
   );
 
   countries: Array<CountryInfo> = [];
+  public filteredCountries: ReplaySubject<CountryInfo[]> = new ReplaySubject<
+    CountryInfo[]
+  >(1);
+
   isDisabled = false;
 
   private _onChange = (_: any) => {};
@@ -132,9 +201,13 @@ export class QQMatTelephoneInputComponent
   onChange = (_: any) => {};
   onTouched = () => {};
 
+  public telForm = new FormGroup({});
+  /** control for the MatSelect filter keyword */
+  public countryFilterCtrl: FormControl<string> = new FormControl<string>('');
+
   get empty() {
     const {
-      value: { country, national }
+      value: { country, national },
     } = this.parts;
 
     return !country && !national;
@@ -166,6 +239,8 @@ export class QQMatTelephoneInputComponent
   }
   private _required = false;
 
+  @Input() searchText = '';
+  @Input() noEntriesFoundLabel = 'Not found';
   @Input()
   get disabled(): boolean {
     return this._disabled;
@@ -176,12 +251,13 @@ export class QQMatTelephoneInputComponent
     this.stateChanges.next();
   }
   private _disabled = false;
+  destroy = new Subject<void>();
 
   @Input()
   get value(): ISOTelNumber | null {
     if (this.parts.valid) {
       const {
-        value: { country, national }
+        value: { country, national },
       } = this.parts;
       return new ISOTelNumber(country!, national!);
     }
@@ -205,7 +281,9 @@ export class QQMatTelephoneInputComponent
   }
 
   onFocusOut(event: FocusEvent) {
-    if (!this._elementRef.nativeElement.contains(event.relatedTarget as Element)) {
+    if (
+      !this._elementRef.nativeElement.contains(event.relatedTarget as Element)
+    ) {
       this.touched = true;
       this.focused = false;
       this.onTouched();
@@ -213,7 +291,10 @@ export class QQMatTelephoneInputComponent
     }
   }
 
-  autoFocusNext(control: AbstractControl, nextElement?: HTMLInputElement): void {
+  autoFocusNext(
+    control: AbstractControl,
+    nextElement?: HTMLInputElement
+  ): void {
     if (!control.errors && nextElement) {
       this._focusMonitor.focusVia(nextElement, 'program');
     }
@@ -226,7 +307,9 @@ export class QQMatTelephoneInputComponent
   }
 
   setDescribedByIds(ids: string[]) {
-    const controlElement = this._elementRef.nativeElement.querySelector('.qq-tel-input-container')!;
+    const controlElement = this._elementRef.nativeElement.querySelector(
+      '.qq-tel-input-container'
+    )!;
     if (controlElement) {
       controlElement.setAttribute('aria-describedby', ids.join(' '));
     }
@@ -261,7 +344,7 @@ export class QQMatTelephoneInputComponent
 
     this.parts = formBuilder.group({
       country: ['', Validators.required],
-      national: ['', Validators.required]
+      national: ['', Validators.required],
     });
 
     this.initCountries();
@@ -289,9 +372,43 @@ export class QQMatTelephoneInputComponent
     // this.countrySelect.nativeElement.addEventListener('blur', this.onCountrySelectBlur);
 
     if (this.defaultCountry) {
-      const country = this.countries.find((ci) => ci.code == this.defaultCountry);
+      const country = this.countries.find(
+        (ci) => ci.code == this.defaultCountry
+      );
       this.parts.controls.country.setValue(`${country.callingCode}`);
     }
+
+    this.filteredCountries.next(this.countries.slice());
+
+    // listen for search field value changes
+    this.countryFilterCtrl.valueChanges
+      .pipe(takeUntil(this.destroy))
+      .subscribe(() => {
+        this.filterCountries();
+      });
+  }
+
+  private filterCountries() {
+    if (!this.countries) {
+      return;
+    }
+    // get the search keyword
+    let search = this.countryFilterCtrl.value;
+    if (!search) {
+      this.filteredCountries.next(this.countries.slice());
+      return;
+    } else {
+      search = search.toLowerCase();
+    }
+    // filter the banks
+    this.filteredCountries.next(
+      this.countries.filter(
+        (country) =>
+          country.name.toLowerCase().indexOf(search) > -1 ||
+          country.callingCode.toString().indexOf(search) > -1 ||
+          country.code.toLowerCase().indexOf(search) > -1
+      )
+    );
   }
 
   ngAfterViewInit() {
@@ -343,7 +460,9 @@ export class QQMatTelephoneInputComponent
           const country = this.countries.find((ci) => ci.callingCode === cc);
           if (country) {
             this.parts.controls.country.setValue(`${country.callingCode}`);
-            this.parts.controls.national.setValue(phoneNumber.getNationalNumber());
+            this.parts.controls.national.setValue(
+              phoneNumber.getNationalNumber()
+            );
           }
         }
       } else {
@@ -374,7 +493,7 @@ export class QQMatTelephoneInputComponent
     }
   }
 
-  onCountryChange(ev: Event) {
+  onCountryChange(ev: MatSelectChange) {
     const telNumberParts = this.getTelephoneNumberParts();
     if (telNumberParts) {
       this.notifyChange(telNumberParts);
@@ -405,12 +524,17 @@ export class QQMatTelephoneInputComponent
    * @param numberParts
    * @returns
    */
-  private ISOTelephoneNumber(numberParts: CountryInfo & { nationalNumber: string }) {
+  private ISOTelephoneNumber(
+    numberParts: CountryInfo & { nationalNumber: string }
+  ) {
     return `+${numberParts.callingCode}${numberParts.nationalNumber}`;
   }
 
   private notifyChange(numberParts: CountryInfo & { nationalNumber: string }) {
-    const geoLocationProvider = this.injector.get(QQMAT_TELEPHONE_INPUT_CONFIG_PROVIDER, null);
+    const geoLocationProvider = this.injector.get(
+      QQMAT_TELEPHONE_INPUT_CONFIG_PROVIDER,
+      null
+    );
     if (geoLocationProvider && geoLocationProvider.saveCountrySelection) {
       geoLocationProvider
         .saveCountrySelection(numberParts)
@@ -477,14 +601,20 @@ export class QQMatTelephoneInputComponent
     if (this.allowedCountries) {
       return this.allowedCountries;
     }
-    const geoLocationProvider = this.injector.get(QQMAT_TELEPHONE_INPUT_CONFIG_PROVIDER, null);
+    const geoLocationProvider = this.injector.get(
+      QQMAT_TELEPHONE_INPUT_CONFIG_PROVIDER,
+      null
+    );
     return geoLocationProvider && geoLocationProvider.countries
       ? geoLocationProvider.countries
       : ALL_COUNTRIES_CALLING_CODES;
   }
 
   private detectCountry() {
-    const geoLocationProvider = this.injector.get(QQMAT_TELEPHONE_INPUT_CONFIG_PROVIDER, null);
+    const geoLocationProvider = this.injector.get(
+      QQMAT_TELEPHONE_INPUT_CONFIG_PROVIDER,
+      null
+    );
     if (geoLocationProvider && geoLocationProvider.getCountryCode) {
       geoLocationProvider
         .getCountryCode(this.http)
@@ -520,7 +650,9 @@ export class QQMatTelephoneInputComponent
           this.countries.push(c);
         }
       });
-      this.countries = this.countries.sort((a, b) => a.name.localeCompare(b.name));
+      this.countries = this.countries.sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
     }
   }
 }
