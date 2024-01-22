@@ -20,8 +20,14 @@
     "module": "ES2020",
     "useDefineForClassFields": false,
     "paths": {
+      "@smallpearl/mat-file-input": [
+        "dist/smallpearl/mat-file-input"
+      ],
       "@smallpearl/mat-tel-input": [
         "dist/smallpearl/mat-tel-input"
+      ],
+      "mat-file-input": [
+        "dist/mat-file-input"
       ],
       "mat-tel-input": [
         "dist/mat-tel-input"

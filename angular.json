@@ -36,7 +36,7 @@
         }
       }
     },
-    "ui-components": {
+    "ngx-ui-components": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -50,7 +50,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/ui-components",
+            "outputPath": "dist/ngx-ui-components",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": [
@@ -98,10 +98,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "ui-components:build:production"
+              "browserTarget": "ngx-ui-components:build:production"
             },
             "development": {
-              "browserTarget": "ui-components:build:development"
+              "browserTarget": "ngx-ui-components:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -109,7 +109,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "ui-components:build"
+            "browserTarget": "ngx-ui-components:build"
           }
         },
         "test": {
@@ -129,6 +129,39 @@
               "src/styles.scss"
             ],
             "scripts": []
+          }
+        }
+      }
+    },
+    "@smallpearl/mat-file-input": {
+      "projectType": "library",
+      "root": "projects/smallpearl/mat-file-input",
+      "sourceRoot": "projects/smallpearl/mat-file-input/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/smallpearl/mat-file-input/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/smallpearl/mat-file-input/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/smallpearl/mat-file-input/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "projects/smallpearl/mat-file-input/tsconfig.spec.json",
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ]
           }
         }
       }
