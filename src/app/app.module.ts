@@ -11,6 +11,7 @@ import {
   QQMAT_TELEPHONE_INPUT_CONFIG_PROVIDER,
   QQMatTelephoneInputConfig,
 } from 'projects/smallpearl/mat-tel-input/src/lib';
+import { MatIconModule } from '@angular/material/icon';
 
 const WebTelInputConfig: QQMatTelephoneInputConfig = {
   // To cache last value from our API request so that we don't have to
@@ -42,6 +43,7 @@ const WebTelInputConfig: QQMatTelephoneInputConfig = {
     HttpClientModule,
     AppRoutingModule,
     MatSelectModule,
+    MatIconModule,
   ],
   providers: [
     {
