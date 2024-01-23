@@ -1,7 +1,7 @@
-# MatFileInput
+# QQMatTelephoneInputComponent (qq-mat-telephone-input)
 
-A file input control, that shows the file's thumbnail, if the selected file is
-an image files. Supported image files are PNG, JPEG, GIF & WEBP.
+A telephone number input control, which allows selecting the country code and
+entering a national number.
 
 # Dependencies
 
@@ -10,6 +10,7 @@ an image files. Supported image files are PNG, JPEG, GIF & WEBP.
 * Material
   - MatIconModule
   - MatFormFieldModule
+* ngx-mat-select-search, v7.x
 
 # How to use
 

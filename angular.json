@@ -166,23 +166,23 @@
         }
       }
     },
-    "ngx-ui-components": {
+    "ngx-helper": {
       "projectType": "library",
-      "root": "projects/ngx-ui-components",
-      "sourceRoot": "projects/ngx-ui-components/src",
+      "root": "projects/ngx-helper",
+      "sourceRoot": "projects/ngx-helper/src",
       "prefix": "lib",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:ng-packagr",
           "options": {
-            "project": "projects/ngx-ui-components/ng-package.json"
+            "project": "projects/ngx-helper/ng-package.json"
           },
           "configurations": {
             "production": {
-              "tsConfig": "projects/ngx-ui-components/tsconfig.lib.prod.json"
+              "tsConfig": "projects/ngx-helper/tsconfig.lib.prod.json"
             },
             "development": {
-              "tsConfig": "projects/ngx-ui-components/tsconfig.lib.json"
+              "tsConfig": "projects/ngx-helper/tsconfig.lib.json"
             }
           },
           "defaultConfiguration": "production"
@@ -190,7 +190,7 @@
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "tsConfig": "projects/ngx-ui-components/tsconfig.spec.json",
+            "tsConfig": "projects/ngx-helper/tsconfig.spec.json",
             "polyfills": [
               "zone.js",
               "zone.js/testing"
@@ -199,23 +199,23 @@
         }
       }
     },
-    "@smallpearl/ngx-ui-components": {
+    "@smallpearl/ngx-helper": {
       "projectType": "library",
-      "root": "projects/smallpearl/ngx-ui-components",
-      "sourceRoot": "projects/smallpearl/ngx-ui-components/src",
+      "root": "projects/smallpearl/ngx-helper",
+      "sourceRoot": "projects/smallpearl/ngx-helper/src",
       "prefix": "lib",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:ng-packagr",
           "options": {
-            "project": "projects/smallpearl/ngx-ui-components/ng-package.json"
+            "project": "projects/smallpearl/ngx-helper/ng-package.json"
           },
           "configurations": {
             "production": {
-              "tsConfig": "projects/smallpearl/ngx-ui-components/tsconfig.lib.prod.json"
+              "tsConfig": "projects/smallpearl/ngx-helper/tsconfig.lib.prod.json"
             },
             "development": {
-              "tsConfig": "projects/smallpearl/ngx-ui-components/tsconfig.lib.json"
+              "tsConfig": "projects/smallpearl/ngx-helper/tsconfig.lib.json"
             }
           },
           "defaultConfiguration": "production"
@@ -223,7 +223,7 @@
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "tsConfig": "projects/smallpearl/ngx-ui-components/tsconfig.spec.json",
+            "tsConfig": "projects/smallpearl/ngx-helper/tsconfig.spec.json",
             "polyfills": [
               "zone.js",
               "zone.js/testing"

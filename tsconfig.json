@@ -20,8 +20,8 @@
     "module": "ES2020",
     "useDefineForClassFields": false,
     "paths": {
-      "@smallpearl/ngx-ui-components": [
-        "dist/smallpearl/ngx-ui-components"
+      "@smallpearl/ngx-helper": [
+        "dist/smallpearl/ngx-helper"
       ],
     },
     "lib": [
