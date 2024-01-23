@@ -55,7 +55,6 @@ import { QQMatTelephoneInputComponent } from 'projects/smallpearl/mat-tel-input/
             <qq-mat-file-input
               formControlName="attachment"
               placeholder="Select an image file"
-              accept="image/jpeg,image/png,image/gif,image/webp"
             ></qq-mat-file-input>
           </mat-form-field>
         </p>

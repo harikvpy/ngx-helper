@@ -4,6 +4,7 @@ import {
   Component,
   ElementRef,
   HostBinding,
+  HostListener,
   Inject,
   Input,
   OnDestroy,
@@ -13,11 +14,11 @@ import {
   ViewChild,
 } from '@angular/core';
 import {
-  UntypedFormControl,
-  Validators,
+  ControlValueAccessor,
   NgControl,
   ReactiveFormsModule,
-  ControlValueAccessor,
+  UntypedFormControl,
+  Validators,
 } from '@angular/forms';
 import {
   MAT_FORM_FIELD,
@@ -26,8 +27,7 @@ import {
   MatFormFieldModule,
 } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { Subject, takeUntil, filter } from 'rxjs';
+import { Subject, filter, takeUntil } from 'rxjs';
 
 let nextId = 0;
 
@@ -61,7 +61,6 @@ function isImageFileExt(filename: string): boolean {
     CommonModule,
     ReactiveFormsModule,
     MatFormFieldModule,
-    MatInputModule,
     MatIconModule,
   ],
   selector: 'qq-mat-file-input',
@@ -71,12 +70,12 @@ function isImageFileExt(filename: string): boolean {
         <input
           type="file"
           hidden
-          [accept]="accept"
+          [accept]="acceptedFileTypes"
           [multiple]="false"
           (change)="onFileSelected($event)"
           #input
         />
-        <div>{{ fileName || placeholder }}</div>
+        <div tabindex="0">{{ fileName || placeholder }}</div>
       </div>
       <div class="thumbnail-wrapper">
         <div
@@ -141,10 +140,12 @@ export class QQMatFileInputComponent
     OnInit,
     OnDestroy
 {
-  @Input() label: string = 'File';
-  @Input() accept: string = 'text/yaml,.yaml,.yml';
+  // @Input() label: string = 'File';
+  @Input() accept: string = '*';
   @Input() thumbnailImageUrl: string = '';
-  @Input() _fileName = '';
+  @Input() imageFile: boolean = false;
+
+  _fileName = '';
 
   @ViewChild('input', { read: ElementRef }) inputFileUpload:
     | ElementRef
@@ -172,6 +173,13 @@ export class QQMatFileInputComponent
 
   get shouldLabelFloat() {
     return this.focused || !this.empty;
+  }
+
+  get acceptedFileTypes() {
+    if (this.imageFile) {
+      return 'image/jpeg,image/png,image/gif,image/webp';
+    }
+    return this.accept;
   }
 
   @Input()
@@ -286,7 +294,14 @@ export class QQMatFileInputComponent
     this.describedBy = ids.join(' ');
   }
 
-  onContainerClick(event: MouseEvent) {
+  @HostListener('document:keypress', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    if (event.key == ' ') {
+      this.onContainerClick(event);
+    }
+  }
+
+  onContainerClick(event: MouseEvent | KeyboardEvent) {
     if (
       !this.disabled &&
       (event.target as Element).tagName.toLowerCase() !== 'input'

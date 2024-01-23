@@ -1,18 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { MatFileInputComponent } from './mat-file-input.component';
+import { QQMatFileInputComponent } from './mat-file-input.component';
 
-describe('MatFileInputComponent', () => {
-  let component: MatFileInputComponent;
-  let fixture: ComponentFixture<MatFileInputComponent>;
+describe('QQMatFileInputComponent', () => {
+  let component: QQMatFileInputComponent;
+  let fixture: ComponentFixture<QQMatFileInputComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ MatFileInputComponent ]
-    })
-    .compileComponents();
+      declarations: [QQMatFileInputComponent],
+    }).compileComponents();
 
-    fixture = TestBed.createComponent(MatFileInputComponent);
+    fixture = TestBed.createComponent(QQMatFileInputComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
