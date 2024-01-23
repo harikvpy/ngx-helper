@@ -9,8 +9,8 @@ import {
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { QQMatFileInputComponent } from 'projects/smallpearl/mat-file-input/src/public-api';
-import { QQMatTelephoneInputComponent } from 'projects/smallpearl/mat-tel-input/src/lib';
+import { QQMatFileInputComponent } from 'projects/smallpearl/ngx-ui-components/mat-file-input';
+import { QQMatTelephoneInputComponent } from 'projects/smallpearl/ngx-ui-components/mat-tel-input';
 
 @Component({
   selector: 'app-home-page',
@@ -25,11 +25,11 @@ import { QQMatTelephoneInputComponent } from 'projects/smallpearl/mat-tel-input/
     QQMatFileInputComponent,
   ],
   template: `
-    <div style="margin-left: 0.5em;">
+    <div style="margin: 0.5em;">
       <p>home-page works!</p>
       <form [formGroup]="form">
         <p>
-          <mat-form-field class="w-50">
+          <mat-form-field class="w-100">
             <qq-mat-telephone-input
               formControlName="telephone"
               searchText="Search"
@@ -51,7 +51,7 @@ import { QQMatTelephoneInputComponent } from 'projects/smallpearl/mat-tel-input/
           <hr />
         </div>
         <p>
-          <mat-form-field class="w-50">
+          <mat-form-field class="w-100">
             <qq-mat-file-input
               formControlName="attachment"
               placeholder="Select an image file"
@@ -72,6 +72,9 @@ import { QQMatTelephoneInputComponent } from 'projects/smallpearl/mat-tel-input/
   `,
   styles: [
     `
+      .w-100 {
+        width: 100%;
+      }
       .w-50 {
         width: 50%;
       }
@@ -83,7 +86,7 @@ export class HomePageComponent {
 
   constructor(fb: FormBuilder) {
     this.form = fb.group({
-      telephone: ['', Validators.required],
+      telephone: ['+886973809972', Validators.required],
       attachment: [
         'https://sfo2.digitaloceanspaces.com/qqdev/media/community/11/huitong.jpg',
       ],

@@ -10,7 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import {
   QQMAT_TELEPHONE_INPUT_CONFIG_PROVIDER,
   QQMatTelephoneInputConfig,
-} from 'projects/smallpearl/mat-tel-input/src/lib';
+} from 'projects/smallpearl/ngx-ui-components/mat-tel-input';
 import { MatIconModule } from '@angular/material/icon';
 
 const WebTelInputConfig: QQMatTelephoneInputConfig = {

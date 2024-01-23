@@ -37,11 +37,15 @@ import {
 } from '@angular/material/form-field';
 import { PhoneNumberType, PhoneNumberUtil } from 'google-libphonenumber';
 import { BehaviorSubject, NEVER, ReplaySubject, Subject } from 'rxjs';
-import { catchError, map, takeUntil, tap } from 'rxjs/operators';
+import { catchError, map, take, takeUntil, tap } from 'rxjs/operators';
 import { COUNTRY_CODES } from './country-codes';
 import { QQMAT_TELEPHONE_INPUT_CONFIG_PROVIDER } from './providers';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
-import { MatSelectChange, MatSelectModule } from '@angular/material/select';
+import {
+  MatSelect,
+  MatSelectChange,
+  MatSelectModule,
+} from '@angular/material/select';
 
 interface CountryInfo {
   name: string;
@@ -106,7 +110,7 @@ export class ISOTelNumber {
         </mat-option>
         <mat-option
           *ngFor="let c of filteredCountries | async"
-          value="{{ c.code }}"
+          [value]="c"
           [attr.data-descr]="c.name + '.' + c.callingCode"
         >
           {{ c.name }} +{{ c.callingCode }}
@@ -148,7 +152,7 @@ export class QQMatTelephoneInputComponent
 {
   static nextId = 0;
 
-  @ViewChild('countryCodeSelector') countrySelect: ElementRef;
+  @ViewChild('countryCodeSelector', { static: true }) countrySelect: MatSelect;
   @ViewChild('nationalNumberInput') nationalInput: ElementRef;
 
   @Input() mobile = false;
@@ -190,7 +194,7 @@ export class QQMatTelephoneInputComponent
   phoneUtil: any = PhoneNumberUtil.getInstance();
 
   parts: FormGroup<{
-    country: FormControl<string | null>;
+    country: FormControl<CountryInfo | null>;
     national: FormControl<string | null>;
   }>;
   stateChanges = new Subject<void>();
@@ -259,13 +263,20 @@ export class QQMatTelephoneInputComponent
       const {
         value: { country, national },
       } = this.parts;
-      return new ISOTelNumber(country!, national!);
+      return new ISOTelNumber(`${country.callingCode}`, national!);
     }
     return null;
   }
   set value(tel: ISOTelNumber | null) {
     const { country, national } = tel || new ISOTelNumber('', '');
-    this.parts.setValue({ country, national });
+    let ci: CountryInfo = undefined;
+    if (country) {
+      ci = this.countries.find(
+        (ci: CountryInfo) => `${ci.callingCode}` == country
+      );
+    }
+    // this.phoneUtil.
+    this.parts.setValue({ country: ci, national });
     this.stateChanges.next();
   }
 
@@ -343,7 +354,7 @@ export class QQMatTelephoneInputComponent
     }
 
     this.parts = formBuilder.group({
-      country: ['', Validators.required],
+      country: [undefined as CountryInfo, Validators.required],
       national: ['', Validators.required],
     });
 
@@ -375,7 +386,7 @@ export class QQMatTelephoneInputComponent
       const country = this.countries.find(
         (ci) => ci.code == this.defaultCountry
       );
-      this.parts.controls.country.setValue(`${country.callingCode}`);
+      this.parts.controls.country.setValue(country);
     }
 
     this.filteredCountries.next(this.countries.slice());
@@ -388,6 +399,20 @@ export class QQMatTelephoneInputComponent
       });
   }
 
+  protected setInitialValue() {
+    this.filteredCountries
+      .pipe(take(1), takeUntil(this.destroy))
+      .subscribe(() => {
+        // Setting the compareWith property to a comparison function
+        // triggers initializing the selection according to the initial value of
+        // the form control (i.e. _initializeSelection()).
+        // This needs to be done after the filteredCountries are loaded
+        // initially and after the mat-option elements are available.
+        this.countrySelect.compareWith = (a: CountryInfo, b: CountryInfo) =>
+          a && b && a.code === b.code;
+      });
+  }
+
   private filterCountries() {
     if (!this.countries) {
       return;
@@ -397,9 +422,8 @@ export class QQMatTelephoneInputComponent
     if (!search) {
       this.filteredCountries.next(this.countries.slice());
       return;
-    } else {
-      search = search.toLowerCase();
     }
+    search = search.toLowerCase();
     // filter the banks
     this.filteredCountries.next(
       this.countries.filter(
@@ -420,11 +444,15 @@ export class QQMatTelephoneInputComponent
 
     if (!this.parts.controls.country.value) {
       this.detectCountry();
+    } else {
+      this.setInitialValue();
     }
   }
 
   ngOnDestroy() {
     // this.countrySelect.nativeElement.removeAllListners();
+    this.destroy.next();
+    this.destroy.complete();
     this.stateChanges.complete();
     this._focusMonitor.stopMonitoring(this._elementRef);
   }
@@ -443,7 +471,7 @@ export class QQMatTelephoneInputComponent
     for (let index = 0; index < this.countries.length; index++) {
       const country = this.countries[index];
       if (`${country.callingCode}` === code) {
-        this.parts.controls.country.setValue(`${country.callingCode}`);
+        this.parts.controls.country.setValue(country);
         this.cdr.detectChanges();
       }
     }
@@ -459,7 +487,7 @@ export class QQMatTelephoneInputComponent
           const cc = phoneNumber.getCountryCode();
           const country = this.countries.find((ci) => ci.callingCode === cc);
           if (country) {
-            this.parts.controls.country.setValue(`${country.callingCode}`);
+            this.parts.controls.country.setValue(country);
             this.parts.controls.national.setValue(
               phoneNumber.getNationalNumber()
             );
@@ -577,10 +605,12 @@ export class QQMatTelephoneInputComponent
    * invalid, returns an empty string.
    */
   private getTelephoneNumberParts(): CountryInfo & { nationalNumber: string } {
-    const code = this.parts.controls.country.value;
+    const selectedCountry: CountryInfo = this.parts.controls.country.value;
     const nationalNumber = this.parts.controls.national.value;
     try {
-      const ci = this.countries.find((ci: CountryInfo) => ci.code == code);
+      const ci = this.countries.find(
+        (ci: CountryInfo) => ci.callingCode == selectedCountry.callingCode
+      );
       const phoneNumber = this.phoneUtil.parse(nationalNumber, ci.code);
       if (this.phoneUtil.isValidNumberForRegion(phoneNumber, ci.code)) {
         const numberType = this.phoneUtil.getNumberType(phoneNumber);
@@ -624,7 +654,7 @@ export class QQMatTelephoneInputComponent
             if (res.countryCode) {
               const cc = COUNTRY_CODES.find((cc) => cc.code == res.countryCode);
               if (cc && !this.parts.controls.country.value) {
-                this.parts.controls.country.setValue(`${cc.code}`);
+                this.parts.controls.country.setValue(cc);
                 this.cdr.detectChanges();
               }
             }
