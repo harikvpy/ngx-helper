@@ -337,7 +337,7 @@ export class QQMatFileInputComponent
   onFileSelected(event: any) {
     // eslint-disable-next-line prefer-destructuring
     const files: File[] = event.target.files; // (event.target as HTMLInputElement)?.files
-    if (files) {
+    if (files && files.length > 0) {
       this._fileName =
         files.length > 1 ? `${files.length} files to upload` : files[0].name;
       this.fileControl.setValue(files);
