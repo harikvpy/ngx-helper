@@ -20,27 +20,9 @@
     "module": "ES2020",
     "useDefineForClassFields": false,
     "paths": {
-      "@smallpearl/mat-file-input": [
-        "dist/smallpearl/mat-file-input"
-      ],
-      "@smallpearl/mat-tel-input": [
-        "dist/smallpearl/mat-tel-input"
-      ],
       "@smallpearl/ngx-ui-components": [
         "dist/smallpearl/ngx-ui-components"
       ],
-      "mat-file-input": [
-        "dist/mat-file-input"
-      ],
-      "mat-tel-input": [
-        "dist/mat-tel-input"
-      ],
-      "ngx-ui-components": [
-        "dist/ngx-ui-components"
-      ],
-      "ui-components": [
-        "dist/ui-components"
-      ]
     },
     "lib": [
       "ES2018",
