@@ -69,7 +69,43 @@ import { NavService } from './nav.service';
       ></qq-mat-menu-list-item>
     </div>
   `,
-  styleUrls: ['./mat-menu-list-item.component.scss'],
+  styles: [
+    `
+      .twistie-separator {
+        flex: 1 1 0%;
+      }
+      .routeIcon {
+        margin-right: 10px;
+        font-size: 16pt;
+      }
+      .menu-item-text {
+        font-size: 10pt;
+      }
+      .menu-twistie {
+        font-size: 10pt;
+        height: 12px;
+        width: 12px;
+      }
+      mat-icon {
+        margin-left: 8px !important;
+        margin-right: 8px !important;
+      }
+      .menu-item-color {
+        color: var(--qq-menu-item-fg-color) !important;
+      }
+      .highlighted {
+        background-color: var(--qq-menu-item-bg-color) !important;
+        color: var(--qq-menu-item-fg-color) !important;
+      }
+      .highlighted .menu-item-color {
+        background-color: var(--qq-menu-item-bg-color) !important;
+        color: var(--qq-menu-item-fg-color) !important;
+      }
+      .mdc-list-item {
+        padding-right: 0px;
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [
     trigger('indicatorRotate', [
