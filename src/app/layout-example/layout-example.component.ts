@@ -15,8 +15,8 @@ import { NavItem } from '@smallpearl/ngx-helper/mat-menu-list-item/src/nav-item'
 import {
   SideMenuLayoutProps,
   LayoutService,
-} from '@smallpearl/ngx-helper/menu-pane/src/layout.service';
-import { MenuPaneComponent } from '@smallpearl/ngx-helper/menu-pane/src/menu-pane.component';
+} from '@smallpearl/ngx-helper/mat-menu-pane/src/layout.service';
+import { QQMatMenuPaneComponent } from '@smallpearl/ngx-helper/mat-menu-pane/src/mat-menu-pane.component';
 import { Subject, takeUntil, tap } from 'rxjs';
 
 // const routes: Routes = [
@@ -40,13 +40,13 @@ import { Subject, takeUntil, tap } from 'rxjs';
         [fixedInViewport]="layout.smallScreen"
       >
         <div class="sidenav-container mw-192px">
-          <qq-menu-pane
+          <qq-mat-menu-pane
             brandingImage="assets/angular.png"
             brandingText="QQBOOKS"
             [menuItems]="menuItems"
             [matSideNav]="menuNav"
             class="h-100"
-          ></qq-menu-pane>
+          ></qq-mat-menu-pane>
         </div>
       </mat-sidenav>
       <mat-sidenav-content>
@@ -101,7 +101,7 @@ import { Subject, takeUntil, tap } from 'rxjs';
     MatToolbarModule,
     MatIconModule,
     MatButtonModule,
-    MenuPaneComponent,
+    QQMatMenuPaneComponent,
   ],
 })
 export class LayoutExampleComponent implements OnInit, OnDestroy {

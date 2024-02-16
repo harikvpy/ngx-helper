@@ -3,12 +3,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { NavItem } from '@smallpearl/ngx-helper/mat-menu-list-item/src/nav-item';
-import { SideMenuLayoutComponent } from '@smallpearl/ngx-helper/side-menu-layout/src/side-menu-layout.component';
+import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-menu-layout/src/mat-side-menu-layout.component';
 
 @Component({
   selector: 'app-side-menu-layout-eample',
   template: `
-    <qq-side-menu-layout
+    <qq-mat-side-menu-layout
       brandingImage="assets/angular.png"
       brandingText="SMALLPEARL"
       appTitle="QQBOOKS"
@@ -19,7 +19,7 @@ import { SideMenuLayoutComponent } from '@smallpearl/ngx-helper/side-menu-layout
       [infoPaneMinWidth]="300"
       [infoPaneMaxWidth]="500"
       [toolbarTitle]="toolbarTitle"
-    ></qq-side-menu-layout>
+    ></qq-mat-side-menu-layout>
     <ng-template #versionInfoFooter>
       <div style="text-align: center; font-size: 0.8em;">
         <select name="language" id="language">
@@ -98,14 +98,15 @@ import { SideMenuLayoutComponent } from '@smallpearl/ngx-helper/side-menu-layout
   ],
   standalone: true,
   imports: [
-    SideMenuLayoutComponent,
+    QQMatSideMenuLayoutComponent,
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
   ],
 })
 export class SideMenuLayoutExampleComponent implements OnInit {
-  @ViewChild(SideMenuLayoutComponent) sideMenuLayout: SideMenuLayoutComponent;
+  @ViewChild(QQMatSideMenuLayoutComponent)
+  sideMenuLayout: QQMatSideMenuLayoutComponent;
 
   menuItems: NavItem[] = [
     {
