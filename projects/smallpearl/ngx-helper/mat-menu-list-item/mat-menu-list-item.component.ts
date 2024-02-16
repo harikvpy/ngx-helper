@@ -91,15 +91,16 @@ import { NavService } from './nav.service';
         margin-right: 8px !important;
       }
       .menu-item-color {
+        background-color: var(--qq-menu-item-bg-color) !important;
         color: var(--qq-menu-item-fg-color) !important;
       }
       .highlighted {
-        background-color: var(--qq-menu-item-bg-color) !important;
-        color: var(--qq-menu-item-fg-color) !important;
+        background-color: var(--qq-highlighted-menu-item-bg-color) !important;
+        color: var(--qq-highlighted-menu-item-fg-color) !important;
       }
       .highlighted .menu-item-color {
-        background-color: var(--qq-menu-item-bg-color) !important;
-        color: var(--qq-menu-item-fg-color) !important;
+        background-color: var(--qq-highlighted-menu-item-bg-color) !important;
+        color: var(--qq-highlighted-menu-item-fg-color) !important;
       }
       .mdc-list-item {
         padding-right: 0px;

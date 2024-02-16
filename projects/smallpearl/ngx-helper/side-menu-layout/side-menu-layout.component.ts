@@ -26,6 +26,7 @@ import { MenuPaneComponent } from '../menu-pane/menu-pane.component';
   template: `
     <mat-sidenav-container class="layout-container">
       <mat-sidenav
+        class="menu-pane"
         mode="side"
         opened
         #menuNav
@@ -82,6 +83,14 @@ import { MenuPaneComponent } from '../menu-pane/menu-pane.component';
   `,
   styles: [
     `
+      .menu-pane {
+        background-color: var(--qq-sidenav-bg-color) !important;
+        color: var(--qq-sidenav-fg-color) !important;
+      }
+      mat-toolbar {
+        background-color: var(--qq-toolbar-bg-color);
+        color: var(--qq-toolbar-fg-color);
+      }
       mat-toolbar {
         padding: 0 0;
       }

@@ -4,7 +4,6 @@ import { NavItem } from '../mat-menu-list-item/nav-item';
  *
  * @param menuItems NavItems[] to update the route with.
  * @param routePrefix The prefix to be added to the route of each NavItem in menuItems.
- * @param transloco If NavItem.displayName is to be localized, pass this parameter.
  * @returns NavItems[], the same array that was passed as argument 1.
  */
 export function prefixNavItemsRoute(

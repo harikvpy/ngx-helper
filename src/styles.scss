@@ -5,3 +5,16 @@ body {
   font-family: Lato, Arial, sans-serif;
   margin: 0;
 }
+:root {
+  --corporate-blue: rgb(25, 119, 227);
+  --corporate-white: rgba(232, 232, 232);
+  --qq-sidenav-fg-color: var(--corporate-white);
+  --qq-sidenav-bg-color: var(--corporate-blue);
+  --qq-toolbar-fg-color: var(--corporate-white);
+  --qq-toolbar-bg-color: var(--corporate-blue);
+  --qq-menu-item-fg-color: var(--corporate-white);
+  --qq-menu-item-bg-color: var(--corporate-blue);
+  --qq-highlighted-menu-item-fg-color: var(--corporate-blue);
+  --qq-highlighted-menu-item-bg-color: var(--corporate-white);;
+}
+
