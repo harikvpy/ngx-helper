@@ -19,7 +19,7 @@ import { MenuListItemComponent } from '../../mat-menu-list-item/src/mat-menu-lis
 import { NavItem } from '../../mat-menu-list-item/src/nav-item';
 
 @Component({
-  selector: 'qq-menu-pane',
+  selector: 'qq-mat-menu-pane',
   template: `
     <div class="menu-pane-wrapper">
       <div class="sidenav-branding mat-toolbar-single-row">
@@ -48,7 +48,7 @@ import { NavItem } from '../../mat-menu-list-item/src/nav-item';
       </div>
     </div>
   `,
-  styleUrls: ['./menu-pane.component.scss'],
+  styleUrls: ['./mat-menu-pane.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
@@ -59,7 +59,7 @@ import { NavItem } from '../../mat-menu-list-item/src/nav-item';
     MenuListItemComponent,
   ],
 })
-export class MenuPaneComponent implements OnInit, OnDestroy {
+export class QQMatMenuPaneComponent implements OnInit, OnDestroy {
   @Input() title: string;
   @Input() backButtonHref: string = '';
   @Input() menuItems: NavItem[];

@@ -18,11 +18,11 @@ import { NavItem } from '../../mat-menu-list-item/src/nav-item';
 import {
   LayoutService,
   SideMenuLayoutProps,
-} from '../../menu-pane/src/layout.service';
-import { MenuPaneComponent } from '../../menu-pane/src/menu-pane.component';
+} from '../../mat-menu-pane/src/layout.service';
+import { QQMatMenuPaneComponent } from '../../mat-menu-pane/src/mat-menu-pane.component';
 
 @Component({
-  selector: 'qq-side-menu-layout',
+  selector: 'qq-mat-side-menu-layout',
   template: `
     <mat-sidenav-container class="layout-container">
       <mat-sidenav
@@ -35,14 +35,14 @@ import { MenuPaneComponent } from '../../menu-pane/src/menu-pane.component';
         [fixedInViewport]="layout.smallScreen"
       >
         <div class="sidenav-container mw-192px">
-          <qq-menu-pane
+          <qq-mat-menu-pane
             [brandingImage]="brandingImage"
             [brandingText]="brandingText"
             [menuItems]="menuItems"
             [matSideNav]="menuNav"
             [menuPaneFooter]="menuPaneFooter"
             class="h-100"
-          ></qq-menu-pane>
+          ></qq-mat-menu-pane>
         </div>
       </mat-sidenav>
 
@@ -142,10 +142,10 @@ import { MenuPaneComponent } from '../../menu-pane/src/menu-pane.component';
     MatToolbarModule,
     MatIconModule,
     MatButtonModule,
-    MenuPaneComponent,
+    QQMatMenuPaneComponent,
   ],
 })
-export class SideMenuLayoutComponent implements OnInit, OnDestroy {
+export class QQMatSideMenuLayoutComponent implements OnInit, OnDestroy {
   @ViewChild('menuNav') menuNav: MatSidenav;
   layout: SideMenuLayoutProps;
   destroy = new Subject<void>();
