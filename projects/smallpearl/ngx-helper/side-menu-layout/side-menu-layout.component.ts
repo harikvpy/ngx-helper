@@ -75,6 +75,9 @@ import { MenuPaneComponent } from '../menu-pane/menu-pane.component';
   `,
   styles: [
     `
+      mat-toolbar {
+        padding: 0 0;
+      }
       .layout-container {
         position: absolute;
         top: 0;
