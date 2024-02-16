@@ -14,7 +14,7 @@ import { SideMenuLayoutComponent } from '@smallpearl/ngx-helper/side-menu-layout
       title="QQBOOKS"
       [menuItems]="menuItems"
       [menuPaneFooter]="versionInfoFooter"
-      [toolbarRightButtons]="toolbarRightButtons"
+      [toolbarEndContent]="toolbarEndContent"
       [infoPaneContent]="infoPaneContent"
       [infoPaneMinWidth]="300"
       [infoPaneMaxWidth]="500"
@@ -29,7 +29,7 @@ import { SideMenuLayoutComponent } from '@smallpearl/ngx-helper/side-menu-layout
         <small>2.3.102</small>
       </div>
     </ng-template>
-    <ng-template #toolbarRightButtons>
+    <ng-template #toolbarEndContent>
       <button mat-icon-button>
         <mat-icon>swap_horiz</mat-icon>
       </button>
@@ -97,49 +97,26 @@ export class SideMenuLayoutExampleComponent implements OnInit {
 
   menuItems: NavItem[] = [
     {
-      route: 'layout2/posts',
+      route: '/layout2/posts',
       displayName: 'Announcements',
       iconName: 'post_add',
     },
     {
-      route: 'layout2/feedback',
+      route: '/layout2/feedback',
       displayName: 'Feedback',
       iconName: 'post_add',
     },
     {
-      route: 'layout2/posts',
-      displayName: 'Contacts',
-      iconName: 'post_add',
-    },
-    {
-      route: 'layout2/feedback',
-      displayName: 'Documents',
-      iconName: 'post_add',
-    },
-    {
-      route: 'layout2/posts',
-      displayName: 'Amenities',
-      iconName: 'refresh',
-    },
-    {
-      route: 'layout2/feedback',
+      route: '/layout2/members',
       displayName: 'Members',
       iconName: 'people',
-    },
-    {
-      route: 'layout2/posts',
-      displayName: 'Groups',
-      iconName: 'shield',
-    },
-    {
-      route: 'layout2/feedback',
-      displayName: 'Parcels',
-      iconName: 'person',
-    },
-    {
-      route: 'layout2/feedback',
-      displayName: 'Settings',
-      iconName: 'settings',
+      children: [
+        {
+          route: '/layout2/members/allmembers',
+          displayName: 'All Members',
+          iconName: 'people_alt',
+        },
+      ],
     },
   ];
 

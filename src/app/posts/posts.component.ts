@@ -5,7 +5,7 @@ import { CommonModule } from '@angular/common';
   selector: 'app-posts',
   standalone: true,
   imports: [CommonModule],
-  template: ` <h2 class="mt-0 pt-0">Posts</h2> `,
+  template: `<h2>Posts</h2> `,
   styles: [
     `
       .mt-0 {

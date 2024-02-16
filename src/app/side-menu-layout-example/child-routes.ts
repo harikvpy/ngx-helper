@@ -12,6 +12,13 @@ export default [
       import('../feedback/feedback.component').then((m) => m.FeedbackComponent),
   },
   {
+    path: 'members/allmembers',
+    loadComponent: () =>
+      import('../all-members/all-members.component').then(
+        (m) => m.AllMembersComponent
+      ),
+  },
+  {
     path: '',
     redirectTo: 'posts',
     pathMatch: 'full',
