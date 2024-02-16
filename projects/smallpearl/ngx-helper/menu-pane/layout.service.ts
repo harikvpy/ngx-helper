@@ -23,7 +23,7 @@ export class LayoutService implements OnDestroy {
 
   layoutChanged = new BehaviorSubject<SideMenuLayoutProps>({
     smallScreen: false,
-    toolbarHeight: 60,
+    toolbarHeight: 64,
   });
 
   constructor(public breakpointObserver: BreakpointObserver, router: Router) {
@@ -44,9 +44,9 @@ export class LayoutService implements OnDestroy {
             if (query == Breakpoints.XSmall) {
               smallScreen = true;
               marginTop = 56;
-              // } else if (query === Breakpoints.Small) {
-              //   smallScreen = true;
-              //   marginTop = 60;
+            } else if (query === Breakpoints.Small) {
+              smallScreen = true;
+              marginTop = 56;
             } else {
               smallScreen = false;
             }

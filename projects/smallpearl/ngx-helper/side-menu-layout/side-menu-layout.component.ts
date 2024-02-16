@@ -65,9 +65,16 @@ import { MenuPaneComponent } from '../menu-pane/menu-pane.component';
           </button>
           <h4>{{ title }}</h4>
           <span class="spacer"></span>
-          <ng-container *ngTemplateOutlet="toolbarRightButtons"></ng-container>
+          <ng-container *ngTemplateOutlet="toolbarEndContent"></ng-container>
         </mat-toolbar>
-        <div class="content-container">
+        <div
+          class="content-container"
+          [ngStyle]="{
+            'height.px': containerHeight,
+            'padding-top.px': topBottomPadding,
+            'padding-bottom.px': topBottomPadding
+          }"
+        >
           <router-outlet></router-outlet>
         </div>
       </mat-sidenav-content>
@@ -93,8 +100,7 @@ import { MenuPaneComponent } from '../menu-pane/menu-pane.component';
         overflow-y: scroll;
       }
       .content-container {
-        height: 100%;
-        padding: 12px 6px;
+        padding: 6px 6px;
         overflow-x: scroll;
         overflow-y: scroll;
       }
@@ -127,17 +133,20 @@ export class SideMenuLayoutComponent implements OnInit, OnDestroy {
   @ViewChild('menuNav') menuNav: MatSidenav;
   layout: SideMenuLayoutProps;
   destroy = new Subject<void>();
-
+  containerHeight: number = 500;
+  topBottomPadding: number = 6;
   @Input() brandingImage: string = '';
   @Input() brandingText: string = '';
   @Input() title: string = '';
   @Input() menuItems: NavItem[] = [];
   // Template Partials for configurable portions of the layout
   @Input() menuPaneFooter: TemplateRef<any>;
-  @Input() toolbarRightButtons: TemplateRef<any>;
+  @Input() toolbarEndContent: TemplateRef<any>;
   @Input() infoPaneContent: TemplateRef<any>;
+  // Width of the info pane on the right (or left for LTR) of the screen.
   @Input() infoPaneMinWidth: number = 250;
   @Input() infoPaneMaxWidth: number = 400;
+  // Allows querying infoPane to activate it or to set its attributes
   @ViewChild('infoPane') infoPane: MatSidenav;
 
   constructor(
@@ -151,6 +160,9 @@ export class SideMenuLayoutComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy),
         tap((newLayout: SideMenuLayoutProps) => {
           this.layout = newLayout;
+          this.containerHeight =
+            window.innerHeight -
+            (newLayout.toolbarHeight + this.topBottomPadding * 2);
           this.changeDetectorRef.detectChanges();
         })
       )
