@@ -2,8 +2,8 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { NavItem } from '@smallpearl/ngx-helper/mat-menu-list-item/nav-item';
-import { SideMenuLayoutComponent } from '@smallpearl/ngx-helper/side-menu-layout/side-menu-layout.component';
+import { NavItem } from '@smallpearl/ngx-helper/mat-menu-list-item/src/nav-item';
+import { SideMenuLayoutComponent } from '@smallpearl/ngx-helper/side-menu-layout/src/side-menu-layout.component';
 
 @Component({
   selector: 'app-side-menu-layout-eample',
@@ -11,7 +11,7 @@ import { SideMenuLayoutComponent } from '@smallpearl/ngx-helper/side-menu-layout
     <qq-side-menu-layout
       brandingImage="assets/angular.png"
       brandingText="SMALLPEARL"
-      title="QQBOOKS"
+      appTitle="QQBOOKS"
       [menuItems]="menuItems"
       [menuPaneFooter]="versionInfoFooter"
       [toolbarEndContent]="toolbarEndContent"
@@ -41,9 +41,6 @@ import { SideMenuLayoutComponent } from '@smallpearl/ngx-helper/side-menu-layout
       </mat-menu>
     </ng-template>
     <ng-template #toolbarEndContent>
-      <button mat-icon-button>
-        <mat-icon>swap_horiz</mat-icon>
-      </button>
       <button mat-icon-button (click)="onNotificationsToggle()">
         <mat-icon>notifications</mat-icon>
       </button>

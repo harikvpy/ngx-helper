@@ -11,12 +11,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterOutlet, Routes } from '@angular/router';
-import { NavItem } from '@smallpearl/ngx-helper/mat-menu-list-item/nav-item';
+import { NavItem } from '@smallpearl/ngx-helper/mat-menu-list-item/src/nav-item';
 import {
   SideMenuLayoutProps,
   LayoutService,
-} from '@smallpearl/ngx-helper/menu-pane/layout.service';
-import { MenuPaneComponent } from '@smallpearl/ngx-helper/menu-pane/menu-pane.component';
+} from '@smallpearl/ngx-helper/menu-pane/src/layout.service';
+import { MenuPaneComponent } from '@smallpearl/ngx-helper/menu-pane/src/menu-pane.component';
 import { Subject, takeUntil, tap } from 'rxjs';
 
 // const routes: Routes = [
