@@ -15,8 +15,8 @@ import { Subject, filter, takeUntil, tap } from 'rxjs';
 import { SideMenuLayoutProps, LayoutService } from './layout.service';
 import { NavigationEnd, Router } from '@angular/router';
 import { MatSidenav } from '@angular/material/sidenav';
-import { MenuListItemComponent } from '../mat-menu-list-item/mat-menu-list-item.component';
-import { NavItem } from '../mat-menu-list-item/nav-item';
+import { MenuListItemComponent } from '../../mat-menu-list-item/src/mat-menu-list-item.component';
+import { NavItem } from '../../mat-menu-list-item/src/nav-item';
 
 @Component({
   selector: 'qq-menu-pane',

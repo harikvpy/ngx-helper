@@ -14,12 +14,12 @@ import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterOutlet } from '@angular/router';
 import { Subject, takeUntil, tap } from 'rxjs';
-import { NavItem } from '../mat-menu-list-item/nav-item';
+import { NavItem } from '../../mat-menu-list-item/src/nav-item';
 import {
   LayoutService,
   SideMenuLayoutProps,
-} from '../menu-pane/layout.service';
-import { MenuPaneComponent } from '../menu-pane/menu-pane.component';
+} from '../../menu-pane/src/layout.service';
+import { MenuPaneComponent } from '../../menu-pane/src/menu-pane.component';
 
 @Component({
   selector: 'qq-side-menu-layout',
@@ -65,15 +65,13 @@ import { MenuPaneComponent } from '../menu-pane/menu-pane.component';
             <mat-icon>menu</mat-icon>
           </button>
           <ng-template #defaultToolbarTitle>
-            <h4>{{ title }}</h4>
+            <h4>{{ appTitle }}</h4>
           </ng-template>
           <ng-container
             *ngTemplateOutlet="
               toolbarTitle ? toolbarTitle : defaultToolbarTitle
             "
-          >
-            <h4>{{ title }}</h4>
-          </ng-container>
+          ></ng-container>
           <span class="spacer"></span>
           <ng-container *ngTemplateOutlet="toolbarEndContent"></ng-container>
         </mat-toolbar>
@@ -155,7 +153,7 @@ export class SideMenuLayoutComponent implements OnInit, OnDestroy {
   topBottomPadding: number = 6;
   @Input() brandingImage: string = '';
   @Input() brandingText: string = '';
-  @Input() title: string = '';
+  @Input() appTitle: string = '';
   @Input() menuItems: NavItem[] = [];
   // Template Partials for configurable portions of the layout
   @Input() menuPaneFooter: TemplateRef<any>;

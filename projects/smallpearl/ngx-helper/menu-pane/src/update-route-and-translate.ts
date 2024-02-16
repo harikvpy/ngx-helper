@@ -1,4 +1,4 @@
-import { NavItem } from '../mat-menu-list-item/nav-item';
+import { NavItem } from '../../mat-menu-list-item/src/nav-item';
 
 /**
  *
