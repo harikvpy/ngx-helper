@@ -20,8 +20,11 @@
     "module": "ES2020",
     "useDefineForClassFields": false,
     "paths": {
+      "@smallpearl/ngx-helper/*": [
+        "projects/smallpearl/ngx-helper/*"
+      ],
       "@smallpearl/ngx-helper": [
-        "dist/smallpearl/ngx-helper"
+        "projects/smallpearl/ngx-helper"
       ],
     },
     "lib": [

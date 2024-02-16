@@ -9,6 +9,26 @@ const routes: Routes = [
         (m) => m.HomePageComponent
       ),
   },
+  {
+    path: 'layout',
+    loadComponent: () =>
+      import('./layout-example/layout-example.component').then(
+        (c) => c.LayoutExampleComponent
+      ),
+    loadChildren: () => import('./layout-example/child-routes'),
+    // loadChildren: () =>
+    //   import('./layout-example/layout-example.module').then(
+    //     (m) => m.LayoutExampleModule
+    //   ),
+  },
+  {
+    path: 'layout2',
+    loadComponent: () =>
+      import(
+        './side-menu-layout-example/side-menu-layout-example.component'
+      ).then((c) => c.SideMenuLayoutExampleComponent),
+    loadChildren: () => import('./side-menu-layout-example/child-routes'),
+  },
 ];
 
 @NgModule({

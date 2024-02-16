@@ -1,0 +1,36 @@
+.twistie-separator {
+  flex: 1 1 0%;
+}
+
+.routeIcon {
+  margin-right: 10px;
+  font-size: 16pt;
+}
+
+.menu-item-text {
+  font-size: 10pt;
+}
+
+.menu-twistie {
+  font-size: 10pt;
+  height: 12px;
+  width: 12px;
+}
+mat-icon {
+  margin-left: 8px !important;
+  margin-right: 8px !important;
+}
+.menu-item-color {
+  color: var(--vendor-foreground-color) !important;
+}
+.highlighted {
+  background-color: var(--vendor-foreground-color) !important;
+  color: var(--vendor-background-color) !important;
+}
+.highlighted .menu-item-color {
+  background-color: var(--vendor-foreground-color) !important;
+  color: var(--vendor-background-color) !important;
+}
+.mdc-list-item {
+  padding-right: 0px;
+}

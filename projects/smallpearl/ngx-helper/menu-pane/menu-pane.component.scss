@@ -1,0 +1,131 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+.app-toolbar {
+  border-bottom: 1px solid lightgray;
+}
+.company-toolbar {
+  background-color: blue;
+}
+.community-toolbar {
+  background-color: inherit;
+}
+.app-is-mobile .app-toolbar {
+  position: fixed;
+  /* Make sure the toolbar will stay on top of the content as it scrolls past. */
+  z-index: 2;
+}
+h1.app-name {
+  margin: auto;
+  margin-left: 0px;
+}
+.sidenav-container {
+  /* When the sidenav is not fixed, stretch the sidenav container to fill the available space. This
+     causes `<mat-sidenav-content>` to act as our scrolling element for desktop layouts. */
+  flex: 1;
+}
+
+.app-is-mobile .sidenav-container {
+  /* When the sidenav is fixed, don't constrain the height of the sidenav container. This allows the
+     `<body>` to be our scrolling element for mobile layouts. */
+  // flex: 1 0 auto;
+  display: inherit;
+}
+.spacer {
+  flex: 1 1 auto;
+}
+mat-toolbar {
+  padding: 12px;
+}
+.app-menu-pane {
+  width: var(--side-bar-width);
+  background-color: var(--vendor-background-color) !important;
+  color: var(--vendor-foreground-color) !important;
+}
+.app-notifications-pane {
+  width: var(--notifications-pane-width);
+}
+mat-icon {
+  margin-right: 8px !important;
+}
+/* Branding for lightgray labelling */
+.sidenav-branding {
+  border-bottom: 1px solid lightgray;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 0px 12px;
+}
+.sidenav-menu {
+  flex: 1; /* or flex-grow: 1  */;
+  overflow-x: hidden;
+}
+.sidenav-menu .title {
+  text-align: center;
+  padding: 0.5em 0.1em 0.2em 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 1.3em;
+}
+.sidenav-version {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  border-top: 1px solid lightgray;
+  font-size: smaller;
+}
+.sidenav-version a {
+  color: var(--vendor-foreground-color) !important;
+}
+.branding {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+/* Branding image */
+.branding-logo img {
+  width: 32px;
+  height: 32px;
+}
+/* Branding name */
+.branding-text {
+  overflow: auto;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1.2em;
+  margin: 0;
+  margin: 0px 4px;
+}
+.sidenav-content {
+  padding: 12px;
+  height: calc(100% - 56px);
+  overflow: auto;
+}
+// .app-is-mobile .sidenav-content {
+//   margin-top: 56px;
+// }
+.community-name {
+  font-size: medium;
+  font-weight: 600;
+}
+.user-button {
+  background: none;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+}
+.user-button img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+}
