@@ -64,7 +64,16 @@ import { MenuPaneComponent } from '../menu-pane/menu-pane.component';
           <button mat-icon-button (click)="onToggleMenuPane()">
             <mat-icon>menu</mat-icon>
           </button>
-          <h4>{{ title }}</h4>
+          <ng-template #defaultToolbarTitle>
+            <h4>{{ title }}</h4>
+          </ng-template>
+          <ng-container
+            *ngTemplateOutlet="
+              toolbarTitle ? toolbarTitle : defaultToolbarTitle
+            "
+          >
+            <h4>{{ title }}</h4>
+          </ng-container>
           <span class="spacer"></span>
           <ng-container *ngTemplateOutlet="toolbarEndContent"></ng-container>
         </mat-toolbar>
@@ -152,6 +161,7 @@ export class SideMenuLayoutComponent implements OnInit, OnDestroy {
   @Input() menuPaneFooter: TemplateRef<any>;
   @Input() toolbarEndContent: TemplateRef<any>;
   @Input() infoPaneContent: TemplateRef<any>;
+  @Input() toolbarTitle: TemplateRef<any>;
   // Width of the info pane on the right (or left for LTR) of the screen.
   @Input() infoPaneMinWidth: number = 250;
   @Input() infoPaneMaxWidth: number = 400;

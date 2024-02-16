@@ -18,6 +18,7 @@ import { SideMenuLayoutComponent } from '@smallpearl/ngx-helper/side-menu-layout
       [infoPaneContent]="infoPaneContent"
       [infoPaneMinWidth]="300"
       [infoPaneMaxWidth]="500"
+      [toolbarTitle]="toolbarTitle"
     ></qq-side-menu-layout>
     <ng-template #versionInfoFooter>
       <div style="text-align: center; font-size: 0.8em;">
@@ -28,6 +29,16 @@ import { SideMenuLayoutComponent } from '@smallpearl/ngx-helper/side-menu-layout
         <br />
         <small>2.3.102</small>
       </div>
+    </ng-template>
+    <ng-template #toolbarTitle>
+      <button mat-button [matMenuTriggerFor]="otherCommunitiesMenu">
+        <h4 class="community-name">Signature Park</h4>
+        <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
+      </button>
+      <mat-menu #otherCommunitiesMenu="matMenu">
+        <button mat-menu-item>Cavenagh Garden</button>
+        <button mat-menu-item>Cashew Heights</button>
+      </mat-menu>
     </ng-template>
     <ng-template #toolbarEndContent>
       <button mat-icon-button>
@@ -81,6 +92,10 @@ import { SideMenuLayoutComponent } from '@smallpearl/ngx-helper/side-menu-layout
       }
       .info-pane-content {
         padding: 10px;
+      }
+      .community-name {
+        font-size: 1.5em;
+        font-weight: 800;
       }
     `,
   ],
