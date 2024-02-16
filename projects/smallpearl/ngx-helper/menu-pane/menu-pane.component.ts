@@ -15,13 +15,13 @@ import { Subject, filter, takeUntil, tap } from 'rxjs';
 import { SideMenuLayoutProps, LayoutService } from './layout.service';
 import { NavigationEnd, Router } from '@angular/router';
 import { MatSidenav } from '@angular/material/sidenav';
-import { MenuListItemComponent } from '../mat-menu-list-item/mat-mat-menu-list-item.component';
+import { MenuListItemComponent } from '../mat-menu-list-item/mat-menu-list-item.component';
 import { NavItem } from '../mat-menu-list-item/nav-item';
 
 @Component({
   selector: 'qq-menu-pane',
   template: `
-    <div style="display: flex; flex-direction: column; height: 100%;">
+    <div class="menu-pane-wrapper">
       <div class="sidenav-branding mat-toolbar-single-row">
         <div class="branding branding-logo">
           <img *ngIf="brandingImage" [src]="brandingImage" />
