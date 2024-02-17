@@ -15,8 +15,10 @@ import { Subject, filter, takeUntil, tap } from 'rxjs';
 import { SideMenuLayoutProps, LayoutService } from './layout.service';
 import { NavigationEnd, Router } from '@angular/router';
 import { MatSidenav } from '@angular/material/sidenav';
-import { MenuListItemComponent } from '../../mat-menu-list-item/src/mat-menu-list-item.component';
-import { NavItem } from '../../mat-menu-list-item/src/nav-item';
+import {
+  MenuListItemComponent,
+  NavItem,
+} from '@smallpearl/ngx-helper/mat-menu-list-item';
 
 @Component({
   selector: 'qq-mat-menu-pane',
@@ -43,7 +45,7 @@ import { NavItem } from '../../mat-menu-list-item/src/nav-item';
           ></qq-mat-menu-list-item>
         </mat-nav-list>
       </div>
-      <div class="sidenav-version">
+      <div class="sidenav-version" *ngIf="menuPaneFooterContent">
         <ng-container *ngTemplateOutlet="menuPaneFooterContent"> </ng-container>
       </div>
     </div>
@@ -60,17 +62,17 @@ import { NavItem } from '../../mat-menu-list-item/src/nav-item';
   ],
 })
 export class QQMatMenuPaneComponent implements OnInit, OnDestroy {
-  @Input() title: string;
+  @Input() title: string = '';
   @Input() backButtonHref: string = '';
-  @Input() menuItems: NavItem[];
+  @Input() menuItems: NavItem[] = [];
   @Input() brandingText: string = 'BRAND';
   @Input() brandingImage: string = '';
-  @Input() matSideNav: MatSidenav;
+  @Input() matSideNav: MatSidenav | undefined;
   @Input() appVersion: string = '0.0';
-  @Input() menuPaneFooterContent: TemplateRef<any>;
-  layout: SideMenuLayoutProps;
+  @Input() menuPaneFooterContent!: TemplateRef<any>;
+  layout!: SideMenuLayoutProps;
 
-  backButtonNavItem: NavItem;
+  backButtonNavItem: NavItem | undefined;
   destroy = new Subject<void>();
 
   constructor(

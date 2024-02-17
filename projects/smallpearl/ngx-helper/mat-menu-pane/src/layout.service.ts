@@ -19,7 +19,7 @@ export class LayoutService implements OnDestroy {
   smallScreen: boolean = false;
 
   destroy = new Subject<void>();
-  _previousUrl: string;
+  _previousUrl: string = '';
 
   layoutChanged = new BehaviorSubject<SideMenuLayoutProps>({
     smallScreen: false,

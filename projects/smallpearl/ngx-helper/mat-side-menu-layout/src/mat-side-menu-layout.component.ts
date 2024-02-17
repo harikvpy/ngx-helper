@@ -14,12 +14,12 @@ import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterOutlet } from '@angular/router';
 import { Subject, takeUntil, tap } from 'rxjs';
-import { NavItem } from '../../mat-menu-list-item/src/nav-item';
+import { NavItem } from '@smallpearl/ngx-helper/mat-menu-list-item';
 import {
+  QQMatMenuPaneComponent,
   LayoutService,
   SideMenuLayoutProps,
-} from '../../mat-menu-pane/src/layout.service';
-import { QQMatMenuPaneComponent } from '../../mat-menu-pane/src/mat-menu-pane.component';
+} from '@smallpearl/ngx-helper/mat-menu-pane';
 
 @Component({
   selector: 'qq-mat-side-menu-layout',
@@ -146,8 +146,8 @@ import { QQMatMenuPaneComponent } from '../../mat-menu-pane/src/mat-menu-pane.co
   ],
 })
 export class QQMatSideMenuLayoutComponent implements OnInit, OnDestroy {
-  @ViewChild('menuNav') menuNav: MatSidenav;
-  layout: SideMenuLayoutProps;
+  @ViewChild('menuNav') menuNav!: MatSidenav;
+  layout!: SideMenuLayoutProps;
   destroy = new Subject<void>();
   containerHeight: number = 500;
   topBottomPadding: number = 6;
@@ -156,15 +156,15 @@ export class QQMatSideMenuLayoutComponent implements OnInit, OnDestroy {
   @Input() appTitle: string = '';
   @Input() menuItems: NavItem[] = [];
   // Template Partials for configurable portions of the layout
-  @Input() menuPaneFooterContent: TemplateRef<any>;
-  @Input() toolbarEndContent: TemplateRef<any>;
-  @Input() infoPaneContent: TemplateRef<any>;
-  @Input() toolbarTitleContent: TemplateRef<any>;
+  @Input() menuPaneFooterContent!: TemplateRef<any>;
+  @Input() toolbarEndContent!: TemplateRef<any>;
+  @Input() infoPaneContent!: TemplateRef<any>;
+  @Input() toolbarTitleContent!: TemplateRef<any>;
   // Width of the info pane on the right (or left for LTR) of the screen.
   @Input() infoPaneMinWidth: number = 250;
   @Input() infoPaneMaxWidth: number = 400;
   // Allows querying infoPane to activate it or to set its attributes
-  @ViewChild('infoPane') infoPane: MatSidenav;
+  @ViewChild('infoPane') infoPane!: MatSidenav;
 
   constructor(
     private layoutService: LayoutService,

@@ -127,7 +127,22 @@ export class MenuListItemComponent implements OnInit, OnDestroy {
   @HostBinding('attr.aria-expanded') ariaExpanded = this.expanded;
   @Input() item!: NavItem;
   @Input() depth!: number;
-  private sub$: Subscription;
+  private sub$ = this.navService
+    .getCurrentUrl()
+    .pipe(
+      tap((url: string) => {
+        if (this.item.route) {
+          const expanded = url.indexOf(`${this.item.route}`) === 0;
+          const highlighted = url.localeCompare(this.item.route) == 0;
+          if (expanded !== this.expanded || highlighted !== this.highlighted) {
+            this.highlighted = highlighted;
+            this.expanded = this.ariaExpanded = expanded;
+            this.cdr.detectChanges();
+          }
+        }
+      })
+    )
+    .subscribe();
 
   constructor(
     public navService: NavService,
@@ -140,27 +155,7 @@ export class MenuListItemComponent implements OnInit, OnDestroy {
     }
   }
 
-  ngOnInit(): void {
-    this.sub$ = this.navService
-      .getCurrentUrl()
-      .pipe(
-        tap((url: string) => {
-          if (this.item.route) {
-            const expanded = url.indexOf(`${this.item.route}`) === 0;
-            const highlighted = url.localeCompare(this.item.route) == 0;
-            if (
-              expanded !== this.expanded ||
-              highlighted !== this.highlighted
-            ) {
-              this.highlighted = highlighted;
-              this.expanded = this.ariaExpanded = expanded;
-              this.cdr.detectChanges();
-            }
-          }
-        })
-      )
-      .subscribe();
-  }
+  ngOnInit(): void {}
 
   ngOnDestroy(): void {
     if (this.sub$) {
