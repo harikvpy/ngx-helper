@@ -60,6 +60,8 @@ export class ISOTelNumber {
   constructor(public country: string, public national: string) {}
 }
 
+type TelephoneNumberParts = CountryInfo & { nationalNumber: string };
+
 @Component({
   standalone: true,
   selector: 'qq-mat-telephone-input',
@@ -152,13 +154,13 @@ export class QQMatTelephoneInputComponent
 {
   static nextId = 0;
 
-  @ViewChild('countryCodeSelector', { static: true }) countrySelect: MatSelect;
-  @ViewChild('nationalNumberInput') nationalInput: ElementRef;
+  @ViewChild('countryCodeSelector', { static: true }) countrySelect!: MatSelect;
+  @ViewChild('nationalNumberInput') nationalInput!: ElementRef;
 
   @Input() mobile = false;
   // A regular expression specified as a string. This will be used to
   // construct a RegExp object, by passing it as the argument.
-  @Input() allowedCountries: string;
+  @Input() allowedCountries!: string;
   @Input() defaultCountry: string = '';
 
   filter$ = new BehaviorSubject<string>('');
@@ -187,9 +189,9 @@ export class QQMatTelephoneInputComponent
   isDisabled = false;
 
   private _onChange = (_: any) => {};
-  private control: UntypedFormControl;
-  private onCountrySelectFocus: () => void;
-  private onCountrySelectBlur: () => void;
+  private control!: UntypedFormControl;
+  private onCountrySelectFocus!: () => void;
+  private onCountrySelectBlur!: () => void;
 
   phoneUtil: any = PhoneNumberUtil.getInstance();
 
@@ -207,7 +209,7 @@ export class QQMatTelephoneInputComponent
 
   public telForm = new FormGroup({});
   /** control for the MatSelect filter keyword */
-  public countryFilterCtrl: FormControl<string> = new FormControl<string>('');
+  public countryFilterCtrl = new FormControl<string>('');
 
   get empty() {
     const {
@@ -221,7 +223,7 @@ export class QQMatTelephoneInputComponent
     return this.focused || !this.empty;
   }
 
-  @Input('aria-describedby') userAriaDescribedBy: string;
+  @Input('aria-describedby') userAriaDescribedBy!: string;
 
   @Input()
   get placeholder(): string {
@@ -231,7 +233,7 @@ export class QQMatTelephoneInputComponent
     this._placeholder = value;
     this.stateChanges.next();
   }
-  private _placeholder: string;
+  private _placeholder!: string;
 
   @Input()
   get required(): boolean {
@@ -263,20 +265,20 @@ export class QQMatTelephoneInputComponent
       const {
         value: { country, national },
       } = this.parts;
-      return new ISOTelNumber(`${country.callingCode}`, national!);
+      return new ISOTelNumber(`${country!.callingCode}`, national!);
     }
     return null;
   }
   set value(tel: ISOTelNumber | null) {
     const { country, national } = tel || new ISOTelNumber('', '');
-    let ci: CountryInfo = undefined;
+    let ci: CountryInfo | undefined;
     if (country) {
       ci = this.countries.find(
         (ci: CountryInfo) => `${ci.callingCode}` == country
       );
     }
     // this.phoneUtil.
-    this.parts.setValue({ country: ci, national });
+    this.parts.setValue({ country: ci!, national });
     this.stateChanges.next();
   }
 
@@ -354,7 +356,7 @@ export class QQMatTelephoneInputComponent
     }
 
     this.parts = formBuilder.group({
-      country: [undefined as CountryInfo, Validators.required],
+      country: [undefined as unknown as CountryInfo, Validators.required],
       national: ['', Validators.required],
     });
 
@@ -386,7 +388,7 @@ export class QQMatTelephoneInputComponent
       const country = this.countries.find(
         (ci) => ci.code == this.defaultCountry
       );
-      this.parts.controls.country.setValue(country);
+      this.parts.controls.country.setValue(country!);
     }
 
     this.filteredCountries.next(this.countries.slice());
@@ -428,15 +430,15 @@ export class QQMatTelephoneInputComponent
     this.filteredCountries.next(
       this.countries.filter(
         (country) =>
-          country.name.toLowerCase().indexOf(search) > -1 ||
-          country.callingCode.toString().indexOf(search) > -1 ||
-          country.code.toLowerCase().indexOf(search) > -1
+          country.name.toLowerCase().indexOf(search!) > -1 ||
+          country.callingCode.toString().indexOf(search!) > -1 ||
+          country.code.toLowerCase().indexOf(search!) > -1
       )
     );
   }
 
   ngAfterViewInit() {
-    const ngControl: NgControl = this.injector.get(NgControl, null);
+    const ngControl = this.injector.get(NgControl, null);
     if (ngControl) {
       this.control = ngControl.control as UntypedFormControl;
     }
@@ -604,25 +606,33 @@ export class QQMatTelephoneInputComponent
    * Validates the entered number using google-libphonenumber and if
    * invalid, returns an empty string.
    */
-  private getTelephoneNumberParts(): CountryInfo & { nationalNumber: string } {
-    const selectedCountry: CountryInfo = this.parts.controls.country.value;
+  private getTelephoneNumberParts(): TelephoneNumberParts | null {
+    const selectedCountry: CountryInfo | null =
+      this.parts.controls.country.value;
     const nationalNumber = this.parts.controls.national.value;
-    try {
+    if (nationalNumber) {
       const ci = this.countries.find(
-        (ci: CountryInfo) => ci.callingCode == selectedCountry.callingCode
+        (ci: CountryInfo) => ci.callingCode == selectedCountry!.callingCode
       );
-      const phoneNumber = this.phoneUtil.parse(nationalNumber, ci.code);
-      if (this.phoneUtil.isValidNumberForRegion(phoneNumber, ci.code)) {
-        const numberType = this.phoneUtil.getNumberType(phoneNumber);
-        // console.log(`Valid phone number for country ${ci.code}: ${this.phoneUtil.format(phoneNumber, PhoneNumberFormat.E164)}, type: ${numberType}`);
-        if (!this.mobile || numberType === PhoneNumberType.MOBILE) {
-          // const fullNumber = this.phoneUtil.format(phoneNumber, PhoneNumberFormat.E164);
-          // console.log('full tel number:', fullNumber);
-          return { ...ci, nationalNumber };
+      if (ci) {
+        try {
+          const phoneNumber = this.phoneUtil.parse(nationalNumber, ci.code);
+          if (this.phoneUtil.isValidNumberForRegion(phoneNumber, ci!.code)) {
+            const numberType = this.phoneUtil.getNumberType(phoneNumber);
+            // console.log(`Valid phone number for country ${ci.code}: ${this.phoneUtil.format(phoneNumber, PhoneNumberFormat.E164)}, type: ${numberType}`);
+            if (!this.mobile || numberType === PhoneNumberType.MOBILE) {
+              // const fullNumber = this.phoneUtil.format(phoneNumber, PhoneNumberFormat.E164);
+              // console.log('full tel number:', fullNumber);
+              return {
+                ...ci,
+                nationalNumber: nationalNumber,
+              };
+            }
+          }
+        } catch (error) {
+          // do nothing
         }
       }
-    } catch (err) {
-      // empty
     }
     return null;
   }
