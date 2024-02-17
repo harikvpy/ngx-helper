@@ -13,12 +13,12 @@ import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-me
       brandingText="SMALLPEARL"
       appTitle="QQBOOKS"
       [menuItems]="menuItems"
-      [menuPaneFooter]="versionInfoFooter"
+      [menuPaneFooterContent]="versionInfoFooter"
       [toolbarEndContent]="toolbarEndContent"
       [infoPaneContent]="infoPaneContent"
       [infoPaneMinWidth]="300"
       [infoPaneMaxWidth]="500"
-      [toolbarTitle]="toolbarTitle"
+      [toolbarTitleContent]="toolbarTitle"
     ></qq-mat-side-menu-layout>
     <ng-template #versionInfoFooter>
       <div style="text-align: center; font-size: 0.8em;">

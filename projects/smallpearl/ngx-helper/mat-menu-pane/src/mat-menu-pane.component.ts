@@ -44,7 +44,7 @@ import { NavItem } from '../../mat-menu-list-item/src/nav-item';
         </mat-nav-list>
       </div>
       <div class="sidenav-version">
-        <ng-container *ngTemplateOutlet="menuPaneFooter"> </ng-container>
+        <ng-container *ngTemplateOutlet="menuPaneFooterContent"> </ng-container>
       </div>
     </div>
   `,
@@ -67,7 +67,7 @@ export class QQMatMenuPaneComponent implements OnInit, OnDestroy {
   @Input() brandingImage: string = '';
   @Input() matSideNav: MatSidenav;
   @Input() appVersion: string = '0.0';
-  @Input() menuPaneFooter: TemplateRef<any>;
+  @Input() menuPaneFooterContent: TemplateRef<any>;
   layout: SideMenuLayoutProps;
 
   backButtonNavItem: NavItem;

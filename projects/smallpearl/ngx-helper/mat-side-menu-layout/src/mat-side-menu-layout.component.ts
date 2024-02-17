@@ -40,7 +40,7 @@ import { QQMatMenuPaneComponent } from '../../mat-menu-pane/src/mat-menu-pane.co
             [brandingText]="brandingText"
             [menuItems]="menuItems"
             [matSideNav]="menuNav"
-            [menuPaneFooter]="menuPaneFooter"
+            [menuPaneFooterContent]="menuPaneFooterContent"
             class="h-100"
           ></qq-mat-menu-pane>
         </div>
@@ -69,7 +69,7 @@ import { QQMatMenuPaneComponent } from '../../mat-menu-pane/src/mat-menu-pane.co
           </ng-template>
           <ng-container
             *ngTemplateOutlet="
-              toolbarTitle ? toolbarTitle : defaultToolbarTitle
+              toolbarTitleContent ? toolbarTitleContent : defaultToolbarTitle
             "
           ></ng-container>
           <span class="spacer"></span>
@@ -156,10 +156,10 @@ export class QQMatSideMenuLayoutComponent implements OnInit, OnDestroy {
   @Input() appTitle: string = '';
   @Input() menuItems: NavItem[] = [];
   // Template Partials for configurable portions of the layout
-  @Input() menuPaneFooter: TemplateRef<any>;
+  @Input() menuPaneFooterContent: TemplateRef<any>;
   @Input() toolbarEndContent: TemplateRef<any>;
   @Input() infoPaneContent: TemplateRef<any>;
-  @Input() toolbarTitle: TemplateRef<any>;
+  @Input() toolbarTitleContent: TemplateRef<any>;
   // Width of the info pane on the right (or left for LTR) of the screen.
   @Input() infoPaneMinWidth: number = 250;
   @Input() infoPaneMaxWidth: number = 400;
