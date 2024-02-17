@@ -106,7 +106,7 @@ import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-me
 })
 export class SideMenuLayoutExampleComponent implements OnInit {
   @ViewChild(QQMatSideMenuLayoutComponent)
-  sideMenuLayout: QQMatSideMenuLayoutComponent;
+  sideMenuLayout!: QQMatSideMenuLayoutComponent;
 
   menuItems: NavItem[] = [
     {

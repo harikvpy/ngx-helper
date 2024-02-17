@@ -105,8 +105,8 @@ import { Subject, takeUntil, tap } from 'rxjs';
   ],
 })
 export class LayoutExampleComponent implements OnInit, OnDestroy {
-  @ViewChild('menuNav') menuNav: MatSidenav;
-  layout: SideMenuLayoutProps;
+  @ViewChild('menuNav') menuNav!: MatSidenav;
+  layout!: SideMenuLayoutProps;
   destroy = new Subject<void>();
 
   menuItems: NavItem[] = [
