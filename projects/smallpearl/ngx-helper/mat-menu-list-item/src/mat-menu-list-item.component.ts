@@ -80,6 +80,9 @@ import { NavItem } from './nav-item';
   `,
   styles: [
     `
+      .menu-list-item {
+        margin-right: 8px !important;
+      }
       .twistie-separator {
         flex: 1 1 0%;
       }
@@ -136,8 +139,17 @@ export class QQMatMenuListItemComponent
   expanded = false;
   highlighted = false;
   @HostBinding('attr.aria-expanded') ariaExpanded = this.expanded;
+
+  // The NavItem associated with this item.
   @Input() item!: NavItem;
+
+  // This is an implementation property that is used to control with offset
+  // of the menu item from the start of the screen to indicate that an item
+  // is a child of a parent menu item.
   @Input() depth!: number;
+
+  // The parent of this menu item. Set only for child items. Will be undefined
+  // for top level menu items
   @Input() parent!: QQMatMenuListItemComponent;
 
   // All child MenuListItemComponents so that we can check each one if
@@ -146,6 +158,9 @@ export class QQMatMenuListItemComponent
   @ViewChildren(QQMatMenuListItemComponent)
   children!: QueryList<QQMatMenuListItemComponent>;
 
+  // Trap router's NavigationEnd event to change the currently select/deselect
+  // MenuItem components. That is select the MenuListItem matching the newly
+  // navigated to url, while deslecting the previous selection.
   private sub$ = this.router.events
     .pipe(
       filter((event: RouterEvent) => event instanceof NavigationEnd),
@@ -162,7 +177,9 @@ export class QQMatMenuListItemComponent
           } else {
             if (this.highlighted) {
               this.highlighted = false;
-              if (this.parent) {
+              // If the item has a parent and current url is not for a sibling
+              // item, collapse parent.
+              if (this.parent && !this.parent.curUrlEndsWithChildItemRoute()) {
                 this.parent.collapse();
               }
               this.cdr.detectChanges();
@@ -187,11 +204,13 @@ export class QQMatMenuListItemComponent
   ngOnInit(): void {}
 
   ngOnDestroy(): void {
-    if (this.sub$) {
-      this.sub$.unsubscribe();
-    }
+    this.sub$.unsubscribe();
   }
 
+  /**
+   * We need to override this to select the correct menu item for the
+   * applications starting URL.
+   */
   ngAfterViewInit(): void {
     if (this.curUrlEndsWithSelfOrChildItemRoute()) {
       if (this.item?.route) {
@@ -204,7 +223,13 @@ export class QQMatMenuListItemComponent
     }
   }
 
-  curUrlEndsWithSelfOrChildItemRoute(): boolean {
+  /**
+   * Tests if the current URL ends with the route of one of the
+   * child menu item's NavItem.route.
+   *
+   * @returns boolean
+   */
+  curUrlEndsWithChildItemRoute(): boolean {
     const curUrl = this.router.routerState.snapshot.url;
     if (this.children && this.children.length) {
       if (
@@ -216,27 +241,34 @@ export class QQMatMenuListItemComponent
         return true;
       }
     }
-    return !!(this.item.route && curUrl.endsWith(this.item.route));
-
-    // return (
-    //   (this.item.route && curUrl.endsWith(this.item.route)) ||
-    //   (this.item.children &&
-    //     this.item.children.find(
-    //       (item) => item.route && curUrl.endsWith(item.route)
-    //     ))
-    // );
+    return false;
   }
 
+  /**
+   * Tests if the current URL ends with the route of one of the
+   * child menu item's NavItem.route or this.item?.route.
+   *
+   * @returns boolean
+   */
+  curUrlEndsWithSelfOrChildItemRoute(): boolean {
+    const curUrl = this.router.routerState.snapshot.url;
+    return (
+      this.curUrlEndsWithChildItemRoute() ||
+      !!(this.item.route && curUrl.endsWith(this.item.route))
+    );
+  }
+
+  // Item selection handler
   onItemSelected(ev: Event, item: NavItem): void {
     this.dialog.closeAll();
 
-    // Leaf menu item
+    // Leaf menu item, navigate the router to the item's route.
     if (!item.children) {
       if (item.route) {
         this.router.navigate([item.route], { relativeTo: this.route });
       }
     } else {
-      // Sub menu items, toogle the item to show/hide the children
+      // Sub menu items, toogle the item to show/hide the child menu items.
       ev.preventDefault();
       ev.stopImmediatePropagation();
       this.expanded = !this.expanded;
@@ -244,16 +276,26 @@ export class QQMatMenuListItemComponent
     }
   }
 
+  /**
+   * Expand a parent container menu item.
+   */
   expand() {
-    this.expanded = this.ariaExpanded = true;
-    this.cdr.detectChanges();
-    if (this.parent) {
-      this.parent.expand();
+    if (!this.item?.route && !this.expanded) {
+      this.expanded = this.ariaExpanded = true;
+      this.cdr.detectChanges();
+      if (this.parent) {
+        this.parent.expand();
+      }
     }
   }
 
+  /**
+   * Collapse an expanded parent container menu item.
+   */
   collapse() {
-    this.expanded = this.ariaExpanded = false;
-    this.cdr.detectChanges();
+    if (!this.item?.route && this.expanded) {
+      this.expanded = this.ariaExpanded = false;
+      this.cdr.detectChanges();
+    }
   }
 }
