@@ -16,7 +16,7 @@ import { SideMenuLayoutProps, LayoutService } from './layout.service';
 import { NavigationEnd, Router } from '@angular/router';
 import { MatSidenav } from '@angular/material/sidenav';
 import {
-  MenuListItemComponent,
+  QQMatMenuListItemComponent,
   NavItem,
 } from '@smallpearl/ngx-helper/mat-menu-list-item';
 
@@ -58,7 +58,7 @@ import {
     MatListModule,
     MatMenuModule,
     MatBadgeModule,
-    MenuListItemComponent,
+    QQMatMenuListItemComponent,
   ],
 })
 export class QQMatMenuPaneComponent implements OnInit, OnDestroy {

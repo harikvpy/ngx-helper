@@ -130,19 +130,21 @@ import { NavItem } from './nav-item';
   standalone: true,
   imports: [CommonModule, MatIconModule, MatListModule, MatDialogModule],
 })
-export class MenuListItemComponent implements OnInit, OnDestroy, AfterViewInit {
+export class QQMatMenuListItemComponent
+  implements OnInit, OnDestroy, AfterViewInit
+{
   expanded = false;
   highlighted = false;
   @HostBinding('attr.aria-expanded') ariaExpanded = this.expanded;
   @Input() item!: NavItem;
   @Input() depth!: number;
-  @Input() parent!: MenuListItemComponent;
+  @Input() parent!: QQMatMenuListItemComponent;
 
   // All child MenuListItemComponents so that we can check each one if
   // the current url ends with the child component's NavItem.route.
   // If it does then we have to mark this component as expanded.
-  @ViewChildren(MenuListItemComponent)
-  children!: QueryList<MenuListItemComponent>;
+  @ViewChildren(QQMatMenuListItemComponent)
+  children!: QueryList<QQMatMenuListItemComponent>;
 
   private sub$ = this.router.events
     .pipe(
