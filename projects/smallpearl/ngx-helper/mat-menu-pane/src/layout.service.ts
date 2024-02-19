@@ -12,7 +12,7 @@ export interface SideMenuLayoutProps {
   toolbarHeight: number;
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: 'any' })
 export class LayoutService implements OnDestroy {
   marginTop: number = 64;
   toolbarHeight: number = 64;
@@ -44,9 +44,9 @@ export class LayoutService implements OnDestroy {
             if (query == Breakpoints.XSmall) {
               smallScreen = true;
               marginTop = 56;
-            } else if (query === Breakpoints.Small) {
-              smallScreen = true;
-              marginTop = 56;
+              // } else if (query === Breakpoints.Small) {
+              //   smallScreen = true;
+              //   marginTop = 56;
             } else {
               smallScreen = false;
             }

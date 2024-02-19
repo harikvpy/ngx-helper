@@ -7,6 +7,7 @@ import {
 } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
@@ -14,14 +15,20 @@ import {
   Input,
   OnDestroy,
   OnInit,
+  QueryList,
+  ViewChildren,
 } from '@angular/core';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
-import { Router } from '@angular/router';
-import { Subscription, tap } from 'rxjs';
+import {
+  ActivatedRoute,
+  NavigationEnd,
+  Router,
+  Event as RouterEvent,
+} from '@angular/router';
+import { filter, tap } from 'rxjs';
 import { NavItem } from './nav-item';
-import { NavService } from './nav.service';
 
 @Component({
   selector: 'qq-mat-menu-list-item',
@@ -60,11 +67,13 @@ import { NavService } from './nav.service';
         </mat-icon>
       </span>
     </a>
-    <div *ngIf="expanded">
+    <div>
       <qq-mat-menu-list-item
         class="menu-child"
+        [ngStyle]="{ display: expanded ? 'inherit' : 'none' }"
         *ngFor="let child of item.children"
         [item]="child"
+        [parent]="this"
         [depth]="depth + 1"
       ></qq-mat-menu-list-item>
     </div>
@@ -121,23 +130,41 @@ import { NavService } from './nav.service';
   standalone: true,
   imports: [CommonModule, MatIconModule, MatListModule, MatDialogModule],
 })
-export class MenuListItemComponent implements OnInit, OnDestroy {
+export class MenuListItemComponent implements OnInit, OnDestroy, AfterViewInit {
   expanded = false;
   highlighted = false;
   @HostBinding('attr.aria-expanded') ariaExpanded = this.expanded;
   @Input() item!: NavItem;
   @Input() depth!: number;
-  private sub$ = this.navService
-    .getCurrentUrl()
+  @Input() parent!: MenuListItemComponent;
+
+  // All child MenuListItemComponents so that we can check each one if
+  // the current url ends with the child component's NavItem.route.
+  // If it does then we have to mark this component as expanded.
+  @ViewChildren(MenuListItemComponent)
+  children!: QueryList<MenuListItemComponent>;
+
+  private sub$ = this.router.events
     .pipe(
-      tap((url: string) => {
-        if (this.item.route) {
-          const expanded = url.indexOf(`${this.item.route}`) === 0;
-          const highlighted = url.localeCompare(this.item.route) == 0;
-          if (expanded !== this.expanded || highlighted !== this.highlighted) {
-            this.highlighted = highlighted;
-            this.expanded = this.ariaExpanded = expanded;
+      filter((event: RouterEvent) => event instanceof NavigationEnd),
+      tap((event: RouterEvent) => {
+        const ne = event as NavigationEnd;
+        const url = ne.urlAfterRedirects;
+        if (this.item?.route) {
+          if (url.endsWith(this.item.route)) {
+            this.highlighted = true;
+            if (this.parent) {
+              this.parent.expand();
+            }
             this.cdr.detectChanges();
+          } else {
+            if (this.highlighted) {
+              this.highlighted = false;
+              if (this.parent) {
+                this.parent.collapse();
+              }
+              this.cdr.detectChanges();
+            }
           }
         }
       })
@@ -145,7 +172,7 @@ export class MenuListItemComponent implements OnInit, OnDestroy {
     .subscribe();
 
   constructor(
-    public navService: NavService,
+    public route: ActivatedRoute,
     public router: Router,
     private dialog: MatDialog,
     private cdr: ChangeDetectorRef
@@ -163,20 +190,68 @@ export class MenuListItemComponent implements OnInit, OnDestroy {
     }
   }
 
+  ngAfterViewInit(): void {
+    if (this.curUrlEndsWithSelfOrChildItemRoute()) {
+      if (this.item?.route) {
+        this.highlighted = true;
+      }
+      if (this.parent) {
+        this.parent.expand();
+      }
+      this.cdr.detectChanges();
+    }
+  }
+
+  curUrlEndsWithSelfOrChildItemRoute(): boolean {
+    const curUrl = this.router.routerState.snapshot.url;
+    if (this.children && this.children.length) {
+      if (
+        this.children.find(
+          (component) =>
+            !!(component.item?.route && curUrl.endsWith(component.item.route))
+        ) !== undefined
+      ) {
+        return true;
+      }
+    }
+    return !!(this.item.route && curUrl.endsWith(this.item.route));
+
+    // return (
+    //   (this.item.route && curUrl.endsWith(this.item.route)) ||
+    //   (this.item.children &&
+    //     this.item.children.find(
+    //       (item) => item.route && curUrl.endsWith(item.route)
+    //     ))
+    // );
+  }
+
   onItemSelected(ev: Event, item: NavItem): void {
     this.dialog.closeAll();
 
-    if (!item.children || !item.children.length) {
+    // Leaf menu item
+    if (!item.children) {
       if (item.route) {
-        this.router.navigate([item.route]);
+        this.router.navigate([item.route], { relativeTo: this.route });
       }
-    }
-
-    if (item.children && item.children.length) {
+    } else {
+      // Sub menu items, toogle the item to show/hide the children
       ev.preventDefault();
       ev.stopImmediatePropagation();
       this.expanded = !this.expanded;
       this.cdr.detectChanges();
     }
+  }
+
+  expand() {
+    this.expanded = this.ariaExpanded = true;
+    this.cdr.detectChanges();
+    if (this.parent) {
+      this.parent.expand();
+    }
+  }
+
+  collapse() {
+    this.expanded = this.ariaExpanded = false;
+    this.cdr.detectChanges();
   }
 }
