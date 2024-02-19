@@ -27,7 +27,7 @@ h1.app-name {
   height: 100%;
 }
 .sidenav-branding {
-  border-bottom: 1px solid lightgray;
+  border-bottom: 1px solid var(--qq-sidenav-border-color);
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -51,7 +51,7 @@ h1.app-name {
   align-items: center;
   justify-content: center;
   min-height: 48px;
-  border-top: 1px solid lightgray;
+  border-top: 1px solid var(--qq-sidenav-border-color);
   font-size: smaller;
 }
 .sidenav-version a {
