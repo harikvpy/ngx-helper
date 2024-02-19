@@ -6,8 +6,9 @@ body {
   margin: 0;
 }
 :root {
-  --corporate-blue: rgb(25, 119, 227);
+  --corporate-blue: rgb(192, 64, 64);
   --corporate-white: rgba(232, 232, 232);
+  --qq-sidenav-border-color: var(--corporate-white);
   --qq-sidenav-fg-color: var(--corporate-white);
   --qq-sidenav-bg-color: var(--corporate-blue);
   --qq-toolbar-fg-color: var(--corporate-white);
