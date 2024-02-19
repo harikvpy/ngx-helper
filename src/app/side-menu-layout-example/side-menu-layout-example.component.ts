@@ -1,7 +1,4 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
 import { NavItem } from '@smallpearl/ngx-helper/mat-menu-list-item/src/nav-item';
 import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-menu-layout/src/mat-side-menu-layout.component';
 
@@ -96,13 +93,6 @@ import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-me
       }
     `,
   ],
-  standalone: true,
-  imports: [
-    QQMatSideMenuLayoutComponent,
-    MatButtonModule,
-    MatIconModule,
-    MatMenuModule,
-  ],
 })
 export class SideMenuLayoutExampleComponent implements OnInit {
   @ViewChild(QQMatSideMenuLayoutComponent)
@@ -110,24 +100,28 @@ export class SideMenuLayoutExampleComponent implements OnInit {
 
   menuItems: NavItem[] = [
     {
-      route: '/layout2/posts',
-      displayName: 'Announcements',
+      route: 'posts',
+      displayName: 'ANNOUNCEMENTS',
       iconName: 'post_add',
     },
     {
-      route: '/layout2/feedback',
-      displayName: 'Feedback',
+      route: 'feedback',
+      displayName: 'FEEDBACK',
       iconName: 'post_add',
     },
     {
-      route: '/layout2/members',
-      displayName: 'Members',
+      displayName: 'MEMBERS',
       iconName: 'people',
       children: [
         {
-          route: '/layout2/members/allmembers',
-          displayName: 'All Members',
+          route: 'allmembers',
+          displayName: 'ALL MEMBERS',
           iconName: 'people_alt',
+        },
+        {
+          route: 'invitations',
+          displayName: 'INVITATIONS',
+          iconName: 'email',
         },
       ],
     },
