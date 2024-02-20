@@ -67,7 +67,7 @@ export class SideMenuLayoutExampleComponent implements OnInit {
       ],
     },
     {
-      route: '../satellite-app',
+      route: './satellite-app',
       displayName: 'SATELLITE APP',
       iconName: 'token',
     },
@@ -76,20 +76,4 @@ export class SideMenuLayoutExampleComponent implements OnInit {
   constructor() {}
 
   ngOnInit() {}
-
-  onNotificationsToggle() {
-    if (this.sideMenuLayout) {
-      this.sideMenuLayout.infoPane.toggle();
-    }
-  }
-
-  onUpdateProfile() {
-    console.log('onUpdateProfile');
-  }
-  onChangePassword() {
-    console.log('onChangePassword');
-  }
-  onSignOut() {
-    console.log('OnSignOut');
-  }
 }

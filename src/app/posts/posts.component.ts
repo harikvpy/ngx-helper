@@ -7,13 +7,12 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <div class="posts-container">
-      <div class="h2">Posts</div>
+      <h2>Posts</h2>
     </div>
   `,
   styles: [
     `
       .posts-container {
-        border: 1px solid teal;
         height: 1500px;
       }
       .h2 {

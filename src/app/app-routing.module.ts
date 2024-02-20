@@ -10,17 +10,10 @@ const routes: Routes = [
       ),
   },
   {
-    path: 'layout',
+    path: 'home',
     loadChildren: () =>
       import('./side-menu-layout-example/side-menu-layout-example.module').then(
         (m) => m.SideMenuLayoutExampleModule
-      ),
-  },
-  {
-    path: 'satellite-app',
-    loadChildren: () =>
-      import('./satellite-app-home/satellite-app-home.module').then(
-        (m) => m.SatelliteAppHomeModule
       ),
   },
 ];

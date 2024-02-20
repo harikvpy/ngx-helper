@@ -49,6 +49,13 @@ const routes: Routes = [
       },
     ],
   },
+  {
+    path: 'satellite-app',
+    loadChildren: () =>
+      import('../satellite-app-home/satellite-app-home.module').then(
+        (m) => m.SatelliteAppHomeModule
+      ),
+  },
 ];
 
 @NgModule({
