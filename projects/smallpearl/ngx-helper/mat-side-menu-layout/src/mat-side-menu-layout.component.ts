@@ -78,7 +78,7 @@ import {
           <ng-container *ngTemplateOutlet="toolbarEndContent"></ng-container>
         </mat-toolbar>
         <div
-          class="content-container"
+          [class]="'content-container ' + contentContainerClass"
           [ngStyle]="{
             'height.px': containerHeight,
           }"
@@ -164,6 +164,7 @@ export class QQMatSideMenuLayoutComponent implements OnInit, OnDestroy {
   // Width of the info pane on the right (or left for LTR) of the screen.
   @Input() infoPaneMinWidth: number = 250;
   @Input() infoPaneMaxWidth: number = 400;
+  @Input() contentContainerClass: string = '';
   // Allows querying infoPane to activate it or to set its attributes
   @ViewChild('infoPane') infoPane!: MatSidenav;
 
