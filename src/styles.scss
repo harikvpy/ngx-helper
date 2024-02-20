@@ -1,10 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
 
-body {
-  font-family: Lato, Arial, sans-serif;
-  margin: 0;
-}
+
+// Customizations for mat-sidemenu-layout component
 :root {
   --corporate-blue: rgb(0, 128, 200);
   --corporate-blue-contrast: rgb(64, 192, 236);
@@ -23,7 +21,6 @@ body {
 }
 
 .ex-content-container {
-  background-color: teal;
   padding: 16px;
 }
 
