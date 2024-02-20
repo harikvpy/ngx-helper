@@ -36,6 +36,7 @@ import {
       >
         <div class="sidenav-container mw-192px">
           <qq-mat-menu-pane
+            [showBackButton]="showBackButton"
             [defaultBackButtonHref]="defaultBackButtonHref"
             [brandingImage]="brandingImage"
             [brandingText]="brandingText"
@@ -80,8 +81,6 @@ import {
           class="content-container"
           [ngStyle]="{
             'height.px': containerHeight,
-            'padding-top.px': topBottomPadding,
-            'padding-bottom.px': topBottomPadding
           }"
         >
           <router-outlet></router-outlet>
@@ -117,7 +116,6 @@ import {
         overflow-y: scroll;
       }
       .content-container {
-        padding: 6px 6px;
         overflow-x: scroll;
         overflow-y: scroll;
       }
@@ -152,6 +150,7 @@ export class QQMatSideMenuLayoutComponent implements OnInit, OnDestroy {
   destroy = new Subject<void>();
   containerHeight: number = 500;
   topBottomPadding: number = 6;
+  @Input() showBackButton: boolean = false;
   @Input() defaultBackButtonHref: string = '';
   @Input() brandingImage: string = '';
   @Input() brandingText: string = '';

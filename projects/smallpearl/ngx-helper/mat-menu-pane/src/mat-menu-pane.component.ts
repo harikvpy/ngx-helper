@@ -63,6 +63,7 @@ import {
 })
 export class QQMatMenuPaneComponent implements OnInit, OnDestroy {
   @Input() title: string = '';
+  @Input() showBackButton: boolean = false;
   @Input() defaultBackButtonHref: string = '';
   @Input() menuItems: NavItem[] = [];
   @Input() brandingText: string = 'BRAND';
@@ -96,7 +97,7 @@ export class QQMatMenuPaneComponent implements OnInit, OnDestroy {
       )
       .subscribe();
 
-    if (this.defaultBackButtonHref) {
+    if (this.showBackButton) {
       this.backButtonNavItem = {
         route: this.layoutService.previousUrl
           ? this.layoutService.previousUrl
@@ -104,6 +105,7 @@ export class QQMatMenuPaneComponent implements OnInit, OnDestroy {
         displayName: 'BACK',
         iconName: 'arrow_back',
         backButton: true,
+        backHref: window.history.state['backHref'],
       };
       this.cdr.detectChanges();
     }

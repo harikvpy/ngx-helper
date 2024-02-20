@@ -6,4 +6,5 @@ export interface NavItem {
   route?: string;
   children?: NavItem[];
   backButton?: boolean;
+  backHref?: string;
 }

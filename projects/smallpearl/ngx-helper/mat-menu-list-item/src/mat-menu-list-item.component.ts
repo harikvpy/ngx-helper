@@ -264,11 +264,20 @@ export class QQMatMenuListItemComponent
 
     // Leaf menu item, navigate the router to the item's route.
     if (!item.children) {
-      if (item?.backButton && window.history.length > 0) {
-        // Idiotic way to implement Back button!
-        window.history.back();
+      if (item?.backButton && item?.backHref) {
+        // Idiotic way to implement Back button! This will conflict
+        // with the browser history as the current satellite app
+        // page would become the previous page to backHref page! A complex
+        // mechanism to navigate back accurately, by popping all the
+        // intermediate pages is beyond our scope for now.
+        this.router.navigateByUrl(item.backHref);
       } else if (item.route) {
-        this.router.navigate([item.route], { relativeTo: this.route });
+        this.router.navigate([item.route], {
+          relativeTo: this.route,
+          state: {
+            backHref: window.location.pathname,
+          },
+        });
       }
     } else {
       // Sub menu items, toogle the item to show/hide the child menu items.
