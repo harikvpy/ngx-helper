@@ -44,6 +44,7 @@ import {
             [menuItems]="menuItems"
             [matSideNav]="menuNav"
             [menuPaneFooterContent]="menuPaneFooterContent"
+            [menuTitle]="menuTitle"
             class="h-100"
           ></qq-mat-menu-pane>
         </div>
@@ -157,6 +158,7 @@ export class QQMatSideMenuLayoutComponent implements OnInit, OnDestroy {
   @Input() brandingImage: string = '';
   @Input() brandingText: string = '';
   @Input() appTitle: string = '';
+  @Input() menuTitle: string = '';
   @Input() menuItems: NavItem[] = [];
   // Template Partials for configurable portions of the layout
   @Input() menuPaneFooterContent!: TemplateRef<any>;
@@ -168,7 +170,7 @@ export class QQMatSideMenuLayoutComponent implements OnInit, OnDestroy {
   @Input() infoPaneMaxWidth: number = 400;
   @Input() contentContainerClass: string = '';
   // Allows querying infoPane to activate it or to set its attributes
-  @ViewChild('infoPane') infoPane!: MatSidenav;
+  @ViewChild('infoPane') readonly infoPane!: MatSidenav;
 
   constructor(
     private layoutService: LayoutService,

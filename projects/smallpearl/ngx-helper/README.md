@@ -139,18 +139,22 @@ in this repo: -
 ```
 
 ### Inputs
-| Name | Description |
-|------|-------------|
-| brandingImage | Branding logo (32x32) that will be displayed on the top of the menu pane. |
-| brandingText | Branding text that is displayed next to the logo on the top of the menu pane. |
-| menuItems | Menu items which is an array of `NavItem` objects. |
-| appTitle | Application title. |
-| menuPaneFooterContent | `TemplateRef<any>` for the footer displayed below side menu. This will be passed to the `qq-mat-menu-pane`. |
-| toolbarEndContent | `TemplateRef<any>` for the content displayed at the end of the top toolbar. |
-| infoPaneContent | `TemplateRef<any>` for the content displayed in the information pane at the end of the page. |
-| toolbarTitleContent | `TemplateRef<any>` for the toolbar title. If specified, `appTitle` will be ignored. |
-| infoPaneMinWidth | Minimum width of the info pane at the end of the page (right on LTR text). |
-| infoPaneMaxWidth | Maximum width of the info pane at the end of the page (right on LTR text). |
+| Name | Type | Description |
+|------|------|-------|
+| showBackButton | boolean | A boolean property that controls if a Back button should be displayed at the top of the side menu. This is useful for secondary menus (note that this is NOT a submenu) from where a navigation path to the parent menu ought to be provided. |
+| defaultBackButtonHref | string | The href for the back button is typically automatically determined. If there's no back history, the back button (if specified) will use this href. |
+| brandingImage | string | Branding logo (32x32) that will be displayed on the top of the menu pane. |
+| brandingText | string | Branding text that is displayed next to the logo on the top of the menu pane. |
+| menuItems | NavItem[] | Menu items which is an array of `NavItem` objects. |
+| appTitle | string | Application title. |
+| menuPaneFooterContent | `TemplateRef<any>` | NgTemplate for the footer displayed below side menu. This will be passed to the `qq-mat-menu-pane`. |
+| toolbarEndContent | `TemplateRef<any>` | NgTemplate for the content displayed at the end of the top toolbar. |
+| infoPaneContent | `TemplateRef<any>` | NgTemplate for the content displayed in the information pane at the end of the page. |
+| toolbarTitleContent | `TemplateRef<any>` | NgTemplate for the toolbar title. If specified, `appTitle` will be ignored. |
+| infoPaneMinWidth | number | Minimum width of the info pane at the end of the page (right on LTR text). |
+| infoPaneMaxWidth | number | Maximum width of the info pane at the end of the page (right on LTR text). |
+| contentContainerClass | string | If specified, the CSS class that is applied to the content container div. This allows global styling of the container class (possibly padding, margin, color, etc) that will be applied to all the compoents corresponding to each menu item's link. |
+| menuTitle | string | A title for the menu pane. Typically used in secondary side-menu layout pages. Defaults to an empty string. |
 
 ### CSS
 
@@ -160,16 +164,22 @@ in this repo: -
 | --qq-sidenav-fg-color | Sidenav menu pane foreground color |
 | --qq-toolbar-bg-color | Toolbar background color |
 | --qq-toolbar-fg-color | Toolbar foreground color |
+| --qq-sidenav-border-color | Sidemenu border color |
+| --qq-toolbar-border-color | Toolbar border color |
+| --qq-menu-item-fg-color | Menu item foreground color |
+| --qq-menu-item-bg-color | Menu item background color |
+| --qq-highlighted-menu-item-fg-color | Highlighted menu item foreground color |
+| --qq-highlighted-menu-item-bg-color | Highlighted menu item background color |
 
 ### Info pane
 
-While the component supports an information pane on the end of the page, it is
+The component supports an information pane on the end of the pag. But it's
 hidden by default and has to be explicitly shown. One way to do that would be
-to query the `infoPane` member of `QQMatSideMenuLayoutComponent` and then
+to query the `infoPane` member of `QQMatSideMenuLayoutComponent`
 which is an instance of the `MatSideNav` component. You can toggle its
-visibility by calling its `toggle()` method. One way would be to show a button
-at the end of the toolbar and then call `infoPane.toggle()` when the button is
-clicked.
+visibility by calling its `toggle()` method. An approach could be to show a
+button at the end of the toolbar and then call `infoPane.toggle()` when the
+button is selected.
 
 ```
   export class AppHomeComponent implements OnInit {

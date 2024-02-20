@@ -33,7 +33,7 @@ import {
         </h4>
       </div>
       <div class="sidenav-menu">
-        <div *ngIf="title" class="title">{{ title }}</div>
+        <div *ngIf="menuTitle" class="mat-body title">{{ menuTitle }}</div>
         <mat-nav-list>
           <qq-mat-menu-list-item
             *ngIf="backButtonNavItem"
@@ -62,7 +62,7 @@ import {
   ],
 })
 export class QQMatMenuPaneComponent implements OnInit, OnDestroy {
-  @Input() title: string = '';
+  @Input() menuTitle: string = '';
   @Input() showBackButton: boolean = false;
   @Input() defaultBackButtonHref: string = '';
   @Input() menuItems: NavItem[] = [];
