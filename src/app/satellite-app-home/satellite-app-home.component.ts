@@ -6,7 +6,7 @@ import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-me
   selector: 'app-satellite-app-home',
   template: `
     <qq-mat-side-menu-layout
-      backButtonHref="../layout"
+      defaultBackButtonHref="../layout"
       brandingImage="assets/angular.png"
       brandingText="SMALLPEARL"
       appTitle="QQBOOKS"
@@ -17,6 +17,7 @@ import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-me
       [infoPaneMinWidth]="300"
       [infoPaneMaxWidth]="500"
       [toolbarTitleContent]="toolbarTitle"
+      #layout
     ></qq-mat-side-menu-layout>
     <ng-template #versionInfoFooter>
       <app-sidemenu-footer></app-sidemenu-footer>
@@ -26,7 +27,7 @@ import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-me
     </ng-template>
     <ng-template #toolbarEndContent>
       <app-toolbar-end-buttons
-        [sideMenuLayout]="sideMenuLayout"
+        [sideMenuLayout]="layout"
       ></app-toolbar-end-buttons>
     </ng-template>
     <ng-template #infoPaneContent>
