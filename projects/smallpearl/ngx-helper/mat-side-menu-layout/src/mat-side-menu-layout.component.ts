@@ -78,7 +78,7 @@ import {
           <ng-container *ngTemplateOutlet="toolbarEndContent"></ng-container>
         </mat-toolbar>
         <div
-          [class]="'content-container ' + contentContainerClass"
+          [class]="'mat-body content-container ' + contentContainerClass"
           [ngStyle]="{
             'height.px': containerHeight,
           }"

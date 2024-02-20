@@ -49,7 +49,7 @@ export class SideMenuLayoutExampleComponent implements OnInit {
     {
       route: 'feedback',
       displayName: 'FEEDBACK',
-      iconName: 'post_add',
+      iconName: 'edit_square',
     },
     {
       displayName: 'MEMBERS',
