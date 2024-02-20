@@ -264,7 +264,10 @@ export class QQMatMenuListItemComponent
 
     // Leaf menu item, navigate the router to the item's route.
     if (!item.children) {
-      if (item.route) {
+      if (item?.backButton && window.history.length > 0) {
+        // Idiotic way to implement Back button!
+        window.history.back();
+      } else if (item.route) {
         this.router.navigate([item.route], { relativeTo: this.route });
       }
     } else {
