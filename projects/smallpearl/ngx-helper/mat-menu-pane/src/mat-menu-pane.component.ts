@@ -28,7 +28,7 @@ import {
         <div class="branding branding-logo">
           <img *ngIf="brandingImage" [src]="brandingImage" />
         </div>
-        <h4 class="branding branding-text">
+        <h4 class="mat-typography branding branding-text">
           {{ brandingText }}
         </h4>
       </div>
