@@ -42,13 +42,13 @@ export class SatelliteAppHomeComponent {
   menuItems: NavItem[] = [
     {
       route: 'flights',
-      displayName: 'FLIGHTS',
-      iconName: 'flight',
+      text: 'FLIGHTS',
+      icon: 'flight',
     },
     {
       route: 'bookings',
-      displayName: 'BOOKINGS',
-      iconName: 'book_online',
+      text: 'BOOKINGS',
+      icon: 'book_online',
     },
   ];
   @ViewChild(QQMatSideMenuLayoutComponent)

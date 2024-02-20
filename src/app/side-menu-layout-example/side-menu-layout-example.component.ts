@@ -43,34 +43,34 @@ export class SideMenuLayoutExampleComponent implements OnInit {
   menuItems: NavItem[] = [
     {
       route: 'posts',
-      displayName: 'ANNOUNCEMENTS',
-      iconName: 'post_add',
+      text: 'ANNOUNCEMENTS',
+      icon: 'post_add',
     },
     {
       route: 'feedback',
-      displayName: 'FEEDBACK',
-      iconName: 'edit_square',
+      text: 'FEEDBACK',
+      icon: 'edit_square',
     },
     {
-      displayName: 'MEMBERS',
-      iconName: 'people',
+      text: 'MEMBERS',
+      icon: 'people',
       children: [
         {
           route: 'allmembers',
-          displayName: 'ALL MEMBERS',
-          iconName: 'people_alt',
+          text: 'ALL MEMBERS',
+          icon: 'people_alt',
         },
         {
           route: 'invitations',
-          displayName: 'INVITATIONS',
-          iconName: 'email',
+          text: 'INVITATIONS',
+          icon: 'email',
         },
       ],
     },
     {
       route: './satellite-app',
-      displayName: 'SATELLITE APP',
-      iconName: 'token',
+      text: 'SATELLITE APP',
+      icon: 'token',
     },
   ];
 
