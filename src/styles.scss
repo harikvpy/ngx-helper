@@ -1,14 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
-// @import '@angular/material/prebuilt-themes/indigo-pink.css';
-
-/* You can add global styles to this file, and also import other style files */
-/* You can add global styles to this file, and also import other style files */
 @use '@angular/material' as mat;
 
-
-
-/* For use in src/lib/core/theming/_palette.scss */
-$myblue-palette: (
+$my-palette-green: (
     50 : #e1f6e2,
     100 : #b3e7b7,
     200 : #81d888,
@@ -41,29 +34,26 @@ $myblue-palette: (
     )
 );
 
-
-
-// Custom theme colors
-$myblue-palette-old: (
-    50 : #d2efff,
-    100 : #86d3ff,
-    200 : #4ebfff,
-    300 : #06a5ff,
-    400 : #0094e7,
-    500 : #0080c8,
-    600 : #006ca9,
-    700 : #00598b,
-    800 : #00456c,
-    900 : #00324e,
-    A100 : #c8ebff,
-    A200 : #62c6ff,
-    A400 : #00a1fb,
-    A700 : #0090e1,
+$my-palette: (
+    50 : #fae4e4,
+    100 : #f3bdbd,
+    200 : #eb9191,
+    300 : #e26464,
+    400 : #dc4343,
+    500 : #d62222,
+    600 : #d11e1e,
+    700 : #cc1919,
+    800 : #c61414,
+    900 : #bc0c0c,
+    A100 : #ffe8e8,
+    A200 : #ffb5b5,
+    A400 : #ff8282,
+    A700 : #ff6969,
     contrast: (
         50 : #000000,
-        100 : #cfcfcf,
-        200 : #efefef,
-        300 : #ffffff,
+        100 : #000000,
+        200 : #000000,
+        300 : #000000,
         400 : #ffffff,
         500 : #ffffff,
         600 : #ffffff,
@@ -72,14 +62,14 @@ $myblue-palette-old: (
         900 : #ffffff,
         A100 : #000000,
         A200 : #000000,
-        A400 : #ffffff,
-        A700 : #ffffff,
+        A400 : #000000,
+        A700 : #000000,
     )
 );
 
 // The typography created via mat.define-typography-config($font-family: 'Lato, "Helvetica Neue", Arial, sans-serif');
 // results in characters a bit too much gap in between. The below typography,
-// based on material/core/typography/_typography.scss definitions.
+// based on material/core/typography/_typography.scss definitions, works better.
 $my-typography: mat.define-typography-config(
   $font-family: 'Lato, "Helvetica Neue", Arial, sans-serif',
   $headline-1: mat.define-typography-level(112px, 112px, 300, $letter-spacing: -0.05em),
@@ -96,11 +86,10 @@ $my-typography: mat.define-typography-config(
   $button: mat.define-typography-level(14px, 14px, 500),
 );
 
-$my-primary: mat.define-palette($myblue-palette, 500);
+$my-primary: mat.define-palette($my-palette, 500);
 $my-accent: mat.define-palette(mat.$green-palette, A200, A100, A400);
 $my-red: mat.define-palette(mat.$red-palette, A200, A100, A400);
 
-// Need this for mat-typograpgy class to generated (our body is styled using this)
 @include mat.typography-hierarchy($my-typography);
 
 $my-theme: mat.define-light-theme((
@@ -121,27 +110,22 @@ $my-theme: mat.define-light-theme((
 @include mat.all-component-typographies($my-theme);
 
 
-// Customizations for mat-sidemenu-layout component.
-// Ideally these should be defined using material mixin variables
-// so that they follow the theme defined above.
 :root {
-  --corporate-blue: rgb(0, 128, 200);
-  --corporate-blue-contrast: rgb(64, 192, 236);
-  --corporate-red: rgb(176, 44, 34);
-  --corporate-white: rgba(232, 232, 232);
-  --qq-sidenav-border-color: var(--corporate-blue-contrast);
-  --qq-toolbar-border-color: var(--corporate-blue-contrast);
-  --qq-sidenav-fg-color: var(--corporate-white);
-  --qq-sidenav-bg-color: var(--corporate-red);
-  --qq-toolbar-fg-color: var(--corporate-white);
-  --qq-toolbar-bg-color: var(--corporate-red);
-  --qq-menu-item-fg-color: var(--corporate-white);
-  --qq-menu-item-bg-color: var(--corporate-red);
-  --qq-highlighted-menu-item-fg-color: var(--corporate-red);
-  --qq-highlighted-menu-item-bg-color: var(--corporate-white);
+  --sidemenu-background: #{map-get($my-primary, 500)};
+  --sidemenu-foreground: #{map-get($my-primary, '500-contrast')};
+  --sidemenu-border-color: #{map-get($my-primary, '800-contrast')};
+  --qq-sidenav-border-color: var(--sidemenu-border-color);
+  --qq-toolbar-border-color: var(--sidemenu-border-color);
+  --qq-sidenav-fg-color: var(--sidemenu-foreground);
+  --qq-sidenav-bg-color: var(--sidemenu-background);
+  --qq-toolbar-fg-color: var(--sidemenu-foreground);
+  --qq-toolbar-bg-color: var(--sidemenu-background);
+  --qq-menu-item-fg-color: var(--sidemenu-foreground);
+  --qq-menu-item-bg-color: var(--sidemenu-background);
+  --qq-highlighted-menu-item-fg-color: var(--sidemenu-background);
+  --qq-highlighted-menu-item-bg-color: var(--sidemenu-foreground);
 }
 
 .ex-content-container {
   padding: 16px;
 }
-
