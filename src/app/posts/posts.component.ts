@@ -5,14 +5,20 @@ import { CommonModule } from '@angular/common';
   selector: 'app-posts',
   standalone: true,
   imports: [CommonModule],
-  template: `<h2>Posts</h2> `,
+  template: `
+    <div class="posts-container">
+      <div class="h2">Posts</div>
+    </div>
+  `,
   styles: [
     `
-      .mt-0 {
-        margin-top: 0px;
+      .posts-container {
+        border: 1px solid teal;
+        height: 1500px;
       }
-      .pt-0 {
-        padding-top: 0px;
+      .h2 {
+        font-size: 1.3em;
+        font-weight: 800;
       }
     `,
   ],
