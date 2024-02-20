@@ -126,7 +126,7 @@ import {
         min-width: 192px;
       }
       .app-toolbar {
-        border-bottom: 1px solid lightgray;
+        border-bottom: 1px solid var(--qq-toolbar-border-color);
       }
       .spacer {
         flex: 1 1 auto;

@@ -11,6 +11,7 @@ body {
   --corporate-red: rgb(192, 64, 64);
   --corporate-white: rgba(232, 232, 232);
   --qq-sidenav-border-color: var(--corporate-blue-contrast);
+  --qq-toolbar-border-color: var(--corporate-blue-contrast);
   --qq-sidenav-fg-color: var(--corporate-white);
   --qq-sidenav-bg-color: var(--corporate-blue);
   --qq-toolbar-fg-color: var(--corporate-white);
@@ -18,7 +19,7 @@ body {
   --qq-menu-item-fg-color: var(--corporate-white);
   --qq-menu-item-bg-color: var(--corporate-blue);
   --qq-highlighted-menu-item-fg-color: var(--corporate-blue);
-  --qq-highlighted-menu-item-bg-color: var(--corporate-white);;
+  --qq-highlighted-menu-item-bg-color: var(--corporate-white);
 }
 
 .ex-content-container {
