@@ -102,8 +102,8 @@ export class QQMatMenuPaneComponent implements OnInit, OnDestroy {
         route: this.layoutService.previousUrl
           ? this.layoutService.previousUrl
           : this.defaultBackButtonHref,
-        displayName: 'BACK',
-        iconName: 'arrow_back',
+        text: 'BACK',
+        icon: 'arrow_back',
         backButton: true,
         backHref: window.history.state['backHref'],
       };

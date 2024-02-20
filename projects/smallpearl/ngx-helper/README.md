@@ -9,7 +9,6 @@ components in `@angular/material` library.
 A File Input Control that shows a thumbnail of the selected file. This can be
 used wherever an <input matInput type='file'> is required.
 
-
 ## qq-mat-tel-input
 A lightweight telephone numner input control that allows country selection by
 typing the country name or country code.
@@ -197,3 +196,35 @@ button is selected.
     ...
   }
 ```
+
+## NavItem
+
+This is the interface that is used to define the side menu items and pass it
+as the value for the `menuItems` property. It is defined as:-
+
+```
+export interface NavItem {
+  text: string;
+  icon: string;
+  iconType?: 'mat' | 'bi' | 'fa';
+  disabled?: boolean;
+  route?: string;
+  children?: NavItem[];
+  backButton?: boolean;
+  backHref?: string;
+}
+```
+Members are described in the following table:
+
+| Member | Description |
+|-------|----|
+| text | The menu item text |
+| icon | Icon displayed along with the text |
+| iconType | One of {'mat'|'bi'|'fa'}. If not specified, defaults to 'mat' |
+| disabled | Indicates that the menu item is disabled |
+| route | The relative URL to navigate when the item is selected |
+| children | If this item is a container for child menu items, set this to an array of `NavItem` objects |
+| backButton | Used internally |
+| backHref | Used internally |
+
+

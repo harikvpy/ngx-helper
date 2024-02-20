@@ -50,13 +50,13 @@ import { NavItem } from './nav-item';
         *ngIf="!item.iconType || item.iconType == 'mat'"
         class="menu-item-color"
         matListItemIcon
-        >{{ item.iconName }}</mat-icon
+        >{{ item.icon }}</mat-icon
       >
       <i
         *ngIf="item.iconType != 'mat'"
-        [class]="'menu-item-color ' + item.iconName"
+        [class]="'menu-item-color ' + item.icon"
       ></i>
-      <span class="menu-item-color text-uppercase">{{ item.displayName }}</span>
+      <span class="menu-item-color text-uppercase">{{ item.text }}</span>
       <span class="twistie-separator"></span>
       <span *ngIf="item.children && item.children.length">
         <mat-icon
