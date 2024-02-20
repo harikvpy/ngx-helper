@@ -5,14 +5,7 @@ import { CommonModule } from '@angular/common';
   selector: 'app-bookings',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <p>
-      bookings works!
-    </p>
-  `,
-  styles: [
-  ]
+  template: `<h2>Bookings</h2>`,
+  styles: [],
 })
-export class BookingsComponent {
-
-}
+export class BookingsComponent {}

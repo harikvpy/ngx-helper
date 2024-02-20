@@ -5,14 +5,7 @@ import { CommonModule } from '@angular/common';
   selector: 'app-flights',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <p>
-      flights works!
-    </p>
-  `,
-  styles: [
-  ]
+  template: `<h2>Flights</h2>`,
+  styles: [],
 })
-export class FlightsComponent {
-
-}
+export class FlightsComponent {}

@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="info-pane-content">
+    <div class="mat-body info-pane-content">
       <h2>Notifications</h2>
       <p>Info pane content!</p>
     </div>

@@ -6,6 +6,7 @@ import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-me
   selector: 'app-satellite-app-home',
   template: `
     <qq-mat-side-menu-layout
+      contentContainerClass="ex-content-container"
       [showBackButton]="true"
       brandingImage="assets/angular.png"
       brandingText="SMALLPEARL"

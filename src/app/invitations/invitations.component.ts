@@ -5,14 +5,7 @@ import { CommonModule } from '@angular/common';
   selector: 'app-invitations',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <p>
-      invitations works!
-    </p>
-  `,
-  styles: [
-  ]
+  template: `<h2>Invitations</h2>`,
+  styles: [],
 })
-export class InvitationsComponent {
-
-}
+export class InvitationsComponent {}
