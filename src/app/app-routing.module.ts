@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 const routes: Routes = [
   {
-    path: '',
+    path: 'demo',
     loadComponent: () =>
       import('./home-page/home-page.component').then(
         (m) => m.HomePageComponent
@@ -15,6 +15,11 @@ const routes: Routes = [
       import('./side-menu-layout-example/side-menu-layout-example.module').then(
         (m) => m.SideMenuLayoutExampleModule
       ),
+  },
+  {
+    path: '',
+    redirectTo: 'home',
+    pathMatch: 'full',
   },
 ];
 

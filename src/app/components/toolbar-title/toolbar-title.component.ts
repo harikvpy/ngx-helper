@@ -21,8 +21,7 @@ import { MatIconModule } from '@angular/material/icon';
   styles: [
     `
       .community-name {
-        font-size: 1.5em;
-        font-weight: 800;
+        font-size: 1.3em;
       }
     `,
   ],
