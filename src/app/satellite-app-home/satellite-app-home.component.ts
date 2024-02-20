@@ -1,11 +1,12 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { NavItem } from '@smallpearl/ngx-helper/mat-menu-list-item/src/nav-item';
-import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-menu-layout/src/mat-side-menu-layout.component';
+import { Component, ViewChild } from '@angular/core';
+import { NavItem } from '@smallpearl/ngx-helper/mat-menu-list-item';
+import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-menu-layout';
 
 @Component({
-  selector: 'app-side-menu-layout-eample',
+  selector: 'app-satellite-app-home',
   template: `
     <qq-mat-side-menu-layout
+      backButtonHref="../layout"
       brandingImage="assets/angular.png"
       brandingText="SMALLPEARL"
       appTitle="QQBOOKS"
@@ -34,48 +35,23 @@ import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-me
   `,
   styles: [],
 })
-export class SideMenuLayoutExampleComponent implements OnInit {
+export class SatelliteAppHomeComponent {
+  menuItems: NavItem[] = [
+    {
+      route: 'flights',
+      displayName: 'FLIGHTS',
+      iconName: 'flight',
+    },
+    {
+      route: 'bookings',
+      displayName: 'BOOKINGS',
+      iconName: 'book_online',
+    },
+  ];
   @ViewChild(QQMatSideMenuLayoutComponent)
   sideMenuLayout!: QQMatSideMenuLayoutComponent;
 
-  menuItems: NavItem[] = [
-    {
-      route: 'posts',
-      displayName: 'ANNOUNCEMENTS',
-      iconName: 'post_add',
-    },
-    {
-      route: 'feedback',
-      displayName: 'FEEDBACK',
-      iconName: 'post_add',
-    },
-    {
-      displayName: 'MEMBERS',
-      iconName: 'people',
-      children: [
-        {
-          route: 'allmembers',
-          displayName: 'ALL MEMBERS',
-          iconName: 'people_alt',
-        },
-        {
-          route: 'invitations',
-          displayName: 'INVITATIONS',
-          iconName: 'email',
-        },
-      ],
-    },
-    {
-      route: '../satellite-app',
-      displayName: 'SATELLITE APP',
-      iconName: 'token',
-    },
-  ];
-
   constructor() {}
-
-  ngOnInit() {}
-
   onNotificationsToggle() {
     if (this.sideMenuLayout) {
       this.sideMenuLayout.infoPane.toggle();

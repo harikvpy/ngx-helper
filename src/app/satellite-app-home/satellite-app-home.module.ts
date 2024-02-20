@@ -1,50 +1,36 @@
 import { NgModule } from '@angular/core';
-
+import { CommonModule } from '@angular/common';
+import { SatelliteAppHomeComponent } from './satellite-app-home.component';
+import { RouterModule, Routes } from '@angular/router';
+import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-menu-layout';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { RouterModule, Routes } from '@angular/router';
-import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-menu-layout';
 import { SidemenuFooterComponent } from '../components/sidemenu-footer/sidemenu-footer.component';
 import { SidemenuInfoPaneComponent } from '../components/sidemenu-info-pane/sidemenu-info-pane.component';
 import { ToolbarEndButtonsComponent } from '../components/toolbar-end-buttons/toolbar-end-buttons.component';
 import { ToolbarTitleComponent } from '../components/toolbar-title/toolbar-title.component';
-import { SideMenuLayoutExampleComponent } from './side-menu-layout-example.component';
 
 const routes: Routes = [
   {
     path: '',
-    component: SideMenuLayoutExampleComponent,
+    component: SatelliteAppHomeComponent,
     children: [
       {
-        path: 'posts',
+        path: 'flights',
         loadComponent: () =>
-          import('../posts/posts.component').then((m) => m.PostsComponent),
+          import('./flights/flights.component').then((c) => c.FlightsComponent),
       },
       {
-        path: 'feedback',
+        path: 'bookings',
         loadComponent: () =>
-          import('../feedback/feedback.component').then(
-            (m) => m.FeedbackComponent
-          ),
-      },
-      {
-        path: 'allmembers',
-        loadComponent: () =>
-          import('../all-members/all-members.component').then(
-            (m) => m.AllMembersComponent
-          ),
-      },
-      {
-        path: 'invitations',
-        loadComponent: () =>
-          import('../invitations/invitations.component').then(
-            (m) => m.InvitationsComponent
+          import('./bookings/bookings.component').then(
+            (c) => c.BookingsComponent
           ),
       },
       {
         path: '',
-        redirectTo: 'posts',
+        redirectTo: 'flights',
         pathMatch: 'full',
       },
     ],
@@ -52,19 +38,18 @@ const routes: Routes = [
 ];
 
 @NgModule({
+  declarations: [SatelliteAppHomeComponent],
   imports: [
-    QQMatSideMenuLayoutComponent,
+    CommonModule,
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
+    QQMatSideMenuLayoutComponent,
     SidemenuFooterComponent,
     SidemenuInfoPaneComponent,
     ToolbarTitleComponent,
     ToolbarEndButtonsComponent,
     RouterModule.forChild(routes),
   ],
-  exports: [],
-  declarations: [SideMenuLayoutExampleComponent],
-  providers: [],
 })
-export class SideMenuLayoutExampleModule {}
+export class SatelliteAppHomeModule {}

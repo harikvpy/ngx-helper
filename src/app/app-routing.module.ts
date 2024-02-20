@@ -15,11 +15,13 @@ const routes: Routes = [
       import('./side-menu-layout-example/side-menu-layout-example.module').then(
         (m) => m.SideMenuLayoutExampleModule
       ),
-    // loadComponent: () =>
-    //   import(
-    //     './side-menu-layout-example/side-menu-layout-example.component'
-    //   ).then((c) => c.SideMenuLayoutExampleComponent),
-    // loadChildren: () => import('./side-menu-layout-example/child-routes'),
+  },
+  {
+    path: 'satellite-app',
+    loadChildren: () =>
+      import('./satellite-app-home/satellite-app-home.module').then(
+        (m) => m.SatelliteAppHomeModule
+      ),
   },
 ];
 

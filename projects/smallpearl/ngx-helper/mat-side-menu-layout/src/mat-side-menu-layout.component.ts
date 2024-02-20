@@ -36,6 +36,7 @@ import {
       >
         <div class="sidenav-container mw-192px">
           <qq-mat-menu-pane
+            [backButtonHref]="backButtonHref"
             [brandingImage]="brandingImage"
             [brandingText]="brandingText"
             [menuItems]="menuItems"
@@ -151,6 +152,7 @@ export class QQMatSideMenuLayoutComponent implements OnInit, OnDestroy {
   destroy = new Subject<void>();
   containerHeight: number = 500;
   topBottomPadding: number = 6;
+  @Input() backButtonHref: string = '';
   @Input() brandingImage: string = '';
   @Input() brandingText: string = '';
   @Input() appTitle: string = '';
