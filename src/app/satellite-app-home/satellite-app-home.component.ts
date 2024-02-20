@@ -11,6 +11,7 @@ import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-me
       brandingImage="assets/angular.png"
       brandingText="SMALLPEARL"
       appTitle="QQBOOKS"
+      menuTitle="SETTINGS"
       [menuItems]="menuItems"
       [menuPaneFooterContent]="versionInfoFooter"
       [toolbarEndContent]="toolbarEndContent"
