@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import {
+  ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   Input,
@@ -133,6 +134,7 @@ import {
       }
     `,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
     CommonModule,
@@ -170,7 +172,7 @@ export class QQMatSideMenuLayoutComponent implements OnInit, OnDestroy {
 
   constructor(
     private layoutService: LayoutService,
-    private changeDetectorRef: ChangeDetectorRef
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -182,7 +184,7 @@ export class QQMatSideMenuLayoutComponent implements OnInit, OnDestroy {
           this.containerHeight =
             window.innerHeight -
             (newLayout.toolbarHeight + this.topBottomPadding * 2);
-          this.changeDetectorRef.detectChanges();
+          this.cdr.detectChanges();
         })
       )
       .subscribe();
