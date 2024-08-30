@@ -136,16 +136,11 @@ type TelephoneNumberParts = CountryInfo & { nationalNumber: string };
     NgxMatSelectSearchModule,
   ],
   providers: [
-    { provide: MatFormFieldControl, useExisting: QQMatTelephoneInputComponent },
-    // {
-    //   provide: NG_VALUE_ACCESSOR,
-    //   useExisting: forwardRef(() => QQWebTelInputComponent),
-    //   multi: true,
-    // },
+    { provide: MatFormFieldControl, useExisting: SPMatTelephoneInputComponent },
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class QQMatTelephoneInputComponent
+export class SPMatTelephoneInputComponent
   implements
     OnInit,
     OnDestroy,
@@ -203,7 +198,7 @@ export class QQMatTelephoneInputComponent
   focused = false;
   touched = false;
   controlType = 'qq-tel-input';
-  id = `qq-tel-input-${QQMatTelephoneInputComponent.nextId++}`;
+  id = `qq-tel-input-${SPMatTelephoneInputComponent.nextId++}`;
   onChange = (_: any) => {};
   onTouched = () => {};
 
