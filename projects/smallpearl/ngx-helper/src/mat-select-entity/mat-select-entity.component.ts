@@ -75,7 +75,7 @@ import {
 
       <ng-container *ngIf="filteredValues | async as entities">
         <span *ngIf="entities.length > 0">
-          <mat-option class="sel-entity-option" *ngFor="let entity of entities" [value]="entity[idKey]">
+          <mat-option class="sel-entity-option" *ngFor="let entity of entities" [value]="entityId(entity)">
             {{ entityLabelFn(entity) }}
           </mat-option>
         </span>
@@ -247,6 +247,10 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
 
   get selectTriggerValueAsArray() {
     return Array.isArray(this.selectValue) ? (this.selectValue as Array<string | number>) : [];
+  }
+
+  entityId(entity: TEntity) {
+    return (entity as any)[this.idKey];
   }
 
   writeValue(entityId: string | number | string[] | number[]): void {
