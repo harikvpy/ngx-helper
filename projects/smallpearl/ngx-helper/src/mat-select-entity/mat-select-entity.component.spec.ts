@@ -1,14 +1,10 @@
-import { CommonModule } from '@angular/common';
 import { HttpClient, HttpParams, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatOption, MatOptionModule } from '@angular/material/core';
-import { MatSelect, MatSelectModule } from '@angular/material/select';
+import { MatOption } from '@angular/material/core';
+import { MatSelect } from '@angular/material/select';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { Observable, of, tap } from 'rxjs';
 import { SPMatSelectEntityComponent } from './mat-select-entity.component';
 
@@ -39,7 +35,7 @@ const DEBOUNCE_TIMEOUT = 400;
 
 type SelectEntityComponent = SPMatSelectEntityComponent<User>;
 
-describe('MatSelectEntity (single selection)', () => {
+describe('MatSelectEntityComponent (single selection)', () => {
   let component!: SelectEntityComponent;
   let fixture!: ComponentFixture<SelectEntityComponent>;
   let matSel!: MatSelect;
@@ -47,18 +43,11 @@ describe('MatSelectEntity (single selection)', () => {
   beforeEach(async () => {
     TestBed.configureTestingModule({
       imports: [
-        CommonModule,
         NoopAnimationsModule,
-        FormsModule,
-        ReactiveFormsModule,
-        MatSelectModule,
-        MatCheckboxModule,
-        MatOptionModule,
-        NgxMatSelectSearchModule,
         SPMatSelectEntityComponent,
       ],
       providers: [provideHttpClient(), provideHttpClientTesting()],
-    }).compileComponents();
+    });
     fixture = TestBed.createComponent(SPMatSelectEntityComponent<User>);
     component = fixture.componentInstance;
     component.url = 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb';
@@ -213,10 +202,7 @@ describe('MatSelectEntity (single selection)', () => {
       )
       .subscribe();
     // Select a random entity
-    const index = Math.round(
-      ((Math.random() * 1000) % matSel.options.length) - 1
-    );
-    const lastOption = matSel.options.toArray()[index];
+    const lastOption = matSel.options.last;
     lastOption.select(true);
     expect(selectedEntityId).toEqual(lastOption.value);
     sub$.unsubscribe();
@@ -228,7 +214,7 @@ describe('MatSelectEntity (single selection)', () => {
  * has to specified during component creation. That is, this property
  * cannot be altered once the component has been created.
  */
-describe('MatSelectEntity (multiple selection)', () => {
+describe('MatSelectEntityComponent (multiple selection)', () => {
   let component!: SelectEntityComponent;
   let fixture!: ComponentFixture<SelectEntityComponent>;
   let matSel!: MatSelect;
@@ -236,14 +222,7 @@ describe('MatSelectEntity (multiple selection)', () => {
   beforeEach(async () => {
     TestBed.configureTestingModule({
       imports: [
-        CommonModule,
         NoopAnimationsModule,
-        FormsModule,
-        ReactiveFormsModule,
-        MatSelectModule,
-        MatCheckboxModule,
-        MatOptionModule,
-        NgxMatSelectSearchModule,
         SPMatSelectEntityComponent,
       ],
       providers: [provideHttpClient(), provideHttpClientTesting()],

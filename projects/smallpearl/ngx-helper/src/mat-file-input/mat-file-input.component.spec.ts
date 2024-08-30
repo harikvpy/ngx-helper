@@ -2,14 +2,16 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { QQMatFileInputComponent } from './mat-file-input.component';
 
-describe('QQMatFileInputComponent', () => {
+describe('MatFileInputComponent', () => {
   let component: QQMatFileInputComponent;
   let fixture: ComponentFixture<QQMatFileInputComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [QQMatFileInputComponent],
-    }).compileComponents();
+    TestBed.configureTestingModule({
+      imports: [
+        QQMatFileInputComponent
+      ],
+    });
 
     fixture = TestBed.createComponent(QQMatFileInputComponent);
     component = fixture.componentInstance;
@@ -19,4 +21,6 @@ describe('QQMatFileInputComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+
 });

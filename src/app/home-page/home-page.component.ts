@@ -9,7 +9,7 @@ import {
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { QQMatFileInputComponent } from '@smallpearl/ngx-helper/mat-file-input';
+import { QQMatFileInputComponent } from '@smallpearl/ngx-helper/src/mat-file-input';
 import { QQMatTelephoneInputComponent } from '@smallpearl/ngx-helper/src/mat-tel-input';
 
 @Component({
