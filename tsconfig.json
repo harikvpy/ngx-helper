@@ -20,9 +20,10 @@
     "module": "ES2020",
     "useDefineForClassFields": false,
     "paths": {
-      "@smallpearl/ngx-helper/*": [
-        "projects/smallpearl/ngx-helper/*"
-      ],
+      "@smallpearl/ngx-helper/mat-select-entity": ["projects/smallpearl/ngx-helper/mat-select-entity/index.ts"],
+      "@smallpearl/ngx-helper/mat-file-input": ["projects/smallpearl/ngx-helper/mat-file-input/index.ts"],
+      "@smallpearl/ngx-helper/mat-tel-input": ["projects/smallpearl/ngx-helper/mat-tel-input/index.ts"],
+      "@smallpearl/ngx-helper/*": ["projects/smallpearl/ngx-helper/*"],
       "@smallpearl/ngx-helper": [
         "projects/smallpearl/ngx-helper"
       ],

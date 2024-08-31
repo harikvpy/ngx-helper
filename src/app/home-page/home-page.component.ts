@@ -9,8 +9,8 @@ import {
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { QQMatFileInputComponent } from '@smallpearl/ngx-helper/src/mat-file-input';
-import { QQMatTelephoneInputComponent } from '@smallpearl/ngx-helper/src/mat-tel-input';
+import { QQMatFileInputComponent } from '@smallpearl/ngx-helper/mat-file-input';
+import { SPMatTelephoneInputComponent } from '@smallpearl/ngx-helper/mat-tel-input';
 
 @Component({
   selector: 'app-home-page',
@@ -21,8 +21,8 @@ import { QQMatTelephoneInputComponent } from '@smallpearl/ngx-helper/src/mat-tel
     ReactiveFormsModule,
     MatFormFieldModule,
     MatSelectModule,
-    QQMatTelephoneInputComponent,
     QQMatFileInputComponent,
+    SPMatTelephoneInputComponent
   ],
   template: `
     <div style="margin: 0.5em;">

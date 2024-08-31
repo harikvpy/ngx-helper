@@ -127,7 +127,42 @@ type TelephoneNumberParts = CountryInfo & { nationalNumber: string };
       />
     </div>
   `,
-  styleUrls: ['./tel-input.scss'],
+  styles: `
+    .tel-input-wrapper {
+      display: flex;
+      padding: 1px 1px 1px 1px;
+    }
+    .error-border {
+      border-color: red;
+    }
+    .box-border {
+      border-bottom: 1px solid gray;
+      border-radius: 4px;
+    }
+    mat-select {
+      display: inline-block;
+      border: none;
+      outline: none;
+      scroll-behavior: smooth;
+      background: none;
+      width: 30%;
+    }
+    mat-select:focus {
+      border: none;
+      outline: none;
+      background: none;
+      scroll-behavior: smooth;
+    }
+    input {
+      flex: 1 1 auto;
+      background: none;
+      border: none;
+    }
+    input:focus {
+      border: none;
+      outline: none;
+    }
+  `,
   imports: [
     CommonModule,
     FormsModule,
