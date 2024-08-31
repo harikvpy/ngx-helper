@@ -1,12 +1,13 @@
 {
   "name": "ngx-helper",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "ng build @smallpearl/ngx-helper",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test @smallpearl/ngx-helper --browsers ChromeHeadless",
+    "test-rel": "ng test @smallpearl/ngx-helper --browsers ChromeHeadless --no-watch --no-progress"
   },
   "private": true,
   "dependencies": {
