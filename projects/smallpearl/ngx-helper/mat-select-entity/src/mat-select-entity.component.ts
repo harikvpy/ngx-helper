@@ -82,13 +82,11 @@ const DEFAULT_SP_MAT_SELECT_ENTITY_CONFIG: SPMatSelectEntityConfig =
         </ngx-mat-select-search>
       </mat-option>
 
-      <ng-container *ngIf="filteredValues | async as entities">
-        <span *ngIf="entities.length > 0">
-          <mat-option class="sel-entity-option" *ngFor="let entity of entities" [value]="entityId(entity)">
-            {{ entityLabelFn(entity) }}
-          </mat-option>
-        </span>
-      </ng-container>
+      <span *ngIf="(filteredValues | async) as entities">
+        <mat-option class="sel-entity-option" *ngFor="let entity of entities" [value]="entityId(entity)">
+          {{ entityLabelFn(entity) }}
+        </mat-option>
+      </span>
       <mat-option *ngIf="inlineNew" class="add-item-option" value="0" (click)="$event.stopPropagation()"
         >⊕ {{ addItemText }}</mat-option
       >
@@ -257,6 +255,9 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
 
   addEntity(entity: TEntity) {
     this._entities.set((entity as any)[this.idKey], entity);
+    // So that the newly added entity will be added to the <mat-option> list.
+    this.filterValues(this.filterStr);
+    this.cdr.detectChanges();
   }
 
   get selectTriggerValue() {
@@ -291,6 +292,10 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
     } else {
       if (this._entities.has(entityId)) {
         this.selectValue = entityId;
+        if (this.filterStr) {
+          this.filterStr = '';
+          this.filterValues(this.filterStr);
+        }
         this.cdr.detectChanges();
       }
     }

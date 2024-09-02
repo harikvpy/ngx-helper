@@ -8,6 +8,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Observable, of, tap } from 'rxjs';
 import { SPMatSelectEntityComponent } from './mat-select-entity.component';
 import { SP_MAT_SELECT_ENTITY_CONFIG, SPMatSelectEntityConfig } from './providers';
+import { FormControl } from '@angular/forms';
 
 /**
  */
@@ -40,6 +41,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
   let component!: SelectEntityComponent;
   let fixture!: ComponentFixture<SelectEntityComponent>;
   let matSel!: MatSelect;
+  let control = new FormControl();
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
@@ -207,6 +209,29 @@ describe('MatSelectEntityComponent (single selection)', () => {
     lastOption.select(true);
     expect(selectedEntityId).toEqual(lastOption.value);
     sub$.unsubscribe();
+  });
+
+  it("should allow adding a new entity", async () => {
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    await openSelect();
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
+    const optionsCountBefore = matSel.options.length;
+    component.addEntity({id: 100000, name: "Moosa Marikkar"});
+    expect(matSel.options.length).toEqual(optionsCountBefore+1);
+  });
+
+  it("should set the current selection to an entity", async () => {
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    await openSelect();
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
+    const optionsCountBefore = matSel.options.length;
+    const DET_MOOSA = {id: 100000, name: "Moosa Marikkar"};
+    component.addEntity(DET_MOOSA);
+    expect(matSel.options.length).toEqual(optionsCountBefore+1);
+    component.writeValue(DET_MOOSA.id);
+    expect(component.value).toEqual(DET_MOOSA.id);
   });
 });
 
