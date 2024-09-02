@@ -25,16 +25,17 @@ import { MatSelect, MatSelectChange, MatSelectModule } from '@angular/material/s
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import {
   BehaviorSubject,
-  Observable,
-  ReplaySubject,
-  Subject,
   combineLatest,
   debounceTime,
+  Observable,
   of,
+  ReplaySubject,
+  Subject,
   switchMap,
   takeUntil,
   tap
 } from 'rxjs';
+import { DEFAULT_SP_MAT_SELECT_ENTITY_COMPONENT_CONFIG, SP_MAT_SELECT_ENTITY_COMPONENT_CONFIG, SPMatSelectEntityComponentConfig } from './providers';
 
 /**
  * This is a generic component to display a <mat-select> for a FK field
@@ -167,8 +168,10 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   @Output() entitySelected = new EventEmitter<TEntity>();
   @Output() createNewItemSelected = new EventEmitter<void>();
 
-  searchText = input<string>('Search')
-  notFoundText = input<string>('Not found');
+  // allow per component customization
+  searchText = input<string>(this.config.i18n.search)
+  notFoundText = input<string>(this.config.i18n.notFound);
+  addItemText = input<string>(this.config.i18n.addItem);
 
   _entities = new Map<PropertyKey, TEntity>();
 
@@ -190,7 +193,6 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   destroy = new Subject<void>();
   private loaded = false;
   private load$ = new BehaviorSubject<boolean>(false);
-  addItemText!: string;
 
   static nextId = 0;
   @HostBinding() id = `sp-select-entity-${SPMatSelectEntityComponent.nextId++}`;
@@ -199,17 +201,20 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   constructor(
     protected http: HttpClient,
     protected cdr: ChangeDetectorRef,
-    private _elementRef: ElementRef<HTMLElement>,
+    protected _elementRef: ElementRef<HTMLElement>,
     @Optional() @Inject(MAT_FORM_FIELD) public _formField: MatFormField,
-    @Optional() @Self() public ngControl: NgControl
+    @Optional() @Self() public ngControl: NgControl,
+    @Optional() @Inject(SP_MAT_SELECT_ENTITY_COMPONENT_CONFIG) private config: SPMatSelectEntityComponentConfig
   ) {
+    if (!this.config) {
+      this.config = DEFAULT_SP_MAT_SELECT_ENTITY_COMPONENT_CONFIG;
+    }
     if (this.ngControl != null) {
       this.ngControl.valueAccessor = this;
     }
   }
 
   ngOnInit() {
-    this.addItemText = "Add New";
     combineLatest([this.filter$.pipe(debounceTime(400)), this.load$])
       .pipe(
         takeUntil(this.destroy),
@@ -233,7 +238,12 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
     this.destroy.next();
     this.stateChanges.complete();
   }
+  
   ngAfterViewInit(): void {
+  }
+
+  addEntity(entity: TEntity) {
+    this._entities.set((entity as any)[this.idKey], entity);
   }
 
   get selectTriggerValue() {
