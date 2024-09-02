@@ -7,6 +7,7 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Observable, of, tap } from 'rxjs';
 import { SPMatSelectEntityComponent } from './mat-select-entity.component';
+import { SP_MAT_SELECT_ENTITY_CONFIG, SPMatSelectEntityConfig } from './providers';
 
 /**
  */
@@ -300,4 +301,62 @@ describe('MatSelectEntityComponent (multiple selection)', () => {
     expect(addlSelectionCount).toBeTruthy();
     expect((addlSelectionCount.nativeElement as HTMLElement).innerText).toEqual('(+2)');
   });  
+});
+
+describe('MatSelectEntityComponent (config object)', () => {
+  let component!: SelectEntityComponent;
+  let fixture!: ComponentFixture<SelectEntityComponent>;
+  let matSel!: MatSelect;
+
+  const SelectEntityConfig: SPMatSelectEntityConfig = {
+    i18n: {
+      search: "Look",
+      notFound: "Nothing",
+      addItem: "Create New"
+    }
+  };
+
+  beforeEach(async () => {
+    TestBed.configureTestingModule({
+      imports: [
+        NoopAnimationsModule,
+        SPMatSelectEntityComponent,
+      ],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: SP_MAT_SELECT_ENTITY_CONFIG,
+          useValue: SelectEntityConfig
+        }
+      ],
+    });
+
+    fixture = TestBed.createComponent(SPMatSelectEntityComponent<User>);
+    component = fixture.componentInstance;
+    component.url = 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb';
+    component.entityLabelFn = (user: User) => user.name;
+    component.entityName = 'Customer';
+    component.inlineNew = true;
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(
+      By.directive(MatSelect)
+    ).componentInstance;
+  });
+
+  afterEach(() => {
+    document.body.removeChild(fixture.nativeElement);
+  });
+
+  it("should display 'Create New' option", () => {
+    expect(matSel).toBeTruthy();
+    expect(component.searchText).toEqual(SelectEntityConfig.i18n.search);
+    expect(component.notFoundText).toEqual(SelectEntityConfig.i18n.notFound);
+    expect(component.addItemText).toEqual(SelectEntityConfig.i18n.addItem);
+    // One mat-option for ngx-select-search and another for 'Create New'
+    expect(matSel.options.length).toEqual(2);
+    const lastOption = matSel.options.last;
+    expect(lastOption.value).toEqual('0');
+    expect(lastOption._text?.nativeElement.innerText.includes(SelectEntityConfig.i18n.addItem)).toBeTrue();
+  });
 });

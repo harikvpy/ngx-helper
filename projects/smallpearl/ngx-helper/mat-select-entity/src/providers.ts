@@ -1,23 +1,16 @@
 import { InjectionToken } from '@angular/core';
 
-export interface SPMatSelectEntityComponentConfig {
+export interface SPMatSelectEntityConfig {
   i18n: {
     search: string;
     notFound: string;
+    // Any embedded "{{ item }}" in the addItem string will be replaced
+    // with entityName property value. If entityName is not specified
+    // "Item" will be used as the value for "{{ item }}".
     addItem: string;
   };
 }
 
-export const DEFAULT_SP_MAT_SELECT_ENTITY_COMPONENT_CONFIG: SPMatSelectEntityComponentConfig =
-  {
-    i18n: {
-      search: 'Search',
-      notFound: 'Not found',
-      addItem: 'Add Item',
-    },
-  };
-
-export const SP_MAT_SELECT_ENTITY_COMPONENT_CONFIG =
-  new InjectionToken<SPMatSelectEntityComponentConfig>(
-    '_SPMatSelectEntityComponentConfig_'
+export const SP_MAT_SELECT_ENTITY_CONFIG = new InjectionToken<SPMatSelectEntityConfig>(
+    'SPMatSelectEntityConfig'
   );
