@@ -85,6 +85,11 @@ export class PostsComponent {
         console.log('selectEntityCtrl is not resolved.');
       }
     }, 2000);
+
+    setTimeout(() => {
+      console.log('Disabling mat-select-entity');
+      this.form.controls['user'].disable();
+    }, 5000);
   }
 
 }

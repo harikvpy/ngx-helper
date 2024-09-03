@@ -62,6 +62,7 @@ const DEFAULT_SP_MAT_SELECT_ENTITY_CONFIG: SPMatSelectEntityConfig =
       (opened)="onSelectOpened($event)"
       (selectionChange)="onSelectionChange($event)"
       [multiple]="multiple"
+      [disabled]="disabled"
       [(ngModel)]="selectValue"
     >
       <mat-select-trigger>
