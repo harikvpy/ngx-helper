@@ -197,10 +197,10 @@ describe('MatSelectEntityComponent (single selection)', () => {
     expect((component as any).loaded).toBeTrue();
 
     let selectedEntityId!: User['id'];
-    const sub$ = component.entitySelected
+    const sub$ = component.selectionChange
       .pipe(
         tap((entity) => {
-          selectedEntityId = entity.id;
+          selectedEntityId = (entity as User).id;
         })
       )
       .subscribe();
@@ -233,6 +233,28 @@ describe('MatSelectEntityComponent (single selection)', () => {
     component.writeValue(DET_MOOSA.id);
     expect(component.value).toEqual(DET_MOOSA.id);
   });
+
+  it('should have Add New option when inlineNew=true', async () => {
+    component.inlineNew = true;
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    await openSelect();
+    expect(matSel.options.length).toEqual(2 + USER_DATA.length);
+    expect(matSel.options.last._getHostElement().innerText.includes('New Item')).toBeTrue();
+
+    // select the New Item option
+    let createNewItemSelected = false;
+    const sub$ = component.createNewItemSelected
+      .pipe(
+        tap((entity) => {
+          createNewItemSelected = true
+        })
+      )
+      .subscribe();
+    matSel.options.last.select(true);
+    expect(createNewItemSelected).toBeTrue();
+  });
+
 });
 
 /**
@@ -284,7 +306,6 @@ describe('MatSelectEntityComponent (multiple selection)', () => {
 
   // MatSelectEntityComponent with multiple selection
   it('should allow multiple selection', async () => {
-    component.multiple = true;
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
     await openSelect();
@@ -325,7 +346,48 @@ describe('MatSelectEntityComponent (multiple selection)', () => {
     const addlSelectionCount = fixture.debugElement.query(By.css('.addl-selection-count'));
     expect(addlSelectionCount).toBeTruthy();
     expect((addlSelectionCount.nativeElement as HTMLElement).innerText).toEqual('(+2)');
-  });  
+  });
+
+  it("should emit 'entitySelected' event", async () => {
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    await openSelect();
+    // There should be USER_DATA.length+1 <mat-option /> elements
+    // The +1 is the <mat-option /> for ngx-mat-select-search.
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
+    expect((component as any).loaded).toBeTrue();
+
+    let selectedEntities!: User[];
+    const sub$ = component.selectionChange
+      .pipe(
+        tap((entity) => {
+          selectedEntities = entity as User[];
+        })
+      )
+      .subscribe();
+    const lastOption = matSel.options.last;
+    // MatOption at index 0 is the ngx-select-search. Option at index 1 is 
+    // the real selectable mat-option.
+    const firstOption = matSel.options.get(1) as MatOption;
+    lastOption.select(true);
+    expect(selectedEntities.length).toEqual(1);
+    expect(selectedEntities[0].id).toEqual(lastOption.value);
+    firstOption.select(true);
+    expect(selectedEntities.length).toEqual(2);
+    // Selected entities are returned in the ascending order of their ids.
+    // This is because we store the entities as a Map<> indexed by their id.
+    expect(selectedEntities[0].id).toEqual(firstOption.value);
+    expect(selectedEntities[1].id).toEqual(lastOption.value);
+    sub$.unsubscribe();
+  });
+
+  it('should not have Add New option when multiple=true', async () => {
+    component.inlineNew = true;
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    await openSelect();
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
+  });
 });
 
 describe('MatSelectEntityComponent (config object)', () => {

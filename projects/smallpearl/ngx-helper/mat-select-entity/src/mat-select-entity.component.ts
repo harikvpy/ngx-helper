@@ -62,7 +62,6 @@ const DEFAULT_SP_MAT_SELECT_ENTITY_CONFIG: SPMatSelectEntityConfig =
       (opened)="onSelectOpened($event)"
       (selectionChange)="onSelectionChange($event)"
       [multiple]="multiple"
-      [disabled]="disabled"
       [(ngModel)]="selectValue"
     >
       <mat-select-trigger>
@@ -88,7 +87,7 @@ const DEFAULT_SP_MAT_SELECT_ENTITY_CONFIG: SPMatSelectEntityConfig =
           {{ entityLabelFn(entity) }}
         </mat-option>
       </span>
-      <mat-option *ngIf="inlineNew" class="add-item-option" value="0" (click)="$event.stopPropagation()"
+      <mat-option *ngIf="!multiple && inlineNew" class="add-item-option" value="0" (click)="$event.stopPropagation()"
         >⊕ {{ addItemText }}</mat-option
       >
     </mat-select>
@@ -172,7 +171,7 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   // would be an array of entity ids.
   @Input({ required: false }) multiple = false;
 
-  @Output() entitySelected = new EventEmitter<TEntity>();
+  @Output() selectionChange = new EventEmitter<TEntity|TEntity[]>();
   @Output() createNewItemSelected = new EventEmitter<void>();
 
   // allow per component customization
@@ -357,9 +356,12 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
     return this._disabled;
   }
   set disabled(value: BooleanInput) {
-    this._disabled = coerceBooleanProperty(value);
-    // this._disabled ? this.parts.disable() : this.parts.enable();
-    this.stateChanges.next();
+    const disabled = coerceBooleanProperty(value);;
+    if (disabled !== this._disabled) {
+      this._disabled = coerceBooleanProperty(value);
+      this.setDisabledState(this._disabled);
+      this.stateChanges.next();
+    }
   }
   private _disabled = false;
 
@@ -417,17 +419,24 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   }
   onSelectionChange(ev: MatSelectChange) {
     // console.log('SelectionChange - sel:', ev);
-    if (ev.value !== '0') {
+    if (Array.isArray(ev.value)) {
       this.selectValue = ev.value;
       this.onTouched();
       this.onChanged(ev.value);
-      this.entitySelected.emit(this._entities.get(ev.value));
+      const selectedEntities: TEntity[] = ev.value.map(id => this._entities.get(id)) as TEntity[];
+      this.selectionChange.emit(selectedEntities);
     } else {
-      // inlineNew activated, return value to previous value
-      ev.source.value = this.selectValue;
-      this.createNewItemSelected.emit();
+      if (ev.value !== '0') {
+        this.selectValue = ev.value;
+        this.onTouched();
+        this.onChanged(ev.value);
+        this.selectionChange.emit(this._entities.get(ev.value));
+      } else {
+        // inlineNew activated, return value to previous value
+        ev.source.value = this.selectValue;
+        this.createNewItemSelected.emit();
+      }
     }
-    // this.cdr.detectChanges();
   }
 
   filterValues(search: string) {

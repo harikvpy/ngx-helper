@@ -38,6 +38,9 @@ const USER_DATA = [
             entityName="User"
             [entityLabelFn]="entityLabelFn"
             formControlName="user"
+            (selectionChange)="onEntitySelected($event)"
+            [multiple]="true"
+            [inlineNew]="true"
           ></sp-mat-select-entity>
         </form>
       </div>
@@ -67,7 +70,7 @@ export class PostsComponent {
 
   constructor(private fb: FormBuilder) {
     this.form = this.fb.group({
-      user: [10]
+      user: [undefined]
     });
     this.form.valueChanges.pipe(
       tap(values => {
@@ -80,16 +83,19 @@ export class PostsComponent {
         const DET_MOOSA = {id: 100000, name: "Moosa Marikkar"};
         console.log('Adding new user after 2 secs:', DET_MOOSA.name);
         this.selectEntityCtrl.addEntity(DET_MOOSA);
-        this.form.controls['user'].setValue(DET_MOOSA.id);
+        // this.form.controls['user'].setValue(DET_MOOSA.id);
       } else {
         console.log('selectEntityCtrl is not resolved.');
       }
     }, 2000);
 
-    setTimeout(() => {
-      console.log('Disabling mat-select-entity');
-      this.form.controls['user'].disable();
-    }, 5000);
+    // setTimeout(() => {
+    //   console.log('Disabling mat-select-entity');
+    //   this.form.controls['user'].disable();
+    // }, 5000);
   }
 
+  onEntitySelected(ev: User|User[]) {
+    console.log(`onEntitySelected - ev: ${JSON.stringify(ev)}`);
+  }
 }
