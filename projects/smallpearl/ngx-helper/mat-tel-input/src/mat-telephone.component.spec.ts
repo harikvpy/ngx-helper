@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { NoopAnimationsModule } from "@angular/platform-browser/animations";
 import { SPMatTelephoneInputComponent } from "./mat-telephone.component";
 
-fdescribe('MatTelephoneInputComponent', () => {
+describe('MatTelephoneInputComponent', () => {
   let component: SPMatTelephoneInputComponent;
   let fixture: ComponentFixture<SPMatTelephoneInputComponent>;
 
