@@ -447,9 +447,8 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
         // whenever the select is opened.
         if (this.ngControl) {
           this.ngControl.control?.setValue(this.lastSelectValue)
-        } else {
-          ev.source.value = this.lastSelectValue;
         }
+        ev.source.value = this.lastSelectValue;
         this.createNewItemSelected.emit();
         this.cdr.detectChanges();
       }
