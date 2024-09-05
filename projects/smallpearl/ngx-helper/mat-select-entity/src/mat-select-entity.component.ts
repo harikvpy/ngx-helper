@@ -186,6 +186,13 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   touched = false;
 
   selectValue!: string | number | string[] | number[];
+  // For storing last select value, which we use to restore the select's value
+  // to when New Item is selected. This ensures that when New Item is selected,
+  // the select's value remains the same. If the newly created item is to be
+  // set as the select's value, the corresponding TEntity has to be added
+  // to _entities (via addEntity()) and then selected by setting the
+  // corresponding formControl's value to the entity's id.
+  lastSelectValue!: string | number | string[] | number[];
   searching = false;
   filterStr: string = '';
 
@@ -412,6 +419,9 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
     }
   }
   onSelectOpened(ev: any) {
+    // Store the current select value so that we can restore it if user
+    // eventually selects 'New Item' option.
+    this.lastSelectValue = this.selectValue;
     // If values have not been loaded from remote, trigger a load.
     if (!this.loaded) {
       this.load$.next(true); // this will trigger the loadFromRemote() call.
@@ -432,9 +442,16 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
         this.onChanged(ev.value);
         this.selectionChange.emit(this._entities.get(ev.value));
       } else {
-        // inlineNew activated, return value to previous value
-        ev.source.value = this.selectValue;
+        // New Item activated, return value to previous value. We track
+        // previous value via 'lastSelectValue' member which is updated
+        // whenever the select is opened.
+        if (this.ngControl) {
+          this.ngControl.control?.setValue(this.lastSelectValue)
+        } else {
+          ev.source.value = this.lastSelectValue;
+        }
         this.createNewItemSelected.emit();
+        this.cdr.detectChanges();
       }
     }
   }

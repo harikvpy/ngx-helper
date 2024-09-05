@@ -65,7 +65,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
     document.body.removeChild(fixture.nativeElement);
   });
 
-  async function openSelect(waitForDebounce = true) {
+  async function toggleSelectOpen(waitForDebounce = true) {
     // Open the mat-select. To open the mat-select, get it's mat-select-trigger child
     // and click on it. mat-select-trigger is <div class='mat-mdc-select-trigger'>
     const triggerElem = fixture.debugElement.query(
@@ -114,7 +114,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
     // Trap HttpClient.get() and return our custom data
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await openSelect();
+    await toggleSelectOpen();
     // There should be USER_DATA.length+1 <mat-option /> elements
     // The +1 is the <mat-option /> for ngx-mat-select-search.
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
@@ -135,7 +135,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
     let params = new HttpParams();
     params = params.set('Authorization', 'abcdefg');
     component.httpParams = params;
-    await openSelect();
+    await toggleSelectOpen();
     // There should be USER_DATA.length+1 <mat-option /> elements
     // The +1 is the <mat-option /> for ngx-mat-select-search.
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
@@ -148,7 +148,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
   it('should filter names based on user input', async () => {
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await openSelect(false);
+    await toggleSelectOpen(false);
     const SEARCH_STRING = USER_DATA[0].name.split(' ')[0];
     // First mat-option element is the ngx-mat-select-search.
     // Simulate user entering into ngx-mat-select-search by setting
@@ -179,7 +179,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
       return of(DATA);
     };
     component.loadFromRemoteFn = loadDataFromRemote;
-    await openSelect();
+    await toggleSelectOpen();
     // There should be DATA.length+1 <mat-option /> elements
     // The +1 is the <mat-option /> for ngx-mat-select-search.
     expect(matSel.options.length).toEqual(1 + DATA.length);
@@ -190,7 +190,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
     // Trap HttpClient.get() and return our custom data
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await openSelect();
+    await toggleSelectOpen();
     // There should be USER_DATA.length+1 <mat-option /> elements
     // The +1 is the <mat-option /> for ngx-mat-select-search.
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
@@ -214,7 +214,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
   it("should allow adding a new entity", async () => {
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await openSelect();
+    await toggleSelectOpen();
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
     const optionsCountBefore = matSel.options.length;
     component.addEntity({id: 100000, name: "Moosa Marikkar"});
@@ -224,7 +224,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
   it("should set the current selection to an entity", async () => {
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await openSelect();
+    await toggleSelectOpen();
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
     const optionsCountBefore = matSel.options.length;
     const DET_MOOSA = {id: 100000, name: "Moosa Marikkar"};
@@ -234,11 +234,11 @@ describe('MatSelectEntityComponent (single selection)', () => {
     expect(component.value).toEqual(DET_MOOSA.id);
   });
 
-  it('should have Add New option when inlineNew=true', async () => {
+  it('should have New Item option when inlineNew=true', async () => {
     component.inlineNew = true;
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await openSelect();
+    await toggleSelectOpen();
     expect(matSel.options.length).toEqual(2 + USER_DATA.length);
     expect(matSel.options.last._getHostElement().innerText.includes('New Item')).toBeTrue();
 
@@ -253,6 +253,41 @@ describe('MatSelectEntityComponent (single selection)', () => {
       .subscribe();
     matSel.options.last.select(true);
     expect(createNewItemSelected).toBeTrue();
+  });
+
+  it("should maintain current value even when New Item is selected", async () => {
+    component.inlineNew = true;
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    await toggleSelectOpen();
+    expect(matSel.options.length).toEqual(2 + USER_DATA.length);
+    expect(matSel.options.last._getHostElement().innerText.includes('New Item')).toBeTrue();
+    // first select first item
+    const firstOption = matSel.options.get(1);
+    firstOption?.select(true);
+    const currentSel = matSel.value;
+    // close the select
+    await toggleSelectOpen();
+    fixture.detectChanges();
+    // open again, which will update lastSelectValue
+    await toggleSelectOpen();
+    fixture.detectChanges();
+    expect(component.lastSelectValue).toEqual(firstOption?.value);
+
+    // select the New Item option
+    let createNewItemSelected = false;
+    const sub$ = component.createNewItemSelected
+      .pipe(
+        tap((entity) => {
+          createNewItemSelected = true
+        })
+      )
+      .subscribe();
+    matSel.options.last.select(true);
+    expect(createNewItemSelected).toBeTrue();
+    fixture.detectChanges();
+    await new Promise(r => setTimeout(r, 200));
+    expect(matSel.value).toEqual(currentSel);
   });
 
 });
@@ -290,7 +325,7 @@ describe('MatSelectEntityComponent (multiple selection)', () => {
     document.body.removeChild(fixture.nativeElement);
   });
 
-  async function openSelect(waitForDebounce=true) {
+  async function toggleSelectOpen(waitForDebounce=true) {
     // Open the mat-select. To open the mat-select, get it's mat-select-trigger child
     // and click on it. mat-select-trigger is <div class='mat-mdc-select-trigger'>
     const triggerElem = fixture.debugElement.query(
@@ -308,7 +343,7 @@ describe('MatSelectEntityComponent (multiple selection)', () => {
   it('should allow multiple selection', async () => {
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await openSelect();
+    await toggleSelectOpen();
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
 
     // Select first and last item. This is equivalent to checking
@@ -330,7 +365,7 @@ describe('MatSelectEntityComponent (multiple selection)', () => {
     component.multiple = true;
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await openSelect();
+    await toggleSelectOpen();
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
     const sel1 = (matSel.options.get(1) as MatOption<any>);
     const sel2 = (matSel.options.get(2) as MatOption<any>);
@@ -351,7 +386,7 @@ describe('MatSelectEntityComponent (multiple selection)', () => {
   it("should emit 'entitySelected' event", async () => {
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await openSelect();
+    await toggleSelectOpen();
     // There should be USER_DATA.length+1 <mat-option /> elements
     // The +1 is the <mat-option /> for ngx-mat-select-search.
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
@@ -385,7 +420,7 @@ describe('MatSelectEntityComponent (multiple selection)', () => {
     component.inlineNew = true;
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await openSelect();
+    await toggleSelectOpen();
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
   });
 });

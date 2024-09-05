@@ -42,7 +42,8 @@ const USER_DATA = [
               [entityLabelFn]="entityLabelFn"
               formControlName="user"
               (selectionChange)="onEntitySelected($event)"
-              [multiple]="true"
+              (createNewItemSelected)="onCreateNewItem($event)"
+              [inlineNew]="true"
             ></sp-mat-select-entity>
           </mat-form-field>
         </form>
@@ -81,24 +82,28 @@ export class PostsComponent {
       })
     ).subscribe();
 
-    setTimeout(() => {
-      if (this.selectEntityCtrl) {
-        const DET_MOOSA = {id: 100000, name: "Moosa Marikkar"};
-        console.log('Adding new user after 2 secs:', DET_MOOSA.name);
-        this.selectEntityCtrl.addEntity(DET_MOOSA);
-        this.form.controls['user'].setValue([DET_MOOSA.id]);
-      } else {
-        console.log('selectEntityCtrl is not resolved.');
-      }
-    }, 2000);
+    // setTimeout(() => {
+    //   if (this.selectEntityCtrl) {
+    //     const DET_MOOSA = {id: 100000, name: "Moosa Marikkar"};
+    //     console.log('Adding new user after 2 secs:', DET_MOOSA.name);
+    //     this.selectEntityCtrl.addEntity(DET_MOOSA);
+    //     this.form.controls['user'].setValue([DET_MOOSA.id]);
+    //   } else {
+    //     console.log('selectEntityCtrl is not resolved.');
+    //   }
+    // }, 2000);
 
-    setTimeout(() => {
-      console.log('Disabling mat-select-entity');
-      this.form.controls['user'].disable();
-    }, 3000);
+    // setTimeout(() => {
+    //   console.log('Disabling mat-select-entity');
+    //   this.form.controls['user'].disable();
+    // }, 3000);
   }
 
   onEntitySelected(ev: User|User[]) {
     console.log(`onEntitySelected - ev: ${JSON.stringify(ev)}`);
+  }
+
+  onCreateNewItem(ev: any) {
+    console.log(`onCreateNewItem - ev: ${JSON.stringify(ev)}`);
   }
 }
