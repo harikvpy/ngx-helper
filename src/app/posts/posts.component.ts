@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { SPMatSelectEntityComponent } from '@smallpearl/ngx-helper/mat-select-entity';
 import { of, tap } from 'rxjs';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 /**
  */
@@ -27,21 +28,23 @@ const USER_DATA = [
 @Component({
   selector: 'app-posts',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, SPMatSelectEntityComponent],
+  imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, SPMatSelectEntityComponent],
   template: `
     <div class="posts-container">
       <h2>Posts</h2>
       <div class="">
         <form [formGroup]="form">
-          <sp-mat-select-entity
-            [loadFromRemoteFn]="loadDataFromRemote"
-            entityName="User"
-            [entityLabelFn]="entityLabelFn"
-            formControlName="user"
-            (selectionChange)="onEntitySelected($event)"
-            [multiple]="true"
-            [inlineNew]="true"
-          ></sp-mat-select-entity>
+          <mat-form-field>
+            <mat-label>Select Users</mat-label>
+            <sp-mat-select-entity
+              [loadFromRemoteFn]="loadDataFromRemote"
+              entityName="User"
+              [entityLabelFn]="entityLabelFn"
+              formControlName="user"
+              (selectionChange)="onEntitySelected($event)"
+              [multiple]="true"
+            ></sp-mat-select-entity>
+          </mat-form-field>
         </form>
       </div>
     </div>
@@ -83,16 +86,16 @@ export class PostsComponent {
         const DET_MOOSA = {id: 100000, name: "Moosa Marikkar"};
         console.log('Adding new user after 2 secs:', DET_MOOSA.name);
         this.selectEntityCtrl.addEntity(DET_MOOSA);
-        // this.form.controls['user'].setValue(DET_MOOSA.id);
+        this.form.controls['user'].setValue([DET_MOOSA.id]);
       } else {
         console.log('selectEntityCtrl is not resolved.');
       }
     }, 2000);
 
-    // setTimeout(() => {
-    //   console.log('Disabling mat-select-entity');
-    //   this.form.controls['user'].disable();
-    // }, 5000);
+    setTimeout(() => {
+      console.log('Disabling mat-select-entity');
+      this.form.controls['user'].disable();
+    }, 3000);
   }
 
   onEntitySelected(ev: User|User[]) {
