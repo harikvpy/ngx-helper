@@ -28,7 +28,6 @@ import {
   debounceTime,
   Observable,
   of,
-  ReplaySubject,
   Subject,
   switchMap,
   takeUntil,
@@ -44,6 +43,15 @@ const DEFAULT_SP_MAT_SELECT_ENTITY_CONFIG: SPMatSelectEntityConfig =
       addItem: 'New Item',
     },
   };
+
+type EntityGroup<T> = {
+  id?: PropertyKey;
+  name?: string;
+  label?: string;
+  description?: string;
+  items?: T[];
+  __items__?: T[];  // for internal use
+};
 
 /**
  * This is a generic component to display a <mat-select> for a FK field
@@ -82,11 +90,27 @@ const DEFAULT_SP_MAT_SELECT_ENTITY_CONFIG: SPMatSelectEntityConfig =
         </ngx-mat-select-search>
       </mat-option>
 
-      <span *ngIf="(filteredValues | async) as entities">
-        <mat-option class="sel-entity-option" *ngFor="let entity of entities" [value]="entityId(entity)">
-          {{ entityLabelFn(entity) }}
-        </mat-option>
-      </span>
+      <ng-container *ngIf="!group; else groupedOptions">
+        <span *ngIf="(filteredValues | async) as entities">
+          <mat-option class="sel-entity-option" *ngFor="let entity of entities" [value]="entityId(entity)">
+            {{ entityLabelFn(entity) }}
+          </mat-option>
+        </span>
+      </ng-container>
+      <ng-template #groupedOptions>
+        <span *ngIf="(filteredGroupedValues | async) as groups">
+          @for (group of groups; track groupLabel(group)) {
+            <mat-optgroup [label]="groupLabel(group)">
+              @for (entity of group.__items__; track entityId(entity)) {
+                <mat-option class="sel-entity-option" [value]="entityId(entity)">
+                  {{ entityLabelFn(entity) }}
+                </mat-option>
+              }
+            </mat-optgroup>
+          }
+        </span>
+      </ng-template>
+      
       <mat-option *ngIf="!multiple && inlineNew" class="add-item-option" value="0" (click)="$event.stopPropagation()"
         >⊕ {{ addItemText }}</mat-option
       >
@@ -153,23 +177,39 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
    */
   @Input({ required: false }) loadFromRemoteFn!: () => Observable<TEntity[]>;
 
-  /**
-   * The entities to be displayed in the select -> option elements. Specifying
-   * this is useful in two scenarios:-
-   *  1. To display a limited set of values (usually one value) to reflect
-   *     current value while editing an item which already has a value
-   *  2. Providing entities which have been cached locally and therefore
-   *     loading from remote is not required. In this case, also set
-   *     doNoLoadFromRemote=true.
-   */
-  // @Input({ required: false }) entities: TEntity[] = [];
-
   @Input({ required: false }) inlineNew: boolean = false;
+  /**
+   * Entity name, that is used to form the "New { item }" menu item if
+   * inlineNew=true.
+   */
   @Input({ required: false }) entityName!: string;
-
   // Set to true to allow multiple option selection. The returned value
   // would be an array of entity ids.
   @Input({ required: false }) multiple = false;
+  /*
+    Whether to group options using <mat-optgroup></mat-optgroup>. 
+    If set to true, the response from the server should be an array of
+    groups of TEntity objects, where each object is of the form:
+      [
+        {
+          id: <id>,
+          name|label: <>,
+          items|<plural_entityName>: [
+          ]
+        },
+        ...
+      ]
+  */
+  @Input({ required: false }) group = false;
+  /**
+   * The group object key name under which options are stored. Defaults to
+   * 'items'.
+   */
+  @Input({ required: false }) groupOptionsKey!: string;
+  // If groupOptions = true, specify this to provide accurate label for each
+  // group. If not specified, group label will be determined by looking up one of
+  // the standard fields - name, label or description - whichever comes first.
+  @Input({ required: false }) groupLabelFn!: (group: any) => string;
 
   @Output() selectionChange = new EventEmitter<TEntity|TEntity[]>();
   @Output() createNewItemSelected = new EventEmitter<void>();
@@ -179,8 +219,11 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   @Input() notFoundText!: string;
   @Input() addItemText!: string;
 
-  _entities = new Map<PropertyKey, TEntity>();
-
+  private _entities = new Map<PropertyKey, TEntity>();
+  private _groupedEntities = new Array<EntityGroup<TEntity>>();
+  private _nextGroupId = 1; // in case EntityGroup does not contain an id key,
+                            // use this to generate a unique id for each group
+  
   stateChanges = new Subject<void>();
   focused = false;
   touched = false;
@@ -202,7 +245,9 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   onTouched = () => {};
   @ViewChild(MatSelect) matSelect!: MatSelect;
 
-  filteredValues = new ReplaySubject<TEntity[]>(1);
+  filteredValues = new Subject<TEntity[]>();
+  filteredGroupedValues = new Subject<EntityGroup<TEntity>[]>();
+
   destroy = new Subject<void>();
   private loaded = false;
   private load$ = new BehaviorSubject<boolean>(false);
@@ -239,7 +284,11 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
           }
         }),
         tap(() => {
-          this.filterValues(this.filterStr);
+          if (this.group) {
+            this.filterGroupedValues(this.filterStr);
+          } else {
+            this.filterValues(this.filterStr);
+          }
           this.cdr.detectChanges();
         })
       )
@@ -320,9 +369,21 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   }
 
   set entities(items: TEntity[]) {
-    items.forEach(item => {
-      this._entities.set((item as any)[this.idKey], item);
-    });
+    if (!this.group) {
+      items.forEach(item => {
+        this._entities.set((item as any)[this.idKey], item);
+      });
+    } else {
+      this._groupedEntities = (items as any) as EntityGroup<TEntity>[];
+      this._groupedEntities.forEach(group => {
+        const key = this.groupEntitiesKey();
+        const groupEntities = (group as any)[key] as TEntity[];
+        (group as any)['__items__'] = groupEntities;
+        groupEntities.forEach(item => {
+          this._entities.set((item as any)[this.idKey], item);
+        });
+      });
+    }
   }
 
   @Input()
@@ -457,14 +518,15 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
 
   filterValues(search: string) {
     const searchLwr = search.toLocaleLowerCase();
-    if (!this.entities) {
+    const entities = this.entities;
+    if (!entities) {
       return;
     }
     if (!search) {
-      this.filteredValues.next(this.entities.slice());
+      this.filteredValues.next(entities.slice());
     } else {
       this.filteredValues.next(
-        this.entities.filter((member) => {
+        entities.filter((member) => {
           if (this.entityFilterFn) {
             return this.entityFilterFn(member, search);
           }
@@ -473,11 +535,57 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
       );
     }
   }
+
+  /**
+   * Filtering grouped entities logic works like this. If the search string
+   * matches a group label, the entire group is to be included in the results.
+   * However, if the search string only matches certain entities, only those
+   * groups are to be included and within those groups, only entities whose
+   * label matches the search string are to be included in the result set.
+   * @param search 
+   * @returns 
+   */
+  filterGroupedValues(search: string) {
+    const searchLwr = search.toLocaleLowerCase();
+    const groups = this._groupedEntities;
+    if (!groups) {
+      return;
+    }
+    if (!search) {
+      const groupsCopy = groups.slice();
+      this.filteredGroupedValues.next(groupsCopy);
+    } else {
+      const groupEntitiesKey = this.groupEntitiesKey();
+      const groups = this._groupedEntities.map(ge => {
+        const label = this.groupLabel(ge);
+        if (label.toLocaleLowerCase().includes(searchLwr)) {
+          return {...ge} as EntityGroup<TEntity>;
+        } else {
+          const groupEntities = ge.__items__?.filter(
+            e => this.entityLabelFn(e).toLocaleLowerCase().includes(searchLwr)
+          );
+          const ret: any = {
+            ...ge
+          };
+          ret['__items__'] = groupEntities ?? [];
+          return ret as EntityGroup<TEntity>;
+        }
+      });
+      // filter out groups with no entities
+      // console.log(`Groups: ${JSON.stringify(groups)}`);
+      this.filteredGroupedValues.next(groups.filter(
+        (group) =>
+          Array.isArray((group as any)[groupEntitiesKey]) &&
+          (group as any)['__items__'].length > 0
+      ));
+    }
+  }
+
   loadFromRemote() {
     if (!this.url && !this.loadFromRemoteFn) {
       // If user had initialized entities, they will be dispalyed
       // in the options list. If not, options would be empty.
-      return this.entities;
+      return of(this.group ? this.groupEntities : this.entities);
     }
 
     let obs: Observable<TEntity[]>;
@@ -498,15 +606,48 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
     return obs.pipe(
       tap((entities) => {
         this.searching = false; // remote loading done, will hide the loading wheel
+        // Handle DRF paginated response
         if (!Array.isArray(entities) && entities['results'] && Array.isArray(entities['results'])) {
           entities = entities['results'];
         }
         if (Array.isArray(entities)) {
           this.entities = entities;
+          // if (this.group) {
+          //   this._groupedEntities = entities as EntityGroup<TEntity>[];
+          // } else {
+          //   this.entities = entities;
+          // }
         }
         this.loaded = true;
         this.cdr.detectChanges();
       })
     );
+  }
+
+  groupLabel(group: EntityGroup<TEntity>): string {
+    if (this.groupLabelFn) {
+      return this.groupLabelFn(group);
+    }
+    const standardLabelFields = ['name', 'label', 'desc', 'description'];
+    standardLabelFields.forEach((labelField: string) => {
+      if ((group as any)[labelField]) {
+        return (group as any)[labelField];
+      }
+    })
+    return `Group ${String(group.id)}`;
+  }
+
+  groupEntities(group: EntityGroup<TEntity>): TEntity[] {
+    const key = this.groupEntitiesKey();
+    console.log(`groupEntities - group: ${JSON.stringify(group)}, key: ${key}`);
+    return (group as any)[this.groupEntitiesKey()] ?? [];
+  }
+
+  groupEntitiesKey() {
+    const pluralize = (noun: string) =>
+      `${noun}${noun.endsWith('s') || noun.endsWith('z') || noun.endsWith('x') ? 'es' : 's'}`;
+
+    return this.groupOptionsKey ? this.groupOptionsKey 
+      : (this.entityName ? pluralize(this.entityName.toLocaleLowerCase()) : 'items');
   }
 }

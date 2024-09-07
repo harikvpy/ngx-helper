@@ -25,27 +25,158 @@ const USER_DATA = [
   { id: 10, name: 'Izola Silversmith' },
 ];
 
+interface Block {
+  id: number;
+  name: string;
+  units: Unit[];
+}
+
+interface Unit {
+  id: number;
+  name: string;
+}
+
+const BLOCKS: Block[] = [
+  {
+    id: 1000,
+    name: 'East',
+    units: [
+      {
+        id: 1000,
+        name: '2A',
+      },
+      {
+        id: 1001,
+        name: '2B',
+      },
+      {
+        id: 1002,
+        name: '2C',
+      },
+      {
+        id: 1003,
+        name: '3A',
+      },
+      {
+        id: 1004,
+        name: '3B',
+      },
+      {
+        id: 1005,
+        name: '3C',
+      },
+      {
+        id: 1006,
+        name: '4A',
+      },
+      {
+        id: 1007,
+        name: '4B',
+      },
+      {
+        id: 1008,
+        name: '4C',
+      },
+      {
+        id: 1009,
+        name: '5A',
+      },
+      {
+        id: 1010,
+        name: '5B',
+      },
+      {
+        id: 1011,
+        name: '5C',
+      },
+    ],
+  },
+  {
+    id: 1001,
+    name: 'West',
+    units: [
+      {
+        id: 2000,
+        name: '2A',
+      },
+      {
+        id: 2001,
+        name: '2B',
+      },
+      {
+        id: 2002,
+        name: '2C',
+      },
+      {
+        id: 2003,
+        name: '3A',
+      },
+      {
+        id: 2004,
+        name: '3B',
+      },
+      {
+        id: 2005,
+        name: '3C',
+      },
+      {
+        id: 2006,
+        name: '4A',
+      },
+      {
+        id: 2007,
+        name: '4B',
+      },
+      {
+        id: 2008,
+        name: '4C',
+      },
+    ],
+  },
+];
+
 @Component({
   selector: 'app-posts',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, SPMatSelectEntityComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    SPMatSelectEntityComponent,
+  ],
   template: `
     <div class="posts-container">
       <h2>Posts</h2>
       <div class="">
         <form [formGroup]="form">
-          <mat-form-field>
-            <mat-label>Select Users</mat-label>
-            <sp-mat-select-entity
-              [loadFromRemoteFn]="loadDataFromRemote"
-              entityName="User"
-              [entityLabelFn]="entityLabelFn"
-              formControlName="user"
-              (selectionChange)="onEntitySelected($event)"
-              (createNewItemSelected)="onCreateNewItem($event)"
-              [inlineNew]="true"
-            ></sp-mat-select-entity>
-          </mat-form-field>
+          <div class="p-2">
+            <mat-form-field>
+              <mat-label>Select User</mat-label>
+              <sp-mat-select-entity
+                [loadFromRemoteFn]="loadUsers"
+                entityName="User"
+                [entityLabelFn]="userLabelFn"
+                formControlName="user"
+                (selectionChange)="onUserSelected($event)"
+                (createNewItemSelected)="onCreateNewUser($event)"
+                [inlineNew]="true"
+              ></sp-mat-select-entity>
+            </mat-form-field>
+          </div>
+          <div class="p-2">
+            <mat-form-field>
+              <mat-label>Select Units</mat-label>
+              <sp-mat-select-entity
+                [loadFromRemoteFn]="loadUnits"
+                entityName="Unit"
+                [entityLabelFn]="unitLabelFn"
+                [group]="true"
+                [groupLabelFn]="blockLabelFn"
+                formControlName="unit"
+                (selectionChange)="onUnitSelected($event)"
+              ></sp-mat-select-entity>
+            </mat-form-field>
+          </div>
         </form>
       </div>
     </div>
@@ -63,24 +194,28 @@ const USER_DATA = [
   ],
 })
 export class PostsComponent {
-
-  loadDataFromRemote = () => {
-    return of(USER_DATA);
-  };
-  entityLabelFn = (u: User) => u.name;
+  loadUsers = () => of(USER_DATA);
+  loadUnits = () => of(BLOCKS);
+  userLabelFn = (u: User) => u.name;
+  blockLabelFn = (u: Block) => u.name;
+  unitLabelFn = (u: Unit) => u.name;
   entities = USER_DATA;
   form!: FormGroup;
-  @ViewChild(SPMatSelectEntityComponent) selectEntityCtrl!: SPMatSelectEntityComponent<User>;
+  @ViewChild(SPMatSelectEntityComponent)
+  selectEntityCtrl!: SPMatSelectEntityComponent<User>;
 
   constructor(private fb: FormBuilder) {
     this.form = this.fb.group({
-      user: [undefined]
+      user: [undefined],
+      unit: [undefined],
     });
-    this.form.valueChanges.pipe(
-      tap(values => {
-        console.log(`Selected user Id: ${values.user}`);
-      })
-    ).subscribe();
+    this.form.valueChanges
+      .pipe(
+        tap((values) => {
+          console.log(`Form values: ${JSON.stringify(values)}`);
+        })
+      )
+      .subscribe();
 
     // setTimeout(() => {
     //   if (this.selectEntityCtrl) {
@@ -99,11 +234,19 @@ export class PostsComponent {
     // }, 3000);
   }
 
-  onEntitySelected(ev: User|User[]) {
-    console.log(`onEntitySelected - ev: ${JSON.stringify(ev)}`);
+  onUserSelected(ev: User | User[]) {
+    console.log(`onUserSelected - ev: ${JSON.stringify(ev)}`);
   }
 
-  onCreateNewItem(ev: any) {
-    console.log(`onCreateNewItem - ev: ${JSON.stringify(ev)}`);
+  onCreateNewUser(ev: any) {
+    console.log(`onCreateNewUser - ev: ${JSON.stringify(ev)}`);
+  }
+
+  onUnitSelected(ev: User | User[]) {
+    console.log(`onUnitSelected - ev: ${JSON.stringify(ev)}`);
+  }
+
+  onCreateNewUnit(ev: any) {
+    console.log(`onCreateNewUnit - ev: ${JSON.stringify(ev)}`);
   }
 }
