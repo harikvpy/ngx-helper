@@ -194,7 +194,9 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
         {
           id: <id>,
           name|label: <>,
-          items|<plural_entityName>: [
+          items|<plural_entityName>|<custom_key>: [
+              TEntity,
+              ...
           ]
         },
         ...
@@ -203,12 +205,16 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   @Input({ required: false }) group = false;
   /**
    * The group object key name under which options are stored. Defaults to
-   * 'items'.
+   * 'items' or pluralized 'entityName'. Ideally the client class should
+   * explicitly set this property value.
    */
   @Input({ required: false }) groupOptionsKey!: string;
-  // If groupOptions = true, specify this to provide accurate label for each
-  // group. If not specified, group label will be determined by looking up one of
-  // the standard fields - name, label or description - whichever comes first.
+  /**
+   * If groupOptions = true, specify this to provide accurate label for each
+   * group. If not specified, group label will be determined by looking up one
+   * of the standard fields - name, label or description - whichever comes
+   * first.
+   */
   @Input({ required: false }) groupLabelFn!: (group: any) => string;
 
   @Output() selectionChange = new EventEmitter<TEntity|TEntity[]>();
