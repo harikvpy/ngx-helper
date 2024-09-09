@@ -6,8 +6,8 @@
     "start": "ng serve",
     "build": "ng build @smallpearl/ngx-helper",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test @smallpearl/ngx-helper --browsers ChromeHeadless",
-    "test-rel": "ng test @smallpearl/ngx-helper --browsers ChromeHeadless --no-watch --no-progress"
+    "lib:test": "ng test @smallpearl/ngx-helper",
+    "lib:test-rel": "ng test @smallpearl/ngx-helper --browsers ChromeHeadless --no-watch --no-progress"
   },
   "private": true,
   "dependencies": {
