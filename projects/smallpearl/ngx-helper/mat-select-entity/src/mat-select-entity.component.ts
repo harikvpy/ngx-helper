@@ -10,6 +10,7 @@ import {
   EventEmitter,
   HostBinding,
   Inject,
+  Injector,
   Input,
   OnDestroy,
   OnInit,
@@ -175,7 +176,7 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   /**
    * Function to load entities from remote.
    */
-  @Input({ required: false }) loadFromRemoteFn!: () => Observable<TEntity[]>;
+  @Input({ required: false }) loadFromRemoteFn!: (injector: Injector) => Observable<TEntity[]>;
 
   @Input({ required: false }) inlineNew: boolean = false;
   /**
@@ -227,8 +228,6 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
 
   private _entities = new Map<PropertyKey, TEntity>();
   private _groupedEntities = new Array<EntityGroup<TEntity>>();
-  private _nextGroupId = 1; // in case EntityGroup does not contain an id key,
-                            // use this to generate a unique id for each group
   
   stateChanges = new Subject<void>();
   focused = false;
@@ -266,6 +265,7 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
     protected http: HttpClient,
     protected cdr: ChangeDetectorRef,
     protected _elementRef: ElementRef<HTMLElement>,
+    protected injector: Injector,
     @Optional() @Inject(MAT_FORM_FIELD) public _formField: MatFormField,
     @Optional() @Self() public ngControl: NgControl,
     @Optional() @Inject(SP_MAT_SELECT_ENTITY_CONFIG) private config: SPMatSelectEntityConfig
@@ -596,7 +596,7 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
 
     let obs: Observable<TEntity[]>;
     if (this.loadFromRemoteFn) {
-      obs = this.loadFromRemoteFn();
+      obs = this.loadFromRemoteFn(this.injector);
     } else {
       let params!: HttpParams;
       if (this.httpParams) {

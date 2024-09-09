@@ -1,6 +1,8 @@
 import { HttpClient, HttpParams, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { Injector } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormControl } from '@angular/forms';
 import { MatOptgroup, MatOption } from '@angular/material/core';
 import { MatSelect } from '@angular/material/select';
 import { By } from '@angular/platform-browser';
@@ -8,7 +10,6 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Observable, of, tap } from 'rxjs';
 import { SPMatSelectEntityComponent } from './mat-select-entity.component';
 import { SP_MAT_SELECT_ENTITY_CONFIG, SPMatSelectEntityConfig } from './providers';
-import { FormControl } from '@angular/forms';
 
 /**
  */
@@ -209,13 +210,16 @@ describe('MatSelectEntityComponent (single selection)', () => {
       0,
       USER_DATA.length / 2
     );
-    const loadDataFromRemote = () => {
+    let injectorArgReceived = false;
+    const loadDataFromRemote = (injector: Injector) => {
+      injectorArgReceived = !!injector;
       return of(DATA);
     };
     component.loadFromRemoteFn = loadDataFromRemote;
     await toggleSelectOpen(fixture);
     // There should be DATA.length+1 <mat-option /> elements
     // The +1 is the <mat-option /> for ngx-mat-select-search.
+    expect(injectorArgReceived).toBeTrue();
     expect(matSel.options.length).toEqual(1 + DATA.length);
     expect((component as any).loaded).toBeTrue();
   });
