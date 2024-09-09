@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatOption } from '@angular/material/core';
+import { MatOptgroup, MatOption } from '@angular/material/core';
 import { MatSelect } from '@angular/material/select';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -30,12 +30,59 @@ const USER_DATA = [
   { id: 10, name: 'Izola Silversmith' },
 ];
 
+
+interface Group {
+  id: number;
+  name: string;
+  users: User[];
+}
+
+// Grouped entities objects - Unit grouped by Block
+const GROUPED_USERS: Group[] = [
+  {
+    id: 1000,
+    name: 'Staff',
+    users: [
+      { id: 1, name: 'Mariam Trevarthen' },
+      { id: 2, name: 'Lanny Nathanson' },
+      { id: 3, name: 'Jaye Nevin' },
+      { id: 4, name: 'Cordelia Blauser' },
+      { id: 5, name: 'Talisha Houk' },
+      { id: 6, name: 'Kirsten Jerkins' },
+      { id: 7, name: 'Kandace Oleary' },
+    ],
+  },
+  {
+    id: 1001,
+    name: 'Managers',
+    users: [
+      { id: 8, name: 'Tammara Michell' },
+      { id: 9, name: 'Lily Rainwater' },
+      { id: 10, name: 'Izola Silversmith' },    
+    ],
+  },
+];
+
 // This is hardcoded as 400 milliseconds in the component code.
 // If the time is increased in the component code, this also has
 // to be updated.
 const DEBOUNCE_TIMEOUT = 400;
 
 type SelectEntityComponent = SPMatSelectEntityComponent<User>;
+
+async function toggleSelectOpen(fixture: ComponentFixture<SelectEntityComponent>, waitForDebounce=true) {
+  // Open the mat-select. To open the mat-select, get it's mat-select-trigger child
+  // and click on it. mat-select-trigger is <div class='mat-mdc-select-trigger'>
+  const triggerElem = fixture.debugElement.query(
+    By.css('.mat-mdc-select-trigger')
+  );
+  (triggerElem.nativeElement as HTMLElement).click();
+  if (waitForDebounce) {
+    // Wait 400 milliseconds, which is the debounceTimeout
+    // for the ngx-mat-select-search filter string
+    await new Promise((r) => setTimeout(r, DEBOUNCE_TIMEOUT));
+  }
+}
 
 describe('MatSelectEntityComponent (single selection)', () => {
   let component!: SelectEntityComponent;
@@ -65,19 +112,6 @@ describe('MatSelectEntityComponent (single selection)', () => {
     document.body.removeChild(fixture.nativeElement);
   });
 
-  async function toggleSelectOpen(waitForDebounce = true) {
-    // Open the mat-select. To open the mat-select, get it's mat-select-trigger child
-    // and click on it. mat-select-trigger is <div class='mat-mdc-select-trigger'>
-    const triggerElem = fixture.debugElement.query(
-      By.css('.mat-mdc-select-trigger')
-    );
-    (triggerElem.nativeElement as HTMLElement).click();
-    // Wait 400 milliseconds, which is the debounceTimeout
-    // for the ngx-mat-select-search filter string
-    if (waitForDebounce) {
-      await new Promise((r) => setTimeout(r, DEBOUNCE_TIMEOUT));
-    }
-  }
 
   it('should create', () => {
     expect(component).toBeTruthy();
@@ -114,7 +148,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
     // Trap HttpClient.get() and return our custom data
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await toggleSelectOpen();
+    await toggleSelectOpen(fixture);
     // There should be USER_DATA.length+1 <mat-option /> elements
     // The +1 is the <mat-option /> for ngx-mat-select-search.
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
@@ -135,7 +169,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
     let params = new HttpParams();
     params = params.set('Authorization', 'abcdefg');
     component.httpParams = params;
-    await toggleSelectOpen();
+    await toggleSelectOpen(fixture);
     // There should be USER_DATA.length+1 <mat-option /> elements
     // The +1 is the <mat-option /> for ngx-mat-select-search.
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
@@ -148,7 +182,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
   it('should filter names based on user input', async () => {
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await toggleSelectOpen(false);
+    await toggleSelectOpen(fixture, false);
     const SEARCH_STRING = USER_DATA[0].name.split(' ')[0];
     // First mat-option element is the ngx-mat-select-search.
     // Simulate user entering into ngx-mat-select-search by setting
@@ -179,7 +213,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
       return of(DATA);
     };
     component.loadFromRemoteFn = loadDataFromRemote;
-    await toggleSelectOpen();
+    await toggleSelectOpen(fixture);
     // There should be DATA.length+1 <mat-option /> elements
     // The +1 is the <mat-option /> for ngx-mat-select-search.
     expect(matSel.options.length).toEqual(1 + DATA.length);
@@ -190,7 +224,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
     // Trap HttpClient.get() and return our custom data
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await toggleSelectOpen();
+    await toggleSelectOpen(fixture);
     // There should be USER_DATA.length+1 <mat-option /> elements
     // The +1 is the <mat-option /> for ngx-mat-select-search.
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
@@ -214,7 +248,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
   it("should allow adding a new entity", async () => {
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await toggleSelectOpen();
+    await toggleSelectOpen(fixture);
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
     const optionsCountBefore = matSel.options.length;
     component.addEntity({id: 100000, name: "Moosa Marikkar"});
@@ -224,7 +258,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
   it("should set the current selection to an entity", async () => {
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await toggleSelectOpen();
+    await toggleSelectOpen(fixture);
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
     const optionsCountBefore = matSel.options.length;
     const DET_MOOSA = {id: 100000, name: "Moosa Marikkar"};
@@ -238,7 +272,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
     component.inlineNew = true;
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await toggleSelectOpen();
+    await toggleSelectOpen(fixture);
     expect(matSel.options.length).toEqual(2 + USER_DATA.length);
     expect(matSel.options.last._getHostElement().innerText.includes('New Item')).toBeTrue();
 
@@ -259,7 +293,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
     component.inlineNew = true;
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await toggleSelectOpen();
+    await toggleSelectOpen(fixture);
     expect(matSel.options.length).toEqual(2 + USER_DATA.length);
     expect(matSel.options.last._getHostElement().innerText.includes('New Item')).toBeTrue();
     // first select first item
@@ -267,10 +301,10 @@ describe('MatSelectEntityComponent (single selection)', () => {
     firstOption?.select(true);
     const currentSel = matSel.value;
     // close the select
-    await toggleSelectOpen();
+    await toggleSelectOpen(fixture);
     fixture.detectChanges();
     // open again, which will update lastSelectValue
-    await toggleSelectOpen();
+    await toggleSelectOpen(fixture);
     fixture.detectChanges();
     expect(component.lastSelectValue).toEqual(firstOption?.value);
 
@@ -325,25 +359,11 @@ describe('MatSelectEntityComponent (multiple selection)', () => {
     document.body.removeChild(fixture.nativeElement);
   });
 
-  async function toggleSelectOpen(waitForDebounce=true) {
-    // Open the mat-select. To open the mat-select, get it's mat-select-trigger child
-    // and click on it. mat-select-trigger is <div class='mat-mdc-select-trigger'>
-    const triggerElem = fixture.debugElement.query(
-      By.css('.mat-mdc-select-trigger')
-    );
-    (triggerElem.nativeElement as HTMLElement).click();
-    if (waitForDebounce) {
-      // Wait 400 milliseconds, which is the debounceTimeout
-      // for the ngx-mat-select-search filter string
-      await new Promise((r) => setTimeout(r, DEBOUNCE_TIMEOUT));
-    }
-  }
-
   // MatSelectEntityComponent with multiple selection
   it('should allow multiple selection', async () => {
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await toggleSelectOpen();
+    await toggleSelectOpen(fixture);
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
 
     // Select first and last item. This is equivalent to checking
@@ -365,7 +385,7 @@ describe('MatSelectEntityComponent (multiple selection)', () => {
     component.multiple = true;
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await toggleSelectOpen();
+    await toggleSelectOpen(fixture);
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
     const sel1 = (matSel.options.get(1) as MatOption<any>);
     const sel2 = (matSel.options.get(2) as MatOption<any>);
@@ -386,7 +406,7 @@ describe('MatSelectEntityComponent (multiple selection)', () => {
   it("should emit 'entitySelected' event", async () => {
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await toggleSelectOpen();
+    await toggleSelectOpen(fixture);
     // There should be USER_DATA.length+1 <mat-option /> elements
     // The +1 is the <mat-option /> for ngx-mat-select-search.
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
@@ -420,7 +440,7 @@ describe('MatSelectEntityComponent (multiple selection)', () => {
     component.inlineNew = true;
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    await toggleSelectOpen();
+    await toggleSelectOpen(fixture);
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
   });
 });
@@ -481,4 +501,102 @@ describe('MatSelectEntityComponent (config object)', () => {
     expect(lastOption.value).toEqual('0');
     expect(lastOption._text?.nativeElement.innerText.includes(SelectEntityConfig.i18n.addItem)).toBeTrue();
   });
+});
+
+describe('MatEntitySelectComponent (grouped entities', () => {
+  let component!: SelectEntityComponent;
+  let fixture!: ComponentFixture<SelectEntityComponent>;
+  let matSel!: MatSelect;
+
+  beforeEach(async () => {
+    TestBed.configureTestingModule({
+      imports: [
+        NoopAnimationsModule,
+        SPMatSelectEntityComponent,
+      ],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+    fixture = TestBed.createComponent(SPMatSelectEntityComponent<User>);
+    component = fixture.componentInstance;
+    component.url = 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb';
+    component.entityLabelFn = (user: User) => user.name;
+    component.entityName = 'user';
+    component.group = true;
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(
+      By.directive(MatSelect)
+    ).componentInstance;
+  });
+
+  afterEach(() => {
+    document.body.removeChild(fixture.nativeElement);
+  });
+
+  it("should load options from pluralized 'entityName'", async () => {
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(of(GROUPED_USERS));
+    expect(true).toBeTruthy();
+    await toggleSelectOpen(fixture);
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
+    const matOptGroup = fixture.debugElement.queryAll(
+      By.directive(MatOptgroup)
+    );
+    expect(matOptGroup.length).toEqual(2);
+    // verify that the mat-optgroup's label and the length of its child 
+    // 'mat-option' elements matches our GROUPED_USERS array.
+    expect(matOptGroup[0].componentInstance.label).toEqual(GROUPED_USERS[0].name);
+    expect(matOptGroup[0].nativeElement.querySelectorAll('mat-option').length).toEqual(GROUPED_USERS[0].users.length);
+    expect(matOptGroup[1].componentInstance.label).toEqual(GROUPED_USERS[1].name);
+    expect(matOptGroup[1].nativeElement.querySelectorAll('mat-option').length).toEqual(GROUPED_USERS[1].users.length);
+
+    // select an entity and check that it emits the 'selectionChange' event.
+    let selectedEntityId!: User['id'];
+    const sub$ = component.selectionChange
+      .pipe(
+        tap((entity) => {
+          selectedEntityId = (entity as User).id;
+        })
+      )
+      .subscribe();
+    // Select a random entity
+    const lastOption = matSel.options.last;
+    lastOption.select(true);
+    expect(selectedEntityId).toEqual(lastOption.value);
+    sub$.unsubscribe();
+  });
+
+  it("should load options when 'groupOptionsKey' is set", async () => {
+    component.groupOptionsKey= 'users';
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(of(GROUPED_USERS));
+    expect(true).toBeTruthy();
+    await toggleSelectOpen(fixture);
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
+    const matOptGroup = fixture.debugElement.queryAll(
+      By.directive(MatOptgroup)
+    );
+    expect(matOptGroup.length).toEqual(2);
+    // verify that the mat-optgroup's label and the length of its child 
+    // 'mat-option' elements matches our GROUPED_USERS array.
+    expect(matOptGroup[0].componentInstance.label).toEqual(GROUPED_USERS[0].name);
+    expect(matOptGroup[0].nativeElement.querySelectorAll('mat-option').length).toEqual(GROUPED_USERS[0].users.length);
+    expect(matOptGroup[1].componentInstance.label).toEqual(GROUPED_USERS[1].name);
+    expect(matOptGroup[1].nativeElement.querySelectorAll('mat-option').length).toEqual(GROUPED_USERS[1].users.length);
+
+    // select an entity and check that it emits the 'selectionChange' event.
+    let selectedEntityId!: User['id'];
+    const sub$ = component.selectionChange
+      .pipe(
+        tap((entity) => {
+          selectedEntityId = (entity as User).id;
+        })
+      )
+      .subscribe();
+    // Select a random entity
+    const lastOption = matSel.options.last;
+    lastOption.select(true);
+    expect(selectedEntityId).toEqual(lastOption.value);
+    sub$.unsubscribe();
+  });
+
 });

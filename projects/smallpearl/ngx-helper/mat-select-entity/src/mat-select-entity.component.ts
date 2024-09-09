@@ -635,11 +635,12 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
       return this.groupLabelFn(group);
     }
     const standardLabelFields = ['name', 'label', 'desc', 'description'];
-    standardLabelFields.forEach((labelField: string) => {
+    for (let index = 0; index < standardLabelFields.length; index++) {
+      const labelField = standardLabelFields[index];
       if ((group as any)[labelField]) {
         return (group as any)[labelField];
-      }
-    })
+      }      
+    }
     return `Group ${String(group.id)}`;
   }
 
