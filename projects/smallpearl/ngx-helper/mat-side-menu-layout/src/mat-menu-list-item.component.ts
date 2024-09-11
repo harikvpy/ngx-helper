@@ -5,7 +5,6 @@ import {
   transition,
   trigger,
 } from '@angular/animations';
-import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -18,9 +17,7 @@ import {
   QueryList,
   ViewChildren,
 } from '@angular/core';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
-import { MatListModule } from '@angular/material/list';
+import { MatDialog } from '@angular/material/dialog';
 import {
   ActivatedRoute,
   NavigationEnd,
@@ -31,29 +28,31 @@ import { filter, tap } from 'rxjs';
 import { NavItem } from './nav-item';
 
 @Component({
-  selector: 'qq-mat-menu-list-item',
+  selector: 'ngx-mat-menu-list-item',
   template: `
-    <a
+    <a *ngIf="item.children || item.route; else divider"
       mat-list-item
-      [ngStyle]="{ 'padding-left': depth * 10 + 'px' }"
+      [ngStyle]="{ 'padding-left': depth * 8 + 'px' }"
       [disabled]="item.disabled"
       [attr.routerLink]="!item.children ? item.route : null"
-      class="menu-list-item"
+      class="menu-list-item pl-8"
       [ngClass]="{
         highlighted: this.highlighted,
-        'not-highlighted': !this.highlighted
+        'not-highlighted': !this.highlighted,
       }"
       routerLinkActive="is-active"
       (click)="onItemSelected($event, item)"
     >
       <mat-icon
-        *ngIf="!item.iconType || item.iconType == 'mat'"
+        *ngIf="
+          (item.icon && showIcon && !item.iconType) || item.iconType == 'mat'
+        "
         class="menu-item-color"
         matListItemIcon
         >{{ item.icon }}</mat-icon
       >
       <i
-        *ngIf="item.iconType != 'mat'"
+        *ngIf="item.icon && showIcon && item.iconType != 'mat'"
         [class]="'menu-item-color ' + item.icon"
       ></i>
       <span class="menu-item-color text-uppercase">{{ item.text }}</span>
@@ -68,20 +67,27 @@ import { NavItem } from './nav-item';
       </span>
     </a>
     <div>
-      <qq-mat-menu-list-item
+      <ngx-mat-menu-list-item
         class="menu-child"
+        [showIcon]="showIcon"
         [ngStyle]="{ display: expanded ? 'inherit' : 'none' }"
         *ngFor="let child of item.children"
         [item]="child"
         [parent]="this"
         [depth]="depth + 1"
-      ></qq-mat-menu-list-item>
+      ></ngx-mat-menu-list-item>
     </div>
+    <ng-template #divider>
+      <div class="menu-divider"></div>
+    </ng-template>
   `,
   styles: [
     `
       .menu-list-item {
         margin-right: 8px !important;
+      }
+      .pl-8 {
+        padding-left: 8px;
       }
       .twistie-separator {
         flex: 1 1 0%;
@@ -103,19 +109,26 @@ import { NavItem } from './nav-item';
         margin-right: 8px !important;
       }
       .menu-item-color {
-        background-color: var(--qq-menu-item-bg-color) !important;
-        color: var(--qq-menu-item-fg-color) !important;
+        background-color: var(--sp-mat-menu-menu-item-bg-color) !important;
+        color: var(--sp-mat-menu-menu-item-fg-color) !important;
       }
       .highlighted {
-        background-color: var(--qq-highlighted-menu-item-bg-color) !important;
-        color: var(--qq-highlighted-menu-item-fg-color) !important;
+        background-color: var(
+          --sp-mat-menu-highlighted-menu-item-bg-color
+        ) !important;
+        color: var(--sp-mat-menu-highlighted-menu-item-fg-color) !important;
       }
       .highlighted .menu-item-color {
-        background-color: var(--qq-highlighted-menu-item-bg-color) !important;
-        color: var(--qq-highlighted-menu-item-fg-color) !important;
+        background-color: var(
+          --sp-mat-menu-highlighted-menu-item-bg-color
+        ) !important;
+        color: var(--sp-mat-menu-highlighted-menu-item-fg-color) !important;
       }
       .mdc-list-item {
         padding-right: 0px;
+      }
+      .menu-divider {
+        height: 1em;
       }
     `,
   ],
@@ -130,10 +143,8 @@ import { NavItem } from './nav-item';
       ),
     ]),
   ],
-  standalone: true,
-  imports: [CommonModule, MatIconModule, MatListModule, MatDialogModule],
 })
-export class QQMatMenuListItemComponent
+export class SPMatMenuListItemComponent
   implements OnInit, OnDestroy, AfterViewInit
 {
   expanded = false;
@@ -150,13 +161,15 @@ export class QQMatMenuListItemComponent
 
   // The parent of this menu item. Set only for child items. Will be undefined
   // for top level menu items
-  @Input() parent!: QQMatMenuListItemComponent;
+  @Input() parent!: SPMatMenuListItemComponent;
+
+  @Input() showIcon: boolean = true;
 
   // All child MenuListItemComponents so that we can check each one if
   // the current url ends with the child component's NavItem.route.
   // If it does then we have to mark this component as expanded.
-  @ViewChildren(QQMatMenuListItemComponent)
-  children!: QueryList<QQMatMenuListItemComponent>;
+  @ViewChildren(SPMatMenuListItemComponent)
+  children!: QueryList<SPMatMenuListItemComponent>;
 
   // Trap router's NavigationEnd event to change the currently select/deselect
   // MenuItem components. That is select the MenuListItem matching the newly
@@ -167,23 +180,20 @@ export class QQMatMenuListItemComponent
       tap((event: RouterEvent) => {
         const ne = event as NavigationEnd;
         const url = ne.urlAfterRedirects;
-        if (this.item?.route) {
-          if (url.endsWith(this.item.route)) {
-            this.highlighted = true;
-            if (this.parent) {
-              this.parent.expand();
-            }
+        const lastSlash = url.lastIndexOf('/');
+        const lastUrlSegment = url.substring(lastSlash + 1);
+        if (lastUrlSegment === this.item?.route) {
+          this.highlighted = true;
+          if (this.parent) {
+            this.parent.expand();
+          }
+          this.cdr.detectChanges();
+        } else {
+          if (this.highlighted) {
+            this.highlighted = false;
             this.cdr.detectChanges();
-          } else {
-            if (this.highlighted) {
-              this.highlighted = false;
-              // If the item has a parent and current url is not for a sibling
-              // item, collapse parent.
-              if (this.parent && !this.parent.curUrlEndsWithChildItemRoute()) {
-                this.parent.collapse();
-              }
-              this.cdr.detectChanges();
-            }
+          } else if (this.expanded && !this.curUrlADescendent()) {
+            this.collapse();
           }
         }
       })
@@ -197,7 +207,7 @@ export class QQMatMenuListItemComponent
     private cdr: ChangeDetectorRef
   ) {
     if (this.depth === undefined) {
-      this.depth = 0;
+      this.depth = 1;
     }
   }
 
@@ -224,6 +234,37 @@ export class QQMatMenuListItemComponent
   }
 
   /**
+   * Tests if any of this NavItem's children's route matches the lastUrlSegment
+   * of the current url.
+   * @returns
+   */
+  curUrlADescendent(): boolean {
+    const curUrl = this.router.routerState.snapshot.url;
+    const lastSlash = curUrl.lastIndexOf('/');
+    const lastUrlSegment = curUrl.substring(lastSlash + 1);
+    if (this.item?.children) {
+      const traverseToLastChild = (item: NavItem): boolean => {
+        if (item?.children) {
+          // iterate all the children and check if the last url segment
+          // matches the corresponding NavItem.route.
+          for (let index = 0; index < item.children.length; index++) {
+            const childItem = item.children[index];
+            if (childItem?.children) {
+              return traverseToLastChild(childItem);
+            }
+            if (lastUrlSegment === childItem?.route) {
+              return true; // We don't have to check the rest of the items
+            }
+          }
+        }
+        return false;
+      };
+      return traverseToLastChild(this.item);
+    }
+    return false;
+  }
+
+  /**
    * Tests if the current URL ends with the route of one of the
    * child menu item's NavItem.route.
    *
@@ -231,11 +272,13 @@ export class QQMatMenuListItemComponent
    */
   curUrlEndsWithChildItemRoute(): boolean {
     const curUrl = this.router.routerState.snapshot.url;
+    const lastSlash = curUrl.lastIndexOf('/');
+    const lastUrlSegment = curUrl.substring(lastSlash + 1);
     if (this.children && this.children.length) {
       if (
         this.children.find(
           (component) =>
-            !!(component.item?.route && curUrl.endsWith(component.item.route))
+            !!(component.item?.route && lastUrlSegment === component.item.route)
         ) !== undefined
       ) {
         return true;
@@ -252,9 +295,11 @@ export class QQMatMenuListItemComponent
    */
   curUrlEndsWithSelfOrChildItemRoute(): boolean {
     const curUrl = this.router.routerState.snapshot.url;
+    const lastSlash = curUrl.lastIndexOf('/');
+    const lastUrlSegment = curUrl.substring(lastSlash + 1);
     return (
       this.curUrlEndsWithChildItemRoute() ||
-      !!(this.item.route && curUrl.endsWith(this.item.route))
+      !!(this.item.route && lastUrlSegment === this.item.route) //  curUrl.endsWith(this.item.route)
     );
   }
 

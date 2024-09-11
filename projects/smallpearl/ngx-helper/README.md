@@ -49,7 +49,7 @@ for its color.
 A parent container component that functions as the menu pane for the
 `mat-sidenav` based user interface. The sidenav user interface (or layout),
 consisting of a sidenav and a top toolbar, is wrapped as a component in
-`qq-mat-side-menu-layout` described below.
+`sp-mat-menu-layout` described below.
 
 This component takes an array of `NavItem` objects and renders it as the menu
 in a container `div`. Typically this `div` will be hosted in a `mat-sidenav` as
@@ -81,14 +81,14 @@ To use this component, initialize it with the branding logo & text, application
 title and menu items (`NavItem[]`). This is the sample code from the example
 in this repo: -
 ```
-    <qq-mat-side-menu-layout
+    <sp-mat-menu-layout
       brandingImage="assets/angular.png"
       brandingText="SMALLPEARL"
       appTitle="QQBOOKS"
       [menuItems]="menuItems"
       [menuPaneFooterContent]="versionInfoFooter"
       [toolbarTitleContent]="toolbarTitle"
-    ></qq-mat-side-menu-layout>
+    ></sp-mat-menu-layout>
     <ng-template #versionInfoFooter>
       <div style="text-align: center; font-size: 0.8em;">
         <select name="language" id="language">
@@ -174,7 +174,7 @@ in this repo: -
 
 The component supports an information pane on the end of the pag. But it's
 hidden by default and has to be explicitly shown. One way to do that would be
-to query the `infoPane` member of `QQMatSideMenuLayoutComponent`
+to query the `infoPane` member of `SPMatMenuLayoutComponent`
 which is an instance of the `MatSideNav` component. You can toggle its
 visibility by calling its `toggle()` method. An approach could be to show a
 button at the end of the toolbar and then call `infoPane.toggle()` when the
@@ -182,8 +182,8 @@ button is selected.
 
 ```
   export class AppHomeComponent implements OnInit {
-    @ViewChild(QQMatSideMenuLayoutComponent)
-    sideMenuLayout: QQMatSideMenuLayoutComponent;
+    @ViewChild(SPMatMenuLayoutComponent)
+    sideMenuLayout: SPMatMenuLayoutComponent;
 
     ngOnInit(): void {}
 

@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -9,36 +8,29 @@ import {
   TemplateRef,
   ViewChild,
 } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { RouterOutlet } from '@angular/router';
+import { MatSidenav } from '@angular/material/sidenav';
 import { Subject, takeUntil, tap } from 'rxjs';
-import { NavItem } from '@smallpearl/ngx-helper/mat-menu-list-item';
-import {
-  QQMatMenuPaneComponent,
-  LayoutService,
-  SideMenuLayoutProps,
-} from '@smallpearl/ngx-helper/mat-menu-pane';
+import { LayoutService, SideMenuLayoutProps } from './layout.service';
+import { NavItem } from './nav-item';
 
 @Component({
-  selector: 'qq-mat-side-menu-layout',
+  selector: 'sp-mat-menu-layout',
   template: `
     <mat-sidenav-container class="layout-container">
       <mat-sidenav
         class="menu-pane"
-        mode="side"
         opened
         #menuNav
         [mode]="layout.smallScreen ? 'over' : 'side'"
         [opened]="!layout.smallScreen"
         [fixedInViewport]="layout.smallScreen"
       >
-        <div class="sidenav-container mw-192px">
-          <qq-mat-menu-pane
+        <div class="sidenav-container">
+          <ngx-mat-menu-pane
             [showBackButton]="showBackButton"
+            [showIcons]="showIcons"
             [defaultBackButtonHref]="defaultBackButtonHref"
+            [backButtonText]="backButtonText"
             [brandingImage]="brandingImage"
             [brandingText]="brandingText"
             [menuItems]="menuItems"
@@ -46,7 +38,7 @@ import {
             [menuPaneFooterContent]="menuPaneFooterContent"
             [menuTitle]="menuTitle"
             class="h-100"
-          ></qq-mat-menu-pane>
+          ></ngx-mat-menu-pane>
         </div>
       </mat-sidenav>
 
@@ -80,7 +72,7 @@ import {
           <ng-container *ngTemplateOutlet="toolbarEndContent"></ng-container>
         </mat-toolbar>
         <div
-          [class]="'mat-body content-container ' + contentContainerClass"
+          [class]="'mat-body ' + contentContainerClass"
           [ngStyle]="{
             'height.px': containerHeight,
           }"
@@ -93,12 +85,12 @@ import {
   styles: [
     `
       .menu-pane {
-        background-color: var(--qq-sidenav-bg-color) !important;
-        color: var(--qq-sidenav-fg-color) !important;
+        background-color: var(--sp-mat-menu-bg-color) !important;
+        color: var(--sp-mat-menu-fg-color) !important;
       }
       mat-toolbar {
-        background-color: var(--qq-toolbar-bg-color);
-        color: var(--qq-toolbar-fg-color);
+        background-color: var(--sp-mat-menu-toolbar-bg-color);
+        color: var(--sp-mat-menu-toolbar-fg-color);
       }
       mat-toolbar {
         padding: 0 0;
@@ -112,42 +104,33 @@ import {
       }
       .sidenav-container {
         height: 100%;
-        max-width: 250px;
+        max-width: var(--sp-mat-menu-sidemenu-max-width, 50%);
+        min-width: var(--sp-mat-menu-sidemenu-min-width, 250px);
         text-wrap: nowrap;
-        overflow-x: scroll;
-        overflow-y: scroll;
-      }
-      .content-container {
         overflow-x: scroll;
         overflow-y: scroll;
       }
       .h-100 {
         height: 100%;
       }
-      .mw-192px {
-        min-width: 192px;
-      }
       .app-toolbar {
-        border-bottom: 1px solid var(--qq-toolbar-border-color);
+        border-bottom: 1px solid var(--sp-mat-menu-toolbar-border-color);
       }
       .spacer {
         flex: 1 1 auto;
       }
     `,
   ],
+  // Add this style to make the content-container scroll from within.
+  // That is override the window scrolling with the content div private
+  // scroller.
+  // .content-container {
+  //   overflow-x: scroll;
+  //   overflow-y: scroll;
+  // }
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: true,
-  imports: [
-    CommonModule,
-    RouterOutlet,
-    MatSidenavModule,
-    MatToolbarModule,
-    MatIconModule,
-    MatButtonModule,
-    QQMatMenuPaneComponent,
-  ],
 })
-export class QQMatSideMenuLayoutComponent implements OnInit, OnDestroy {
+export class SPMatMenuLayoutComponent implements OnInit, OnDestroy {
   @ViewChild('menuNav') menuNav!: MatSidenav;
   layout!: SideMenuLayoutProps;
   destroy = new Subject<void>();
@@ -155,6 +138,7 @@ export class QQMatSideMenuLayoutComponent implements OnInit, OnDestroy {
   topBottomPadding: number = 6;
   @Input() showBackButton: boolean = false;
   @Input() defaultBackButtonHref: string = '';
+  @Input() backButtonText: string = 'BACK';
   @Input() brandingImage: string = '';
   @Input() brandingText: string = '';
   @Input() appTitle: string = '';
@@ -169,6 +153,7 @@ export class QQMatSideMenuLayoutComponent implements OnInit, OnDestroy {
   @Input() infoPaneMinWidth: number = 250;
   @Input() infoPaneMaxWidth: number = 400;
   @Input() contentContainerClass: string = '';
+  @Input() showIcons: boolean = true;
   // Allows querying infoPane to activate it or to set its attributes
   @ViewChild('infoPane') readonly infoPane!: MatSidenav;
 

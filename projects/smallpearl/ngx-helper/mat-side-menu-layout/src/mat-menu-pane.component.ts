@@ -1,27 +1,22 @@
-import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   Input,
+  OnChanges,
   OnDestroy,
   OnInit,
+  SimpleChanges,
   TemplateRef,
 } from '@angular/core';
-import { MatBadgeModule } from '@angular/material/badge';
-import { MatListModule } from '@angular/material/list';
-import { MatMenuModule } from '@angular/material/menu';
-import { Subject, filter, takeUntil, tap } from 'rxjs';
-import { SideMenuLayoutProps, LayoutService } from './layout.service';
-import { NavigationEnd, Router } from '@angular/router';
 import { MatSidenav } from '@angular/material/sidenav';
-import {
-  QQMatMenuListItemComponent,
-  NavItem,
-} from '@smallpearl/ngx-helper/mat-menu-list-item';
+import { NavigationEnd, Router } from '@angular/router';
+import { Subject, filter, takeUntil, tap } from 'rxjs';
+import { LayoutService, SideMenuLayoutProps } from './layout.service';
+import { NavItem } from './nav-item';
 
 @Component({
-  selector: 'qq-mat-menu-pane',
+  selector: 'ngx-mat-menu-pane',
   template: `
     <div class="menu-pane-wrapper">
       <div class="sidenav-branding mat-toolbar-single-row">
@@ -35,14 +30,15 @@ import {
       <div class="sidenav-menu">
         <div *ngIf="menuTitle" class="mat-body title">{{ menuTitle }}</div>
         <mat-nav-list>
-          <qq-mat-menu-list-item
+          <ngx-mat-menu-list-item
             *ngIf="backButtonNavItem"
             [item]="backButtonNavItem"
-          ></qq-mat-menu-list-item>
-          <qq-mat-menu-list-item
+          ></ngx-mat-menu-list-item>
+          <ngx-mat-menu-list-item
             *ngFor="let item of menuItems"
             [item]="item"
-          ></qq-mat-menu-list-item>
+            [showIcon]="showIcons"
+          ></ngx-mat-menu-list-item>
         </mat-nav-list>
       </div>
       <div class="sidenav-version" *ngIf="menuPaneFooterContent">
@@ -52,25 +48,19 @@ import {
   `,
   styleUrls: ['./mat-menu-pane.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: true,
-  imports: [
-    CommonModule,
-    MatListModule,
-    MatMenuModule,
-    MatBadgeModule,
-    QQMatMenuListItemComponent,
-  ],
 })
-export class QQMatMenuPaneComponent implements OnInit, OnDestroy {
+export class SPMatMenuPaneComponent implements OnInit, OnDestroy, OnChanges {
   @Input() menuTitle: string = '';
   @Input() showBackButton: boolean = false;
   @Input() defaultBackButtonHref: string = '';
+  @Input() backButtonText: string = 'BACK';
   @Input() menuItems: NavItem[] = [];
   @Input() brandingText: string = 'BRAND';
   @Input() brandingImage: string = '';
   @Input() matSideNav: MatSidenav | undefined;
   @Input() appVersion: string = '0.0';
   @Input() menuPaneFooterContent!: TemplateRef<any>;
+  @Input() showIcons: boolean = true;
   layout!: SideMenuLayoutProps;
 
   backButtonNavItem: NavItem | undefined;
@@ -102,7 +92,7 @@ export class QQMatMenuPaneComponent implements OnInit, OnDestroy {
         route: this.layoutService.previousUrl
           ? this.layoutService.previousUrl
           : this.defaultBackButtonHref,
-        text: 'BACK',
+        text: this.backButtonText,
         icon: 'arrow_back',
         backButton: true,
         backHref: window.history.state['backHref'],
@@ -125,5 +115,17 @@ export class QQMatMenuPaneComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.destroy.next();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['backButtonText']) {
+      if (this.backButtonNavItem) {
+        this.backButtonNavItem = {
+          ...this.backButtonNavItem,
+          text: this.backButtonText,
+        };
+        this.cdr.detectChanges();
+      }
+    }
   }
 }
