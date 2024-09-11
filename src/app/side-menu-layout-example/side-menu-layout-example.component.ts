@@ -1,11 +1,10 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { NavItem } from '@smallpearl/ngx-helper/mat-menu-list-item/src/nav-item';
-import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-menu-layout/src/mat-side-menu-layout.component';
+import { NavItem, SPMatMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-menu-layout';
 
 @Component({
   selector: 'app-side-menu-layout-eample',
   template: `
-    <qq-mat-side-menu-layout
+    <sp-mat-menu-layout
       brandingImage="assets/angular.png"
       brandingText="SMALLPEARL"
       appTitle="QQBOOKS"
@@ -18,7 +17,7 @@ import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-me
       [infoPaneMaxWidth]="500"
       [toolbarTitleContent]="toolbarTitle"
       #layout
-    ></qq-mat-side-menu-layout>
+    ></sp-mat-menu-layout>
     <ng-template #versionInfoFooter>
       <app-sidemenu-footer></app-sidemenu-footer>
     </ng-template>
@@ -37,9 +36,7 @@ import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-me
   styles: [],
 })
 export class SideMenuLayoutExampleComponent implements OnInit {
-  @ViewChild(QQMatSideMenuLayoutComponent)
-  sideMenuLayout!: QQMatSideMenuLayoutComponent;
-
+  @ViewChild(SPMatMenuLayoutComponent) sideMenuLayout!: SPMatMenuLayoutComponent;
   menuItems: NavItem[] = [
     {
       route: 'posts',

@@ -1,11 +1,10 @@
 import { Component, ViewChild } from '@angular/core';
-import { NavItem } from '@smallpearl/ngx-helper/mat-menu-list-item';
-import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-menu-layout';
+import { NavItem, SPMatMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-menu-layout';
 
 @Component({
   selector: 'app-satellite-app-home',
   template: `
-    <qq-mat-side-menu-layout
+    <sp-mat-menu-layout
       contentContainerClass="ex-content-container"
       [showBackButton]="true"
       brandingImage="assets/angular.png"
@@ -20,7 +19,7 @@ import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-me
       [infoPaneMaxWidth]="500"
       [toolbarTitleContent]="toolbarTitle"
       #layout
-    ></qq-mat-side-menu-layout>
+    ></sp-mat-menu-layout>
     <ng-template #versionInfoFooter>
       <app-sidemenu-footer></app-sidemenu-footer>
     </ng-template>
@@ -51,8 +50,8 @@ export class SatelliteAppHomeComponent {
       icon: 'book_online',
     },
   ];
-  @ViewChild(QQMatSideMenuLayoutComponent)
-  sideMenuLayout!: QQMatSideMenuLayoutComponent;
+  @ViewChild(SPMatMenuLayoutComponent)
+  sideMenuLayout!: SPMatMenuLayoutComponent;
 
   constructor() {}
   onNotificationsToggle() {

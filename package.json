@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build @smallpearl/ngx-helper",
-    "watch": "ng build --watch --configuration development",
+    "app:start": "ng serve",
+    "lib:build": "ng build @smallpearl/ngx-helper",
+    "lib:watch": "ng build @smallpearl/ngx-helper --configuration --watch",
     "lib:test": "ng test @smallpearl/ngx-helper",
     "lib:test-rel": "ng test @smallpearl/ngx-helper --browsers ChromeHeadless --no-watch --no-progress"
   },

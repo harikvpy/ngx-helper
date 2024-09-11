@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SatelliteAppHomeComponent } from './satellite-app-home.component';
 import { RouterModule, Routes } from '@angular/router';
-import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-menu-layout';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -10,6 +9,7 @@ import { SidemenuFooterComponent } from '../components/sidemenu-footer/sidemenu-
 import { SidemenuInfoPaneComponent } from '../components/sidemenu-info-pane/sidemenu-info-pane.component';
 import { ToolbarEndButtonsComponent } from '../components/toolbar-end-buttons/toolbar-end-buttons.component';
 import { ToolbarTitleComponent } from '../components/toolbar-title/toolbar-title.component';
+import { SPMatMenuLayoutComponent, SPMatMenuLayoutModule } from '@smallpearl/ngx-helper/mat-side-menu-layout';
 
 const routes: Routes = [
   {
@@ -44,7 +44,7 @@ const routes: Routes = [
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
-    QQMatSideMenuLayoutComponent,
+    SPMatMenuLayoutModule,
     SidemenuFooterComponent,
     SidemenuInfoPaneComponent,
     ToolbarTitleComponent,

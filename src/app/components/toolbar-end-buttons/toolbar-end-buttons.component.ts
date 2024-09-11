@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
-import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-menu-layout';
+import { SPMatMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-menu-layout';
 
 @Component({
   selector: 'app-toolbar-end-buttons',
@@ -53,7 +53,7 @@ import { QQMatSideMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-me
   ],
 })
 export class ToolbarEndButtonsComponent {
-  @Input() sideMenuLayout!: QQMatSideMenuLayoutComponent;
+  @Input() sideMenuLayout!: SPMatMenuLayoutComponent;
 
   onNotificationsToggle() {
     if (this.sideMenuLayout) {
