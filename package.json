@@ -40,6 +40,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.0.0",
     "ng-packagr": "^17.2.0",
+    "ngx-infinite-scroll": "^17.0.1",
     "ngx-mat-select-search": "^7.0.7",
     "typescript": "~5.3.3"
   }

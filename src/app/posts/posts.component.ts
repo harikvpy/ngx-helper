@@ -1,9 +1,10 @@
-import { Component, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SPMatSelectEntityComponent } from '@smallpearl/ngx-helper/mat-select-entity';
-import { of, tap } from 'rxjs';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { SPMatSelectEntityComponent } from '@smallpearl/ngx-helper/mat-select-entity';
+import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
+import { of, tap } from 'rxjs';
 
 /**
  */
@@ -142,9 +143,19 @@ const BLOCKS: Block[] = [
     CommonModule,
     ReactiveFormsModule,
     MatFormFieldModule,
+    InfiniteScrollDirective,
     SPMatSelectEntityComponent,
   ],
   template: `
+  <div class="posts-wrapper"
+    infiniteScroll
+    (scrolled)="onScrollDown()"
+    (scrolledUp)="onScrollUp()"
+    [scrollWindow]="false"
+    [infiniteScrollDistance]="1.5"
+    infiniteScrollContainer=".sp-sidenav-content-container"
+    [fromRoot]="true"
+  >
     <div class="posts-container">
       <h2>Posts</h2>
       <div class="">
@@ -180,17 +191,17 @@ const BLOCKS: Block[] = [
         </form>
       </div>
     </div>
+  </div>
   `,
-  styles: [
-    `
-      .posts-container {
-        height: 1500px;
-      }
-      .h2 {
-        font-size: 1.3em;
-        font-weight: 800;
-      }
-    `,
+  styles: [`
+    .posts-container {
+      height: 1500px;
+    }
+    .h2 {
+      font-size: 1.3em;
+      font-weight: 800;
+    }
+  `,
   ],
 })
 export class PostsComponent {
@@ -204,7 +215,7 @@ export class PostsComponent {
   @ViewChild(SPMatSelectEntityComponent)
   selectEntityCtrl!: SPMatSelectEntityComponent<User>;
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private host: ElementRef) {
     this.form = this.fb.group({
       user: [undefined],
       unit: [undefined],
@@ -248,5 +259,13 @@ export class PostsComponent {
 
   onCreateNewUnit(ev: any) {
     console.log(`onCreateNewUnit - ev: ${JSON.stringify(ev)}`);
+  }
+
+  onScrollDown() {
+    console.log(`onScrollDown`);
+  }
+
+  onScrollUp() {
+    console.log(`onScrollUp`);
   }
 }
