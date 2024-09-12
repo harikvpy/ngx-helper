@@ -95,7 +95,7 @@ export class SPMatMenuPaneComponent implements OnInit, OnDestroy, OnChanges {
         text: this.backButtonText,
         icon: 'arrow_back',
         backButton: true,
-        backHref: window.history.state['backHref'],
+        backHref: window.history.state ? window.history.state['backHref'] : '#',
       };
       this.cdr.detectChanges();
     }

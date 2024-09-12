@@ -6,7 +6,7 @@ import {
   OnDestroy,
   OnInit,
   TemplateRef,
-  ViewChild,
+  ViewChild
 } from '@angular/core';
 import { MatSidenav } from '@angular/material/sidenav';
 import { Subject, takeUntil, tap } from 'rxjs';
@@ -55,8 +55,8 @@ import { NavItem } from './nav-item';
         <ng-container *ngTemplateOutlet="infoPaneContent"></ng-container>
       </mat-sidenav>
 
-      <mat-sidenav-content>
-        <mat-toolbar class="app-toolbar">
+      <mat-sidenav-content class="sp-sidenav-content-wrapper">
+        <mat-toolbar class="sp-sidenav-content-toolbar">
           <button mat-icon-button (click)="onToggleMenuPane()">
             <mat-icon>menu</mat-icon>
           </button>
@@ -71,13 +71,24 @@ import { NavItem } from './nav-item';
           <span class="spacer"></span>
           <ng-container *ngTemplateOutlet="toolbarEndContent"></ng-container>
         </mat-toolbar>
-        <div
-          [class]="'mat-body ' + contentContainerClass"
-          [ngStyle]="{
-            'height.px': containerHeight,
-          }"
-        >
-          <router-outlet></router-outlet>
+        <!-- This div takes up the rest of the vertical space on the screen.
+         It also has display:flex with overflow: auto, which causes it to have
+         the scrollbar if its child's height exceeds it's own height.
+         Note that the menu layout's child routes are placed in yet another
+         child div, which is required for the scrollbar to be active only
+         in "<div class="sp-sidenav-content-container>".
+         -->
+        <div class="sp-sidenav-content-container">
+          <div>
+            <!-- this is necessary or the <div class="sp-sidenav-content-container>
+          local scrolling logic won't work -->
+            <div [class]="contentContainerClass">
+              <!-- child route's content goes here.
+              This div can be customized by a contentContainerClass which is a property
+              that can be customized by the client. -->
+              <router-outlet></router-outlet>
+            </div>
+          </div>
         </div>
       </mat-sidenav-content>
     </mat-sidenav-container>
@@ -102,6 +113,20 @@ import { NavItem } from './nav-item';
         left: 0;
         right: 0;
       }
+      .sp-sidenav-content-wrapper {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .sp-sidenav-content-toolbar {
+        border-bottom: 1px solid var(--sp-mat-menu-toolbar-border-color);
+      }
+      .sp-sidenav-content-container {
+        display: flex;
+        flex-flow: column;
+        flex: 1 1 auto;
+        overflow-y: auto;
+      }
       .sidenav-container {
         height: 100%;
         max-width: var(--sp-mat-menu-sidemenu-max-width, 50%);
@@ -112,9 +137,6 @@ import { NavItem } from './nav-item';
       }
       .h-100 {
         height: 100%;
-      }
-      .app-toolbar {
-        border-bottom: 1px solid var(--sp-mat-menu-toolbar-border-color);
       }
       .spacer {
         flex: 1 1 auto;
