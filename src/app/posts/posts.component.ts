@@ -210,6 +210,7 @@ const BLOCKS: Block[] = [
     display: flex;
     flex-flow: column;
     height: 100%;
+    margin-top: 50px;
   }
   .posts-scroller {
     overflow-y: auto;

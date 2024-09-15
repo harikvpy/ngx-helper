@@ -112,10 +112,10 @@ import { NavItem } from './nav-item';
       }
       .layout-content-toolbar {
         border-bottom: 1px solid var(--sp-mat-menu-toolbar-border-color);
-        flex: 0 0 auto;
+        flex-grow: 0;
       }
       .layout-content-content {
-        flex: 1 0 auto;
+        flex-grow: 1;
         overflow: hidden;
       }
       .h-100 {
