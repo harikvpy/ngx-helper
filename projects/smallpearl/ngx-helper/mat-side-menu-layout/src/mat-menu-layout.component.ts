@@ -18,14 +18,14 @@ import { NavItem } from './nav-item';
   template: `
     <mat-sidenav-container class="layout-container">
       <mat-sidenav
-        class="menu-pane"
+        class="layout-menu-pane"
         opened
         #menuNav
         [mode]="layout.smallScreen ? 'over' : 'side'"
         [opened]="!layout.smallScreen"
         [fixedInViewport]="layout.smallScreen"
       >
-        <div class="sidenav-container">
+        <div class="layout-menu-container">
           <ngx-mat-menu-pane
             [showBackButton]="showBackButton"
             [showIcons]="showIcons"
@@ -55,8 +55,8 @@ import { NavItem } from './nav-item';
         <ng-container *ngTemplateOutlet="infoPaneContent"></ng-container>
       </mat-sidenav>
 
-      <mat-sidenav-content class="sp-sidenav-content-wrapper">
-        <mat-toolbar class="sp-sidenav-content-toolbar">
+      <mat-sidenav-content class="layout-content">
+        <mat-toolbar class="layout-content-toolbar">
           <button mat-icon-button (click)="onToggleMenuPane()">
             <mat-icon>menu</mat-icon>
           </button>
@@ -71,31 +71,15 @@ import { NavItem } from './nav-item';
           <span class="spacer"></span>
           <ng-container *ngTemplateOutlet="toolbarEndContent"></ng-container>
         </mat-toolbar>
-        <!-- This div takes up the rest of the vertical space on the screen.
-         It also has display:flex with overflow: auto, which causes it to have
-         the scrollbar if its child's height exceeds it's own height.
-         Note that the menu layout's child routes are placed in yet another
-         child div, which is required for the scrollbar to be active only
-         in "<div class="sp-sidenav-content-container>".
-         -->
-        <div class="sp-sidenav-content-container">
-          <div>
-            <!-- this is necessary or the <div class="sp-sidenav-content-container>
-          local scrolling logic won't work -->
-            <div [class]="contentContainerClass">
-              <!-- child route's content goes here.
-              This div can be customized by a contentContainerClass which is a property
-              that can be customized by the client. -->
-              <router-outlet></router-outlet>
-            </div>
-          </div>
+        <div class="layout-content-content" [class]="contentContainerClass">
+          <router-outlet></router-outlet>
         </div>
       </mat-sidenav-content>
     </mat-sidenav-container>
   `,
   styles: [
     `
-      .menu-pane {
+      .layout-menu-pane {
         background-color: var(--sp-mat-menu-bg-color) !important;
         color: var(--sp-mat-menu-fg-color) !important;
       }
@@ -113,27 +97,26 @@ import { NavItem } from './nav-item';
         left: 0;
         right: 0;
       }
-      .sp-sidenav-content-wrapper {
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-      }
-      .sp-sidenav-content-toolbar {
-        border-bottom: 1px solid var(--sp-mat-menu-toolbar-border-color);
-      }
-      .sp-sidenav-content-container {
-        display: flex;
-        flex-flow: column;
-        flex: 1 1 auto;
-        overflow-y: auto;
-      }
-      .sidenav-container {
+      .layout-menu-container {
         height: 100%;
         max-width: var(--sp-mat-menu-sidemenu-max-width, 50%);
         min-width: var(--sp-mat-menu-sidemenu-min-width, 250px);
         text-wrap: nowrap;
         overflow-x: scroll;
         overflow-y: scroll;
+      }
+      .layout-content {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .layout-content-toolbar {
+        border-bottom: 1px solid var(--sp-mat-menu-toolbar-border-color);
+        flex: 1 0 auto;
+      }
+      .layout-content-content {
+        flex: 2 2 auto;
+        overflow: hidden;
       }
       .h-100 {
         height: 100%;

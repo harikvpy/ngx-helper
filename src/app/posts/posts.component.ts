@@ -147,60 +147,92 @@ const BLOCKS: Block[] = [
     SPMatSelectEntityComponent,
   ],
   template: `
+  <!--
+    infiniteScrollContainer=".sp-sidenav-content-container"
+    [fromRoot]="true"
+  -->
   <div class="posts-wrapper"
     infiniteScroll
+    infiniteScrollContainer=".posts-scroller"
     (scrolled)="onScrollDown()"
     (scrolledUp)="onScrollUp()"
     [scrollWindow]="false"
     [infiniteScrollDistance]="1.5"
-    infiniteScrollContainer=".sp-sidenav-content-container"
-    [fromRoot]="true"
   >
-    <div class="posts-container">
-      <h2>Posts</h2>
-      <div class="">
-        <form [formGroup]="form">
-          <div class="p-2">
-            <mat-form-field>
-              <mat-label>Select User</mat-label>
-              <sp-mat-select-entity
-                [loadFromRemoteFn]="loadUsers"
-                entityName="User"
-                [entityLabelFn]="userLabelFn"
-                formControlName="user"
-                (selectionChange)="onUserSelected($event)"
-                (createNewItemSelected)="onCreateNewUser($event)"
-                [inlineNew]="true"
-              ></sp-mat-select-entity>
-            </mat-form-field>
+    <div class="posts-scroller">
+      <div class="posts-container">
+        <div class="posts-row-1">
+          <div class="fs-2">Posts</div>
+          <div class="">
+            <form [formGroup]="form">
+              <div class="p-2">
+                <mat-form-field>
+                  <mat-label>Select User</mat-label>
+                  <sp-mat-select-entity
+                    [loadFromRemoteFn]="loadUsers"
+                    entityName="User"
+                    [entityLabelFn]="userLabelFn"
+                    formControlName="user"
+                    (selectionChange)="onUserSelected($event)"
+                    (createNewItemSelected)="onCreateNewUser($event)"
+                    [inlineNew]="true"
+                  ></sp-mat-select-entity>
+                </mat-form-field>
+              </div>
+              <div class="p-2">
+                <mat-form-field>
+                  <mat-label>Select Units</mat-label>
+                  <sp-mat-select-entity
+                    [loadFromRemoteFn]="loadUnits"
+                    entityName="Unit"
+                    [entityLabelFn]="unitLabelFn"
+                    [group]="true"
+                    [groupLabelFn]="blockLabelFn"
+                    formControlName="unit"
+                    (selectionChange)="onUnitSelected($event)"
+                  ></sp-mat-select-entity>
+                </mat-form-field>
+              </div>
+            </form>
           </div>
-          <div class="p-2">
-            <mat-form-field>
-              <mat-label>Select Units</mat-label>
-              <sp-mat-select-entity
-                [loadFromRemoteFn]="loadUnits"
-                entityName="Unit"
-                [entityLabelFn]="unitLabelFn"
-                [group]="true"
-                [groupLabelFn]="blockLabelFn"
-                formControlName="unit"
-                (selectionChange)="onUnitSelected($event)"
-              ></sp-mat-select-entity>
-            </mat-form-field>
-          </div>
-        </form>
+        </div>
+        <div class="posts-row-2"></div>
+        <div class="posts-row-3"></div>
       </div>
     </div>
   </div>
   `,
   styles: [`
-    .posts-container {
-      height: 1500px;
-    }
-    .h2 {
-      font-size: 1.3em;
-      font-weight: 800;
-    }
+  .fs-2 {
+    font-size: 2em;
+  }
+  .posts-wrapper {
+    display: flex;
+    flex-flow: column;
+    height: 100%;
+  }
+  .posts-scroller {
+    overflow-y: auto;
+  }
+  .posts-container {
+    height: 1500px;
+  }
+  .posts-row-1 {
+    height: 500px;
+    background-color: yellow;
+  }
+  .posts-row-2 {
+    height: 500px;    
+    background-color: cyan;
+  }
+  .posts-row-3 {
+    height: 500px;    
+    background-color: indigo;
+  }
+  .h2 {
+    font-size: 1.3em;
+    font-weight: 800;
+  }
   `,
   ],
 })
