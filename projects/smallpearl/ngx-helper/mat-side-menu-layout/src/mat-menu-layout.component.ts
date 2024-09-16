@@ -83,13 +83,6 @@ import { NavItem } from './nav-item';
         background-color: var(--sp-mat-menu-bg-color) !important;
         color: var(--sp-mat-menu-fg-color) !important;
       }
-      mat-toolbar {
-        background-color: var(--sp-mat-menu-toolbar-bg-color);
-        color: var(--sp-mat-menu-toolbar-fg-color);
-      }
-      mat-toolbar {
-        padding: 0 0;
-      }
       .layout-container {
         position: absolute;
         top: 0;
@@ -113,6 +106,11 @@ import { NavItem } from './nav-item';
       .layout-content-toolbar {
         border-bottom: 1px solid var(--sp-mat-menu-toolbar-border-color);
         flex-grow: 0;
+        background-color: var(--sp-mat-menu-toolbar-bg-color);
+        color: var(--sp-mat-menu-toolbar-fg-color);
+        padding: 0 0;
+        min-height: var(--mat-toolbar-standard-height);
+        max-height: var(--mat-toolbar-standard-height);
       }
       .layout-content-content {
         flex-grow: 1;
