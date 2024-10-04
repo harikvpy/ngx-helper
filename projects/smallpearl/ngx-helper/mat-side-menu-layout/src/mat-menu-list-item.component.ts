@@ -182,7 +182,10 @@ export class SPMatMenuListItemComponent
         const url = ne.urlAfterRedirects;
         const lastSlash = url.lastIndexOf('/');
         const lastUrlSegment = url.substring(lastSlash + 1);
-        if (lastUrlSegment === this.item?.route) {
+        if (
+          lastUrlSegment === this.item?.route ||
+          lastUrlSegment.split('?')[0] === this.item?.route
+        ) {
           this.highlighted = true;
           if (this.parent) {
             this.parent.expand();
