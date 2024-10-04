@@ -255,7 +255,8 @@ export class SPMatMenuListItemComponent
             if (childItem?.children) {
               return traverseToLastChild(childItem);
             }
-            if (lastUrlSegment === childItem?.route) {
+            if (lastUrlSegment === childItem?.route ||
+              lastUrlSegment.split('?')[0] === childItem?.route) {
               return true; // We don't have to check the rest of the items
             }
           }
@@ -281,7 +282,11 @@ export class SPMatMenuListItemComponent
       if (
         this.children.find(
           (component) =>
-            !!(component.item?.route && lastUrlSegment === component.item.route)
+            !!(
+              (component.item?.route &&
+                lastUrlSegment === component.item.route) ||
+              lastUrlSegment.split('?')[0] === component.item.route
+            )
         ) !== undefined
       ) {
         return true;
@@ -302,7 +307,11 @@ export class SPMatMenuListItemComponent
     const lastUrlSegment = curUrl.substring(lastSlash + 1);
     return (
       this.curUrlEndsWithChildItemRoute() ||
-      !!(this.item.route && lastUrlSegment === this.item.route) //  curUrl.endsWith(this.item.route)
+      !!(
+        this.item.route &&
+        (lastUrlSegment === this.item.route ||
+          lastUrlSegment.split('?')[0] == this.item.route)
+      ) //  curUrl.endsWith(this.item.route)
     );
   }
 
