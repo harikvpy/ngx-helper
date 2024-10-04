@@ -7,6 +7,7 @@ import { NavItem, SPMatMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-si
     <sp-mat-menu-layout
       contentContainerClass="ex-content-container"
       [showBackButton]="true"
+      defaultBackButtonHref="/"
       brandingImage="assets/angular.png"
       brandingText="SMALLPEARL"
       appTitle="QQBOOKS"
