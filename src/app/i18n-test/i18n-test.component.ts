@@ -12,7 +12,8 @@ import { SPDatePipe } from '@smallpearl/ngx-helper/i18n/src/date.pipe';
   template: `
     <h2>i18n Pipes Test</h2>
     <div class="p-1">
-      <select name="locale" id="id_locale" (change)="onLocaleChange($event)">
+    <label for="locale">Locale: </label>
+    <select name="locale" id="id_locale" (change)="onLocaleChange($event)">
         <option value="en-US">English (US)</option>
         <option value="en-UK">English (UK)</option>
         <option value="en-IN">English (IN)</option>
@@ -20,6 +21,7 @@ import { SPDatePipe } from '@smallpearl/ngx-helper/i18n/src/date.pipe';
         <option value="ja-JP">Japanese</option>
       </select>
       <br/>
+      <label for="currency">Currency: </label>
       <select name="currency" id="id_currency" (change)="onCurrencyChange($event)">
         <option value="INR">Indian Rupee</option>
         <option value="USD">US Dollar</option>
@@ -30,7 +32,7 @@ import { SPDatePipe } from '@smallpearl/ngx-helper/i18n/src/date.pipe';
         <option value="EUR">Euro</option>
       </select>
       <br/>
-      <br/>
+      <label for="dateFormat">Date Format: </label>
       <select name="dateFormat" id="id_dateFormat" (change)="onDateFormatChange($event)">
         <option value="short">Short</option>
         <option value="medium">Medium</option>
@@ -41,11 +43,14 @@ import { SPDatePipe } from '@smallpearl/ngx-helper/i18n/src/date.pipe';
         <option value="longDate">Long Date</option>
       </select>
       <br/>
+      <br/>
 
       @if (refresh$ | async) {
+        <h4>Currency pipe</h4>
         Amount1: {{ amount1 | spCurrency }}<br/>
         Amount2: {{ amount2 | spCurrency }}<br/>
         <br/>
+        <h4>Date pipe</h4>
         Date1: {{ date1 | spDate }}<br/>
         Date2: {{ date2 | spDate }}
       }
@@ -54,6 +59,17 @@ import { SPDatePipe } from '@smallpearl/ngx-helper/i18n/src/date.pipe';
   styles: [`
   .p-1 {
     padding: .4em;
+  }
+  select {
+    border-color: lightgray;
+    border-radius: 4px;
+    padding: 0.3em;
+    margin: 0.2em;
+  }
+  h4 {
+    font-size: larger;
+    padding: 0 0;
+    margin: 6px 0;
   }
   `],
 })
