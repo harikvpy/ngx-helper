@@ -24,6 +24,7 @@ import { SPDatePipe } from '@smallpearl/ngx-helper/i18n/src/date.pipe';
         <option value="INR">Indian Rupee</option>
         <option value="USD">US Dollar</option>
         <option value="CAD">Canadian Dollar</option>
+        <option value="TWD">New Taiwan Dollar</option>
         <option value="JPY">Japanese Yen</option>
         <option value="CNY">Chinese Yuan</option>
         <option value="EUR">Euro</option>
