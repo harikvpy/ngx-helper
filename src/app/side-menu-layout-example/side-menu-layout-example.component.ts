@@ -69,6 +69,11 @@ export class SideMenuLayoutExampleComponent implements OnInit {
       text: 'SATELLITE APP',
       icon: 'token',
     },
+    {
+      route: './i18ntest',
+      text: 'I18N TEST',
+      icon: 'language'
+    }
   ];
 
   constructor() {}

@@ -44,6 +44,13 @@ const routes: Routes = [
           ),
       },
       {
+        path: 'i18ntest',
+        loadComponent: () =>
+          import('../i18n-test/i18n-test.component').then(
+            (m) => m.I18nTestComponent
+          ),
+      },
+      {
         path: '',
         redirectTo: 'posts',
         pathMatch: 'full',
