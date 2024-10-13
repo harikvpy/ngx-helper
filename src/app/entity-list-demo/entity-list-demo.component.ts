@@ -4,8 +4,9 @@ import { AfterViewInit, ChangeDetectorRef, Component, OnInit, QueryList, signal,
 import { FormsModule } from '@angular/forms';
 import { MatSortModule } from '@angular/material/sort';
 import { MatColumnDef, MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { ColumnDef } from '@smallpearl/ngx-helper/mat-entity-list/src/mat-entity-list-types';
+import { SPMatEntityListColumn } from '@smallpearl/ngx-helper/mat-entity-list/src/mat-entity-list-types';
 import { SPMatEntityListComponent } from '@smallpearl/ngx-helper/mat-entity-list/src/mat-entity-list.component';
+import { SPMatEntityListPaginator } from 'dist/smallpearl/ngx-helper/mat-entity-list/src/mat-entity-list-types';
 
 interface User {
   id: number;
@@ -47,6 +48,26 @@ const ELEMENT_DATA: PeriodicElement[] = [
   { position: 10, name: 'Neon', weight: 20.1797, symbol: 'Ne' },
 ];
 
+class MyPaginator implements SPMatEntityListPaginator {
+  total = 100;
+  currentPage = 1;
+  // Number of entities per page
+  pageSize = 50;
+  hasNext() {
+    return false;
+  }
+  hasPrevious() {
+    return false;
+  }
+  nextPageEndpoint(endpoint: string, currentPageNumber: number) {
+    return endpoint;
+  };
+
+  previousPageEndpoint(endpoint: string, currentPageNumber: number) {
+    return endpoint;
+  };
+}
+
 @Component({
   standalone: true,
   imports: [
@@ -66,7 +87,8 @@ const ELEMENT_DATA: PeriodicElement[] = [
       [columns]="spEntityListColumns"
       idKey="cell"
       pagination="discrete"
-      >
+      [paginator]="paginator"
+    >
 
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef>Name</th>
@@ -108,24 +130,24 @@ const ELEMENT_DATA: PeriodicElement[] = [
 })
 export class EntityListDemoComponent implements OnInit, AfterViewInit {
 
-  displayedColumns = signal<string[]>([]);
-  // dataSource = ELEMENT_DATA;
-  dataSource = signal<MatTableDataSource<PeriodicElement>>(new MatTableDataSource<PeriodicElement>([]));
-
   // columns = ['position', 'weight', 'name', 'symbol'];
-  columns: ColumnDef<User>[] = [
+  columns: SPMatEntityListColumn<User>[] = [
     { name: 'position' },
     { name: 'weight' },
     { name: 'name' },
     { name: 'symbol' },
   ];
 
-  endpoint = 'https://randomuser.me/api/?results=10&nat=us,dk,fr,gb';
-  spEntityListColumns: ColumnDef<User>[] = [
+  endpoint = 'https://randomuser.me/api/?page=1&results=10&nat=us,dk,fr,gb';
+  spEntityListColumns: SPMatEntityListColumn<User>[] = [
     { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
     { name: 'gender' },
     { name: 'cell' },
   ];
+  paginator = new MyPaginator();
+
+  displayedColumns = signal<string[]>([]);
+  dataSource = signal<MatTableDataSource<PeriodicElement>>(new MatTableDataSource<PeriodicElement>([]));
 
   @ViewChild(MatTable, { static: false }) table!: MatTable<PeriodicElement>;
   // These are our own <ng-container matColumnDef></ng-container>

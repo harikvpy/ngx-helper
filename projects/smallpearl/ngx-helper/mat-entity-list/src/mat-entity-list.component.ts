@@ -5,15 +5,16 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  computed,
   ContentChildren,
+  Inject,
   input,
   OnDestroy,
   OnInit,
+  Optional,
   QueryList,
   signal,
   viewChild,
-  viewChildren,
+  viewChildren
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
@@ -26,12 +27,14 @@ import {
   MatTableDataSource,
   MatTableModule,
 } from '@angular/material/table';
-import { createStore, Store } from '@ngneat/elf';
-import { addEntities, selectAllEntities, upsertEntities, withEntities } from '@ngneat/elf-entities';
+import { createStore } from '@ngneat/elf';
+import { selectAllEntities, upsertEntities, withEntities } from '@ngneat/elf-entities';
 import { spFormatDate } from '@smallpearl/ngx-helper/i18n/src/format-date';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { Observable, Subject, takeUntil, tap } from 'rxjs';
-import { ColumnDef } from './mat-entity-list-types';
+import { DefaultSPMatEntityListConfig } from './config';
+import { SPMatEntityListColumn, SPMatEntityListPaginator } from './mat-entity-list-types';
+import { SP_MAT_ENTITY_LIST_CONFIG, SPMatEntityListConfig } from './providers';
 
 /**
  * A component to display a list of entities loaded from remote.
@@ -58,15 +61,15 @@ import { ColumnDef } from './mat-entity-list-types';
       [fromRoot]="false"
       (scrolled)="infiniteScrollLoadNextPage($event)"
       [scrollWindow]="false"
-      [infiniteScrollDisabled]="pagination() == 'discrete'"
+      [infiniteScrollDisabled]="pagination() != 'infinite' || !_paginator"
     >
       <div class="scroll-pane">
         <table mat-table matSort [dataSource]="dataSource()">
           <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
         </table>
-        @if (pagination() == 'discrete') {
-        <mat-paginator showFirstLastButtons aria-label=""></mat-paginator>
+        @if (pagination() == 'discrete' && _paginator) {
+          <mat-paginator showFirstLastButtons aria-label=""></mat-paginator>
         }
       </div>
     </div>
@@ -106,7 +109,7 @@ export class SPMatEntityListComponent<
   /**
    * The columns of the entity to be displayed.
    */
-  columns = input.required<ColumnDef<TEntity, IdKey>[]>();
+  columns = input.required<SPMatEntityListColumn<TEntity, IdKey>[]>();
   /**
    * Entity idKey, if idKey is different from the default 'id'.
    */
@@ -116,7 +119,12 @@ export class SPMatEntityListComponent<
    * uses an 'infiniteScroll' and 'discrete' pagination uses a mat-paginator
    * at the bottom to navigate between pages.
    */
-  pagination = input<'infinite' | 'discrete'>('discrete');
+  pagination = input<'infinite' | 'discrete' | 'none'>('discrete');
+  /**
+   * Component specific paginator. Only used if pagination != 'none'.
+   */
+  paginator = input<SPMatEntityListPaginator>();
+
   /* END CLIENT PROVIDED PARAMETERS */
 
   // *** INTERNAL *** //
@@ -168,11 +176,23 @@ export class SPMatEntityListComponent<
   // correct TEntity store that can be safely indexed using IdKey.
   entities$!: Observable<TEntity[]>;
 
+  _paginator!: SPMatEntityListPaginator | undefined;
+
   curPageNumber!: number;
   nextPage!: string;
   prevPage!: string;
 
-  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private http: HttpClient,
+    @Optional()
+    @Inject(SP_MAT_ENTITY_LIST_CONFIG)
+    private config: SPMatEntityListConfig,
+    private cdr: ChangeDetectorRef
+  ) {
+    if (!this.config) {
+      this.config = new DefaultSPMatEntityListConfig();
+    }
+  }
 
   ngOnInit() {
     // This is the reactive callback that listens for changes to table entities
@@ -182,16 +202,21 @@ export class SPMatEntityListComponent<
       withEntities<TEntity, IdKey>({ idKey: this.idKey() as IdKey })
     );
     this.entities$ = this.store.pipe(selectAllEntities());
+    this._paginator = this.paginator()
+      ? this.paginator()
+      : this.config?.paginator;
 
-    this.entities$.pipe(
-      takeUntil(this.destroy$),
-      tap((entities) => {
-        // .data is a setter property, which ought to trigger the necessary
-        // signals resulting in mat-table picking up the changes without
-        // requiring us to call cdr.detectChanges() explicitly.
-        this.dataSource().data = entities;
-      })
-    ).subscribe();
+    this.entities$
+      .pipe(
+        takeUntil(this.destroy$),
+        tap((entities) => {
+          // .data is a setter property, which ought to trigger the necessary
+          // signals resulting in mat-table picking up the changes without
+          // requiring us to call cdr.detectChanges() explicitly.
+          this.dataSource().data = entities;
+        })
+      )
+      .subscribe();
   }
 
   ngOnDestroy(): void {
@@ -202,7 +227,10 @@ export class SPMatEntityListComponent<
     this.buildColumns();
   }
 
-  getColumnValue(entity: TEntity, column: ColumnDef<TEntity, IdKey>) {
+  getColumnValue(
+    entity: TEntity,
+    column: SPMatEntityListColumn<TEntity, IdKey>
+  ) {
     let val = undefined;
     if (!column.valueFn) {
       val = (entity as any)[column.name];

@@ -6,7 +6,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatColumnDef, MatTable, MatTableModule } from '@angular/material/table';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
-import { ColumnDef } from './mat-entity-list-types';
+import { SPMatEntityListColumn } from './mat-entity-list-types';
 import { SPMatEntityListComponent } from './mat-entity-list.component';
 import { By } from '@angular/platform-browser';
 
@@ -65,7 +65,7 @@ class SPMatEntityListTestComponent implements OnInit {
 
   displayedColumns = signal<string[]>([]);
   endpoint = 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb';
-  columns: ColumnDef<User, 'cell'>[] = [
+  columns: SPMatEntityListColumn<User, 'cell'>[] = [
     { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
     { name: 'gender' },
     { name: 'cell' },
