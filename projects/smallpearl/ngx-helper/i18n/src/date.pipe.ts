@@ -1,7 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-import { isEmpty } from './is-empty';
-import { getSPI18nConfig, IntlDateFormat } from './providers';
+import { spFormatDate } from './format-date';
+import { IntlDateFormat } from './providers';
 
 /**
  * An alternative to the Angular built-in `DatePipe` based on the native `Intl.DateTimeFormat` API.
@@ -98,24 +98,25 @@ export class SPDatePipe implements PipeTransform {
     timeZone?: string
   ): string | null {
 
-    if (isEmpty(value)) {
-      return '';
-    }
+    return spFormatDate(value, format, timeZone);
+    // if (isEmpty(value)) {
+    //   return '';
+    // }
 
-    const date = new Date(value);
+    // const date = new Date(value);
 
-    if (isNaN(date.valueOf())) {
-      return '******';
-      // throw new Error(`Unable to convert "${value}" into a date.`);
-    }
-    const config = getSPI18nConfig();
-    format = format ?? config.datetimeFormat;
-    timeZone = timeZone ?? config.timezone;
-    const dateTimeFormatter = new Intl.DateTimeFormat(config.locale, {
-      ...this.#formatOptions[format],
-      timeZone,
-    });
+    // if (isNaN(date.valueOf())) {
+    //   return '******';
+    //   // throw new Error(`Unable to convert "${value}" into a date.`);
+    // }
+    // const config = getSPI18nConfig();
+    // format = format ?? config.datetimeFormat;
+    // timeZone = timeZone ?? config.timezone;
+    // const dateTimeFormatter = new Intl.DateTimeFormat(config.locale, {
+    //   ...this.#formatOptions[format],
+    //   timeZone,
+    // });
 
-    return dateTimeFormatter.format(date);
+    // return dateTimeFormatter.format(date);
   }
 }
