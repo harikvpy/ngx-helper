@@ -5,7 +5,7 @@
     "ng": "ng",
     "app:start": "ng serve",
     "lib:build": "ng build @smallpearl/ngx-helper",
-    "lib:watch": "ng build @smallpearl/ngx-helper --configuration --watch",
+    "lib:watch": "ng build @smallpearl/ngx-helper --configuration development --watch",
     "lib:test": "ng test @smallpearl/ngx-helper",
     "lib:test-rel": "ng test @smallpearl/ngx-helper --browsers ChromeHeadless --no-watch --no-progress"
   },
