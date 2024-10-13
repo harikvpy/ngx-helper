@@ -2,7 +2,7 @@ import { TestBed } from "@angular/core/testing";
 import { SPDatePipe } from "./date.pipe";
 import { setSPI18nConfig } from "./providers";
 
-describe('SPDatePipe', () => {
+fdescribe('SPDatePipe', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({

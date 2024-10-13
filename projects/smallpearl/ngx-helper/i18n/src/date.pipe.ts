@@ -1,7 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
+import { isEmpty } from './is-empty';
+import { getSPI18nConfig, IntlDateFormat } from './providers';
 import { spFormatDate } from './format-date';
-import { IntlDateFormat } from './providers';
 
 /**
  * An alternative to the Angular built-in `DatePipe` based on the native `Intl.DateTimeFormat` API.
