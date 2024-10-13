@@ -51,6 +51,13 @@ const routes: Routes = [
           ),
       },
       {
+        path: 'entitylistdemo',
+        loadComponent: () =>
+          import('../entity-list-demo/entity-list-demo.component').then(
+            (m) => m.EntityListDemoComponent
+          ),
+      },
+      {
         path: '',
         redirectTo: 'posts',
         pathMatch: 'full',

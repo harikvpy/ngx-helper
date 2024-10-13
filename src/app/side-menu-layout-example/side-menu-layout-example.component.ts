@@ -73,6 +73,11 @@ export class SideMenuLayoutExampleComponent implements OnInit {
       route: './i18ntest',
       text: 'I18N TEST',
       icon: 'language'
+    },
+    {
+      route: './entitylistdemo',
+      text: 'ENTITY LIST',
+      icon: 'list_alt',
     }
   ];
 
