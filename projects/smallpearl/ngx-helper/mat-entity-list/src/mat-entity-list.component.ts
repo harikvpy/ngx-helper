@@ -5,7 +5,6 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  computed,
   ContentChildren,
   Inject,
   input,
@@ -32,7 +31,7 @@ import { createStore } from '@ngneat/elf';
 import { selectAllEntities, upsertEntities, withEntities } from '@ngneat/elf-entities';
 import { spFormatDate } from '@smallpearl/ngx-helper/locale';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
-import { Observable, Subject, takeUntil, tap } from 'rxjs';
+import { finalize, Observable, Subject, takeUntil, tap } from 'rxjs';
 import { DefaultSPMatEntityListConfig } from './config';
 import { SPMatEntityListColumn, SPMatEntityListConfig, SPMatEntityListPaginator } from './mat-entity-list-types';
 import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
@@ -64,6 +63,9 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
       [infiniteScrollDisabled]="pagination() !== 'infinite' || !_paginator"
       (scrolled)="infiniteScrollLoadNextPage($event)"
       >
+        <div class="busy-overlay" [ngClass]="{'show': pagination() === 'discrete' && loading()}">
+          <ng-container *ngTemplateOutlet="busySpinner"></ng-container>
+        </div>
         <table mat-table matSort [dataSource]="dataSource()">
           <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
@@ -80,6 +82,9 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
             aria-label="Select page"
           ></mat-paginator>
         }
+        <div class="infinite-scroll-loading" [ngClass]="{'show': pagination() === 'infinite' && loading()}">
+          <ng-container *ngTemplateOutlet="busySpinner"></ng-container>
+        </div>
       </div>
     <!-- We keep the column definitions outside the <table> so that they can
     be dynamically added to the MatTable. -->
@@ -93,9 +98,42 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
       </td>
     </ng-container>
     }
+    <ng-template #busySpinner>
+      <div class="busy-spinner">
+        <mat-spinner mode="indeterminate" diameter="28"></mat-spinner>
+      </div>
+    </ng-template>
   `,
   styles: [
     `
+    .entities-list-wrapper {
+      position: relative;
+    }
+    .busy-overlay {
+      display: none;
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      z-index: 10000;
+      opacity: 0.3;
+      border: 1px solid black;
+    }
+    .show {
+      display: block;
+    }
+    .busy-spinner {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .infinite-scroll-loading {
+      width: 100%;
+      padding: 8px;
+    }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -187,7 +225,7 @@ export class SPMatEntityListComponent<
   entities$!: Observable<TEntity[]>;
 
   _paginator!: SPMatEntityListPaginator | undefined;
-
+  loading = signal<boolean>(false);
   // infiniteScrollWindow = computed<boolean>(() => this.infiniteScrollContainer() === undefined);
 
   constructor(
@@ -296,6 +334,7 @@ export class SPMatEntityListComponent<
   }
 
   private loadEntities(url: string, params: any) {
+    this.loading.set(true);
     this.http
       .get<any>(url, { params })
       .pipe(
@@ -313,8 +352,9 @@ export class SPMatEntityListComponent<
           }
           // store the entities in the store
           this.store.update(upsertEntities(entities));
-          // this.dataSource().data = entities;
-          // this.cdr.detectChanges();
+        }),
+        finalize(() => {
+          this.loading.set(false);
         })
       )
       .subscribe();
