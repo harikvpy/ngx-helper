@@ -1,17 +1,13 @@
-import { DataSource } from '@angular/cdk/collections';
 import { CommonModule } from '@angular/common';
-import { HttpParams } from '@angular/common/http';
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, QueryList, signal, viewChild, ViewChild, ViewChildren } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatSortModule } from '@angular/material/sort';
 import { MatColumnDef, MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
 import {
-  SPMatEntityListPaginator,
   SPMatEntityListColumn,
   SPMatEntityListComponent,
+  SPMatEntityListPaginator,
 } from '@smallpearl/ngx-helper/mat-entity-list';
-// import { SPMatEntityListColumn } from '@smallpearl/ngx-helper/mat-entity-list/src/mat-entity-list-types';
-// import { SPMatEntityListPaginator } from 'dist/smallpearl/ngx-helper/mat-entity-list/src/mat-entity-list-types';
 
 interface User {
   id: number;
