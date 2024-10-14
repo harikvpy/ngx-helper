@@ -1,5 +1,5 @@
-import { HttpParams } from "@angular/common/http";
 import { SPIntlDateFormat } from "@smallpearl/ngx-helper/locale";
+import { Observable } from "rxjs";
 
 /**
  * Each column is represented by a column definition. An <ng-container matColumnDef=""></ng-container>
@@ -54,3 +54,9 @@ export interface SPMatEntityListConfig {
   urlResolver?: (endpoint: string) => string;
   paginator?: SPMatEntityListPaginator;
 }
+
+/**
+ * Type for custom entities loader function, which if provided will be called
+ * instead of HttpClient.get.
+ */
+export type SPMatEntityListEntityLoaderFn = (params: any) => Observable<any>;

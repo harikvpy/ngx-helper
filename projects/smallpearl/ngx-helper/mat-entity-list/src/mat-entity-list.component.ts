@@ -33,7 +33,7 @@ import { spFormatDate } from '@smallpearl/ngx-helper/locale';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { finalize, Observable, Subject, takeUntil, tap } from 'rxjs';
 import { DefaultSPMatEntityListConfig } from './config';
-import { SPMatEntityListColumn, SPMatEntityListConfig, SPMatEntityListPaginator } from './mat-entity-list-types';
+import { SPMatEntityListColumn, SPMatEntityListConfig, SPMatEntityListEntityLoaderFn, SPMatEntityListPaginator } from './mat-entity-list-types';
 import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
 
 /**
@@ -150,6 +150,11 @@ export class SPMatEntityListComponent<
    * The endpoint from where the entities are to be retrieved
    */
   endpoint = input<string>('');
+  /**
+   * Custom entities loader function, which if provided will be called
+   * instead of HttpClient.get.
+   */
+  entityLoaderFn = input<SPMatEntityListEntityLoaderFn|undefined>(undefined);
   /**
    * The columns of the entity to be displayed.
    */
@@ -336,16 +341,23 @@ export class SPMatEntityListComponent<
   }
 
   private loadEntities(url: string, params: any) {
+    // Inline check for input signal value before calling its value doesn't
+    // seem to work as of now. So we assign the value to a const and check
+    // it for undefined before calling it.
+    const loaderFn = this.entityLoaderFn();
+    const obs = loaderFn !== undefined
+      ? loaderFn(params)
+      : this.http.get<any>(url, { params });
+
     this.loading.set(true);
-    this.http
-      .get<any>(url, { params })
+    obs
       .pipe(
         tap((entities) => {
           // TODO: defer this to a pagination provider so that we can support
           // many types of pagination. DRF itself has different schemes. And
           // express may have yet another pagination protocol.
           if (this._paginator) {
-            entities = this._paginator.getEntitiesFromResponse(entities)
+            entities = this._paginator.getEntitiesFromResponse(entities);
           } else {
             entities = this.findArrayInResult(entities) as TEntity[];
           }
@@ -378,7 +390,6 @@ export class SPMatEntityListComponent<
   }
 
   handlePageEvent(e: PageEvent) {
-    console.log(`handlePageEvent - ev: ${JSON.stringify(e)}`);
     this._paginator?.setPageIndex(e.pageIndex);
     this.loadEntities(this.endpoint(), this._paginator?.getPageParams());
   }
