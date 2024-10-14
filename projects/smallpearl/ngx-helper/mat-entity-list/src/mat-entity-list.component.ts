@@ -5,13 +5,12 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  ContentChildren,
+  contentChildren,
   Inject,
   input,
   OnDestroy,
   OnInit,
   Optional,
-  QueryList,
   signal,
   viewChild,
   viewChildren
@@ -60,7 +59,7 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
       [infiniteScrollThrottle]="infiniteScrollThrottle()"
       [infiniteScrollContainer]="infiniteScrollContainer()"
       [scrollWindow]="infiniteScrollWindow()"
-      [infiniteScrollDisabled]="pagination() !== 'infinite' || !_paginator"
+      [infiniteScrollDisabled]="pagination() !== 'infinite' || !_paginator || !hasMore()"
       (scrolled)="infiniteScrollLoadNextPage($event)"
       >
         <div class="busy-overlay" [ngClass]="{'show': pagination() === 'discrete' && loading()}">
@@ -184,7 +183,7 @@ export class SPMatEntityListComponent<
 
   // *** INTERNAL *** //
 
-  // Columns that are displayed.
+  // Names of columns that are displayed.
   displayedColumns = signal<string[]>([]); // ['name', 'cell', 'gender'];
 
   dataSource = signal<MatTableDataSource<TEntity>>(
@@ -199,8 +198,7 @@ export class SPMatEntityListComponent<
   // These are the <ng-container matColumnDef></ng-container> placed
   // inside <sp-mat-entity-list></<sp-mat-entity-list> by the client to override
   // the default <ng-container matColumnDef> created by the component.
-  // clientColumnDefs = contentChildren(MatColumnDef); // this seems to have problems ng v17
-  @ContentChildren(MatColumnDef) clientColumnDefs!: QueryList<MatColumnDef>;
+  clientColumnDefs = contentChildren(MatColumnDef);
 
   destroy$ = new Subject<void>();
 
@@ -230,10 +228,13 @@ export class SPMatEntityListComponent<
   // We'll initialize this in ngOnInit() when 'store' is initialized with the
   // correct TEntity store that can be safely indexed using IdKey.
   entities$!: Observable<TEntity[]>;
-
+  // Effective paginator, coalescing local paginator and paginator from global
+  // config.
   _paginator!: SPMatEntityListPaginator | undefined;
+  // We will toggle this during every entity load.
   loading = signal<boolean>(false);
-  // infiniteScrollWindow = computed<boolean>(() => this.infiniteScrollContainer() === undefined);
+  // We will update this after every load and pagination() == 'infinite'
+  hasMore = signal<boolean>(true);
 
   constructor(
     private http: HttpClient,
@@ -312,7 +313,7 @@ export class SPMatEntityListComponent<
         const matColDef = this.viewColumnDefs().find(
           (cd) => cd.name === colDef.name
         );
-        const clientColDef = this.clientColumnDefs.find(
+        const clientColDef = this.clientColumnDefs().find(
           (cd) => cd.name === colDef.name
         );
         if (clientColDef) {
@@ -358,11 +359,13 @@ export class SPMatEntityListComponent<
           // express may have yet another pagination protocol.
           if (this._paginator) {
             entities = this._paginator.getEntitiesFromResponse(entities);
+            if (this.pagination() === 'discrete') {
+              this.store.reset();
+            } else if (this.pagination() === 'infinite') {
+              this.hasMore.set(this._paginator?.getPageIndex()+1 === this._paginator?.getPageCount())
+            }
           } else {
             entities = this.findArrayInResult(entities) as TEntity[];
-          }
-          if (this.pagination() === 'discrete') {
-            this.store.reset();
           }
           // store the entities in the store
           this.store.update(upsertEntities(entities));

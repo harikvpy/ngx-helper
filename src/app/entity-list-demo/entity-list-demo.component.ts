@@ -69,7 +69,7 @@ class MyPaginator implements SPMatEntityListPaginator {
     this.pageIndex = pageIndex;
   }
   getPageSize() {
-    return 20;
+    return 10;
   }
   getPageParams() {
     return {
