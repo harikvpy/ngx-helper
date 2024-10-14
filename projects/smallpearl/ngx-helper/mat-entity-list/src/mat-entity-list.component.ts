@@ -19,7 +19,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSortModule } from '@angular/material/sort';
+import { MatSort, MatSortModule } from '@angular/material/sort';
 import {
   MatColumnDef,
   MatTable,
@@ -62,42 +62,44 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
       [infiniteScrollDisabled]="pagination() !== 'infinite' || !_paginator || !hasMore()"
       (scrolled)="infiniteScrollLoadNextPage($event)"
       >
-        <div class="busy-overlay" [ngClass]="{'show': pagination() === 'discrete' && loading()}">
-          <ng-container *ngTemplateOutlet="busySpinner"></ng-container>
-        </div>
-        <table mat-table matSort [dataSource]="dataSource()">
-          <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
-        </table>
-        @if (pagination() == 'discrete' && _paginator) {
-          <mat-paginator
-            showFirstLastButtons
-            [length]="_paginator.getEntityCount()"
-            [pageSize]="_paginator.getPageSize()"
-            [pageIndex]="_paginator.getPageIndex()"
-            [pageSizeOptions]="[]"
-            [hidePageSize]="true"
-            (page)="handlePageEvent($event)"
-            [disabled]="loading()"
-            aria-label="Select page"
-          ></mat-paginator>
-        }
-        <div class="infinite-scroll-loading" [ngClass]="{'show': pagination() === 'infinite' && loading()}">
-          <ng-container *ngTemplateOutlet="busySpinner"></ng-container>
-        </div>
+      <div class="busy-overlay" [ngClass]="{'show': pagination() === 'discrete' && loading()}">
+        <ng-container *ngTemplateOutlet="busySpinner"></ng-container>
       </div>
+      <table mat-table [dataSource]="dataSource()">
+        <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
+      </table>
+      @if (pagination() == 'discrete' && _paginator) {
+        <mat-paginator
+          showFirstLastButtons
+          [length]="_paginator.getEntityCount()"
+          [pageSize]="_paginator.getPageSize()"
+          [pageIndex]="_paginator.getPageIndex()"
+          [pageSizeOptions]="[]"
+          [hidePageSize]="true"
+          (page)="handlePageEvent($event)"
+          [disabled]="loading()"
+          aria-label="Select page"
+        ></mat-paginator>
+      }
+      <div class="infinite-scroll-loading" [ngClass]="{'show': pagination() === 'infinite' && loading()}">
+        <ng-container *ngTemplateOutlet="busySpinner"></ng-container>
+      </div>
+    </div>
     <!-- We keep the column definitions outside the <table> so that they can
     be dynamically added to the MatTable. -->
-    @for (column of columns(); track $index) {
-    <ng-container [matColumnDef]="column.name">
-      <th mat-header-cell *matHeaderCellDef>
-        {{ column?.label || column.name }}
-      </th>
-      <td mat-cell *matCellDef="let element">
-        {{ getColumnValue(element, column) }}
-      </td>
-    </ng-container>
-    }
+    <span matSort="sorter()">
+      @for (column of columns(); track $index) {
+      <ng-container [matColumnDef]="column.name" >
+        <th mat-header-cell mat-sort-header *matHeaderCellDef>
+          {{ column?.label || column.name }}
+        </th>
+        <td mat-cell *matCellDef="let element">
+          {{ getColumnValue(element, column) }}
+        </td>
+      </ng-container>
+      }
+    </span>
     <ng-template #busySpinner>
       <div class="busy-spinner">
         <mat-spinner mode="indeterminate" diameter="28"></mat-spinner>
@@ -173,6 +175,10 @@ export class SPMatEntityListComponent<
    */
   paginator = input<SPMatEntityListPaginator>();
   /**
+   *
+   */
+  sorter = input<MatSort>();
+  /**
    * Wrappers for infiniteScroll properties, for customization by the client
    */
   infiniteScrollContainer = input<any>('');
@@ -191,6 +197,7 @@ export class SPMatEntityListComponent<
   );
 
   table = viewChild(MatTable);
+  sort = viewChild(MatSort);
   // These are our own <ng-container matColumnDef></ng-container>
   // which we create for each column that we create by the declaration:
   // <ng-container *ngFor="let column of columns()" [matColumnDef]="column.name">
@@ -279,6 +286,10 @@ export class SPMatEntityListComponent<
 
   ngAfterViewInit(): void {
     this.buildColumns();
+    const matSort = this.sort();
+    if (matSort) {
+      this.dataSource().sort = matSort;
+    }
   }
 
   getColumnValue(
@@ -316,11 +327,9 @@ export class SPMatEntityListComponent<
         const clientColDef = this.clientColumnDefs().find(
           (cd) => cd.name === colDef.name
         );
-        if (clientColDef) {
-          columnDefs.push(clientColDef);
-          columnNames.add(colDef.name);
-        } else if (matColDef) {
-          columnDefs.push(matColDef);
+        const columnDef = clientColDef ? clientColDef : matColDef;
+        if (columnDef) {
+          columnDefs.push(columnDef);
           columnNames.add(colDef.name);
         }
       });

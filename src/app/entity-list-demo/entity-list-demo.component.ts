@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, QueryList, signal, viewChild, ViewChild, ViewChildren } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MatSortModule } from '@angular/material/sort';
+import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatColumnDef, MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
 import {
   SPMatEntityListColumn,
@@ -166,6 +166,8 @@ export class EntityListDemoComponent implements OnInit, AfterViewInit {
   dataSource = signal<MatTableDataSource<PeriodicElement>>(new MatTableDataSource<PeriodicElement>([]));
 
   @ViewChild(MatTable, { static: false }) table!: MatTable<PeriodicElement>;
+  mySorter = viewChild(MatSort);
+
   // These are our own <ng-container matColumnDef></ng-container>
   // which we create for each column that we create by the declaration:
   // <ng-container *ngFor="let column of columns()" [matColumnDef]="column.name">
