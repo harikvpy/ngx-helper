@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { isEmpty } from './is-empty';
-import { getSPI18nConfig } from './providers';
+import { getSPLocaleConfig } from './providers';
 
 /**
  * This is a replacement for Angular's native currency pipe. This uses
@@ -28,7 +28,7 @@ export class SPCurrencyPipe implements PipeTransform {
       // throw new Error(`"${value}" is not a number.`);
     }
 
-    const config = getSPI18nConfig();
+    const config = getSPLocaleConfig();
     // TODO: change to community locale read from this.currentCommunity.locale
     const currencyFormatter = new Intl.NumberFormat(config.locale, {
       currency: currency ?? config.currency,

@@ -1,8 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
-
-import { isEmpty } from './is-empty';
-import { getSPI18nConfig, IntlDateFormat } from './providers';
 import { spFormatDate } from './format-date';
+import { SPIntlDateFormat } from './providers';
 
 /**
  * An alternative to the Angular built-in `DatePipe` based on the native `Intl.DateTimeFormat` API.
@@ -14,7 +12,7 @@ import { spFormatDate } from './format-date';
   name: 'spDate',
 })
 export class SPDatePipe implements PipeTransform {
-  readonly #formatOptions: Record<IntlDateFormat, Intl.DateTimeFormatOptions> = {
+  readonly #formatOptions: Record<SPIntlDateFormat, Intl.DateTimeFormatOptions> = {
     short: {
       year: 'numeric',
       month: 'numeric',
@@ -95,7 +93,7 @@ export class SPDatePipe implements PipeTransform {
 
   transform(
     value: Date | number | string,
-    format?: IntlDateFormat,
+    format?: SPIntlDateFormat,
     timeZone?: string
   ): string | null {
 

@@ -1,10 +1,10 @@
-export type IntlDateFormat = 'short'|'medium'|'long'|'full'|'shortDate'|'mediumDate'|'longDate'|'fullDate'|'shortTime'|'mediumTime'|'longTime'|'fullTime';
+export type SPIntlDateFormat = 'short'|'medium'|'long'|'full'|'shortDate'|'mediumDate'|'longDate'|'fullDate'|'shortTime'|'mediumTime'|'longTime'|'fullTime';
 
 export interface SPNgxI18nConfig {
   locale: string;
   currency: string;
   timezone: string;
-  datetimeFormat: IntlDateFormat;
+  datetimeFormat: SPIntlDateFormat;
 }
 
 /**
@@ -26,13 +26,13 @@ export let _config: SPNgxI18nConfig = DEFAULT_SP_NGX_I18N_CONFIG;
  * Call this function update the _config dynamically as the need arises.
  * @param config
  */
-export function setSPI18nConfig(config: Partial<SPNgxI18nConfig>) {
+export function setSPLocaleConfig(config: Partial<SPNgxI18nConfig>) {
   _config = {..._config, ...config };
 }
 
 /**
  * @returns Current config object.
  */
-export function getSPI18nConfig() {
+export function getSPLocaleConfig() {
   return _config;
 }

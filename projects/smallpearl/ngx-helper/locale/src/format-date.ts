@@ -1,7 +1,7 @@
 import { isEmpty } from "./is-empty";
-import { getSPI18nConfig, IntlDateFormat } from "./providers";
+import { getSPLocaleConfig, SPIntlDateFormat } from "./providers";
 
-const formatOptions: Record<IntlDateFormat, Intl.DateTimeFormatOptions> = {
+const formatOptions: Record<SPIntlDateFormat, Intl.DateTimeFormatOptions> = {
   short: {
     year: 'numeric',
     month: 'numeric',
@@ -80,7 +80,7 @@ const formatOptions: Record<IntlDateFormat, Intl.DateTimeFormatOptions> = {
   },
 };
 
-export function spFormatDate(value: Date | number | string, format?: IntlDateFormat, timeZone?: string) {
+export function spFormatDate(value: Date | number | string, format?: SPIntlDateFormat, timeZone?: string) {
   if (isEmpty(value)) {
     return '';
   }
@@ -91,8 +91,12 @@ export function spFormatDate(value: Date | number | string, format?: IntlDateFor
     return '******';
     // throw new Error(`Unable to convert "${value}" into a date.`);
   }
-  const config = getSPI18nConfig();
+  const config = getSPLocaleConfig();
   format = format ?? config.datetimeFormat;
+  const validFormatStrings = Object.keys(formatOptions);
+  if (!validFormatStrings.find(formatStr => formatStr === format)) {
+    format = 'mediumDate';
+  }
   timeZone = timeZone ?? config.timezone;
   const dateTimeFormatter = new Intl.DateTimeFormat(config.locale, {
     ...formatOptions[format],

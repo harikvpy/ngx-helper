@@ -1,9 +1,8 @@
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { getSPI18nConfig, setSPI18nConfig, SPCurrencyPipe } from '@smallpearl/ngx-helper/i18n';
+import { setSPLocaleConfig, SPDatePipe, SPCurrencyPipe } from '@smallpearl/ngx-helper/locale';
 import { BehaviorSubject } from 'rxjs';
-import { SPDatePipe } from '@smallpearl/ngx-helper/i18n/src/date.pipe';
 
 @Component({
   selector: 'app-i18n-test',
@@ -84,7 +83,7 @@ export class I18nTestComponent {
 
   constructor(private cdr: ChangeDetectorRef) {
     this.date2.setFullYear(this.date2.getFullYear()-2);
-    setSPI18nConfig({
+    setSPLocaleConfig({
       locale: 'en-US',
       currency: 'INR',
       timezone: 'UTC',
@@ -93,17 +92,17 @@ export class I18nTestComponent {
   }
 
   onLocaleChange(ev: any) {
-    setSPI18nConfig({ locale: ev.target.value });
+    setSPLocaleConfig({ locale: ev.target.value });
     this.refreshValues();
   }
 
   onCurrencyChange(ev: any) {
-    setSPI18nConfig({ currency: ev.target.value });
+    setSPLocaleConfig({ currency: ev.target.value });
     this.refreshValues();
   }
 
   onDateFormatChange(ev: any) {
-    setSPI18nConfig({ datetimeFormat: ev.target.value });
+    setSPLocaleConfig({ datetimeFormat: ev.target.value });
     this.refreshValues();
   }
 
