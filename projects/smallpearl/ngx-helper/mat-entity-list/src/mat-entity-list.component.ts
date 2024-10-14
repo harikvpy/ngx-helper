@@ -18,7 +18,7 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
-import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSortModule } from '@angular/material/sort';
 import {
@@ -29,12 +29,12 @@ import {
 } from '@angular/material/table';
 import { createStore } from '@ngneat/elf';
 import { selectAllEntities, upsertEntities, withEntities } from '@ngneat/elf-entities';
-import { spFormatDate } from '@smallpearl/ngx-helper/i18n/src/format-date';
+import { spFormatDate } from '@smallpearl/ngx-helper/locale';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { Observable, Subject, takeUntil, tap } from 'rxjs';
 import { DefaultSPMatEntityListConfig } from './config';
-import { SPMatEntityListColumn, SPMatEntityListPaginator } from './mat-entity-list-types';
-import { SP_MAT_ENTITY_LIST_CONFIG, SPMatEntityListConfig } from './providers';
+import { SPMatEntityListColumn, SPMatEntityListConfig, SPMatEntityListPaginator } from './mat-entity-list-types';
+import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
 
 /**
  * A component to display a list of entities loaded from remote.
@@ -69,7 +69,16 @@ import { SP_MAT_ENTITY_LIST_CONFIG, SPMatEntityListConfig } from './providers';
           <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
         </table>
         @if (pagination() == 'discrete' && _paginator) {
-          <mat-paginator showFirstLastButtons aria-label=""></mat-paginator>
+          <mat-paginator
+            showFirstLastButtons
+            [length]="_paginator.getEntityCount()"
+            [pageSize]="_paginator.getPageSize()"
+            [pageIndex]="_paginator.getPageIndex()"
+            [pageSizeOptions]="[]"
+            [hidePageSize]="true"
+            (page)="handlePageEvent($event)"
+            aria-label="Select page"
+          ></mat-paginator>
         }
       </div>
     </div>
@@ -275,7 +284,7 @@ export class SPMatEntityListComponent<
       });
 
       this.displayedColumns.set(Array.from(columnNames) as string[]);
-      this.getMoreEntities(this.endpoint(), {});
+      this.getMoreEntities(this.endpoint(), this._paginator?.getPageParams());
     }
   }
 
@@ -285,13 +294,20 @@ export class SPMatEntityListComponent<
 
   private getMoreEntities(url: string, params: any) {
     this.http
-      .get<TEntity[]>(url, { params })
+      .get<any>(url, { params })
       .pipe(
         tap((entities) => {
           // TODO: defer this to a pagination provider so that we can support
           // many types of pagination. DRF itself has different schemes. And
           // express may have yet another pagination protocol.
-          entities = this.findArrayInResult(entities) as TEntity[];
+          if (this._paginator) {
+            entities = this._paginator.getEntitiesFromResponse(entities)
+          } else {
+            entities = this.findArrayInResult(entities) as TEntity[];
+          }
+          if (this.pagination() === 'discrete') {
+            this.store.reset();
+          }
           // store the entities in the store
           this.store.update(upsertEntities(entities));
           // this.dataSource().data = entities;
@@ -314,5 +330,11 @@ export class SPMatEntityListComponent<
       }
     }
     return [];
+  }
+
+  handlePageEvent(e: PageEvent) {
+    console.log(`handlePageEvent - ev: ${JSON.stringify(e)}`);
+    this._paginator?.setPageIndex(e.pageIndex);
+    this.getMoreEntities(this.endpoint(), this._paginator?.getPageParams());
   }
 }

@@ -1,4 +1,5 @@
-import { IntlDateFormat } from "@smallpearl/ngx-helper/i18n";
+import { HttpParams } from "@angular/common/http";
+import { SPIntlDateFormat } from "@smallpearl/ngx-helper/locale";
 
 /**
  * Each column is represented by a column definition. An <ng-container matColumnDef=""></ng-container>
@@ -14,21 +15,42 @@ export type SPMatEntityListColumn<TEntity extends { [P in IdKey]: PropertyKey },
   // Date types.
   valueOptions?: {
     // Specify the same format string argument that is passed to DatePipe.
-    dateTimeFormat?: IntlDateFormat;
+    dateTimeFormat?: SPIntlDateFormat;
   };
   // If the column value cannot be derived by simple TEntity[name] lookup,
   // use this function to return a custom computed or formatted value.
   valueFn?: (t: TEntity) => string|number|Date|boolean;
 }
 
+/**
+ * Pagination HTTP request params. Actually copied from Angular's HttpParams
+ * declaration. The ReadonlyArray<string|number|boolean> is a bit of an
+ * overkill for pagination params, but what the heck. When you copy-paste,
+ * do it in full!
+ */
+export type SPPageParams = { [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean>; }
+
+/**
+ * An interface that the clients should provide, either via a global config
+ * (see above), that handles parsing the GET response and returns the entities
+ * stored therein. This class will allow the entity-list component to be
+ * used across different pagination response types as long as the appropriate
+ * SPMatEntityListPaginator class is provided to the component.
+ */
 export interface SPMatEntityListPaginator {
-  // Total count of entities
-  total: number;
-  currentPage: number;
-  // Number of entities per page
-  pageSize: number;
-  hasNext: () => boolean;
-  hasPrevious: () => boolean;
-  nextPageEndpoint: (endpoint: string, currentPageNumber: number) => string;
-  previousPageEndpoint: (endpoint: string, currentPageNumber: number) => string;
+  getEntityCount: () => number;
+  getPageCount: () => number;
+  getPageSize: () => number;
+  getPageIndex: () => number;
+  setPageIndex: (pageIndex: number) => void;
+  getPageParams: () => SPPageParams;
+  getEntitiesFromResponse: <TEntity extends { [P in IdKey]: PropertyKey }, IdKey extends string = 'id'>(resp: any) => TEntity[];
+}
+
+/**
+ * Global config for SPMatEntityList component.
+ */
+export interface SPMatEntityListConfig {
+  urlResolver?: (endpoint: string) => string;
+  paginator?: SPMatEntityListPaginator;
 }

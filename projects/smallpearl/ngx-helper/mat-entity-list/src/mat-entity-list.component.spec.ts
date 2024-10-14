@@ -3,12 +3,11 @@ import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, ComponentRef, OnInit, signal, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatColumnDef, MatTable, MatTableModule } from '@angular/material/table';
+import { MatTableModule } from '@angular/material/table';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
 import { SPMatEntityListColumn } from './mat-entity-list-types';
 import { SPMatEntityListComponent } from './mat-entity-list.component';
-import { By } from '@angular/platform-browser';
 
 interface User {
   name: { title: string, first: string, last: string },
@@ -78,7 +77,7 @@ class SPMatEntityListTestComponent implements OnInit {
   }
 }
 
-fdescribe('SPMatEntityListComponent', () => {
+describe('SPMatEntityListComponent', () => {
   let testComponent!: SPMatEntityListTestComponent;
   let testComponentFixture!: ComponentFixture<SPMatEntityListTestComponent>;
   let testComponentRef!: ComponentRef<SPMatEntityListTestComponent>;
@@ -144,7 +143,7 @@ fdescribe('SPMatEntityListComponent', () => {
     expect(rows.length).toEqual(USER_DATA.length+1);
   });
 
-  fit('should show pagination control for pagination="discrete"', async () => {
+  it('should show pagination control for pagination="discrete"', async () => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('pagination', 'discrete')
     const http = TestBed.inject(HttpClient);
@@ -162,7 +161,7 @@ fdescribe('SPMatEntityListComponent', () => {
     expect(paginator).toBeTruthy();
   });
 
-  fit('should *NOT* show pagination control for pagination="infinite"', async () => {
+  it('should *NOT* show pagination control for pagination="infinite"', async () => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('pagination', 'infinite')
     const http = TestBed.inject(HttpClient);

@@ -1,12 +1,17 @@
 import { DataSource } from '@angular/cdk/collections';
 import { CommonModule } from '@angular/common';
+import { HttpParams } from '@angular/common/http';
 import { AfterViewInit, ChangeDetectorRef, Component, OnInit, QueryList, signal, ViewChild, ViewChildren } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatSortModule } from '@angular/material/sort';
 import { MatColumnDef, MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { SPMatEntityListColumn } from '@smallpearl/ngx-helper/mat-entity-list/src/mat-entity-list-types';
-import { SPMatEntityListComponent } from '@smallpearl/ngx-helper/mat-entity-list/src/mat-entity-list.component';
-import { SPMatEntityListPaginator } from 'dist/smallpearl/ngx-helper/mat-entity-list/src/mat-entity-list-types';
+import {
+  SPMatEntityListPaginator,
+  SPMatEntityListColumn,
+  SPMatEntityListComponent,
+} from '@smallpearl/ngx-helper/mat-entity-list';
+// import { SPMatEntityListColumn } from '@smallpearl/ngx-helper/mat-entity-list/src/mat-entity-list-types';
+// import { SPMatEntityListPaginator } from 'dist/smallpearl/ngx-helper/mat-entity-list/src/mat-entity-list-types';
 
 interface User {
   id: number;
@@ -49,23 +54,32 @@ const ELEMENT_DATA: PeriodicElement[] = [
 ];
 
 class MyPaginator implements SPMatEntityListPaginator {
-  total = 100;
-  currentPage = 1;
-  // Number of entities per page
-  pageSize = 50;
-  hasNext() {
-    return false;
+  pageIndex = 0;
+  getEntityCount() {
+    return 100;
   }
-  hasPrevious() {
-    return false;
+  getPageCount() {
+    return Math.floor(this.getEntityCount()/this.getPageSize()) +
+      (this.getEntityCount()%this.getPageSize() ? 1 : 0)
   }
-  nextPageEndpoint(endpoint: string, currentPageNumber: number) {
-    return endpoint;
-  };
-
-  previousPageEndpoint(endpoint: string, currentPageNumber: number) {
-    return endpoint;
-  };
+  getPageIndex() {
+    return this.pageIndex;
+  }
+  setPageIndex(pageIndex: number) { // index is 0-based
+    this.pageIndex = pageIndex;
+  }
+  getPageSize() {
+    return 10;
+  }
+  getPageParams() {
+    return {
+      page: this.getPageIndex()+1,  // account for 0-based index
+      results: this.getPageSize()
+    }
+  }
+  getEntitiesFromResponse(resp: any) {
+    return resp['results'];
+  }
 }
 
 @Component({
@@ -138,7 +152,7 @@ export class EntityListDemoComponent implements OnInit, AfterViewInit {
     { name: 'symbol' },
   ];
 
-  endpoint = 'https://randomuser.me/api/?page=1&results=10&nat=us,dk,fr,gb';
+  endpoint = 'https://randomuser.me/api/?nat=us,dk,fr,gb';
   spEntityListColumns: SPMatEntityListColumn<User>[] = [
     { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
     { name: 'gender' },
