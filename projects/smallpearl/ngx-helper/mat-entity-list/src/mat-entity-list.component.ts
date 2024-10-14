@@ -79,6 +79,7 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
             [pageSizeOptions]="[]"
             [hidePageSize]="true"
             (page)="handlePageEvent($event)"
+            [disabled]="loading()"
             aria-label="Select page"
           ></mat-paginator>
         }
@@ -116,9 +117,9 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
       position: absolute;
       top: 0px;
       left: 0px;
-      z-index: 10000;
-      opacity: 0.3;
-      border: 1px solid black;
+      z-index: 1000;
+      opacity: 0.6;
+      background-color: transparent;
     }
     .show {
       display: block;
@@ -131,6 +132,7 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
       justify-content: center;
     }
     .infinite-scroll-loading {
+      display: none;
       width: 100%;
       padding: 8px;
     }
