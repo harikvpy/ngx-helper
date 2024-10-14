@@ -69,7 +69,7 @@ class MyPaginator implements SPMatEntityListPaginator {
     this.pageIndex = pageIndex;
   }
   getPageSize() {
-    return 10;
+    return 20;
   }
   getPageParams() {
     return {
@@ -96,23 +96,24 @@ class MyPaginator implements SPMatEntityListPaginator {
   <div class="demo-wrapper">
     <h1>Entity List Demo</h1>
 
-    <sp-mat-entity-list
-      [endpoint]="endpoint"
-      [columns]="spEntityListColumns"
-      idKey="cell"
-      pagination="discrete"
-      [paginator]="paginator"
-    >
+    <div class="entities-list">
+      <sp-mat-entity-list
+        [endpoint]="endpoint"
+        [columns]="spEntityListColumns"
+        idKey="cell"
+        pagination="discrete"
+        [paginator]="paginator"
+      >
 
-      <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef>Name</th>
-        <td mat-cell *matCellDef="let element">
-          {{element.name.title}}. {{element.name.first}} {{element.name.last}}
-        </td>
-      </ng-container>
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let element">
+            {{element.name.title}}. {{element.name.first}} {{element.name.last}}
+          </td>
+        </ng-container>
 
-    </sp-mat-entity-list>
-
+      </sp-mat-entity-list>
+    </div>
 
     <!-- <hr/>
     <div class="p-2">
@@ -135,6 +136,10 @@ class MyPaginator implements SPMatEntityListPaginator {
     display: flex;
     flex-direction: column;
     height: 100%;
+    overflow: hidden;
+  }
+  .entities-list {
+    flex-grow: 1;
     overflow: scroll;
   }
   .p-2 {
