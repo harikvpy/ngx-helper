@@ -5,6 +5,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  computed,
   ContentChildren,
   Inject,
   input,
@@ -54,16 +55,15 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
   selector: 'sp-mat-entity-list',
   template: `
     <div
+      class="entities-list-wrapper"
       infiniteScroll
-      [infiniteScrollDistance]="2"
-      [infiniteScrollThrottle]="400"
-      infiniteScrollContainer=".scroll-pane"
-      [fromRoot]="false"
+      [infiniteScrollDistance]="infiniteScrollDistance()"
+      [infiniteScrollThrottle]="infiniteScrollThrottle()"
+      [infiniteScrollContainer]="infiniteScrollContainer()"
+      [scrollWindow]="infiniteScrollWindow()"
+      [infiniteScrollDisabled]="pagination() !== 'infinite' || !_paginator"
       (scrolled)="infiniteScrollLoadNextPage($event)"
-      [scrollWindow]="false"
-      [infiniteScrollDisabled]="pagination() != 'infinite' || !_paginator"
-    >
-      <div class="scroll-pane">
+      >
         <table mat-table matSort [dataSource]="dataSource()">
           <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
@@ -81,7 +81,6 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
           ></mat-paginator>
         }
       </div>
-    </div>
     <!-- We keep the column definitions outside the <table> so that they can
     be dynamically added to the MatTable. -->
     @for (column of columns(); track $index) {
@@ -97,10 +96,6 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
   `,
   styles: [
     `
-      .scroll-pane {
-        height: 100%;
-        overflow-y: scroll;
-      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -133,7 +128,13 @@ export class SPMatEntityListComponent<
    * Component specific paginator. Only used if pagination != 'none'.
    */
   paginator = input<SPMatEntityListPaginator>();
-
+  /**
+   * Wrappers for infiniteScroll properties, for customization by the client
+   */
+  infiniteScrollContainer = input<any>('');
+  infiniteScrollDistance = input<number>(1);
+  infiniteScrollThrottle = input<number>(400);
+  infiniteScrollWindow = input<boolean>(false);
   /* END CLIENT PROVIDED PARAMETERS */
 
   // *** INTERNAL *** //
@@ -187,9 +188,7 @@ export class SPMatEntityListComponent<
 
   _paginator!: SPMatEntityListPaginator | undefined;
 
-  curPageNumber!: number;
-  nextPage!: string;
-  prevPage!: string;
+  // infiniteScrollWindow = computed<boolean>(() => this.infiniteScrollContainer() === undefined);
 
   constructor(
     private http: HttpClient,
@@ -284,15 +283,19 @@ export class SPMatEntityListComponent<
       });
 
       this.displayedColumns.set(Array.from(columnNames) as string[]);
-      this.getMoreEntities(this.endpoint(), this._paginator?.getPageParams());
+      this.loadEntities(this.endpoint(), this._paginator?.getPageParams());
     }
   }
 
   infiniteScrollLoadNextPage(ev: any) {
-    this.getMoreEntities('', { page: this.curPageNumber + 1 });
+    // console.log(`infiniteScrollLoadNextPage - ${JSON.stringify(ev)}`);
+    if (this._paginator) {
+      this._paginator.setPageIndex(this._paginator.getPageIndex()+1)
+      this.loadEntities(this.endpoint(), this._paginator.getPageParams());
+    }
   }
 
-  private getMoreEntities(url: string, params: any) {
+  private loadEntities(url: string, params: any) {
     this.http
       .get<any>(url, { params })
       .pipe(
@@ -335,6 +338,6 @@ export class SPMatEntityListComponent<
   handlePageEvent(e: PageEvent) {
     console.log(`handlePageEvent - ev: ${JSON.stringify(e)}`);
     this._paginator?.setPageIndex(e.pageIndex);
-    this.getMoreEntities(this.endpoint(), this._paginator?.getPageParams());
+    this.loadEntities(this.endpoint(), this._paginator?.getPageParams());
   }
 }

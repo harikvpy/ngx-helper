@@ -1,7 +1,7 @@
 import { DataSource } from '@angular/cdk/collections';
 import { CommonModule } from '@angular/common';
 import { HttpParams } from '@angular/common/http';
-import { AfterViewInit, ChangeDetectorRef, Component, OnInit, QueryList, signal, ViewChild, ViewChildren } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, QueryList, signal, viewChild, ViewChild, ViewChildren } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatSortModule } from '@angular/material/sort';
 import { MatColumnDef, MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -96,13 +96,14 @@ class MyPaginator implements SPMatEntityListPaginator {
   <div class="demo-wrapper">
     <h1>Entity List Demo</h1>
 
-    <div class="entities-list">
+    <div class="entities-list" #entitiesList>
       <sp-mat-entity-list
         [endpoint]="endpoint"
         [columns]="spEntityListColumns"
         idKey="cell"
         pagination="discrete"
         [paginator]="paginator"
+        [infiniteScrollContainer]="entitiesScroller()"
       >
 
         <ng-container matColumnDef="name">
@@ -157,7 +158,7 @@ export class EntityListDemoComponent implements OnInit, AfterViewInit {
     { name: 'symbol' },
   ];
 
-  endpoint = 'https://randomuser.me/api/?nat=us,dk,fr,gb';
+  endpoint = 'https://randomuser.me/api/?nat=us,gb';
   spEntityListColumns: SPMatEntityListColumn<User>[] = [
     { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
     { name: 'gender' },
@@ -174,12 +175,23 @@ export class EntityListDemoComponent implements OnInit, AfterViewInit {
   // <ng-container *ngFor="let column of columns()" [matColumnDef]="column.name">
   @ViewChildren(MatColumnDef) viewColumnDefs!: QueryList<MatColumnDef>;
 
+  spEntitiesList = viewChild(SPMatEntityListComponent);
+  entitiesListScroller = viewChild<ElementRef>('entitiesList');
+
+  entitiesScroller = signal<HTMLElement|undefined>(undefined);
+
   constructor(private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {}
 
   ngAfterViewInit(): void {
     setTimeout(() => this.buildColumns(), 100);
+    if (this.entitiesListScroller()) {
+      this.entitiesScroller.set(this.entitiesListScroller()?.nativeElement);
+    }
+    // if (this.spEntitiesList() && this.entitiesListScroller()) {
+    //   this.spEntitiesList()?.infiniteScrollContainer().set(this.entitiesListScroller()?.nativeElement);
+    // }
   }
 
   /**
