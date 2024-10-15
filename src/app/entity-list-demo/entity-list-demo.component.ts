@@ -100,10 +100,12 @@ class MyPaginator implements SPMatEntityListPaginator {
         pagination="discrete"
         [paginator]="paginator"
         [infiniteScrollContainer]="entitiesScroller()"
+        matSort
+        [sorter]="matSort()"
       >
 
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <th mat-header-cell mat-sort-header *matHeaderCellDef>NAME</th>
           <td mat-cell *matCellDef="let element">
             {{element.name.title}}. {{element.name.first}} {{element.name.last}}
           </td>
@@ -154,11 +156,11 @@ export class EntityListDemoComponent implements OnInit, AfterViewInit {
     { name: 'symbol' },
   ];
 
-  endpoint = 'https://randomuser.me/api/?nat=us,gb';
+  endpoint = 'https://randomuser.me/api/?results=1000&nat=us,gb';
   spEntityListColumns: SPMatEntityListColumn<User>[] = [
     { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
-    { name: 'gender' },
-    { name: 'cell' },
+    { name: 'gender', label: 'GENDER' },
+    { name: 'cell', label: 'CELL' },
   ];
   paginator = new MyPaginator();
 
@@ -166,14 +168,14 @@ export class EntityListDemoComponent implements OnInit, AfterViewInit {
   dataSource = signal<MatTableDataSource<PeriodicElement>>(new MatTableDataSource<PeriodicElement>([]));
 
   @ViewChild(MatTable, { static: false }) table!: MatTable<PeriodicElement>;
-  mySorter = viewChild(MatSort);
+  matSort = viewChild(MatSort);
 
   // These are our own <ng-container matColumnDef></ng-container>
   // which we create for each column that we create by the declaration:
   // <ng-container *ngFor="let column of columns()" [matColumnDef]="column.name">
   @ViewChildren(MatColumnDef) viewColumnDefs!: QueryList<MatColumnDef>;
 
-  spEntitiesList = viewChild(SPMatEntityListComponent);
+  spEntitiesList = viewChild(SPMatEntityListComponent<User, 'cell'>);
   entitiesListScroller = viewChild<ElementRef>('entitiesList');
 
   entitiesScroller = signal<HTMLElement|undefined>(undefined);
@@ -187,9 +189,17 @@ export class EntityListDemoComponent implements OnInit, AfterViewInit {
     if (this.entitiesListScroller()) {
       this.entitiesScroller.set(this.entitiesListScroller()?.nativeElement);
     }
-    // if (this.spEntitiesList() && this.entitiesListScroller()) {
-    //   this.spEntitiesList()?.infiniteScrollContainer().set(this.entitiesListScroller()?.nativeElement);
-    // }
+    if (this.spEntitiesList()) {
+      const dataSource = this.spEntitiesList()?.dataSource();
+      if (dataSource) {
+        dataSource.sortingDataAccessor = (data: User, sortHeaderId: string): string | number => {
+          if (sortHeaderId === 'name') {
+            return data.name.title + data.name.first + data.name.last;
+          }
+          return (data as any)[sortHeaderId];
+        };
+      }
+    }
   }
 
   /**

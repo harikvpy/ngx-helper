@@ -5,12 +5,13 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  contentChildren,
+  ContentChildren,
   Inject,
   input,
   OnDestroy,
   OnInit,
   Optional,
+  QueryList,
   signal,
   viewChild,
   viewChildren
@@ -92,7 +93,7 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
       @for (column of columns(); track $index) {
       <ng-container [matColumnDef]="column.name" >
         <th mat-header-cell mat-sort-header *matHeaderCellDef>
-          {{ column?.label || column.name }}
+          {{ getColumnLabel(column) }}
         </th>
         <td mat-cell *matCellDef="let element">
           {{ getColumnValue(element, column) }}
@@ -205,7 +206,8 @@ export class SPMatEntityListComponent<
   // These are the <ng-container matColumnDef></ng-container> placed
   // inside <sp-mat-entity-list></<sp-mat-entity-list> by the client to override
   // the default <ng-container matColumnDef> created by the component.
-  clientColumnDefs = contentChildren(MatColumnDef);
+  @ContentChildren(MatColumnDef) clientColumnDefs!: QueryList<MatColumnDef>;
+
 
   destroy$ = new Subject<void>();
 
@@ -310,6 +312,12 @@ export class SPMatEntityListComponent<
     return val;
   }
 
+  getColumnLabel(column: SPMatEntityListColumn<TEntity, IdKey>) {
+    return this.config && this.config?.i18nTranslate
+      ? this.config.i18nTranslate(column?.label || column.name)
+      : column?.label || column.name;
+  }
+
   /**
    * Build the effective columns by parsing our own <ng-container matColumnDef>
    * statements for each column in columns() property and client's
@@ -324,7 +332,7 @@ export class SPMatEntityListComponent<
         const matColDef = this.viewColumnDefs().find(
           (cd) => cd.name === colDef.name
         );
-        const clientColDef = this.clientColumnDefs().find(
+        const clientColDef = this.clientColumnDefs.find(
           (cd) => cd.name === colDef.name
         );
         const columnDef = clientColDef ? clientColDef : matColDef;
@@ -350,14 +358,16 @@ export class SPMatEntityListComponent<
     }
   }
 
-  private loadEntities(url: string, params: any) {
+  private loadEntities(endpoint: string, params: any) {
     // Inline check for input signal value before calling its value doesn't
     // seem to work as of now. So we assign the value to a const and check
     // it for undefined before calling it.
     const loaderFn = this.entityLoaderFn();
+    const getUrl = (endpoint: string): string =>
+      this.config?.urlResolver ? this.config?.urlResolver(endpoint) : endpoint;
     const obs = loaderFn !== undefined
       ? loaderFn(params)
-      : this.http.get<any>(url, { params });
+      : this.http.get<any>(getUrl(endpoint), { params });
 
     this.loading.set(true);
     obs

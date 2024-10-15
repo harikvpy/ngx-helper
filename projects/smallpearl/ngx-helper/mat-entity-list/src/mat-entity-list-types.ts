@@ -53,6 +53,7 @@ export interface SPMatEntityListPaginator {
 export interface SPMatEntityListConfig {
   urlResolver?: (endpoint: string) => string;
   paginator?: SPMatEntityListPaginator;
+  i18nTranslate?: (label: string, context?: any) => string;
 }
 
 /**
