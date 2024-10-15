@@ -31,7 +31,7 @@ import { createStore } from '@ngneat/elf';
 import { selectAllEntities, upsertEntities, withEntities } from '@ngneat/elf-entities';
 import { spFormatDate } from '@smallpearl/ngx-helper/locale';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
-import { finalize, Observable, Subject, takeUntil, tap } from 'rxjs';
+import { finalize, Observable, Subscription, tap } from 'rxjs';
 import { DefaultSPMatEntityListConfig } from './config';
 import { SPMatEntityListColumn, SPMatEntityListConfig, SPMatEntityListEntityLoaderFn, SPMatEntityListPaginator } from './mat-entity-list-types';
 import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
@@ -208,8 +208,7 @@ export class SPMatEntityListComponent<
   // the default <ng-container matColumnDef> created by the component.
   @ContentChildren(MatColumnDef) clientColumnDefs!: QueryList<MatColumnDef>;
 
-
-  destroy$ = new Subject<void>();
+  subs$ = new Subscription();
 
   // We isolate retrieving items from the remote and providing the items
   // to the component into two distinct operations. The retrieval operation
@@ -269,21 +268,22 @@ export class SPMatEntityListComponent<
       ? this.paginator()
       : this.config?.paginator;
 
-    this.entities$
-      .pipe(
-        takeUntil(this.destroy$),
-        tap((entities) => {
-          // .data is a setter property, which ought to trigger the necessary
-          // signals resulting in mat-table picking up the changes without
-          // requiring us to call cdr.detectChanges() explicitly.
-          this.dataSource().data = entities;
-        })
-      )
-      .subscribe();
+    this.subs$.add(
+      this.entities$
+        .pipe(
+          tap((entities) => {
+            // .data is a setter property, which ought to trigger the necessary
+            // signals resulting in mat-table picking up the changes without
+            // requiring us to call cdr.detectChanges() explicitly.
+            this.dataSource().data = entities;
+          })
+        )
+        .subscribe()
+    );
   }
 
   ngOnDestroy(): void {
-    this.destroy$.next();
+    this.subs$.unsubscribe();
   }
 
   ngAfterViewInit(): void {
@@ -370,30 +370,32 @@ export class SPMatEntityListComponent<
       : this.http.get<any>(getUrl(endpoint), { params });
 
     this.loading.set(true);
-    obs
-      .pipe(
-        tap((entities) => {
-          // TODO: defer this to a pagination provider so that we can support
-          // many types of pagination. DRF itself has different schemes. And
-          // express may have yet another pagination protocol.
-          if (this._paginator) {
-            entities = this._paginator.getEntitiesFromResponse(entities);
-            if (this.pagination() === 'discrete') {
-              this.store.reset();
-            } else if (this.pagination() === 'infinite') {
-              this.hasMore.set(this._paginator?.getPageIndex()+1 === this._paginator?.getPageCount())
+    this.subs$.add(
+      obs
+        .pipe(
+          tap((entities) => {
+            // TODO: defer this to a pagination provider so that we can support
+            // many types of pagination. DRF itself has different schemes. And
+            // express may have yet another pagination protocol.
+            if (this._paginator) {
+              entities = this._paginator.getEntitiesFromResponse(entities);
+              if (this.pagination() === 'discrete') {
+                this.store.reset();
+              } else if (this.pagination() === 'infinite') {
+                this.hasMore.set(this._paginator?.getPageIndex()+1 === this._paginator?.getPageCount())
+              }
+            } else {
+              entities = this.findArrayInResult(entities) as TEntity[];
             }
-          } else {
-            entities = this.findArrayInResult(entities) as TEntity[];
-          }
-          // store the entities in the store
-          this.store.update(upsertEntities(entities));
-        }),
-        finalize(() => {
-          this.loading.set(false);
-        })
-      )
-      .subscribe();
+            // store the entities in the store
+            this.store.update(upsertEntities(entities));
+          }),
+          finalize(() => {
+            this.loading.set(false);
+          })
+        )
+        .subscribe()
+      );
   }
 
   private findArrayInResult(res: any): any[] | undefined {

@@ -8,6 +8,7 @@ import {
   SPMatEntityListComponent,
   SPMatEntityListPaginator,
 } from '@smallpearl/ngx-helper/mat-entity-list';
+import { Subscription } from 'rxjs';
 
 interface User {
   id: number;
@@ -65,7 +66,7 @@ class MyPaginator implements SPMatEntityListPaginator {
     this.pageIndex = pageIndex;
   }
   getPageSize() {
-    return 10;
+    return 100;
   }
   getPageParams() {
     return {
@@ -156,7 +157,7 @@ export class EntityListDemoComponent implements OnInit, AfterViewInit {
     { name: 'symbol' },
   ];
 
-  endpoint = 'https://randomuser.me/api/?results=1000&nat=us,gb';
+  endpoint = 'https://randomuser.me/api/?nat=us,gb';
   spEntityListColumns: SPMatEntityListColumn<User>[] = [
     { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
     { name: 'gender', label: 'GENDER' },
