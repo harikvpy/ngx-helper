@@ -5,6 +5,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  computed,
   ContentChildren,
   Inject,
   input,
@@ -33,7 +34,12 @@ import { spFormatDate } from '@smallpearl/ngx-helper/locale';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { finalize, Observable, Subscription, tap } from 'rxjs';
 import { DefaultSPMatEntityListConfig } from './config';
-import { SPMatEntityListColumn, SPMatEntityListConfig, SPMatEntityListEntityLoaderFn, SPMatEntityListPaginator } from './mat-entity-list-types';
+import {
+  SPMatEntityListColumn,
+  SPMatEntityListConfig,
+  SPMatEntityListEntityLoaderFn,
+  SPMatEntityListPaginator,
+} from './mat-entity-list-types';
 import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
 
 /**
@@ -60,10 +66,15 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
       [infiniteScrollThrottle]="infiniteScrollThrottle()"
       [infiniteScrollContainer]="infiniteScrollContainer()"
       [scrollWindow]="infiniteScrollWindow()"
-      [infiniteScrollDisabled]="pagination() !== 'infinite' || !_paginator || !hasMore()"
+      [infiniteScrollDisabled]="
+        pagination() !== 'infinite' || !_paginator || !hasMore()
+      "
       (scrolled)="infiniteScrollLoadNextPage($event)"
+    >
+      <div
+        class="busy-overlay"
+        [ngClass]="{ show: pagination() === 'discrete' && loading() }"
       >
-      <div class="busy-overlay" [ngClass]="{'show': pagination() === 'discrete' && loading()}">
         <ng-container *ngTemplateOutlet="busySpinner"></ng-container>
       </div>
       <table mat-table [dataSource]="dataSource()">
@@ -71,19 +82,22 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
         <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
       </table>
       @if (pagination() == 'discrete' && _paginator) {
-        <mat-paginator
-          showFirstLastButtons
-          [length]="_paginator.getEntityCount()"
-          [pageSize]="_paginator.getPageSize()"
-          [pageIndex]="_paginator.getPageIndex()"
-          [pageSizeOptions]="[]"
-          [hidePageSize]="true"
-          (page)="handlePageEvent($event)"
-          [disabled]="loading()"
-          aria-label="Select page"
-        ></mat-paginator>
+      <mat-paginator
+        showFirstLastButtons
+        [length]="entityCount()"
+        [pageSize]="_pageSize()"
+        [pageIndex]="pageIndex()"
+        [pageSizeOptions]="[]"
+        [hidePageSize]="true"
+        (page)="handlePageEvent($event)"
+        [disabled]="loading()"
+        aria-label="Select page"
+      ></mat-paginator>
       }
-      <div class="infinite-scroll-loading" [ngClass]="{'show': pagination() === 'infinite' && loading()}">
+      <div
+        class="infinite-scroll-loading"
+        [ngClass]="{ show: pagination() === 'infinite' && loading() }"
+      >
         <ng-container *ngTemplateOutlet="busySpinner"></ng-container>
       </div>
     </div>
@@ -91,10 +105,16 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
     be dynamically added to the MatTable. -->
     <span matSort="sorter()">
       @for (column of columns(); track $index) {
-      <ng-container [matColumnDef]="column.name" >
+      <ng-container [matColumnDef]="column.name">
+        @if (disableSort()) {
+        <th mat-header-cell *matHeaderCellDef>
+          {{ getColumnLabel(column) }}
+        </th>
+        } @else {
         <th mat-header-cell mat-sort-header *matHeaderCellDef>
           {{ getColumnLabel(column) }}
         </th>
+        }
         <td mat-cell *matCellDef="let element">
           {{ getColumnValue(element, column) }}
         </td>
@@ -109,35 +129,35 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
   `,
   styles: [
     `
-    .entities-list-wrapper {
-      position: relative;
-    }
-    .busy-overlay {
-      display: none;
-      height: 100%;
-      width: 100%;
-      position: absolute;
-      top: 0px;
-      left: 0px;
-      z-index: 1000;
-      opacity: 0.6;
-      background-color: transparent;
-    }
-    .show {
-      display: block;
-    }
-    .busy-spinner {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .infinite-scroll-loading {
-      display: none;
-      width: 100%;
-      padding: 8px;
-    }
+      .entities-list-wrapper {
+        position: relative;
+      }
+      .busy-overlay {
+        display: none;
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        z-index: 1000;
+        opacity: 0.6;
+        background-color: transparent;
+      }
+      .show {
+        display: block;
+      }
+      .busy-spinner {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .infinite-scroll-loading {
+        display: none;
+        width: 100%;
+        padding: 8px;
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -156,11 +176,17 @@ export class SPMatEntityListComponent<
    * Custom entities loader function, which if provided will be called
    * instead of HttpClient.get.
    */
-  entityLoaderFn = input<SPMatEntityListEntityLoaderFn|undefined>(undefined);
+  entityLoaderFn = input<SPMatEntityListEntityLoaderFn | undefined>(undefined);
   /**
    * The columns of the entity to be displayed.
    */
   columns = input.required<SPMatEntityListColumn<TEntity, IdKey>[]>();
+  /**
+   * Number of entities per page. If this is not set and paginator is defined,
+   * the number of entities int in the first request, will be taken as the
+   * page size.
+   */
+  pageSize = input<number>(0);
   /**
    * Entity idKey, if idKey is different from the default 'id'.
    */
@@ -179,6 +205,10 @@ export class SPMatEntityListComponent<
    *
    */
   sorter = input<MatSort>();
+  /**
+   * Disable sorting of rows
+   */
+  disableSort = input<boolean>(false);
   /**
    * Wrappers for infiniteScroll properties, for customization by the client
    */
@@ -209,6 +239,16 @@ export class SPMatEntityListComponent<
   @ContentChildren(MatColumnDef) clientColumnDefs!: QueryList<MatColumnDef>;
 
   subs$ = new Subscription();
+
+  // Pagination state
+  entityCount = signal<number>(0);
+  pageIndex = signal<number>(0);
+
+  // Mechanism to default pageSize to last entities length.
+  lastFetchedEntitiesCount = signal<number>(0);
+  _pageSize = computed<number>(() =>
+    this.pageSize() ? this.pageSize() : this.lastFetchedEntitiesCount()
+  );
 
   // We isolate retrieving items from the remote and providing the items
   // to the component into two distinct operations. The retrieval operation
@@ -346,56 +386,85 @@ export class SPMatEntityListComponent<
       });
 
       this.displayedColumns.set(Array.from(columnNames) as string[]);
-      this.loadEntities(this.endpoint(), this._paginator?.getPageParams());
+      this.loadMoreEntities();
     }
   }
 
   infiniteScrollLoadNextPage(ev: any) {
     // console.log(`infiniteScrollLoadNextPage - ${JSON.stringify(ev)}`);
     if (this._paginator) {
-      this._paginator.setPageIndex(this._paginator.getPageIndex()+1)
-      this.loadEntities(this.endpoint(), this._paginator.getPageParams());
+      this.loadMoreEntities();
     }
   }
 
-  private loadEntities(endpoint: string, params: any) {
+  private loadMoreEntities() {
+    let pageParams = {};
+    if (this._paginator) {
+      pageParams = this._paginator.getRequestPageParams(
+        this.endpoint(),
+        this.pageIndex(),
+        this.pageSize()
+      );
+    }
+
     // Inline check for input signal value before calling its value doesn't
     // seem to work as of now. So we assign the value to a const and check
     // it for undefined before calling it.
     const loaderFn = this.entityLoaderFn();
     const getUrl = (endpoint: string): string =>
       this.config?.urlResolver ? this.config?.urlResolver(endpoint) : endpoint;
-    const obs = loaderFn !== undefined
-      ? loaderFn(params)
-      : this.http.get<any>(getUrl(endpoint), { params });
+    const obs =
+      loaderFn !== undefined
+        ? loaderFn({ params: pageParams })
+        : this.http.get<any>(getUrl(this.endpoint()), { params: pageParams });
 
     this.loading.set(true);
     this.subs$.add(
       obs
         .pipe(
-          tap((entities) => {
+          tap((resp) => {
             // TODO: defer this to a pagination provider so that we can support
             // many types of pagination. DRF itself has different schemes. And
             // express may have yet another pagination protocol.
             if (this._paginator) {
-              entities = this._paginator.getEntitiesFromResponse(entities);
+              const { entities, total } = this._paginator.parseRequestResponse(
+                this.endpoint(),
+                pageParams,
+                resp
+              );
+              this.entityCount.set(total);
+              this.lastFetchedEntitiesCount.set(entities.length);
+              // this.pageIndex.set(this.pageIndex() + 1)
+              // entities = this._paginator.getEntitiesFromResponse(entities);
               if (this.pagination() === 'discrete') {
                 this.store.reset();
               } else if (this.pagination() === 'infinite') {
-                this.hasMore.set(this._paginator?.getPageIndex()+1 === this._paginator?.getPageCount())
+                const pageSize = this._pageSize();
+                const entityCount = this.entityCount();
+                if (pageSize > 0) {
+                  const pageCount =
+                    Math.floor(entityCount / pageSize) +
+                    (entityCount % pageSize ? 1 : 0);
+                  this.hasMore.set(this.pageIndex() === pageCount);
+                } else {
+                  this.hasMore.set(false);
+                }
               }
+              // store the entities in the store
+              // TODO: remove as any
+              this.store.update(upsertEntities(entities as any));
             } else {
-              entities = this.findArrayInResult(entities) as TEntity[];
+              this.store.update(
+                upsertEntities(this.findArrayInResult(resp) as TEntity[])
+              );
             }
-            // store the entities in the store
-            this.store.update(upsertEntities(entities));
           }),
           finalize(() => {
             this.loading.set(false);
           })
         )
         .subscribe()
-      );
+    );
   }
 
   private findArrayInResult(res: any): any[] | undefined {
@@ -414,7 +483,7 @@ export class SPMatEntityListComponent<
   }
 
   handlePageEvent(e: PageEvent) {
-    this._paginator?.setPageIndex(e.pageIndex);
-    this.loadEntities(this.endpoint(), this._paginator?.getPageParams());
+    this.pageIndex.set(e.pageIndex);
+    this.loadMoreEntities();
   }
 }

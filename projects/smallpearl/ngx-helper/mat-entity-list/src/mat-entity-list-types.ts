@@ -38,13 +38,15 @@ export type SPPageParams = { [param: string]: string | number | boolean | Readon
  * SPMatEntityListPaginator class is provided to the component.
  */
 export interface SPMatEntityListPaginator {
-  getEntityCount: () => number;
-  getPageCount: () => number;
-  getPageSize: () => number;
-  getPageIndex: () => number;
-  setPageIndex: (pageIndex: number) => void;
-  getPageParams: () => SPPageParams;
-  getEntitiesFromResponse: <TEntity extends { [P in IdKey]: PropertyKey }, IdKey extends string = 'id'>(resp: any) => TEntity[];
+  getRequestPageParams: (endpoint: string, pageIndex: number, pageSize: number) => SPPageParams;
+  parseRequestResponse: <
+    TEntity extends { [P in IdKey]: PropertyKey },
+    IdKey extends string = 'id'
+  >(
+    endpoint: string,
+    params: SPPageParams,
+    resp: any
+  ) => { total: number; entities: TEntity[] };
 }
 
 /**

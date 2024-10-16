@@ -86,33 +86,18 @@ class SPMatEntityListTestComponent implements OnInit {
       results: TEntity[]
  */
 class DRFPaginator implements SPMatEntityListPaginator {
-  total = 0;
-  pageIndex = 0;
-  getEntityCount() {
-    return this.total;
-  }
-  getPageCount() {
-    return Math.floor(this.getEntityCount()/this.getPageSize()) +
-      (this.getEntityCount()%this.getPageSize() ? 1 : 0)
-  }
-  getPageIndex() {
-    return this.pageIndex;
-  }
-  setPageIndex(pageIndex: number) { // index is 0-based
-    this.pageIndex = pageIndex;
-  }
-  getPageSize() {
-    return 10;
-  }
-  getPageParams() {
+  getRequestPageParams(endpoint: string, pageIndex: number, pageSize: number) {
     return {
-      page: this.getPageIndex()+1,  // account for 0-based index
-      results: this.getPageSize()
+      page: pageIndex+1,  // account for 0-based index
+      results: 20
     }
   }
-  getEntitiesFromResponse(resp: any) {
-    this.total = resp['total'];
-    return resp['results'];
+  parseRequestResponse(endpoint: string, params: any, resp: any) {
+    console.log(`parseRequestResponse - params: ${JSON.stringify(params)}`);
+    return {
+      total: resp['total'],
+      entities: resp['results']
+    }
   }
 }
 
@@ -246,9 +231,12 @@ fdescribe('SPMatEntityListComponent', () => {
       }
     };
     let globalPaginatorGetEntitiesFromResponseCalled = false;
-    spyOn(myPaginator, 'getEntitiesFromResponse').and.callFake((resp: any) => {
+    spyOn(myPaginator, 'parseRequestResponse').and.callFake((endpoint: string, params: any, resp: any) => {
       globalPaginatorGetEntitiesFromResponseCalled = true;
-      return resp['results'];
+      return {
+        total: 100,
+        entities: resp['results']
+      };
     });
     const entityListConfig = new EntityListConfig();
     let globalUrlResolverCalled = false;
