@@ -3,12 +3,12 @@ import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, QueryL
 import { FormsModule } from '@angular/forms';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatColumnDef, MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTabsModule } from '@angular/material/tabs';
 import {
   SPMatEntityListColumn,
   SPMatEntityListComponent,
   SPMatEntityListPaginator,
 } from '@smallpearl/ngx-helper/mat-entity-list';
-import { Subscription } from 'rxjs';
 
 interface User {
   id: number;
@@ -51,31 +51,18 @@ const ELEMENT_DATA: PeriodicElement[] = [
 ];
 
 class MyPaginator implements SPMatEntityListPaginator {
-  pageIndex = 0;
-  getEntityCount() {
-    return 100;
-  }
-  getPageCount() {
-    return Math.floor(this.getEntityCount()/this.getPageSize()) +
-      (this.getEntityCount()%this.getPageSize() ? 1 : 0)
-  }
-  getPageIndex() {
-    return this.pageIndex;
-  }
-  setPageIndex(pageIndex: number) { // index is 0-based
-    this.pageIndex = pageIndex;
-  }
-  getPageSize() {
-    return 100;
-  }
-  getPageParams() {
+  getRequestPageParams(endpoint: string, pageIndex: number, pageSize: number) {
     return {
-      page: this.getPageIndex()+1,  // account for 0-based index
-      results: this.getPageSize()
+      page: pageIndex+1,  // account for 0-based index
+      results: 20
     }
   }
-  getEntitiesFromResponse(resp: any) {
-    return resp['results'];
+  parseRequestResponse(endpoint: string, params: any, resp: any) {
+    console.log(`parseRequestResponse - params: ${JSON.stringify(params)}`);
+    return {
+      total: 110,
+      entities: resp['results']
+    }
   }
 }
 
@@ -87,48 +74,93 @@ class MyPaginator implements SPMatEntityListPaginator {
     SPMatEntityListComponent,
     MatTableModule,
     MatSortModule,
+    MatTabsModule,
   ],
   selector: 'app-entity-list-demo',
   template: `
   <div class="demo-wrapper">
     <h1>Entity List Demo</h1>
-
-    <div class="entities-list" #entitiesList>
-      <sp-mat-entity-list
-        [endpoint]="endpoint"
-        [columns]="spEntityListColumns"
-        idKey="cell"
-        pagination="discrete"
-        [paginator]="paginator"
-        [infiniteScrollContainer]="entitiesScroller()"
-        matSort
-        [sorter]="matSort()"
-      >
-
-        <ng-container matColumnDef="name">
-          <th mat-header-cell mat-sort-header *matHeaderCellDef>NAME</th>
-          <td mat-cell *matCellDef="let element">
-            {{element.name.title}}. {{element.name.first}} {{element.name.last}}
-          </td>
-        </ng-container>
-
-      </sp-mat-entity-list>
+    <div class="demo-tabs">
+      <mat-tab-group class="mh-100" #matTabGroup>
+        <mat-tab label="Custom Column Def">
+          <ng-container *ngTemplateOutlet="tableWithCustomColumnDef"></ng-container>
+        </mat-tab>
+        <mat-tab label="Without Sorting">
+          <ng-template matTabContent>
+            <div class="entities-list">
+              <sp-mat-entity-list
+                [endpoint]="endpoint"
+                [columns]="spEntityListColumns"
+                [pageSize]="10"
+                idKey="cell"
+                pagination="discrete"
+                [paginator]="paginator2"
+                [infiniteScrollContainer]="entitiesScroller()"
+                [disableSort]="true"
+              >
+              </sp-mat-entity-list>
+            </div>
+          </ng-template>
+        </mat-tab>
+        <mat-tab label="Infinite Scroll">
+        <ng-template matTabContent>
+            <div class="entities-list" #entitiesList>
+              <sp-mat-entity-list
+                [endpoint]="endpoint"
+                [columns]="spEntityListColumns"
+                [pageSize]="10"
+                idKey="cell"
+                pagination="infinite"
+                [paginator]="paginator2"
+                [infiniteScrollContainer]="entitiesScroller()"
+                [disableSort]="true"
+              >
+              </sp-mat-entity-list>
+            </div>
+          </ng-template>
+        </mat-tab>
+      </mat-tab-group>
     </div>
+    <ng-template #tableWithCustomColumnDef>
+      <div class="entities-list" #entitiesList>
+        <sp-mat-entity-list
+          [endpoint]="endpoint"
+          [columns]="spEntityListColumns"
+          [pageSize]="20"
+          idKey="cell"
+          pagination="discrete"
+          [paginator]="paginator"
+          matSort
+          [sorter]="matSort()"
+        >
 
-    <!-- <hr/>
-    <div class="p-2">
-      <table mat-table matSort [dataSource]="dataSource()" class="mat-elevation-z8">
-        <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
-      </table>
-    </div>
+          <ng-container matColumnDef="name">
+            <th mat-header-cell mat-sort-header *matHeaderCellDef>NAME</th>
+            <td mat-cell *matCellDef="let element">
+              {{element.name.title}}. {{element.name.first}} {{element.name.last}}
+            </td>
+          </ng-container>
 
-    @for (column of columns; track $index) {
-      <ng-container [matColumnDef]="column.name">
-        <th mat-header-cell *matHeaderCellDef>{{ column.name | uppercase }}</th>
-        <td mat-cell *matCellDef="let element">{{ element[column.name] }}</td>
-      </ng-container>
-    } -->
+        </sp-mat-entity-list>
+      </div>
+    </ng-template>
+
+    <ng-template #tableWithoutSorting>
+      <div class="entities-list" #entitiesList>
+        <sp-mat-entity-list
+          [endpoint]="endpoint"
+          [columns]="spEntityListColumns"
+          [pageSize]="10"
+          idKey="cell"
+          pagination="discrete"
+          [paginator]="paginator2"
+          [infiniteScrollContainer]="entitiesScroller()"
+          [disableSort]="true"
+        >
+        </sp-mat-entity-list>
+      </div>
+    </ng-template>
+
   </div>
   `,
   styles: [`
@@ -138,32 +170,26 @@ class MyPaginator implements SPMatEntityListPaginator {
     height: 100%;
     overflow: hidden;
   }
-  .entities-list {
+  .demo-tabs {
     flex-grow: 1;
-    overflow: scroll;
+    overflow: hidden;
+    border: 1px solid red;
   }
-  .p-2 {
-    padding: 0.4em;
+  .mh-100 {
+    max-height: 100%;
   }
   `]
 })
 export class EntityListDemoComponent implements OnInit, AfterViewInit {
 
-  // columns = ['position', 'weight', 'name', 'symbol'];
-  columns: SPMatEntityListColumn<User>[] = [
-    { name: 'position' },
-    { name: 'weight' },
-    { name: 'name' },
-    { name: 'symbol' },
-  ];
-
   endpoint = 'https://randomuser.me/api/?nat=us,gb';
   spEntityListColumns: SPMatEntityListColumn<User>[] = [
-    { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
+    { name: 'name', label: 'NAME', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
     { name: 'gender', label: 'GENDER' },
     { name: 'cell', label: 'CELL' },
   ];
   paginator = new MyPaginator();
+  paginator2 = new MyPaginator();
 
   displayedColumns = signal<string[]>([]);
   dataSource = signal<MatTableDataSource<PeriodicElement>>(new MatTableDataSource<PeriodicElement>([]));
@@ -177,7 +203,7 @@ export class EntityListDemoComponent implements OnInit, AfterViewInit {
   @ViewChildren(MatColumnDef) viewColumnDefs!: QueryList<MatColumnDef>;
 
   spEntitiesList = viewChild(SPMatEntityListComponent<User, 'cell'>);
-  entitiesListScroller = viewChild<ElementRef>('entitiesList');
+  entitiesListScroller = viewChild<ElementRef>('matTabGroup');
 
   entitiesScroller = signal<HTMLElement|undefined>(undefined);
 
@@ -188,7 +214,7 @@ export class EntityListDemoComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
     setTimeout(() => this.buildColumns(), 100);
     if (this.entitiesListScroller()) {
-      this.entitiesScroller.set(this.entitiesListScroller()?.nativeElement);
+      this.entitiesScroller.set((this.entitiesListScroller() as any)?._elementRef.nativeElement);
     }
     if (this.spEntitiesList()) {
       const dataSource = this.spEntitiesList()?.dataSource();
