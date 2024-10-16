@@ -47,14 +47,14 @@ const ELEMENT_DATA: PeriodicElement[] = [
   { position: 7, name: 'Nitrogen', weight: 14.0067, symbol: 'N' },
   { position: 8, name: 'Oxygen', weight: 15.9994, symbol: 'O' },
   { position: 9, name: 'Fluorine', weight: 18.9984, symbol: 'F' },
-  { position: 10, name: 'Neon', weight: 20.1797, symbol: 'Ne' },
+  { position: 10, name: 'Neon', weight: 10.1797, symbol: 'Ne' },
 ];
 
 class MyPaginator implements SPMatEntityListPaginator {
   getRequestPageParams(endpoint: string, pageIndex: number, pageSize: number) {
     return {
       page: pageIndex+1,  // account for 0-based index
-      results: 20
+      results: pageSize
     }
   }
   parseRequestResponse(endpoint: string, params: any, resp: any) {
@@ -91,7 +91,7 @@ class MyPaginator implements SPMatEntityListPaginator {
               <sp-mat-entity-list
                 [endpoint]="endpoint"
                 [columns]="hybridColumnDefs"
-                [pageSize]="10"
+                [pageSize]="40"
                 idKey="cell"
                 pagination="discrete"
                 [paginator]="paginator2"
@@ -108,7 +108,7 @@ class MyPaginator implements SPMatEntityListPaginator {
               <sp-mat-entity-list
                 [endpoint]="endpoint"
                 [columns]="homoColumnDefs"
-                [pageSize]="10"
+                [pageSize]="15"
                 idKey="cell"
                 pagination="discrete"
                 [paginator]="paginator2"
@@ -143,7 +143,7 @@ class MyPaginator implements SPMatEntityListPaginator {
         <sp-mat-entity-list
           [endpoint]="endpoint"
           [columns]="homoColumnDefs"
-          [pageSize]="20"
+          [pageSize]="10"
           idKey="cell"
           pagination="discrete"
           [paginator]="paginator"

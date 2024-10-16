@@ -89,7 +89,7 @@ class DRFPaginator implements SPMatEntityListPaginator {
   getRequestPageParams(endpoint: string, pageIndex: number, pageSize: number) {
     return {
       page: pageIndex+1,  // account for 0-based index
-      results: 20
+      results: pageSize
     }
   }
   parseRequestResponse(endpoint: string, params: any, resp: any) {
@@ -228,6 +228,47 @@ describe('SPMatEntityListComponent', () => {
     expect(component).toBeTruthy();
     const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
+  });
+
+  it('should call paginator methods for pagination args', async () => {
+    const endpoint = 'https://randomuser.me/api/?nat=us';
+    componentRef.setInput('endpoint', endpoint);
+    componentRef.setInput('idKey', 'cell');
+    const pageSize = 10;
+    const myPaginator = new DRFPaginator()
+    componentRef.setInput('paginator', myPaginator);
+    componentRef.setInput('pagination', 'discrete')
+    componentRef.setInput('pageSize', pageSize)
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(of(
+      {
+        total: USER_DATA.length,
+        next: null,
+        previous: null,
+        results: USER_DATA
+      }
+    ));
+    let getRequestPageParams: any = undefined;
+    const getRequestPageParamsSpy = spyOn(myPaginator, 'getRequestPageParams').and.callFake((endpoint, pageIndex, pageSize) => {
+      getRequestPageParams = {
+        endpoint,
+        pageIndex,
+        pageSize
+      }
+      return {
+        page: pageIndex,
+        results: pageSize,
+      }
+    })
+    const parseRequestResponseSpy = spyOn(myPaginator, 'parseRequestResponse');
+    fixture.autoDetectChanges();
+    expect(component).toBeTruthy();
+    const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
+    expect(paginator).toBeTruthy();
+    expect(getRequestPageParams).toBeTruthy();
+    expect(getRequestPageParams.endpoint).toEqual(endpoint);
+    expect(getRequestPageParams.pageSize).toEqual(pageSize);
+    expect(parseRequestResponseSpy).toHaveBeenCalled();
   });
 
   /**
