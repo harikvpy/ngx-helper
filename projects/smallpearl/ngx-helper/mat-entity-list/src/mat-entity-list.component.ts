@@ -104,7 +104,7 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
     <!-- We keep the column definitions outside the <table> so that they can
     be dynamically added to the MatTable. -->
     <span matSort="sorter()">
-      @for (column of columns(); track $index) {
+      @for (column of _columns(); track $index) {
       <ng-container [matColumnDef]="column.name">
         @if (disableSort()) {
         <th mat-header-cell *matHeaderCellDef>
@@ -178,9 +178,13 @@ export class SPMatEntityListComponent<
    */
   entityLoaderFn = input<SPMatEntityListEntityLoaderFn | undefined>(undefined);
   /**
-   * The columns of the entity to be displayed.
+   * The columns of the entity to be displayed. This is an array of
+   * SPMatEntityListColumn objects. If there's a one-to-one mapping between the
+   * column's field name, its title & the rendered value, a string can be
+   * specified instead. That is, the value of this property is a heterogeneous
+   * array consisting of SPMatEntityListColumn<> objects and strings.
    */
-  columns = input.required<SPMatEntityListColumn<TEntity, IdKey>[]>();
+  columns = input.required<Array<SPMatEntityListColumn<TEntity, IdKey>|string>>();
   /**
    * Number of entities per page. If this is not set and paginator is defined,
    * the number of entities int in the first request, will be taken as the
@@ -249,7 +253,20 @@ export class SPMatEntityListComponent<
   _pageSize = computed<number>(() =>
     this.pageSize() ? this.pageSize() : this.lastFetchedEntitiesCount()
   );
-
+  // Effective columns, derived from columns(), which can either be an array
+  // of objects of array of strings.
+  _columns = computed<SPMatEntityListColumn<TEntity, IdKey>[]>(() => {
+    const columns = this.columns();
+    let cols: SPMatEntityListColumn<TEntity, IdKey>[] = []
+    columns.forEach(colDef => {
+      if (typeof colDef === 'string') {
+        cols.push({ name: String(colDef) })
+      } else if (typeof colDef === 'object') {
+        cols.push(colDef as SPMatEntityListColumn<TEntity, IdKey>)
+      }
+    });
+    return cols;
+  });
   // We isolate retrieving items from the remote and providing the items
   // to the component into two distinct operations. The retrieval operation
   // retrieves data asynchronously and then stores the data in a local store.
@@ -368,7 +385,7 @@ export class SPMatEntityListComponent<
       const columnNames = new Set();
       const columnDefs: MatColumnDef[] = [];
 
-      this.columns().forEach((colDef) => {
+      this._columns().forEach((colDef) => {
         const matColDef = this.viewColumnDefs().find(
           (cd) => cd.name === colDef.name
         );

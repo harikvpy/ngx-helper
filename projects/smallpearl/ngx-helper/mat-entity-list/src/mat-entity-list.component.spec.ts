@@ -101,7 +101,7 @@ class DRFPaginator implements SPMatEntityListPaginator {
   }
 }
 
-fdescribe('SPMatEntityListComponent', () => {
+describe('SPMatEntityListComponent', () => {
   let testComponent!: SPMatEntityListTestComponent;
   let testComponentFixture!: ComponentFixture<SPMatEntityListTestComponent>;
   let testComponentRef!: ComponentRef<SPMatEntityListTestComponent>;
@@ -157,6 +157,24 @@ fdescribe('SPMatEntityListComponent', () => {
   });
 
   it('should create and load data without paginator', async () => {
+    componentRef.setInput('columns', [
+      { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
+      'gender', 'cell'
+    ]);
+    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    componentRef.setInput('idKey', 'cell');
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    fixture.autoDetectChanges();
+    expect(component).toBeTruthy();
+    const rows = fixture.debugElement.nativeElement.querySelectorAll('tr');
+    // +1 for the <tr> in <thead>
+    expect(rows.length).toEqual(USER_DATA.length+1);
+    const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
+    expect(paginator).toBeFalsy();
+  });
+
+  it('should accept hybrid column definitions', async () => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
     const http = TestBed.inject(HttpClient);

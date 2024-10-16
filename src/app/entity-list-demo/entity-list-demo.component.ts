@@ -85,12 +85,29 @@ class MyPaginator implements SPMatEntityListPaginator {
         <mat-tab label="Custom Column Def">
           <ng-container *ngTemplateOutlet="tableWithCustomColumnDef"></ng-container>
         </mat-tab>
+        <mat-tab label="Hybrid ColumnDefs">
+          <ng-template matTabContent>
+            <div class="entities-list">
+              <sp-mat-entity-list
+                [endpoint]="endpoint"
+                [columns]="hybridColumnDefs"
+                [pageSize]="10"
+                idKey="cell"
+                pagination="discrete"
+                [paginator]="paginator2"
+                [infiniteScrollContainer]="entitiesScroller()"
+                [disableSort]="true"
+              >
+              </sp-mat-entity-list>
+            </div>
+          </ng-template>
+        </mat-tab>
         <mat-tab label="Without Sorting">
           <ng-template matTabContent>
             <div class="entities-list">
               <sp-mat-entity-list
                 [endpoint]="endpoint"
-                [columns]="spEntityListColumns"
+                [columns]="homoColumnDefs"
                 [pageSize]="10"
                 idKey="cell"
                 pagination="discrete"
@@ -107,7 +124,7 @@ class MyPaginator implements SPMatEntityListPaginator {
             <div class="entities-list" #entitiesList>
               <sp-mat-entity-list
                 [endpoint]="endpoint"
-                [columns]="spEntityListColumns"
+                [columns]="homoColumnDefs"
                 [pageSize]="10"
                 idKey="cell"
                 pagination="infinite"
@@ -125,7 +142,7 @@ class MyPaginator implements SPMatEntityListPaginator {
       <div class="entities-list" #entitiesList>
         <sp-mat-entity-list
           [endpoint]="endpoint"
-          [columns]="spEntityListColumns"
+          [columns]="homoColumnDefs"
           [pageSize]="20"
           idKey="cell"
           pagination="discrete"
@@ -149,7 +166,7 @@ class MyPaginator implements SPMatEntityListPaginator {
       <div class="entities-list" #entitiesList>
         <sp-mat-entity-list
           [endpoint]="endpoint"
-          [columns]="spEntityListColumns"
+          [columns]="homoColumnDefs"
           [pageSize]="10"
           idKey="cell"
           pagination="discrete"
@@ -173,7 +190,6 @@ class MyPaginator implements SPMatEntityListPaginator {
   .demo-tabs {
     flex-grow: 1;
     overflow: hidden;
-    border: 1px solid red;
   }
   .mh-100 {
     max-height: 100%;
@@ -183,10 +199,17 @@ class MyPaginator implements SPMatEntityListPaginator {
 export class EntityListDemoComponent implements OnInit, AfterViewInit {
 
   endpoint = 'https://randomuser.me/api/?nat=us,gb';
-  spEntityListColumns: SPMatEntityListColumn<User>[] = [
+  homoColumnDefs: SPMatEntityListColumn<User>[] = [
     { name: 'name', label: 'NAME', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
     { name: 'gender', label: 'GENDER' },
     { name: 'cell', label: 'CELL' },
+  ];
+  hybridColumnDefs = [
+    { name: 'name', label: 'NAME', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
+    'gender',
+    'cell',
+    'email',
+    'phone'
   ];
   paginator = new MyPaginator();
   paginator2 = new MyPaginator();
