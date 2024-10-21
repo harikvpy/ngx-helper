@@ -38,10 +38,11 @@ const routes: Routes = [
       },
       {
         path: 'invitations',
-        loadComponent: () =>
-          import('../invitations/invitations.component').then(
-            (m) => m.InvitationsComponent
-          ),
+        loadChildren: () => import('../invitations/routes').then(m => m.INVITATION_ROUTES)
+        // loadComponent: () =>
+        //   import('../invitations/invitations.component').then(
+        //     (m) => m.InvitationsComponent
+        //   ),
       },
       {
         path: 'i18ntest',
