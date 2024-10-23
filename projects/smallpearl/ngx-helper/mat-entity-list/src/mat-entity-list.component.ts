@@ -29,7 +29,7 @@ import {
   MatTableModule,
 } from '@angular/material/table';
 import { createStore } from '@ngneat/elf';
-import { selectAllEntities, upsertEntities, withEntities } from '@ngneat/elf-entities';
+import { deleteEntities, getEntitiesCount, hasEntity, selectAllEntities, updateEntities, upsertEntities, withEntities } from '@ngneat/elf-entities';
 import { spFormatDate } from '@smallpearl/ngx-helper/locale';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { finalize, Observable, Subscription, tap } from 'rxjs';
@@ -348,6 +348,59 @@ export class SPMatEntityListComponent<
     const matSort = this.sort();
     if (matSort) {
       this.dataSource().sort = matSort;
+    }
+  }
+
+  /**
+   * Update an entity with a modified version. Can be used by CRUD UPDATE
+   * operation to update an entity in the local store that is used to as the
+   * source of MatTableDataSource.
+   * @param id
+   * @param entity
+   */
+  updateEntity(id: TEntity[IdKey], entity: TEntity) {
+    if (this.store.query(hasEntity(id))) {
+      this.store.update(updateEntities(id, entity));
+    }
+  }
+
+  /**
+   * Clients can call this method when it has deleted and entity via a CRUD
+   * operation. Depending on the pagination mode, MatEntityList implements
+   * an appropriate behavior.
+   *
+   * If the pagination is 'infinite', the relevent entity is removed from our
+   * entity list. View will be repained as data store has changed.
+   *
+   * If the pagination is 'discrete', the entity is removed from the page.
+   * If this is the only entity in the page, the current pageNumber is
+   * decremented by 1 if it's possible (if the current pageNumber > 1).
+   * The page is reloaded from remote.
+   */
+  removeEntity(id: TEntity[IdKey]) {
+    const paginator = this._paginator;
+    if (paginator) {
+      if (this.pagination() === 'infinite') {
+        // This will cause store to mutate which will trigger this.entity$ to
+        // emit which in turn will update our MatTableDataSource instance.
+        this.store.update(deleteEntities(id));
+      } else {
+        // Logic
+        this.store.update(deleteEntities(id));
+        const count = this.store.query(getEntitiesCount());
+        if (count == 0) {
+          // No more entities in this page
+          // Go back one page
+          if (this.pageIndex() > 0) {
+            this.pageIndex.set(this.pageIndex()-1);
+          }
+        }
+        // load the page again
+        this.loadMoreEntities();
+      }
+    } else {
+      // Just remove the entity that has been deleted.
+      this.store.update(deleteEntities(id));
     }
   }
 

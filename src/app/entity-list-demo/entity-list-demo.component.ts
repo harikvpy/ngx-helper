@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatColumnDef, MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
+import { SPMatContextMenuComponent } from '@smallpearl/ngx-helper/mat-context-menu';
 import {
   SPMatEntityListColumn,
   SPMatEntityListComponent,
@@ -75,6 +76,7 @@ class MyPaginator implements SPMatEntityListPaginator {
     MatTableModule,
     MatSortModule,
     MatTabsModule,
+    SPMatContextMenuComponent,
   ],
   selector: 'app-entity-list-demo',
   template: `
@@ -158,6 +160,20 @@ class MyPaginator implements SPMatEntityListPaginator {
             </td>
           </ng-container>
 
+          <ng-container matColumnDef="action">
+            <th mat-header-cell *matHeaderCellDef>Action</th>
+            <td mat-cell *matCellDef="let element">
+              <sp-mat-context-menu
+                [menuItems]="[
+                  { label: 'Edit', role: 'edit' },
+                  { label: 'Delete', role: 'delete' }
+                ]"
+                (selected)="onItemAction($event, element)"
+              ></sp-mat-context-menu>
+            </td>
+          </ng-container>
+
+
         </sp-mat-entity-list>
       </div>
     </ng-template>
@@ -203,6 +219,7 @@ export class EntityListDemoComponent implements OnInit, AfterViewInit {
     { name: 'name', label: 'NAME', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
     { name: 'gender', label: 'GENDER' },
     { name: 'cell', label: 'CELL' },
+    { name: 'action', label: 'ACTION' },
   ];
   hybridColumnDefs = [
     { name: 'name', label: 'NAME', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
@@ -284,6 +301,22 @@ export class EntityListDemoComponent implements OnInit, AfterViewInit {
       this.dataSource().data = ELEMENT_DATA;
       // this.cdr.detectChanges();
       // this.getMoreEntities(this.endpoint(), {});
+    }
+  }
+
+
+  onItemAction(role: string, entry: User) {
+    if (role === 'delete') {
+      this.onDelete(entry);
+    }
+  }
+
+  async onDelete(user: User) {
+
+    const sure = window.confirm('Are you sure?');
+    const entitiesList = this.spEntitiesList();
+    if (sure && entitiesList) {
+      entitiesList.removeEntity(user['cell']);
     }
   }
 }
