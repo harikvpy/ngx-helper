@@ -59,6 +59,13 @@ const routes: Routes = [
           ),
       },
       {
+        path: 'entitycruddemo',
+        loadComponent: () =>
+          import('../entity-crud-demo/entity-crud-demo.component').then(
+            (m) => m.EntityCrudDemoComponent
+          ),
+      },
+      {
         path: '',
         redirectTo: 'posts',
         pathMatch: 'full',

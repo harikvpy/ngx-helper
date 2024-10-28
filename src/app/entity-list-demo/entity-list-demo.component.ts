@@ -10,13 +10,8 @@ import {
   SPMatEntityListComponent,
   SPMatEntityListPaginator,
 } from '@smallpearl/ngx-helper/mat-entity-list';
-
-interface User {
-  id: number;
-  name: { title: string, first: string, last: string },
-  gender: string;
-  cell: string;
-}
+import { User } from './user';
+import { MyPaginator } from './paginater';
 
 const USER_DATA: User[] = [
   { id: 1, name: { title: 'Ms', first: 'Mariam', last: 'Trevarthen' }, cell: '2323234', gender: 'F' },
@@ -50,22 +45,6 @@ const ELEMENT_DATA: PeriodicElement[] = [
   { position: 9, name: 'Fluorine', weight: 18.9984, symbol: 'F' },
   { position: 10, name: 'Neon', weight: 10.1797, symbol: 'Ne' },
 ];
-
-class MyPaginator implements SPMatEntityListPaginator {
-  getRequestPageParams(endpoint: string, pageIndex: number, pageSize: number) {
-    return {
-      page: pageIndex+1,  // account for 0-based index
-      results: pageSize
-    }
-  }
-  parseRequestResponse(endpoint: string, params: any, resp: any) {
-    console.log(`parseRequestResponse - params: ${JSON.stringify(params)}`);
-    return {
-      total: 110,
-      entities: resp['results']
-    }
-  }
-}
 
 @Component({
   standalone: true,

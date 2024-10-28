@@ -78,6 +78,11 @@ export class SideMenuLayoutExampleComponent implements OnInit {
       route: './entitylistdemo',
       text: 'ENTITY LIST',
       icon: 'list_alt',
+    },
+    {
+      route: './entitycruddemo',
+      text: 'ENTITY CRUD',
+      icon: 'list_alt',
     }
   ];
 
