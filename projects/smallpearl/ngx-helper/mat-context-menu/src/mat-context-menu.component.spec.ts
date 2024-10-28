@@ -2,7 +2,7 @@ import { ComponentRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
-import { ContextMenuItem, SPMatContextMenuComponent } from './mat-context-menu.component';
+import { SPContextMenuItem, SPMatContextMenuComponent } from './mat-context-menu.component';
 
 describe('SPMatContextMenuComponent', () => {
   let fixture!: ComponentFixture<SPMatContextMenuComponent>;
@@ -25,7 +25,7 @@ describe('SPMatContextMenuComponent', () => {
   })
 
   it('should show menu items on click', async () => {
-    const menuItems: ContextMenuItem[] = [
+    const menuItems: SPContextMenuItem[] = [
       {
         label: 'Edit',
       },

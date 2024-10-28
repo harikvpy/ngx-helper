@@ -16,7 +16,7 @@ import { HoverDropDownDirective } from '@smallpearl/ngx-helper/hover-dropdown';
 /**
  * Describes each item in the context menu.
  */
-export interface ContextMenuItem {
+export interface SPContextMenuItem {
   // Menu item label
   label: string;
   // Menu icon, A material icon
@@ -27,6 +27,8 @@ export interface ContextMenuItem {
   // by the user and the corresponding ContextMenuItem does not have a
   // 'route' property value.
   role?: string;
+  // Whether the menu item should be disabled
+  disable?: (arg: any) => boolean;
 }
 
 @Component({
@@ -61,6 +63,7 @@ export interface ContextMenuItem {
         mat-menu-item
         [routerLink]="menuItem.route ? menuItem.route : undefined"
         (click)="$event.preventDefault(); onSelectMenuItem(menuItem)"
+        [disabled]="itemDisabled(menuItem)"
       >
         @if (menuItem.icon) {
         <mat-icon>{{ menuItem.icon }}</mat-icon>
@@ -77,7 +80,7 @@ export class SPMatContextMenuComponent implements OnInit {
    * The menu items to display. Refer to ContextMenuItem doc for details
    * on the menu items.
    */
-  menuItems = input.required<ContextMenuItem[]>();
+  menuItems = input.required<SPContextMenuItem[]>();
   /**
    * Label to display for the context menu. If omitted will just show the
    * menuIcon.
@@ -93,6 +96,10 @@ export class SPMatContextMenuComponent implements OnInit {
    */
   disableHover = input<boolean>(false);
   /**
+   * Context data for menu item disabled callback
+   */
+  contextData = input<any>();
+  /**
    * Event generated when use selects an item in the context menu. This event
    * is generated only if the context menu item does not specify a route to
    * activate. The string event parameter is ContextMenuItem.role property
@@ -104,9 +111,14 @@ export class SPMatContextMenuComponent implements OnInit {
 
   ngOnInit() {}
 
-  onSelectMenuItem(item: ContextMenuItem) {
+
+  onSelectMenuItem(item: SPContextMenuItem) {
     if (!item.route) {
       this.selected.emit(item?.role || item.label);
     }
+  }
+
+  itemDisabled(menuItem: SPContextMenuItem) {
+    return menuItem?.disable && menuItem.disable(this.contextData());
   }
 }
