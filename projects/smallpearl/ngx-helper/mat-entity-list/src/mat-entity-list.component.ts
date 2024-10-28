@@ -3,7 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   computed,
   ContentChildren,
@@ -302,11 +301,10 @@ export class SPMatEntityListComponent<
   hasMore = signal<boolean>(true);
 
   constructor(
-    private http: HttpClient,
+    protected http: HttpClient,
     @Optional()
     @Inject(SP_MAT_ENTITY_LIST_CONFIG)
-    private config: SPMatEntityListConfig,
-    private cdr: ChangeDetectorRef
+    protected config: SPMatEntityListConfig,
   ) {
     if (!this.config) {
       this.config = new DefaultSPMatEntityListConfig();
@@ -481,12 +479,10 @@ export class SPMatEntityListComponent<
     // seem to work as of now. So we assign the value to a const and check
     // it for undefined before calling it.
     const loaderFn = this.entityLoaderFn();
-    const getUrl = (endpoint: string): string =>
-      this.config?.urlResolver ? this.config?.urlResolver(endpoint) : endpoint;
     const obs =
       loaderFn !== undefined
         ? loaderFn({ params: pageParams })
-        : this.http.get<any>(getUrl(this.endpoint()), { params: pageParams });
+        : this.http.get<any>(this.getUrl(this.endpoint()), { params: pageParams });
 
     this.loading.set(true);
     this.subs$.add(
@@ -555,5 +551,9 @@ export class SPMatEntityListComponent<
   handlePageEvent(e: PageEvent) {
     this.pageIndex.set(e.pageIndex);
     this.loadMoreEntities();
+  }
+
+  getUrl(endpoint: string) {
+    return this.config?.urlResolver ? this.config?.urlResolver(endpoint) : endpoint;
   }
 }
