@@ -38,7 +38,8 @@ const routes: Routes = [
       },
       {
         path: 'invitations',
-        loadChildren: () => import('../invitations/routes').then(m => m.INVITATION_ROUTES)
+        loadChildren: () =>
+          import('../invitations/routes').then((m) => m.INVITATION_ROUTES),
         // loadComponent: () =>
         //   import('../invitations/invitations.component').then(
         //     (m) => m.InvitationsComponent
@@ -60,14 +61,15 @@ const routes: Routes = [
       },
       {
         path: 'entitycruddemo',
-        loadComponent: () =>
-          import('../entity-crud-demo/entity-crud-demo.component').then(
-            (m) => m.EntityCrudDemoComponent
-          ),
+        loadChildren: () =>
+          import('../entity-crud-demo/routes').then((m) => m.CRUD_DEMO_ROUTES),
       },
       {
         path: 'busywheeldemo',
-        loadComponent: () => import('../busy-wheel-demo/busy-wheel-demo.component').then(c => c.BusyWheelDemoComponent)
+        loadComponent: () =>
+          import('../busy-wheel-demo/busy-wheel-demo.component').then(
+            (c) => c.BusyWheelDemoComponent
+          ),
       },
       {
         path: '',
