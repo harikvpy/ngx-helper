@@ -66,6 +66,10 @@ const routes: Routes = [
           ),
       },
       {
+        path: 'busywheeldemo',
+        loadComponent: () => import('../busy-wheel-demo/busy-wheel-demo.component').then(c => c.BusyWheelDemoComponent)
+      },
+      {
         path: '',
         redirectTo: 'posts',
         pathMatch: 'full',

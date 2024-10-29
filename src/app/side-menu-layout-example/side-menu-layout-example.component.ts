@@ -65,24 +65,29 @@ export class SideMenuLayoutExampleComponent implements OnInit {
       ],
     },
     {
-      route: './satellite-app',
+      route: 'satellite-app',
       text: 'SATELLITE APP',
       icon: 'token',
     },
     {
-      route: './i18ntest',
+      route: 'i18ntest',
       text: 'I18N TEST',
       icon: 'language'
     },
     {
-      route: './entitylistdemo',
+      route: 'entitylistdemo',
       text: 'ENTITY LIST',
       icon: 'list_alt',
     },
     {
-      route: './entitycruddemo',
+      route: 'entitycruddemo',
       text: 'ENTITY CRUD',
       icon: 'list_alt',
+    },
+    {
+      route: 'busywheeldemo',
+      text: 'BUSY WHEEL DEMO',
+      icon: 'hourglass_empty'
     }
   ];
 
