@@ -1,15 +1,77 @@
-import { ComponentRef, Injectable, ViewContainerRef } from '@angular/core';
+import { ComponentRef, Injectable } from '@angular/core';
 import { SPMatBusyWheelComponent } from './busy-wheel.component';
 import { SPMatHostBusyWheelDirective } from './host-busy-wheel.directive';
 
 const BACKDROP_DIV_ID = 'id_busy-wheel-backdrop';
 const BUSY_WHEEL_DIV_ID = 'id_busy-wheel';
 
-// TODO: Replace busy-wheel with <mat-spinner>
-// <mat-spinner diameter="32"></mat-spinner>
-const BUSY_WHEEL_FRAGMENT_TEMPLATE = `
-<div id="{wheelId}">
-  <div class="{containerClass}">
+const VIEWPORT_BUSY_WHEEL_STYLE_ID = 'id_viewport_busy_wheel_style';
+const VIEWPORT_BUSY_WHEEL_STYLE = `
+  .busy-wheel-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    z-index: 9999999;
+    background-color: rgba(255, 255, 255, 0.35);
+  }
+  .busy-wheel-container {
+    display: flex;
+    position: relative;
+    top: 0;
+    height: 100%;
+    width: 100%;
+  }
+  .busy-wheel,
+  .busy-wheel:after {
+    border-radius: 50%;
+    width: 4em;
+    height: 4em;
+  }
+  .busy-wheel {
+    margin: auto auto;
+    font-size: 8px;
+    position: relative;
+    text-indent: -9999em;
+    border-top: 0.5em solid rgba(0, 0, 0, 0.8);
+    border-right: 0.5em solid rgba(0, 0, 0, 0.8);
+    border-bottom: 0.5em solid rgba(0, 0, 0, 0.8);
+    border-left: 0.5em solid #ffffff;
+    -webkit-transform: translateZ(0);
+    -ms-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-animation: load8 1.1s infinite linear;
+    animation: load8 1.1s infinite linear;
+  }
+  @-webkit-keyframes load8 {
+    0% {
+      -webkit-transform: rotate(0deg);
+      transform: rotate(0deg);
+    }
+    100% {
+      -webkit-transform: rotate(360deg);
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes load8 {
+    0% {
+      -webkit-transform: rotate(0deg);
+      transform: rotate(0deg);
+    }
+
+    100% {
+      -webkit-transform: rotate(360deg);
+      transform: rotate(360deg);
+    }
+  }
+`;
+const VIEWPORT_BUSY_WHEEL_FRAGMENT_TEMPLATE = `
+<div class="busy-wheel-wrapper" id="{wheelId}">
+  <div class="{containerClass}" style="display: flex; position: relative; top: 0; width: 100vw; height: 100vh; z-index: 9999999;">
     <div class="busy-wheel"></div>
   </div>
 </div>
@@ -75,25 +137,24 @@ export class BusyWheelService {
               component: busyWheelComponentRef,
               oldStyles: []
             });
-            // const busyWheel = this.createBusyWheel(
-            //   'busy-wheel-container busy-wheel-backdrop-dim-100',
-            //   wheelId
-            // );
-            //   (viewContainerRef.element.nativeElement as HTMLElement).prepend(busyWheel);
           });
         }
       })
     } else {
       // viewport global busy-wheel
-      const busyWheel = this.createBusyWheel(
-        'busy-wheel-container busy-wheel-backdrop-dimwh-100',
+      const busyWheel = this.createViewportBusyWheel(
+        'busy-wheel-container',
         undefined
       );
       const backdrop = this.createBackdrop();
       backdrop.firstChild?.appendChild(busyWheel);
-      const fc = backdrop.querySelector('body')?.firstChild;
-      if (fc) {
-        document.body.appendChild(fc);
+      const viewportBusyWheelStyle = backdrop.querySelector('style');
+      if (viewportBusyWheelStyle) {
+        document.head.appendChild(viewportBusyWheelStyle);
+      }
+      const viewportBusyWheelDiv = backdrop.querySelector('body')?.firstChild;
+      if (viewportBusyWheelDiv) {
+        document.body.appendChild(viewportBusyWheelDiv);
       }
     }
   }
@@ -128,7 +189,7 @@ export class BusyWheelService {
     } else {
       // viewport global busy-wheel, remove the entire backdrop, which
       // will also kill the child busy-wheel.
-      this.removeBusyWheel();
+      this.removeViewportBusyWheel();
     }
   }
 
@@ -182,20 +243,20 @@ export class BusyWheelService {
    *
    *  <div id="id_busy-wheel_{id}">
    *    <div class="{containerClass}">
-   *      <div class="busy-wheel">
-   *      </div>
+   *      <!-- <div class="busy-wheel"></div> -->
+   *      <mat-spinner></mat-spinner>
    *    </div>
    *  </div>
    * @param containerClass
    * @param id
    * @returns
    */
-  private createBusyWheel(containerClass: string, id: string|undefined): DocumentFragment {
+  private createViewportBusyWheel(containerClass: string, id: string|undefined): DocumentFragment {
     let wheelId = BUSY_WHEEL_DIV_ID;
     if (id) {
       wheelId += `_${id}`;
     }
-    let template = BUSY_WHEEL_FRAGMENT_TEMPLATE;
+    let template = VIEWPORT_BUSY_WHEEL_FRAGMENT_TEMPLATE;
     const parser = new DOMParser();
     const doc = parser.parseFromString(
       template
@@ -205,9 +266,21 @@ export class BusyWheelService {
     );
     const fragment = document.createDocumentFragment();
     fragment.appendChild(doc.documentElement);
+
+    // Create the style element
+    const style = document.createElement('style');
+    style.textContent = VIEWPORT_BUSY_WHEEL_STYLE;
+    style.id = VIEWPORT_BUSY_WHEEL_STYLE_ID;
+    fragment.querySelector('head')?.appendChild(style);
+
     return fragment;
   }
 
+  /**
+   * Creates a backdrop overlay, of the same size as the container that it
+   * covers, on which the busy wheel will be positioned.
+   * @returns
+   */
   private createBackdrop() {
     const fragment = document.createDocumentFragment();
     const backdropDiv = document.createElement('div');
@@ -217,7 +290,7 @@ export class BusyWheelService {
     return fragment;
   }
 
-  private removeBusyWheel(id?: string) {
+  private removeViewportBusyWheel(id?: string) {
     let wheelId = BUSY_WHEEL_DIV_ID;
     if (id) {
       wheelId += `_${id}`;
@@ -226,6 +299,14 @@ export class BusyWheelService {
     const busyWheelDiv = body.querySelector(`div#${wheelId}`);
     if (busyWheelDiv) {
       busyWheelDiv.remove();
+    }
+
+    // remove the style
+    const busyWheelStyle = document.head.querySelector(
+      `style#${VIEWPORT_BUSY_WHEEL_STYLE_ID}`
+    );
+    if (busyWheelStyle) {
+      busyWheelStyle.remove();
     }
   }
 }

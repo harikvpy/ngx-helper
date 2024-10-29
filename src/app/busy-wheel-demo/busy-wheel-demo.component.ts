@@ -22,6 +22,9 @@ import { BusyWheelModule, hideBusyWheel, showBusyWheel } from '@smallpearl/ngx-h
       <button mat-raised-button color="primary" (click)="onStart2()">Start</button>
       </div>
     </div>
+    <div class="w-100 p-4 text-center">
+    <button mat-raised-button color="primary" (click)="onStart3()">Show Viewport Busy Wheel</button>
+    </div>
   </div>
   `,
   styles: `
@@ -38,11 +41,16 @@ export class BusyWheelDemoComponent implements OnInit {
 
   onStart1() {
     showBusyWheel('busyWheel1');
-    setTimeout(() => hideBusyWheel('busyWheel1'), 3000);
+    setTimeout(() => hideBusyWheel('busyWheel1'), 30000);
   }
 
   onStart2() {
     showBusyWheel('busyWheel2');
     setTimeout(() => hideBusyWheel('busyWheel2'), 3000);
+  }
+
+  onStart3() {
+    showBusyWheel();
+    setTimeout(() => hideBusyWheel(), 3000);
   }
 }
