@@ -211,7 +211,7 @@ export class SPMatMenuListItemComponent implements OnInit, OnDestroy {
   checkChildrenForHighlight(lastUrlSegment: string) {
     let childHighlighted = false;
     this.children.forEach((childItem) => {
-      if (childItem.item.route?.endsWith(lastUrlSegment)) {
+      if (childItem.item.route === lastUrlSegment) {
         childItem.toggleHighlight(true);
         childHighlighted = true;
       } else {
