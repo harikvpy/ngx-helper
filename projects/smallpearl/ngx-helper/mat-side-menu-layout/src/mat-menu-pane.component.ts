@@ -1,4 +1,5 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
@@ -8,11 +9,13 @@ import {
   OnInit,
   SimpleChanges,
   TemplateRef,
+  viewChildren
 } from '@angular/core';
 import { MatSidenav } from '@angular/material/sidenav';
-import { NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Router, Event as RouterEvent } from '@angular/router';
 import { Subject, filter, takeUntil, tap } from 'rxjs';
 import { LayoutService, SideMenuLayoutProps } from './layout.service';
+import { SPMatMenuListItemComponent } from './mat-menu-list-item.component';
 import { NavItem } from './nav-item';
 
 @Component({
@@ -49,7 +52,7 @@ import { NavItem } from './nav-item';
   styleUrls: ['./mat-menu-pane.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SPMatMenuPaneComponent implements OnInit, OnDestroy, OnChanges {
+export class SPMatMenuPaneComponent implements OnInit, OnDestroy, AfterViewInit, OnChanges {
   @Input() menuTitle: string = '';
   @Input() showBackButton: boolean = false;
   @Input() defaultBackButtonHref: string = '';
@@ -65,6 +68,8 @@ export class SPMatMenuPaneComponent implements OnInit, OnDestroy, OnChanges {
 
   backButtonNavItem: NavItem | undefined;
   destroy = new Subject<void>();
+
+  menuItemComps = viewChildren(SPMatMenuListItemComponent);
 
   constructor(
     public cdr: ChangeDetectorRef,
@@ -104,10 +109,12 @@ export class SPMatMenuPaneComponent implements OnInit, OnDestroy, OnChanges {
       .pipe(
         takeUntil(this.destroy),
         filter((e) => e instanceof NavigationEnd),
-        tap(() => {
+        tap((e: RouterEvent) => {
           if (this.matSideNav && this.layout.smallScreen) {
             this.matSideNav.close();
           }
+          const ne = e as NavigationEnd;
+          this.highlightCurrentUrlMenuItem(ne.urlAfterRedirects);
         })
       )
       .subscribe();
@@ -127,5 +134,27 @@ export class SPMatMenuPaneComponent implements OnInit, OnDestroy, OnChanges {
         this.cdr.detectChanges();
       }
     }
+  }
+
+  ngAfterViewInit(): void {
+    this.highlightCurrentUrlMenuItem(this.router.routerState.snapshot.url);
+  }
+
+  highlightCurrentUrlMenuItem(url: string) {
+    const urlParts = url.split('/');
+    const lastUrlSegment = urlParts[urlParts.length-1].split('?')[0];
+
+    this.menuItemComps().find(menuItemComp => {
+      if (menuItemComp.item.route?.endsWith(lastUrlSegment)) {
+        menuItemComp.toggleHighlight(true);
+      } else {
+        menuItemComp.toggleHighlight(false);
+        if (menuItemComp.item?.children) {
+          if (menuItemComp.checkChildrenForHighlight(lastUrlSegment)) {
+            menuItemComp.expand();
+          };
+        }
+      }
+    });
   }
 }

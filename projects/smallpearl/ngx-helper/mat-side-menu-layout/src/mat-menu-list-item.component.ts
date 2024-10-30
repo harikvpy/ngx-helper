@@ -6,7 +6,6 @@ import {
   trigger,
 } from '@angular/animations';
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
@@ -18,19 +17,14 @@ import {
   ViewChildren,
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import {
-  ActivatedRoute,
-  NavigationEnd,
-  Router,
-  Event as RouterEvent,
-} from '@angular/router';
-import { filter, tap } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NavItem } from './nav-item';
 
 @Component({
   selector: 'ngx-mat-menu-list-item',
   template: `
-    <a *ngIf="item.children || item.route; else divider"
+    <a
+      *ngIf="item.children || item.route; else divider"
       mat-list-item
       [ngStyle]="{ 'padding-left': depth * 8 + 'px' }"
       [disabled]="item.disabled"
@@ -144,11 +138,9 @@ import { NavItem } from './nav-item';
     ]),
   ],
 })
-export class SPMatMenuListItemComponent
-  implements OnInit, OnDestroy, AfterViewInit
-{
+export class SPMatMenuListItemComponent implements OnInit, OnDestroy {
   expanded = false;
-  highlighted = false;
+  @Input() highlighted = false;
   @HostBinding('attr.aria-expanded') ariaExpanded = this.expanded;
 
   // The NavItem associated with this item.
@@ -171,38 +163,6 @@ export class SPMatMenuListItemComponent
   @ViewChildren(SPMatMenuListItemComponent)
   children!: QueryList<SPMatMenuListItemComponent>;
 
-  // Trap router's NavigationEnd event to change the currently select/deselect
-  // MenuItem components. That is select the MenuListItem matching the newly
-  // navigated to url, while deslecting the previous selection.
-  private sub$ = this.router.events
-    .pipe(
-      filter((event: RouterEvent) => event instanceof NavigationEnd),
-      tap((event: RouterEvent) => {
-        const ne = event as NavigationEnd;
-        const url = ne.urlAfterRedirects;
-        const lastSlash = url.lastIndexOf('/');
-        const lastUrlSegment = url.substring(lastSlash + 1);
-        if (
-          lastUrlSegment === this.item?.route ||
-          lastUrlSegment.split('?')[0] === this.item?.route
-        ) {
-          this.highlighted = true;
-          if (this.parent) {
-            this.parent.expand();
-          }
-          this.cdr.detectChanges();
-        } else {
-          if (this.highlighted) {
-            this.highlighted = false;
-            this.cdr.detectChanges();
-          } else if (this.expanded && !this.curUrlADescendent()) {
-            this.collapse();
-          }
-        }
-      })
-    )
-    .subscribe();
-
   constructor(
     public route: ActivatedRoute,
     public router: Router,
@@ -216,103 +176,56 @@ export class SPMatMenuListItemComponent
 
   ngOnInit(): void {}
 
-  ngOnDestroy(): void {
-    this.sub$.unsubscribe();
-  }
+  ngOnDestroy(): void {}
 
-  /**
-   * We need to override this to select the correct menu item for the
-   * applications starting URL.
-   */
-  ngAfterViewInit(): void {
-    if (this.curUrlEndsWithSelfOrChildItemRoute()) {
-      if (this.item?.route) {
-        this.highlighted = true;
-      }
-      if (this.parent) {
-        this.parent.expand();
-      }
+  toggleHighlight(highlight: boolean) {
+    if (highlight != this.highlighted) {
+      this.highlighted = highlight;
       this.cdr.detectChanges();
     }
   }
 
   /**
-   * Tests if any of this NavItem's children's route matches the lastUrlSegment
-   * of the current url.
-   * @returns
+   * Expand a parent container menu item.
    */
-  curUrlADescendent(): boolean {
-    const curUrl = this.router.routerState.snapshot.url;
-    const lastSlash = curUrl.lastIndexOf('/');
-    const lastUrlSegment = curUrl.substring(lastSlash + 1);
-    if (this.item?.children) {
-      const traverseToLastChild = (item: NavItem): boolean => {
-        if (item?.children) {
-          // iterate all the children and check if the last url segment
-          // matches the corresponding NavItem.route.
-          for (let index = 0; index < item.children.length; index++) {
-            const childItem = item.children[index];
-            if (childItem?.children) {
-              return traverseToLastChild(childItem);
-            }
-            if (lastUrlSegment === childItem?.route ||
-              lastUrlSegment.split('?')[0] === childItem?.route) {
-              return true; // We don't have to check the rest of the items
-            }
-          }
-        }
-        return false;
-      };
-      return traverseToLastChild(this.item);
-    }
-    return false;
-  }
-
-  /**
-   * Tests if the current URL ends with the route of one of the
-   * child menu item's NavItem.route.
-   *
-   * @returns boolean
-   */
-  curUrlEndsWithChildItemRoute(): boolean {
-    const curUrl = this.router.routerState.snapshot.url;
-    const lastSlash = curUrl.lastIndexOf('/');
-    const lastUrlSegment = curUrl.substring(lastSlash + 1);
-    if (this.children && this.children.length) {
-      if (
-        this.children.find(
-          (component) =>
-            !!(
-              (component.item?.route &&
-                lastUrlSegment === component.item.route) ||
-              lastUrlSegment.split('?')[0] === component.item.route
-            )
-        ) !== undefined
-      ) {
-        return true;
+  expand() {
+    if (!this.item?.route && !this.expanded) {
+      this.expanded = this.ariaExpanded = true;
+      this.cdr.detectChanges();
+      if (this.parent) {
+        this.parent.expand();
       }
     }
-    return false;
   }
 
   /**
-   * Tests if the current URL ends with the route of one of the
-   * child menu item's NavItem.route or this.item?.route.
-   *
-   * @returns boolean
+   * Collapse an expanded parent container menu item.
    */
-  curUrlEndsWithSelfOrChildItemRoute(): boolean {
-    const curUrl = this.router.routerState.snapshot.url;
-    const lastSlash = curUrl.lastIndexOf('/');
-    const lastUrlSegment = curUrl.substring(lastSlash + 1);
-    return (
-      this.curUrlEndsWithChildItemRoute() ||
-      !!(
-        this.item.route &&
-        (lastUrlSegment === this.item.route ||
-          lastUrlSegment.split('?')[0] == this.item.route)
-      ) //  curUrl.endsWith(this.item.route)
-    );
+  collapse() {
+    if (!this.item?.route && this.expanded) {
+      this.expanded = this.ariaExpanded = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  checkChildrenForHighlight(lastUrlSegment: string) {
+    let childHighlighted = false;
+    this.children.forEach((childItem) => {
+      if (childItem.item.route?.endsWith(lastUrlSegment)) {
+        childItem.toggleHighlight(true);
+        childHighlighted = true;
+      } else {
+        childItem.toggleHighlight(false);
+        if (childItem.item?.children) {
+          if (childItem.checkChildrenForHighlight(lastUrlSegment)) {
+            childHighlighted = true;
+          }
+        }
+        childItem.expand(); // open the childItem
+      }
+    });
+    return childHighlighted; // Return highlighted state so that caller can
+    // expand itself.
   }
 
   // Item selection handler
@@ -341,29 +254,6 @@ export class SPMatMenuListItemComponent
       ev.preventDefault();
       ev.stopImmediatePropagation();
       this.expanded = !this.expanded;
-      this.cdr.detectChanges();
-    }
-  }
-
-  /**
-   * Expand a parent container menu item.
-   */
-  expand() {
-    if (!this.item?.route && !this.expanded) {
-      this.expanded = this.ariaExpanded = true;
-      this.cdr.detectChanges();
-      if (this.parent) {
-        this.parent.expand();
-      }
-    }
-  }
-
-  /**
-   * Collapse an expanded parent container menu item.
-   */
-  collapse() {
-    if (!this.item?.route && this.expanded) {
-      this.expanded = this.ariaExpanded = false;
       this.cdr.detectChanges();
     }
   }
