@@ -143,9 +143,10 @@ export class SPMatMenuPaneComponent implements OnInit, OnDestroy, AfterViewInit,
 
   highlightCurrentUrlMenuItem(url: string) {
     // Remove baseUrl from our url-to-SPMatMenuListItem matching logic
-    const baseUrlIndex = url.search(this.baseUrl);
+    const baseUrl = this.baseUrl.startsWith('/') ? this.baseUrl.substring(1) : this.baseUrl;
+    const baseUrlIndex = url.search(baseUrl);
     if (baseUrlIndex != -1) {
-      url = url.substring(baseUrlIndex+this.baseUrl.length);
+      url = url.substring(baseUrlIndex+baseUrl.length);
     }
 
     // Filter out empty strings so that we avoid a pointless iteration of the
@@ -156,7 +157,8 @@ export class SPMatMenuPaneComponent implements OnInit, OnDestroy, AfterViewInit,
     for (let index = 0; !highlightedItemFound && index < urlParts.length; index++) {
       const lastUrlSegment = urlParts[index];
       this.menuItemComps().find(menuItemComp => {
-        if (menuItemComp.item.route?.endsWith(lastUrlSegment)) {
+        const route = menuItemComp.item?.route;
+        if (route === lastUrlSegment) {
           menuItemComp.toggleHighlight(true);
           highlightedItemFound = true;
         } else {

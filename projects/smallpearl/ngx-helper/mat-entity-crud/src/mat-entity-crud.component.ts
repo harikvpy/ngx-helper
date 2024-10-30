@@ -12,8 +12,8 @@ import {
   viewChild,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatTableModule } from '@angular/material/table';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTableModule } from '@angular/material/table';
 import { RouterModule } from '@angular/router';
 import {
   SPContextMenuItem,
@@ -27,7 +27,6 @@ import {
 import { Subscription, tap } from 'rxjs';
 import { SPMatEntityCrudConfig } from './mat-entity-crud-types';
 import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
-import { OverlayModule } from '@angular/cdk/overlay';
 
 const DefaultSPMatEntityCrudConfig: SPMatEntityCrudConfig = {
   i18n: {
@@ -62,13 +61,12 @@ const DefaultSPMatEntityCrudConfig: SPMatEntityCrudConfig = {
     MatButtonModule,
     MatTableModule,
     MatSnackBarModule,
-    OverlayModule,
     SPMatEntityListComponent,
     SPMatContextMenuComponent,
   ],
   selector: 'sp-mat-entity-crud',
   template: `
-    <div cdkOverlayOrigin #trigger="cdkOverlayOrigin">
+    <div>
       <div class="action-bar">
         <div class="action-bar-title">
           {{ itemsLabel() }}
@@ -110,18 +108,6 @@ const DefaultSPMatEntityCrudConfig: SPMatEntityCrudConfig = {
         </ng-container>
       </sp-mat-entity-list>
     </div>
-
-    <ng-template
-      cdkConnectedOverlay
-      [cdkConnectedOverlayOrigin]="trigger"
-      [cdkConnectedOverlayOpen]="isOpen()"
-    >
-      <ul class="example-list">
-        <li>Item 1</li>
-        <li>Item 2</li>
-        <li>Item 3</li>
-      </ul>
-    </ng-template>
   `,
   styles: `
   .action-bar {
