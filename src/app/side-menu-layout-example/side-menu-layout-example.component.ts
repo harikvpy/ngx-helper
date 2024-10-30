@@ -5,6 +5,7 @@ import { NavItem, SPMatMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-si
   selector: 'app-side-menu-layout-eample',
   template: `
     <sp-mat-menu-layout
+      baseUrl="home"
       brandingImage="assets/angular.png"
       brandingText="SMALLPEARL"
       appTitle="QQBOOKS"

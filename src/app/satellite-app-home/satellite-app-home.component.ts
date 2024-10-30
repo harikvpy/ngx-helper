@@ -6,8 +6,7 @@ import { NavItem, SPMatMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-si
   template: `
     <sp-mat-menu-layout
       contentContainerClass="ex-content-container"
-      [showBackButton]="true"
-      defaultBackButtonHref="/"
+      baseUrl="/home/satellite-app"
       brandingImage="assets/angular.png"
       brandingText="SMALLPEARL"
       appTitle="QQBOOKS"
@@ -40,6 +39,11 @@ import { NavItem, SPMatMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-si
 })
 export class SatelliteAppHomeComponent {
   menuItems: NavItem[] = [
+    {
+      route: '..',
+      text: 'HOME',
+      icon: 'home',
+    },
     {
       route: 'flights',
       text: 'FLIGHTS',

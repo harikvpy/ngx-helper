@@ -27,6 +27,7 @@ import { NavItem } from './nav-item';
       >
         <div class="layout-menu-container">
           <ngx-mat-menu-pane
+            [baseUrl]="baseUrl"
             [showBackButton]="showBackButton"
             [showIcons]="showIcons"
             [defaultBackButtonHref]="defaultBackButtonHref"
@@ -139,6 +140,7 @@ export class SPMatMenuLayoutComponent implements OnInit, OnDestroy {
   destroy = new Subject<void>();
   containerHeight: number = 500;
   topBottomPadding: number = 6;
+  @Input() baseUrl = '';
   @Input() showBackButton: boolean = false;
   @Input() defaultBackButtonHref: string = '';
   @Input() backButtonText: string = 'BACK';

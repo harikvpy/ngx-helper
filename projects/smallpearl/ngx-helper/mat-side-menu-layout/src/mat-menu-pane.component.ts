@@ -64,6 +64,7 @@ export class SPMatMenuPaneComponent implements OnInit, OnDestroy, AfterViewInit,
   @Input() appVersion: string = '0.0';
   @Input() menuPaneFooterContent!: TemplateRef<any>;
   @Input() showIcons: boolean = true;
+  @Input() baseUrl = '';
   layout!: SideMenuLayoutProps;
 
   backButtonNavItem: NavItem | undefined;
@@ -141,20 +142,33 @@ export class SPMatMenuPaneComponent implements OnInit, OnDestroy, AfterViewInit,
   }
 
   highlightCurrentUrlMenuItem(url: string) {
-    const urlParts = url.split('/');
-    const lastUrlSegment = urlParts[urlParts.length-1].split('?')[0];
+    // Remove baseUrl from our url-to-SPMatMenuListItem matching logic
+    const baseUrlIndex = url.search(this.baseUrl);
+    if (baseUrlIndex != -1) {
+      url = url.substring(baseUrlIndex+this.baseUrl.length);
+    }
 
-    this.menuItemComps().find(menuItemComp => {
-      if (menuItemComp.item.route?.endsWith(lastUrlSegment)) {
-        menuItemComp.toggleHighlight(true);
-      } else {
-        menuItemComp.toggleHighlight(false);
-        if (menuItemComp.item?.children) {
-          if (menuItemComp.checkChildrenForHighlight(lastUrlSegment)) {
-            menuItemComp.expand();
-          };
+    // Filter out empty strings so that we avoid a pointless iteration of the
+    // menuItemComps() array.
+    const urlParts = url.split('/').filter(u => !!u);
+    // console.log(`highlightCurrentUrlMenuItem - baseUrl: ${this.baseUrl} url: ${url}, urlParts: ${urlParts}`);
+    let highlightedItemFound = false;
+    for (let index = 0; !highlightedItemFound && index < urlParts.length; index++) {
+      const lastUrlSegment = urlParts[index];
+      this.menuItemComps().find(menuItemComp => {
+        if (menuItemComp.item.route?.endsWith(lastUrlSegment)) {
+          menuItemComp.toggleHighlight(true);
+          highlightedItemFound = true;
+        } else {
+          menuItemComp.toggleHighlight(false);
+          if (menuItemComp.item?.children) {
+            if (menuItemComp.checkChildrenForHighlight(lastUrlSegment)) {
+              menuItemComp.expand();
+              highlightedItemFound = true
+            };
+          }
         }
-      }
-    });
+      });
+    }
   }
 }
