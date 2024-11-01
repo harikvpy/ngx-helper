@@ -1,58 +1,15 @@
-import { Overlay, OverlayRef } from "@angular/cdk/overlay";
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, viewChild } from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ActivatedRoute, Router } from "@angular/router";
+import { getEntitiesIds } from '@ngneat/elf-entities';
 import { SPContextMenuItem } from '@smallpearl/ngx-helper/mat-context-menu';
 import { SPMatEntityCrudComponent } from '@smallpearl/ngx-helper/mat-entity-crud';
 import { SPMatEntityListColumn } from '@smallpearl/ngx-helper/mat-entity-list';
-import { finalize, Observable, tap } from 'rxjs';
+import { delay, of } from 'rxjs';
 import { MyPaginator } from '../entity-list-demo/paginater';
 import { User } from '../entity-list-demo/user';
-
-export function trackBusyWheelStatus(id?: string, show = true, showImmediate = false, hideOnNthEmit = 0) {
-  let timeout: any = null;
-  let wheelShown = false;
-  if (show) {
-    timeout = setTimeout(
-      () => {
-        // showBusyWheel(id);
-        wheelShown = true;
-      },
-      showImmediate ? 0 : 150
-    );
-  }
-
-  return function <T>(source: Observable<T>): Observable<T> {
-    let emits = 0;
-    const hideFn = () => {
-      // console.log('busywheel.hideFn');
-      if (timeout) {
-        clearTimeout(timeout);
-        timeout = null;
-      }
-      if (!show || wheelShown) {
-        // hideBusyWheel(id);
-      }
-    };
-    return source.pipe(
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      tap((val) => {
-        if (hideOnNthEmit > 0 && ++emits == hideOnNthEmit) {
-          // console.log(`trackBusyWheelStatus - obs emitted ${hideOnNthEmit} values, hiding`);
-          hideFn();
-        }
-      }),
-      finalize(() => {
-        // finalize() arg will be invoked upon completion or error
-        hideFn();
-      })
-    );
-  };
-}
-
-export function showBusyWheelUntilComplete(id?: string, showImmediate = false) {
-  return trackBusyWheelStatus(id, true, showImmediate, 0);
-}
+import { CreateEditEntityDemoComponent } from "./create-edit-entity-demo.component";
 
 @Component({
   standalone: true,
@@ -60,6 +17,7 @@ export function showBusyWheelUntilComplete(id?: string, showImmediate = false) {
     CommonModule,
     MatProgressSpinnerModule,
     SPMatEntityCrudComponent,
+    CreateEditEntityDemoComponent,
   ],
   selector: 'app-entity-crud-demo',
   template: `
@@ -71,15 +29,20 @@ export function showBusyWheelUntilComplete(id?: string, showImmediate = false) {
       idKey="cell"
       pagination="discrete"
       [paginator]="paginator"
-      [disableSort]="true"
       itemLabel="User"
       itemsLabel="Users"
       [itemActions]="itemActions"
       (action)="onItemAction($event)"
-      [newItemLink]="['./new']"
+      [createEditFormTemplate]="createEdit"
+      [crudOpFn]="crudOpFn"
     >
     </sp-mat-entity-crud>
   </div>
+
+  <ng-template #createEdit let-data>
+    <app-create-edit-entity-demo [bridge]="data.bridge" [entity]="data.entity"></app-create-edit-entity-demo>
+  </ng-template>
+
   `,
   styles: `
   `,
@@ -96,26 +59,51 @@ export class EntityCrudDemoComponent implements OnInit {
     { name: 'action', label: 'ACTION' },
   ];
   itemActions: SPContextMenuItem[] = [
-    { label: 'Edit', role: 'edit', },
-    { label: 'Delete', role: 'delete', disable: (user: User) => user.cell.startsWith('(') }
+    { label: 'Edit', role: '_update_', },
+    { label: 'Delete', role: '_delete_', disable: (user: User) => user.cell.startsWith('(') }
   ];
+  spEntityCrudComponent = viewChild(SPMatEntityCrudComponent);
 
   paginator = new MyPaginator();
 
-  private overlayRef!: OverlayRef;
-  isOpen = signal<boolean>(false);
+  crudOpFn(op: string, entityValue: any, crudComponent: SPMatEntityCrudComponent<User, 'cell'>) {
+    if (op === 'create') {
+      return of(({
+        name: { title: 'Mr', first: entityValue['firstName'], last: entityValue['lastName'] },
+        gender: entityValue['gender'],
+        cell: entityValue['cell']
+      } as unknown) as User);
+    } else if (op === 'update') {
+      const ids = crudComponent?.spEntitiesList()?.store.query(getEntitiesIds());
+      if (ids?.length) {
+        const id = ids.find(id => id === entityValue['cell']);
+        // const id = ids[Math.floor((Math.random()*1000))%ids?.length];
+        console.log(`Updating name & gender of cell # ${String(id)}`);
+        return of({
+          name: { title: 'Mr', first: entityValue['firstName'], last: entityValue['lastName'] },
+          gender: entityValue['gender'],
+          cell: id
+        });
+      }
+    }
+    return of(null);
+  }
 
-  constructor(private overlay: Overlay) { }
+  constructor(private router: Router, private route: ActivatedRoute) { }
 
   ngOnInit() { }
 
   onItemAction(ev: {role: string, entity?: User}) {
     console.log(`onItemAction - role: ${ev.role}`);
-    if (ev.role === '_new_') {
-      this.isOpen.set(true);
-      setTimeout(() => {
-        this.isOpen.set(false);
-      }, 5000);
+    if (ev.role === 'edit') {
+      if (ev.entity) {
+        this.router.navigate([`${ev.entity['cell']}`], {
+          relativeTo: this.route,
+          state: {
+            entity: ev.entity
+          }
+        });
+      }
     }
   }
 }

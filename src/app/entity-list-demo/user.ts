@@ -4,3 +4,10 @@ export interface User {
   gender: string;
   cell: string;
 }
+
+export const MOCK_USER: User = {
+  id: 0,
+  name: { title: '', first: '', last: '' },
+  gender: '',
+  cell: ''
+}

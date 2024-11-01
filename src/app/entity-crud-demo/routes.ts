@@ -1,5 +1,5 @@
 import { Routes } from "@angular/router";
-import { CreateEntityDemoComponent } from "./create-entity.component";
+import { CreateEditEntityDemoComponent } from "./create-edit-entity-demo.component";
 
 export const CRUD_DEMO_ROUTES: Routes = [
   {
@@ -8,6 +8,10 @@ export const CRUD_DEMO_ROUTES: Routes = [
   },
   {
     path: 'new',
-    loadComponent: () => import('./create-entity.component').then(c => CreateEntityDemoComponent)
+    loadComponent: () => import('./create-edit-entity-demo.component').then(c => CreateEditEntityDemoComponent)
+  },
+  {
+    path: ':id',
+    loadComponent: () => import('./create-edit-entity-demo.component').then(c => CreateEditEntityDemoComponent)
   }
 ]

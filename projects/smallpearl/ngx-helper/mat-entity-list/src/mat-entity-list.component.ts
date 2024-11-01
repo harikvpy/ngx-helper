@@ -28,7 +28,7 @@ import {
   MatTableModule,
 } from '@angular/material/table';
 import { createStore } from '@ngneat/elf';
-import { deleteEntities, getEntitiesCount, hasEntity, selectAllEntities, updateEntities, upsertEntities, withEntities } from '@ngneat/elf-entities';
+import { addEntities, deleteEntities, getEntitiesCount, hasEntity, selectAllEntities, updateEntities, upsertEntities, withEntities } from '@ngneat/elf-entities';
 import { spFormatDate } from '@smallpearl/ngx-helper/locale';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { finalize, Observable, Subscription, tap } from 'rxjs';
@@ -346,6 +346,19 @@ export class SPMatEntityListComponent<
     const matSort = this.sort();
     if (matSort) {
       this.dataSource().sort = matSort;
+    }
+  }
+
+  addEntity(entity: TEntity) {
+    const pagination = this.pagination()
+    const count = this.store.query(getEntitiesCount())
+    if (pagination === 'infinite' || pagination === 'none' || count < this.pageSize()) {
+      this.store.update(addEntities(entity));
+    } else {
+      // 'discrete' pagination, refresh the crud items from the beginning.
+      // Let component client set the behavior using a property
+      // this.pageIndex.set(0);
+      // this.loadMoreEntities();
     }
   }
 

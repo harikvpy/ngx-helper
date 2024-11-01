@@ -12,6 +12,8 @@ import {
   QQMatTelephoneInputConfig,
 } from '@smallpearl/ngx-helper/mat-tel-input';
 import { MatIconModule } from '@angular/material/icon';
+import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
+import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 
 const WebTelInputConfig: QQMatTelephoneInputConfig = {
   // To cache last value from our API request so that we don't have to
@@ -50,6 +52,11 @@ const WebTelInputConfig: QQMatTelephoneInputConfig = {
       provide: QQMAT_TELEPHONE_INPUT_CONFIG_PROVIDER,
       useValue: WebTelInputConfig,
     },
+    {
+      provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
+      useValue: { appearance: 'outline' },
+    },
+    { provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 3000 } },
   ],
   bootstrap: [AppComponent],
 })
