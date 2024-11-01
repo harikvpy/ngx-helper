@@ -5,7 +5,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { SPMatEntityCrudCreateEditBridge } from '@smallpearl/ngx-helper/mat-entity-crud';
 import { Observable, of } from 'rxjs';
 import { MOCK_USER, User } from '../entity-list-demo/user';
@@ -19,7 +18,6 @@ import { MOCK_USER, User } from '../entity-list-demo/user';
     MatInputModule,
     MatButtonModule,
     MatSelectModule,
-    MatSnackBarModule,
   ],
   selector: 'app-create-edit-entity-demo',
   template: `
