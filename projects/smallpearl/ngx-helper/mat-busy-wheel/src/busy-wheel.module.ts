@@ -10,4 +10,4 @@ import { SPMatHostBusyWheelDirective } from './host-busy-wheel.directive';
   exports: [SPMatHostBusyWheelDirective, SPMatBusyWheelComponent],
   providers: [],
 })
-export class BusyWheelModule {}
+export class SPBusyWheelModule {}
