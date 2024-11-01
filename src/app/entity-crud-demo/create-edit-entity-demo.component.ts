@@ -59,7 +59,7 @@ import { MOCK_USER, User } from '../entity-list-demo/user';
       </mat-form-field>
 
       <div class="mt-2 d-flex gap-2">
-        <button type="reset" color="secondary" mat-raised-button>Reset</button>
+        <button type="button" color="secondary" mat-raised-button (click)="form.reset()">Reset</button>
         <button
           type="submit"
           color="primary"
@@ -78,10 +78,10 @@ import { MOCK_USER, User } from '../entity-list-demo/user';
 })
 export class CreateEditEntityDemoComponent implements OnInit, OnDestroy {
   form!: FormGroup<{
-    firstName: FormControl<string|null>,
-    lastName: FormControl<string|null>,
-    gender: FormControl<string|null>,
-    cell: FormControl<string|null>,
+    firstName: FormControl<string>,
+    lastName: FormControl<string>,
+    gender: FormControl<string>,
+    cell: FormControl<string>,
   }>;
   // update = false;
   init$!: Observable<any>;
@@ -116,11 +116,23 @@ export class CreateEditEntityDemoComponent implements OnInit, OnDestroy {
   }
 
   createForm(entity?: User) {
-    return this.fb.group({
-      firstName: [entity ? entity.name.first : '', Validators.required],
-      lastName: [entity ? entity.name.last : '', Validators.required],
-      gender: [entity ? entity.gender : '', Validators.required],
-      cell: [entity ? entity.cell : '', Validators.required],
+    return new FormGroup({
+      firstName: new FormControl(entity ? entity.name.first : '', {
+        nonNullable: true,
+        validators: Validators.required,
+      }),
+      lastName: new FormControl(entity ? entity.name.last : '', {
+        nonNullable: true,
+        validators: Validators.required,
+      }),
+      gender: new FormControl(entity ? entity.gender : '', {
+        nonNullable: true,
+        validators: Validators.required,
+      }),
+      cell: new FormControl(entity ? entity.cell : '', {
+        nonNullable: true,
+        validators: Validators.required,
+      }),
     });
   }
   onSubmit() {
