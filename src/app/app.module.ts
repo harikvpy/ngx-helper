@@ -3,17 +3,17 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { AppRoutingModule } from './app-routing.module';
-import { AppComponent } from './app.component';
-import { MatSelectModule } from '@angular/material/select';
+import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
+import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
+import { FORM_ERRORS, provideErrorTailorConfig } from '@ngneat/error-tailor';
 import {
   QQMAT_TELEPHONE_INPUT_CONFIG_PROVIDER,
   QQMatTelephoneInputConfig,
 } from '@smallpearl/ngx-helper/mat-tel-input';
-import { MatIconModule } from '@angular/material/icon';
-import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
-import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
+import { Observable, of } from 'rxjs';
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { MatErrorTailorControlErrorComponent } from './components/mat-error-tailor-control-error/mat-error-tailor-control-error.component';
 
 const WebTelInputConfig: QQMatTelephoneInputConfig = {
   // To cache last value from our API request so that we don't have to
@@ -44,8 +44,7 @@ const WebTelInputConfig: QQMatTelephoneInputConfig = {
     BrowserAnimationsModule,
     HttpClientModule,
     AppRoutingModule,
-    MatSelectModule,
-    MatIconModule,
+    MatErrorTailorControlErrorComponent
   ],
   providers: [
     {
@@ -57,6 +56,47 @@ const WebTelInputConfig: QQMatTelephoneInputConfig = {
       useValue: { appearance: 'outline' },
     },
     { provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 3000 } },
+    provideErrorTailorConfig({
+      blurPredicate(element: Element) {
+        return (
+          element.tagName === 'INPUT' ||
+          element.tagName === 'SELECT' ||
+          element.tagName === 'TEXTAREA' ||
+          element.tagName === 'MAT-SELECT' ||
+          element.tagName === 'MAT-DATE-RANGE-INPUT'
+        );
+      },
+      controlErrorComponent: MatErrorTailorControlErrorComponent,
+    }),
+    {
+      provide: FORM_ERRORS,
+      useFactory: () => {
+        const errorsMap = {
+          required: 'Required',
+          invalidPhoneNumber: 'Not a valid phone number.',
+          invalidMobileNumber: 'Not a valid mobile number.',
+          invalidEmail: 'Not a valid email address.',
+          invalidValue: 'Invalid value',
+          email: 'Not a valid email address.',
+          passwordMismatchError: "The two passwords don't match.",
+          incorrectOldPassword:
+            'Incorrect old password. Please enter it again.',
+          invalidPassword:
+            'Password should be at least 8 charactes long and consist of alphanumeric characters.',
+          invalidNewPassword:
+            'Password should be at least 8 charactes long and consist of alphanumeric characters.',
+        };
+        // console.log(`ErrorTailor messages: ${JSON.stringify(errorsMap)}`);
+        return {
+          ...errorsMap,
+          serverMessage: (msgArgs: any) => {
+            // console.log(`serverMessage - args: ${JSON.stringify(msgArgs)}`);
+            return msgArgs.message;
+          },
+        };
+      },
+      deps: [],
+    },
   ],
   bootstrap: [AppComponent],
 })

@@ -33,6 +33,8 @@
     "@angular/compiler-cli": "^17.2.1",
     "@ngneat/elf": "^2.5.1",
     "@ngneat/elf-entities": "^5.0.2",
+    "@ngneat/error-tailor": "^5.0.1",
+    "@ngneat/transloco": "^6.0.4",
     "@types/google-libphonenumber": "^7.4.30",
     "@types/jasmine": "~4.3.0",
     "jasmine-core": "~4.5.0",

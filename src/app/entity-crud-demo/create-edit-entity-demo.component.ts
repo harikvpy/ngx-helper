@@ -5,7 +5,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { errorTailorImports } from '@ngneat/error-tailor';
 import { SPMatEntityCrudCreateEditBridge } from '@smallpearl/ngx-helper/mat-entity-crud';
+import { showServerValidationErrors } from './validation-error-handler';
 import { Observable, of } from 'rxjs';
 import { MOCK_USER, User } from '../entity-list-demo/user';
 
@@ -18,42 +20,53 @@ import { MOCK_USER, User } from '../entity-list-demo/user';
     MatInputModule,
     MatButtonModule,
     MatSelectModule,
+    errorTailorImports,
   ],
   selector: 'app-create-edit-entity-demo',
   template: `
+    <ng-template let-error let-text="text" #tpl>
+      <mat-error>{{ text }}</mat-error>
+    </ng-template>
+
   @if (init$|async) {
-    <!-- <h2>
-      @if (update) {
-        Update User
-      } @else {
-        Create User
-      }
-    </h2> -->
     <form
       [formGroup]="form"
       (ngSubmit)="onSubmit()"
       class="d-flex flex-column align-items-start"
+      errorTailor
     >
       <div class="d-flex flex-row gap-1">
         <mat-form-field>
           <mat-label>Firstname</mat-label>
-          <input matInput formControlName="firstName" />
+          <input matInput formControlName="firstName" [controlErrorAnchor]="errorAnchorFirstName" />
+          <mat-error>
+            <ng-template controlErrorAnchor #errorAnchorFirstName="controlErrorAnchor"></ng-template>
+          </mat-error>
         </mat-form-field>
         <mat-form-field>
           <mat-label>Lastname</mat-label>
-          <input matInput formControlName="lastName" />
+          <input matInput formControlName="lastName" [controlErrorAnchor]="errorAnchorLastName" />
+          <mat-error>
+            <ng-template controlErrorAnchor #errorAnchorLastName="controlErrorAnchor"></ng-template>
+          </mat-error>
         </mat-form-field>
       </div>
       <mat-form-field>
         <mat-label>Gender</mat-label>
-        <mat-select formControlName="gender">
+        <mat-select formControlName="gender" [controlErrorAnchor]="errorAnchorGender" >
           <mat-option value="male">Male</mat-option>
           <mat-option value="female">Female</mat-option>
         </mat-select>
+        <mat-error>
+          <ng-template controlErrorAnchor #errorAnchorGender="controlErrorAnchor"></ng-template>
+        </mat-error>
       </mat-form-field>
       <mat-form-field>
         <mat-label>Cell</mat-label>
-        <input matInput formControlName="cell" />
+        <input matInput formControlName="cell" [controlErrorAnchor]="errorAnchorCell" />
+        <mat-error>
+          <ng-template controlErrorAnchor #errorAnchorCell="controlErrorAnchor"></ng-template>
+        </mat-error>
       </mat-form-field>
 
       <div class="mt-2 d-flex gap-2">
@@ -136,6 +149,9 @@ export class CreateEditEntityDemoComponent implements OnInit, OnDestroy {
   onSubmit() {
     const value = this.form.value;
     const bridge = this.bridge();
-    this.creating() ? bridge?.create(value) : bridge?.update(this.entity()?.cell, value);
+    const obs = this.creating() ? bridge?.create(value) : bridge?.update(this.entity()?.cell, value);
+    obs?.pipe(
+      showServerValidationErrors(this.form)
+    ).subscribe();
   }
 }

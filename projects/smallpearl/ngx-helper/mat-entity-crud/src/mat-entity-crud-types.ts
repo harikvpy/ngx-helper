@@ -45,7 +45,7 @@ export interface SPMatEntityCrudCreateEditBridge {
    * @inner Implementation will show a busy wheel centered on the form
    * view while the async function to update the object remains active.
    */
-  create: (entityValue: any) => void;
+  create: (entityValue: any) => Observable<any>;
   /**
    * Update the entity with id `id` with new values in entityValue.
    * @param id TEntity id
@@ -54,7 +54,7 @@ export interface SPMatEntityCrudCreateEditBridge {
    * @inner Implementation will show a busy wheel centered on the form
    * view while the async function to update the object remains active.
    */
-  update: (id: any, entityValue: any) => void;
+  update: (id: any, entityValue: any) => Observable<any>;
 }
 
 export type CRUD_OP_FN<

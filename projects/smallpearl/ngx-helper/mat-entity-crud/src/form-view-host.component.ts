@@ -16,7 +16,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { SPBusyWheelModule } from '@smallpearl/ngx-helper/mat-busy-wheel';
-import { catchError, Subscription, tap, throwError } from 'rxjs';
+import { Subscription, tap } from 'rxjs';
 import { getConfig } from './default-config';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
 import { SPMatEntityCrudConfig, SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
@@ -116,14 +116,8 @@ export class FormViewHostComponent<
     //   )}`
     // );
     const crudComponent = this.entityCrudComponentBase();
-    this.sub$.add(
-      crudComponent?.create(entityValue).pipe(
-        tap(() => this.close()),
-        catchError(err => {
-          // TODO: handle errors, by providing them to the client form
-          return throwError(() => err)
-        })
-      ).subscribe()
+    return crudComponent?.create(entityValue).pipe(
+      tap(() => this.close()),
     );
   }
 
@@ -134,14 +128,8 @@ export class FormViewHostComponent<
     //   )}, entity: ${entityValue}`
     // );
     const crudComponent = this.entityCrudComponentBase();
-    this.sub$.add(
-      crudComponent?.update(id, entityValue).pipe(
-        tap(() => this.close()),
-        catchError(err => {
-          // TODO: handle errors, by providing them to the client form
-          return throwError(() => err)
-        })
-      ).subscribe()
+    return crudComponent?.update(id, entityValue).pipe(
+      tap(() => this.close()),
     );
   }
 
