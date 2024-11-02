@@ -6,10 +6,11 @@ import { getEntitiesIds } from '@ngneat/elf-entities';
 import { SPContextMenuItem } from '@smallpearl/ngx-helper/mat-context-menu';
 import { SPMatEntityCrudComponent } from '@smallpearl/ngx-helper/mat-entity-crud';
 import { SPMatEntityListColumn } from '@smallpearl/ngx-helper/mat-entity-list';
-import { delay, of } from 'rxjs';
+import { of } from 'rxjs';
 import { MyPaginator } from '../entity-list-demo/paginater';
 import { User } from '../entity-list-demo/user';
 import { CreateEditEntityDemoComponent } from "./create-edit-entity-demo.component";
+import { SPMatEntityCrudPreviewPaneComponent } from "../../../projects/smallpearl/ngx-helper/mat-entity-crud/src/preview-pane.component";
 
 @Component({
   standalone: true,
@@ -18,10 +19,11 @@ import { CreateEditEntityDemoComponent } from "./create-edit-entity-demo.compone
     MatProgressSpinnerModule,
     SPMatEntityCrudComponent,
     CreateEditEntityDemoComponent,
-  ],
+    SPMatEntityCrudPreviewPaneComponent
+],
   selector: 'app-entity-crud-demo',
   template: `
-  <div>
+  <div style="width: 100%; height: 100%;">
     <sp-mat-entity-crud
       [endpoint]="endpoint"
       [columns]="columns"
@@ -35,12 +37,22 @@ import { CreateEditEntityDemoComponent } from "./create-edit-entity-demo.compone
       (action)="onItemAction($event)"
       [createEditFormTemplate]="createEdit"
       [crudOpFn]="crudOpFn"
+      (selectEntity)="handleSelectEntity($event)"
+      [previewTemplate]="userPreview"
     >
     </sp-mat-entity-crud>
   </div>
-
   <ng-template #createEdit let-data>
     <app-create-edit-entity-demo [bridge]="data.bridge" [entity]="data.entity"></app-create-edit-entity-demo>
+  </ng-template>
+
+  <ng-template #userPreview let-data>
+    <sp-mat-entity-crud-preview-pane
+      [title]="data.entity.name.first + ' ' + data.entity.name.last"
+      [entityCrudComponent]="spEntityCrudComponent()!"
+    >
+      <p>{{ data.entity.name.first }} {{ data.entity.name.first }}</p>
+    </sp-mat-entity-crud-preview-pane>
   </ng-template>
 
   `,
@@ -105,5 +117,9 @@ export class EntityCrudDemoComponent implements OnInit {
         });
       }
     }
+  }
+
+  handleSelectEntity(user: User) {
+    console.log(`handleSelectEntity - user: ${user ? user.name.first : undefined}`);
   }
 }
