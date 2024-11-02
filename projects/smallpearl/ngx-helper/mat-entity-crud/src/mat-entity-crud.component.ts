@@ -298,29 +298,38 @@ export class SPMatEntityCrudComponent<
     if (!this.createEditViewActive()) {
       this.action.emit({role: '_update_'});
     }
-}
+  }
 
   async onDelete(entity: TEntity) {
     // Do the delete prompt asynchronously so that the context menu is
     // dismissed before the prompt is displayed.
-
     setTimeout(() => {
-      const yes = confirm(this.config.i18n.deleteItemMessage);
+      const deletedItemPrompt = this.config?.i18nTranslate!(this.config.i18n.deleteItemMessage, {item: this.itemLabel()});
+      const yes = confirm(deletedItemPrompt);
       if (yes) {
         const entityId = (entity as any)[this.idKey()];
+
+        let obs!: Observable<any>;
+        const crudOpFn = this.crudOpFn();
+        if (crudOpFn) {
+          obs = crudOpFn('delete', entity, this);
+        } else {
+          obs = this.http.delete<void>(this.getEntityUrl(this.endpoint(), entityId));
+        }
+
         this.sub$.add(
-          this.http
-            .delete(this.getUrl(this.endpoint()) + `${entityId}/`)
+          obs
             .pipe(
               // TODO: how to display a busy wheel?
               // showBusyWheelUntilComplete(this.busyWheelId),
               tap(() => {
                 this.spEntitiesList()!.removeEntity(entityId);
-                if (this.config?.i18nTranslate) {
-                  // TODO: customize by providing an interface via SPMatEntityCrudConfig?
-                  const deletedMessage = this.config.i18nTranslate(this.config.i18n.itemDeletedNotification, {item: this.itemLabel()});
-                  this.snackBar.open(deletedMessage);
-                }
+                // TODO: customize by providing an interface via SPMatEntityCrudConfig?
+                const deletedMessage = this.config.i18nTranslate!(
+                  this.config.i18n.itemDeletedNotification,
+                  { item: this.itemLabel() }
+                );
+                this.snackBar.open(deletedMessage);
               })
             )
             .subscribe()
