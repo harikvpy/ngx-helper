@@ -51,7 +51,32 @@ import { SPMatEntityCrudPreviewPaneComponent } from "../../../projects/smallpear
       [title]="data.entity.name.first + ' ' + data.entity.name.last"
       [entityCrudComponent]="spEntityCrudComponent()!"
     >
-      <p>{{ data.entity.name.first }} {{ data.entity.name.first }}</p>
+      <div previewContent>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+      </div>
     </sp-mat-entity-crud-preview-pane>
   </ng-template>
 
