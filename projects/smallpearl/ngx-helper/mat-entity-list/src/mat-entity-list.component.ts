@@ -6,11 +6,14 @@ import {
   Component,
   computed,
   ContentChildren,
+  effect,
+  EventEmitter,
   Inject,
   input,
   OnDestroy,
   OnInit,
   Optional,
+  Output,
   QueryList,
   signal,
   viewChild,
@@ -78,7 +81,12 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
       </div>
       <table mat-table [dataSource]="dataSource()">
         <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
+        <tr
+          mat-row
+          [class.active-row]="activeEntityId() === row[this.idKey()]"
+          *matRowDef="let row; columns: displayedColumns()"
+          (click)="handleRowClick(row)"
+        ></tr>
       </table>
       @if (pagination() == 'discrete' && _paginator) {
       <mat-paginator
@@ -156,6 +164,9 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
         display: none;
         width: 100%;
         padding: 8px;
+      }
+      .active-row {
+        font-weight: bold;
       }
     `,
   ],
@@ -299,6 +310,28 @@ export class SPMatEntityListComponent<
   loading = signal<boolean>(false);
   // We will update this after every load and pagination() == 'infinite'
   hasMore = signal<boolean>(true);
+
+  activeEntity = signal<TEntity|undefined>(undefined);
+  activeEntityId = computed(() => this.activeEntity() ? (this.activeEntity() as any)[this.idKey()] : undefined);
+  _prevActiveEntity!: TEntity|undefined;
+  _activeEntityChange = effect(() => {
+    const activeEntity = this.activeEntity();
+    // Though we can raise the selectEntity event directly from effect handler,
+    // that would prevent the event handler from being able to update any
+    // signals from inside it. So we generate the event asyncronously.
+    // Also, this effect handler will be invoked for the initial 'undefined'
+    // during which we shouldn't emit the selectEntity event. Therefore we
+    // keep another state variable to filter out this state.
+    setTimeout(() => {
+      if (this._prevActiveEntity && !activeEntity) {
+        this.selectEntity.emit(activeEntity);
+      } else if (activeEntity) {
+        this.selectEntity.emit(activeEntity);
+      }
+      this._prevActiveEntity = activeEntity;
+    });
+  });
+  @Output() selectEntity = new EventEmitter<TEntity>();
 
   constructor(
     protected http: HttpClient,
@@ -568,5 +601,15 @@ export class SPMatEntityListComponent<
 
   getUrl(endpoint: string) {
     return this.config?.urlResolver ? this.config?.urlResolver(endpoint) : endpoint;
+  }
+
+  handleRowClick(entity: TEntity) {
+    if (entity) {
+      if (entity === this.activeEntity()) {
+        this.activeEntity.set(undefined);
+      } else {
+        this.activeEntity.set(entity);
+      }
+    }
   }
 }

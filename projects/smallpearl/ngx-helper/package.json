@@ -11,10 +11,14 @@
     "@ngneat/elf": "^2.5.1",
     "@ngneat/elf-entities": "^5.0.2",
     "ngx-mat-select-search": "^7.0.5",
-    "ngx-infinite-scroll": "^17.0.1"
+    "ngx-infinite-scroll": "^17.0.1",
+    "angular-split": "^17.2.0"
   },
   "peerDependenciesMeta": {
     "ngx-infinite-scroll": {
+      "optional": true
+    },
+    "angular-split": {
       "optional": true
     },
     "@ngneat/elf": {

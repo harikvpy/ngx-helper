@@ -49,4 +49,9 @@ export interface SPMatEntityCrudComponentBase {
    * REST's GET request.
    */
   update: (id: any, entityValue: any) => Observable<any>;
+  /**
+   * Close the preview pane.
+   * @returns
+   */
+  closePreview: () => void;
 }

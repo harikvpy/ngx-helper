@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   EventEmitter,
   Inject,
   input,
@@ -32,6 +33,8 @@ import { FormViewHostComponent } from './form-view-host.component';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
 import { CRUD_OP_FN, SPMatEntityCrudConfig } from './mat-entity-crud-types';
 import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
+import { AngularSplitModule } from 'angular-split';
+import { PreviewHostComponent } from './preview-host.component';
 
 @Component({
   standalone: true,
@@ -41,65 +44,80 @@ import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
     MatButtonModule,
     MatTableModule,
     MatSnackBarModule,
+    AngularSplitModule,
     SPMatEntityListComponent,
     SPMatContextMenuComponent,
     FormViewHostComponent,
     SPBusyWheelModule,
+    PreviewHostComponent,
   ],
   selector: 'sp-mat-entity-crud',
   template: `
-  <div>
-    <div [ngStyle]="{'display': !createEditViewActive() ? 'inherit' : 'none'}">
-      <div class="action-bar">
-        <div class="action-bar-title">
-          {{ itemsLabel() }}
-        </div>
-        <span class="spacer"></span>
-        <div class="action-bar-actions">
-          <button
-            mat-raised-button
-            color="primary"
-            (click)="onCreate($event)"
-            [routerLink]="newItemLink()"
+    <as-split direction="horizontal" [gutterSize]="6">
+      <as-split-area [size]="entitiesPaneWidth()">
+        <div [ngStyle]="{'display': !createEditViewActive() ? 'inherit' : 'none'}">
+          <div class="action-bar">
+            <div class="action-bar-title">
+              {{ itemsLabel() }}
+            </div>
+            <span class="spacer"></span>
+            <div class="action-bar-actions">
+              <button
+                mat-raised-button
+                color="primary"
+                (click)="onCreate($event)"
+                [routerLink]="newItemLink()"
+              >
+                {{ config.i18n.newItemLabel(this.itemLabel()) }}
+              </button>
+            </div>
+          </div>
+          <sp-mat-entity-list
+            [endpoint]="endpoint()"
+            [entityLoaderFn]="entityLoaderFn()"
+            [columns]="columns()"
+            [idKey]="idKey()"
+            [pagination]="pagination()"
+            [paginator]="paginator()"
+            [pageSize]="pageSize()"
+            [sorter]="sorter()"
+            [disableSort]="disableSort()"
+            (selectEntity)="handleSelectEntity($event)"
           >
-            {{ config.i18n.newItemLabel(this.itemLabel()) }}
-          </button>
+            <ng-container matColumnDef="action">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let element">
+                @if (itemActions().length) {
+                <sp-mat-context-menu
+                  [menuItems]="itemActions()"
+                  (selected)="onItemAction($event, element)"
+                  [contextData]="element"
+                ></sp-mat-context-menu>
+                }
+              </td>
+            </ng-container>
+          </sp-mat-entity-list>
         </div>
-      </div>
-      <sp-mat-entity-list
-        [endpoint]="endpoint()"
-        [entityLoaderFn]="entityLoaderFn()"
-        [columns]="columns()"
-        [idKey]="idKey()"
-        [pagination]="pagination()"
-        [paginator]="paginator()"
-        [pageSize]="pageSize()"
-        [sorter]="sorter()"
-        [disableSort]="disableSort()"
-      >
-        <ng-container matColumnDef="action">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let element">
-            @if (itemActions().length) {
-            <sp-mat-context-menu
-              [menuItems]="itemActions()"
-              (selected)="onItemAction($event, element)"
-              [contextData]="element"
-            ></sp-mat-context-menu>
-            }
-          </td>
-        </ng-container>
-      </sp-mat-entity-list>
-    </div>
-    <div [ngStyle]="{'display': createEditViewActive() ? 'inherit' : 'none'}" spHostBusyWheel="formBusyWheel">
-      <sp-create-edit-entity-host
-        [itemLabel]="itemLabel()"
-        [itemsLabel]="itemsLabel()"
-        [entityCrudComponentBase]="this"
-        [clientViewTemplate]="createEditFormTemplate()"
-      ></sp-create-edit-entity-host>
-    </div>
-  </div>
+        <div [ngStyle]="{'display': createEditViewActive() ? 'inherit' : 'none'}" spHostBusyWheel="formBusyWheel">
+          <sp-create-edit-entity-host
+            [itemLabel]="itemLabel()"
+            [itemsLabel]="itemsLabel()"
+            [entityCrudComponentBase]="this"
+            [clientViewTemplate]="createEditFormTemplate()"
+          ></sp-create-edit-entity-host>
+        </div>
+      </as-split-area>
+      <as-split-area [size]="previewPaneWidth()" [visible]="previewActive()">
+        @if (previewActive()) {
+          <sp-entity-crud-preview-host
+            (closePreview)="closePreview()"
+            [entityCrudComponent]="this"
+            [previewTemplate]="previewTemplate()!"
+            [previewedEntity]="previewedEntity()"
+          ></sp-entity-crud-preview-host>
+        }
+      </as-split-area>
+    </as-split>
   `,
   styles: `
   .d-none {
@@ -124,6 +142,9 @@ import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
   .action-bar-actions {
     text-align: end;
   }
+  .active-row {
+    font-weight: bold;
+  }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -136,6 +157,8 @@ export class SPMatEntityCrudComponent<
   itemActions = input<SPContextMenuItem[]>([]);
   newItemLink = input<string | string[]>();
   crudOpFn = input<CRUD_OP_FN<TEntity, IdKey>>();
+  previewTemplate = input<TemplateRef<any>>();
+
   /**
    * Event raised for user selecting an item action. It's also raised
    * for 'New <Item>' action, if 'newItemLink' property is not set.
@@ -172,6 +195,11 @@ export class SPMatEntityCrudComponent<
 
   // Whether it's okay to cancel the edit
   canCancelEditCallback!: () => boolean;
+
+  previewedEntity = signal<TEntity|undefined>(undefined);
+  previewActive = computed(() => this.previewedEntity() !== undefined);
+  previewPaneWidth = signal<number>(50);
+  entitiesPaneWidth = computed(() => 100 - this.previewPaneWidth())
 
   constructor(
     @Optional()
@@ -256,6 +284,12 @@ export class SPMatEntityCrudComponent<
         }
       }),
     )
+  }
+
+  closePreview() {
+    if (this.previewedEntity()) {
+      this.previewedEntity.set(undefined);
+    }
   }
 
   onItemAction(role: string, entity: TEntity) {
@@ -345,5 +379,14 @@ export class SPMatEntityCrudComponent<
   getEntityUrl(endpoint: string, entityId: TEntity[IdKey]) {
     const entitEndpoint = (endpoint.endsWith('/') ? endpoint : endpoint+ '/') +`${String(entityId)}/`;
     return this.getUrl(entitEndpoint);
+  }
+
+  handleSelectEntity(entity: TEntity) {
+    if (this.previewTemplate()) {
+      this.previewedEntity.set(entity);
+    } else {
+      // If 'previewTemplate' is not set, propagate the event to client.
+      this.selectEntity.emit(entity);
+    }
   }
 }
