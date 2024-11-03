@@ -57,6 +57,15 @@ export interface SPMatEntityCrudCreateEditBridge {
   update: (id: any, entityValue: any) => Observable<any>;
 }
 
+/**
+ * Prototype of the function that will be used instead of HttpClient for
+ * CRUD operations.
+ * @param op - the CRUD operation being requested
+ * @param entityValue - The entity or entity value upon which the operation
+ * is being requested. for 'create' & 'update' this will be the value
+ * of the reactive form. This is typically form.value or the 2nd arg to create
+ * & update methods of SPMatEntityCrudCreateEditBridge.
+ */
 export type CRUD_OP_FN<
   TEntity extends { [P in IdKey]: PropertyKey },
   IdKey extends string = 'id'

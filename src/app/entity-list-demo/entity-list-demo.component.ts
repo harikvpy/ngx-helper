@@ -7,11 +7,10 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { SPMatContextMenuComponent } from '@smallpearl/ngx-helper/mat-context-menu';
 import {
   SPMatEntityListColumn,
-  SPMatEntityListComponent,
-  SPMatEntityListPaginator,
+  SPMatEntityListComponent
 } from '@smallpearl/ngx-helper/mat-entity-list';
-import { User } from './user';
 import { MyPaginator } from './paginater';
+import { User } from './user';
 
 const USER_DATA: User[] = [
   { id: 1, name: { title: 'Ms', first: 'Mariam', last: 'Trevarthen' }, cell: '2323234', gender: 'F' },
@@ -133,7 +132,7 @@ const ELEMENT_DATA: PeriodicElement[] = [
         >
 
           <ng-container matColumnDef="name">
-            <th mat-header-cell mat-sort-header *matHeaderCellDef>NAME</th>
+            <th mat-header-cell mat-sort-header *matHeaderCellDef>FULL NAME</th>
             <td mat-cell *matCellDef="let element">
               {{element.name.title}}. {{element.name.first}} {{element.name.last}}
             </td>
@@ -151,7 +150,6 @@ const ELEMENT_DATA: PeriodicElement[] = [
               ></sp-mat-context-menu>
             </td>
           </ng-container>
-
 
         </sp-mat-entity-list>
       </div>

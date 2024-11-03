@@ -1,21 +1,27 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, viewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSortModule } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
 import { ActivatedRoute, Router } from "@angular/router";
 import { getEntitiesIds } from '@ngneat/elf-entities';
 import { SPContextMenuItem } from '@smallpearl/ngx-helper/mat-context-menu';
 import { SPMatEntityCrudComponent } from '@smallpearl/ngx-helper/mat-entity-crud';
 import { SPMatEntityListColumn } from '@smallpearl/ngx-helper/mat-entity-list';
 import { of } from 'rxjs';
+import { SPMatEntityCrudPreviewPaneComponent } from "../../../projects/smallpearl/ngx-helper/mat-entity-crud/src/preview-pane.component";
 import { MyPaginator } from '../entity-list-demo/paginater';
 import { User } from '../entity-list-demo/user';
 import { CreateEditEntityDemoComponent } from "./create-edit-entity-demo.component";
-import { SPMatEntityCrudPreviewPaneComponent } from "../../../projects/smallpearl/ngx-helper/mat-entity-crud/src/preview-pane.component";
 
 @Component({
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
+    MatTableModule,
+    MatSortModule,
     MatProgressSpinnerModule,
     SPMatEntityCrudComponent,
     CreateEditEntityDemoComponent,
@@ -39,7 +45,16 @@ import { SPMatEntityCrudPreviewPaneComponent } from "../../../projects/smallpear
       [crudOpFn]="crudOpFn"
       (selectEntity)="handleSelectEntity($event)"
       [previewTemplate]="userPreview"
+      matSort
     >
+
+      <ng-container matColumnDef="name">
+        <th mat-header-cell mat-sort-header *matHeaderCellDef>FULL NAME</th>
+        <td mat-cell *matCellDef="let element">
+          {{element.name.title}}. {{element.name.first}} {{element.name.last}}
+        </td>
+      </ng-container>
+
     </sp-mat-entity-crud>
   </div>
   <ng-template #createEdit let-data>
@@ -90,7 +105,7 @@ export class EntityCrudDemoComponent implements OnInit {
 
   endpoint = 'https://randomuser.me/api/?nat=us,gb';
   columns: SPMatEntityListColumn<User>[] = [
-    { name: 'name', label: 'NAME', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
+    { name: 'name', label: 'NAME', valueFn: (user: User) => user.name.first },
     { name: 'gender', label: 'GENDER' },
     { name: 'cell', label: 'CELL' },
     { name: 'action', label: 'ACTION' },

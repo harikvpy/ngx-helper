@@ -175,7 +175,7 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
 export class SPMatEntityListComponent<
   TEntity extends { [P in IdKey]: PropertyKey },
   IdKey extends string = 'id'
-> implements OnInit, AfterViewInit, OnDestroy
+> implements OnInit, OnDestroy, AfterViewInit
 {
   /* CLIENT PROVIDED PARAMETERS */
   /**
@@ -233,7 +233,8 @@ export class SPMatEntityListComponent<
   /* END CLIENT PROVIDED PARAMETERS */
 
   // *** INTERNAL *** //
-
+  _deferViewInit = input<boolean>(false);
+  firstLoadDone = false;
   // Names of columns that are displayed.
   displayedColumns = signal<string[]>([]); // ['name', 'cell', 'gender'];
 
@@ -251,6 +252,8 @@ export class SPMatEntityListComponent<
   // inside <sp-mat-entity-list></<sp-mat-entity-list> by the client to override
   // the default <ng-container matColumnDef> created by the component.
   @ContentChildren(MatColumnDef) clientColumnDefs!: QueryList<MatColumnDef>;
+
+  contentColumnDefs: MatColumnDef[] = [];
 
   subs$ = new Subscription();
 
@@ -375,10 +378,11 @@ export class SPMatEntityListComponent<
   }
 
   ngAfterViewInit(): void {
-    this.buildColumns();
-    const matSort = this.sort();
-    if (matSort) {
-      this.dataSource().sort = matSort;
+    if (!this._deferViewInit()) {
+      this.buildContentColumnDefs();
+      this.buildColumns();
+      this.setupSort();
+      this.loadMoreEntities();
     }
   }
 
@@ -473,34 +477,55 @@ export class SPMatEntityListComponent<
   }
 
   /**
+   * Build the contentColumnDefs array by enumerating all of client's projected
+   * content with matColumnDef directive.
+   */
+  buildContentColumnDefs() {
+    const clientColumnDefs = this.clientColumnDefs;
+    if (clientColumnDefs) {
+      this.contentColumnDefs = clientColumnDefs.toArray();
+    }
+  }
+
+  /**
    * Build the effective columns by parsing our own <ng-container matColumnDef>
    * statements for each column in columns() property and client's
    * <ng-container matColumnDef> provided via content projection.
    */
-  private buildColumns() {
-    if (this.table()) {
+  buildColumns() {
+    const matTable = this.table();
+
+    if (matTable) {
       const columnNames = new Set();
       const columnDefs: MatColumnDef[] = [];
 
       this._columns().forEach((colDef) => {
-        const matColDef = this.viewColumnDefs().find(
-          (cd) => cd.name === colDef.name
-        );
-        const clientColDef = this.clientColumnDefs.find(
-          (cd) => cd.name === colDef.name
-        );
-        const columnDef = clientColDef ? clientColDef : matColDef;
-        if (columnDef) {
-          columnDefs.push(columnDef);
-          columnNames.add(colDef.name);
+        if (!columnNames.has(colDef.name)) {
+          const matColDef = this.viewColumnDefs().find(
+            (cd) => cd.name === colDef.name
+          );
+          const clientColDef = this.contentColumnDefs.find(
+            (cd) => cd.name === colDef.name
+          );
+          const columnDef = clientColDef ? clientColDef : matColDef;
+          if (columnDef) {
+            columnDefs.push(columnDef);
+            columnNames.add(colDef.name);
+          }
         }
       });
       columnDefs.forEach((cd) => {
-        this.table()!.addColumnDef(cd);
+        matTable.addColumnDef(cd);
       });
 
       this.displayedColumns.set(Array.from(columnNames) as string[]);
-      this.loadMoreEntities();
+    }
+  }
+
+  setupSort() {
+    const matSort = this.sort();
+    if (matSort) {
+      this.dataSource().sort = matSort;
     }
   }
 
@@ -511,7 +536,7 @@ export class SPMatEntityListComponent<
     }
   }
 
-  private loadMoreEntities() {
+  loadMoreEntities() {
     let pageParams = {};
     if (this._paginator) {
       pageParams = this._paginator.getRequestPageParams(
@@ -538,6 +563,7 @@ export class SPMatEntityListComponent<
             // TODO: defer this to a pagination provider so that we can support
             // many types of pagination. DRF itself has different schemes. And
             // express may have yet another pagination protocol.
+            this.firstLoadDone = true;
             if (this._paginator) {
               const { entities, total } = this._paginator.parseRequestResponse(
                 this.endpoint(),
