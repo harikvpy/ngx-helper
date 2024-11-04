@@ -62,13 +62,16 @@ import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
   template: `
     <as-split direction="horizontal" [gutterSize]="6">
       <as-split-area [size]="entitiesPaneWidth()">
-        <div [ngStyle]="{'display': !createEditViewActive() ? 'inherit' : 'none'}">
+        <div
+          [ngStyle]="{ display: !createEditViewActive() ? 'inherit' : 'none' }"
+        >
           <div class="action-bar">
             <div class="action-bar-title">
               {{ itemsLabel() }}
             </div>
             <span class="spacer"></span>
             <div class="action-bar-actions">
+              @if (!disableCreate()) {
               <button
                 mat-raised-button
                 color="primary"
@@ -77,6 +80,7 @@ import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
               >
                 {{ config.i18n.newItemLabel(this.itemLabel()) }}
               </button>
+              }
             </div>
           </div>
           <sp-mat-entity-list
@@ -114,7 +118,10 @@ import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
           </td>
         </ng-container>
 
-        <div [ngStyle]="{'display': createEditViewActive() ? 'inherit' : 'none'}" spHostBusyWheel="formBusyWheel">
+        <div
+          [ngStyle]="{ display: createEditViewActive() ? 'inherit' : 'none' }"
+          spHostBusyWheel="formBusyWheel"
+        >
           <sp-create-edit-entity-host
             [itemLabel]="itemLabel()"
             [itemsLabel]="itemsLabel()"
@@ -125,12 +132,12 @@ import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
       </as-split-area>
       <as-split-area [size]="previewPaneWidth()" [visible]="previewActive()">
         @if (previewActive()) {
-          <sp-entity-crud-preview-host
-            (closePreview)="closePreview()"
-            [entityCrudComponent]="this"
-            [previewTemplate]="previewTemplate()!"
-            [previewedEntity]="previewedEntity()"
-          ></sp-entity-crud-preview-host>
+        <sp-entity-crud-preview-host
+          (closePreview)="closePreview()"
+          [entityCrudComponent]="this"
+          [previewTemplate]="previewTemplate()!"
+          [previewedEntity]="previewedEntity()"
+        ></sp-entity-crud-preview-host>
         }
       </as-split-area>
     </as-split>
@@ -165,9 +172,12 @@ import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SPMatEntityCrudComponent<
-  TEntity extends { [P in IdKey]: PropertyKey },
-  IdKey extends string = 'id'
-> extends SPMatEntityListComponent<TEntity, IdKey> implements SPMatEntityCrudComponentBase, AfterViewInit {
+    TEntity extends { [P in IdKey]: PropertyKey },
+    IdKey extends string = 'id'
+  >
+  extends SPMatEntityListComponent<TEntity, IdKey>
+  implements SPMatEntityCrudComponentBase, AfterViewInit
+{
   itemLabel = input.required<string>();
   itemsLabel = input.required<string>();
   itemActions = input<SPContextMenuItem[]>([]);
@@ -182,7 +192,7 @@ export class SPMatEntityCrudComponent<
    * Event raised for user selecting an item action. It's also raised
    * for 'New <Item>' action, if 'newItemLink' property is not set.
    */
-  @Output() action = new EventEmitter<{role: string, entity?: TEntity}>();
+  @Output() action = new EventEmitter<{ role: string; entity?: TEntity }>();
 
   busyWheelId = `entityCrudBusyWheel-${Date.now()}`;
   sub$ = new Subscription();
@@ -204,12 +214,16 @@ export class SPMatEntityCrudComponent<
    * (app-create-edit-entity-demo here is the client code that implements the
    * Create/Edit form)
    */
-  createEditFormTemplate = input<TemplateRef<any>|null>(null);
+  createEditFormTemplate = input<TemplateRef<any> | null>(null);
   /**
    * Disables the per item actions column, preventing 'Edit' & 'Delete'
    * (and other user defined) item operations.
    */
   disableItemActions = input<boolean>(false);
+  /**
+   * Disables the Create function.
+   */
+  disableCreate = input<boolean>(false);
 
   // This is the internal component that will host the createEditFormTemplate
   createEditHostComponent = viewChild(FormViewHostComponent);
@@ -220,10 +234,10 @@ export class SPMatEntityCrudComponent<
   // Whether it's okay to cancel the edit
   canCancelEditCallback!: () => boolean;
 
-  previewedEntity = signal<TEntity|undefined>(undefined);
+  previewedEntity = signal<TEntity | undefined>(undefined);
   previewActive = computed(() => this.previewedEntity() !== undefined);
   previewPaneWidth = signal<number>(50);
-  entitiesPaneWidth = computed(() => 100 - this.previewPaneWidth())
+  entitiesPaneWidth = computed(() => 100 - this.previewPaneWidth());
 
   defaultItemCrudActions = signal<SPContextMenuItem[]>([]);
   columnsWithAction = computed(() => {
@@ -237,12 +251,12 @@ export class SPMatEntityCrudComponent<
       cols.push('action');
     }
     return cols;
-  })
-  _itemActions = computed(() => {
-    const ret = this.itemActions() && this.itemActions().length ? this.itemActions() : this.defaultItemCrudActions();
-    console.log(`itemActions: ${JSON.stringify(ret)}`);
-    return ret;
   });
+  _itemActions = computed(() =>
+    this.itemActions() && this.itemActions().length
+      ? this.itemActions()
+      : this.defaultItemCrudActions()
+  );
 
   constructor(
     @Optional()
@@ -252,13 +266,13 @@ export class SPMatEntityCrudComponent<
     @Inject(SP_MAT_ENTITY_LIST_CONFIG)
     private entityListConfig: SPMatEntityListConfig,
     http: HttpClient,
-    private snackBar: MatSnackBar,
+    private snackBar: MatSnackBar
   ) {
     super(http, entityListConfig);
     this.config = getConfig(crudConfig);
     this.defaultItemCrudActions.set([
-      { label: this.config.i18n.edit, role: '_update_'},
-      { label: this.config.i18n.delete, role: '_delete_'},
+      { label: this.config.i18n.edit, role: '_update_' },
+      { label: this.config.i18n.delete, role: '_delete_' },
     ]);
   }
 
@@ -284,9 +298,9 @@ export class SPMatEntityCrudComponent<
         // name has already been defined via content projection. This allows the
         // clients to override even internal columns with their column defintion.
         let contentColumnDefs = new Array<MatColumnDef>();
-        clientColumnDefs.toArray().forEach(c => contentColumnDefs.push(c));
-        this.componentColumns().forEach(ic => {
-          if (!contentColumnDefs.find(c => c.name === ic.name)) {
+        clientColumnDefs.toArray().forEach((c) => contentColumnDefs.push(c));
+        this.componentColumns().forEach((ic) => {
+          if (!contentColumnDefs.find((c) => c.name === ic.name)) {
             contentColumnDefs.push(ic);
           }
         });
@@ -317,7 +331,7 @@ export class SPMatEntityCrudComponent<
   }
 
   create(entityValue: any) {
-    let obs!: Observable<TEntity|null>;
+    let obs!: Observable<TEntity | null>;
     const crudOpFn = this.crudOpFn();
     if (crudOpFn) {
       obs = crudOpFn('create', entityValue, this);
@@ -327,7 +341,7 @@ export class SPMatEntityCrudComponent<
 
     return obs.pipe(
       showBusyWheelUntilComplete('formBusyWheel'),
-      tap(entity => {
+      tap((entity) => {
         // If pagination is infinite or if the pagination if none or if the
         // count of items in the current page is less than pageSize()
         // wec an safely add the item to the list, which will cause the view
@@ -335,35 +349,44 @@ export class SPMatEntityCrudComponent<
         if (entity) {
           this.spEntitiesList()?.addEntity(entity);
           this.snackBar.open(
-            this.config.i18nTranslate!(this.config.i18n.createdItemNotification, {item: this.itemLabel()})
+            this.config.i18nTranslate!(
+              this.config.i18n.createdItemNotification,
+              { item: this.itemLabel() }
+            )
           );
         }
-      }),
+      })
     );
   }
 
   update(id: TEntity[IdKey], entityValue: any) {
-    let obs!: Observable<TEntity|null>;
+    let obs!: Observable<TEntity | null>;
     const crudOpFn = this.crudOpFn();
     if (crudOpFn) {
       obs = crudOpFn('update', entityValue, this);
     } else {
-      obs = this.http.patch<TEntity>(this.getEntityUrl(this.endpoint(), id), entityValue);
+      obs = this.http.patch<TEntity>(
+        this.getEntityUrl(this.endpoint(), id),
+        entityValue
+      );
     }
 
     return obs.pipe(
       showBusyWheelUntilComplete('formBusyWheel'),
-      tap(entity => {
+      tap((entity) => {
         if (entity) {
           this.spEntitiesList()?.updateEntity(id, entity);
           if (this.config.i18nTranslate) {
             this.snackBar.open(
-              this.config.i18nTranslate(this.config.i18n.updatedItemNotification, {item: this.itemLabel()})
+              this.config.i18nTranslate(
+                this.config.i18n.updatedItemNotification,
+                { item: this.itemLabel() }
+              )
             );
           }
         }
-      }),
-    )
+      })
+    );
   }
 
   closePreview() {
@@ -378,7 +401,7 @@ export class SPMatEntityCrudComponent<
     } else if (role === '_delete_') {
       this.onDelete(entity);
     } else {
-      this.action.emit({role, entity});
+      this.action.emit({ role, entity });
     }
   }
 
@@ -396,7 +419,7 @@ export class SPMatEntityCrudComponent<
         this.createEditViewActive.set(true);
       }
       if (!this.createEditViewActive()) {
-        this.action.emit({role: '_new_'});
+        this.action.emit({ role: '_new_' });
       }
     }
     // fall through to let routerLink act
@@ -410,7 +433,7 @@ export class SPMatEntityCrudComponent<
       this.createEditViewActive.set(true);
     }
     if (!this.createEditViewActive()) {
-      this.action.emit({role: '_update_'});
+      this.action.emit({ role: '_update_' });
     }
   }
 
@@ -418,7 +441,10 @@ export class SPMatEntityCrudComponent<
     // Do the delete prompt asynchronously so that the context menu is
     // dismissed before the prompt is displayed.
     setTimeout(() => {
-      const deletedItemPrompt = this.config?.i18nTranslate!(this.config.i18n.deleteItemMessage, {item: this.itemLabel()});
+      const deletedItemPrompt = this.config?.i18nTranslate!(
+        this.config.i18n.deleteItemMessage,
+        { item: this.itemLabel() }
+      );
       const yes = confirm(deletedItemPrompt);
       if (yes) {
         const entityId = (entity as any)[this.idKey()];
@@ -428,7 +454,9 @@ export class SPMatEntityCrudComponent<
         if (crudOpFn) {
           obs = crudOpFn('delete', entity, this);
         } else {
-          obs = this.http.delete<void>(this.getEntityUrl(this.endpoint(), entityId));
+          obs = this.http.delete<void>(
+            this.getEntityUrl(this.endpoint(), entityId)
+          );
         }
 
         this.sub$.add(
@@ -453,11 +481,15 @@ export class SPMatEntityCrudComponent<
   }
 
   override getUrl(endpoint: string) {
-    return this.entityListConfig?.urlResolver ? this.entityListConfig?.urlResolver(endpoint) : endpoint;
+    return this.entityListConfig?.urlResolver
+      ? this.entityListConfig?.urlResolver(endpoint)
+      : endpoint;
   }
 
   getEntityUrl(endpoint: string, entityId: TEntity[IdKey]) {
-    const entitEndpoint = (endpoint.endsWith('/') ? endpoint : endpoint+ '/') +`${String(entityId)}/`;
+    const entitEndpoint =
+      (endpoint.endsWith('/') ? endpoint : endpoint + '/') +
+      `${String(entityId)}/`;
     return this.getUrl(entitEndpoint);
   }
 

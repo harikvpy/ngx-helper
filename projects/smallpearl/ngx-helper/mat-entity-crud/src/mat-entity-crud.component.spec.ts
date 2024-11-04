@@ -9,20 +9,19 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
+import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, provideRouter } from '@angular/router';
+import { SPContextMenuItem } from '@smallpearl/ngx-helper/mat-context-menu';
 import {
   SPMatEntityListColumn,
   SPMatEntityListComponent,
   SPMatEntityListPaginator,
 } from '@smallpearl/ngx-helper/mat-entity-list';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
 import { SPMatEntityCrudComponent } from './mat-entity-crud.component';
 import { SPMatEntityCrudPreviewPaneComponent } from './preview-pane.component';
-import { By } from '@angular/platform-browser';
-import { FormViewHostComponent } from './form-view-host.component';
-import { SPContextMenuItem } from '@smallpearl/ngx-helper/mat-context-menu';
 
 interface User {
   name: { title: string; first: string; last: string };
@@ -394,6 +393,19 @@ describe('SPMatEntityCrudComponent', () => {
     // columns should equal number columns as set in [columns] property value
     expect(columns.length).toEqual(USER_COLUMNS.length);
   });
+
+  it('should not display "New Item" button disableCreate = true', async () => {
+    // await createCrudComponent();
+    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableCreate', true);
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    fixture.autoDetectChanges();
+    const matButton = fixture.debugElement.query(By.directive(MatButton))
+    expect(matButton).toBeFalsy();
+  });
+
 });
 
 describe('SPMatEntityCrudComponent client configurable behavior', () => {
