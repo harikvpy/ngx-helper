@@ -1,23 +1,39 @@
 import { CommonModule } from '@angular/common';
-import { Component, ComponentRef, OnInit, signal, viewChild } from '@angular/core';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { Component, ComponentRef, computed, input, OnInit, signal, viewChild } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButton, MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import {
   SPMatEntityListColumn,
   SPMatEntityListComponent,
   SPMatEntityListPaginator,
 } from '@smallpearl/ngx-helper/mat-entity-list';
+import { Observable, of } from 'rxjs';
+import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
 import { SPMatEntityCrudComponent } from './mat-entity-crud.component';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { HttpClient, provideHttpClient } from '@angular/common/http';
-import { of } from 'rxjs';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { SPMatEntityCrudPreviewPaneComponent } from './preview-pane.component';
+import { By } from '@angular/platform-browser';
+import { FormViewHostComponent } from './form-view-host.component';
+import { SPContextMenuItem } from '@smallpearl/ngx-helper/mat-context-menu';
 
 interface User {
   name: { title: string; first: string; last: string };
   gender: string;
   cell: string;
+}
+
+const MOCK_USER: User = {
+  name: { title: '', first: '', last: '' },
+  gender: '',
+  cell: ''
 }
 
 const USER_DATA: User[] = [
@@ -73,8 +89,120 @@ const USER_DATA: User[] = [
   },
 ];
 
+const USER_COLUMNS: SPMatEntityListColumn<User, 'cell'>[] = [
+  {
+    name: 'name',
+    valueFn: (user: User) => user.name.first + ' ' + user.name.last,
+  },
+  { name: 'gender' },
+  { name: 'cell' },
+  { name: 'action', label: 'ACTION' },
+];
+
 type UserEntityCrudComponent = SPMatEntityCrudComponent<User, 'cell'>;
-type UserEntityListComponent = SPMatEntityListComponent<User, 'cell'>;
+
+
+@Component({
+  standalone: true,
+  imports: [ReactiveFormsModule, FormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule],
+  selector: 'create-edit-user-demo',
+  template: `
+    <form
+      [formGroup]="form"
+      (ngSubmit)="onNgSubmit()"
+      class="d-flex flex-column align-items-start"
+      errorTailor
+    >
+      <div class="d-flex flex-row gap-1">
+        <mat-form-field>
+          <mat-label>Firstname</mat-label>
+          <input matInput formControlName="first" />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Lastname</mat-label>
+          <input matInput formControlName="last" />
+        </mat-form-field>
+      </div>
+      <mat-form-field>
+        <mat-label>Gender</mat-label>
+        <mat-select formControlName="gender" >
+          <mat-option value="male">Male</mat-option>
+          <mat-option value="female">Female</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Cell</mat-label>
+        <input matInput formControlName="cell" />
+      </mat-form-field>
+
+      <div class="mt-2 d-flex gap-2">
+        <button type="button" color="secondary" mat-raised-button (click)="form.reset()">Reset</button>
+        <button
+          type="submit"
+          color="primary"
+          mat-raised-button
+          [disabled]="form.invalid"
+        >
+          Save
+        </button>
+      </div>
+    </form>
+  `
+})
+export class CreateEditUserComponent implements OnInit {
+  form!: FormGroup<{
+    first: FormControl<string>,
+    last: FormControl<string>,
+    gender: FormControl<string>,
+    cell: FormControl<string>,
+  }>;
+  bridge = input<SPMatEntityCrudCreateEditBridge>();
+  entity = input<User>();
+  creating = computed(() => !this.entity()|| !this.entity()?.cell)
+
+  canCancelEdit = () => {
+    return this._canCancelEdit();
+  }
+
+  _canCancelEdit() {
+    if (this.form.touched) {
+      return window.confirm('Lose Changes?');
+    }
+    return true;
+  }
+
+  constructor() {}
+
+  ngOnInit(): void {
+    this.form = this.createForm(this.entity())
+    this.bridge()?.registerCanCancelEditCallback(this.canCancelEdit);
+  }
+
+  createForm(entity?: User) {
+    return new FormGroup({
+      first: new FormControl(entity ? entity.name.first : '', {
+        nonNullable: true,
+        validators: Validators.required,
+      }),
+      last: new FormControl(entity ? entity.name.last : '', {
+        nonNullable: true,
+        validators: Validators.required,
+      }),
+      gender: new FormControl(entity ? entity.gender : '', {
+        nonNullable: true,
+        validators: Validators.required,
+      }),
+      cell: new FormControl(entity ? entity.cell : '', {
+        nonNullable: true,
+        validators: Validators.required,
+      }),
+    });
+  }
+
+  onNgSubmit() {
+
+  }
+}
 
 /**
  * A client component that we'll host the SPMatEntityCrudComponent. We can use
@@ -82,16 +210,27 @@ type UserEntityListComponent = SPMatEntityListComponent<User, 'cell'>;
  */
 @Component({
   standalone: true,
-  imports: [CommonModule, MatTableModule, SPMatEntityCrudComponent],
+  imports: [
+    CommonModule,
+    MatTableModule,
+    SPMatEntityCrudComponent,
+    CreateEditUserComponent,
+    SPMatEntityCrudPreviewPaneComponent,
+  ],
   template: `
     <div>
       <sp-mat-entity-crud
+        itemLabel="User"
+        itemsLabel="Users"
         [endpoint]="endpoint"
-        [columns]="spEntityListColumns"
+        [columns]="columns"
+        [itemActions]="itemActions"
         idKey="cell"
+        [createEditFormTemplate]="createEdit"
+        [previewTemplate]="userPreview"
       >
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <th mat-header-cell *matHeaderCellDef>FULL NAME</th>
           <td mat-cell *matCellDef="let element">
             {{ element.name.title }}. {{ element.name.first }}
             {{ element.name.last }}
@@ -99,18 +238,30 @@ type UserEntityListComponent = SPMatEntityListComponent<User, 'cell'>;
         </ng-container>
       </sp-mat-entity-crud>
     </div>
+
+    <ng-template #createEdit let-data>
+      <create-edit-user-demo [bridge]="data.bridge" [entity]="data.entity"></create-edit-user-demo>
+    </ng-template>
+
+    <ng-template #userPreview let-data>
+      <sp-mat-entity-crud-preview-pane
+        [title]="data.entity.name.first + ' ' + data.entity.name.last"
+        [entityCrudComponent]="spEntityCrudComponent()!"
+      >
+        <div previewContent>
+          <h1>{{ data.entity.name.first }} {{ data.entity.name.last }}</h1>
+        </div>
+      </sp-mat-entity-crud-preview-pane>
+    </ng-template>
   `,
 })
 class SPMatEntityCrudTestComponent implements OnInit {
   displayedColumns = signal<string[]>([]);
   endpoint = 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb';
-  columns: SPMatEntityListColumn<User, 'cell'>[] = [
-    {
-      name: 'name',
-      valueFn: (user: User) => user.name.first + ' ' + user.name.last,
-    },
-    { name: 'gender' },
-    { name: 'cell' },
+  columns = USER_COLUMNS;
+  itemActions: SPContextMenuItem[] = [
+    { label: 'Edit', role: '_update_', },
+    { label: 'Delete', role: '_delete_', disable: (user: User) => user.cell.startsWith('(') }
   ];
 
   spEntityCrudComponent = viewChild(SPMatEntityCrudComponent<User, 'cell'>);
@@ -162,36 +313,7 @@ describe('SPMatEntityCrudComponent', () => {
     component = (testComponent.spEntityCrudComponent as any) as UserEntityCrudComponent;
   }
 
-  const createComponent = async () => {
-    TestBed.configureTestingModule({
-      imports: [NoopAnimationsModule, SPMatEntityListComponent, SPMatEntityCrudTestComponent],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        provideRouter([]),
-        {
-          provide: ActivatedRoute,
-          useValue: {
-            snapshot: {params: {id: 100}}
-          }
-        }
-      ],
-    });
-    fixture = TestBed.createComponent(SPMatEntityCrudComponent<User, 'cell'>);
-    component = fixture.componentInstance;
-    componentRef = fixture.componentRef;
-    componentRef.setInput('columns', [
-      { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
-      { name: 'gender' },
-      { name: 'cell' },
-    ]);
-    componentRef.setInput('endpoint', 'https://abc.efg.com');
-    const http = TestBed.inject(HttpClient);
-    spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    fixture.autoDetectChanges();
-  }
-
-  beforeEach(async () => {
+  async function createCrudComponent() {
     TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, SPMatEntityListComponent, SPMatEntityCrudTestComponent],
       providers: [
@@ -215,9 +337,14 @@ describe('SPMatEntityCrudComponent', () => {
       { name: 'gender' },
       { name: 'cell' },
     ]);
-  });
+  };
+
+  beforeEach(async () => {
+    await createCrudComponent();
+  })
 
   it("should create", async () => {
+    // await createCrudComponent();
     componentRef.setInput('columns', [
       { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
       'gender', 'cell'
@@ -233,6 +360,100 @@ describe('SPMatEntityCrudComponent', () => {
     expect(rows.length).toEqual(USER_DATA.length+1);
     const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
+  });
+
+  it('should accept hybrid column definitions', async () => {
+    // await createCrudComponent();
+    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    componentRef.setInput('idKey', 'cell');
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    fixture.autoDetectChanges();
+    expect(component).toBeTruthy();
+    const rows = fixture.debugElement.nativeElement.querySelectorAll('tr');
+    // +1 for the <tr> in <thead>
+    expect(rows.length).toEqual(USER_DATA.length+1);
+    const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
+    expect(paginator).toBeFalsy();
+  });
+
+});
+
+describe('SPMatEntityCrudComponent client configurable behavior', () => {
+  let testComponent!: SPMatEntityCrudTestComponent;
+  let testComponentFixture!: ComponentFixture<SPMatEntityCrudTestComponent>;
+  let testComponentRef!: ComponentRef<SPMatEntityCrudTestComponent>;
+  let fixture!: ComponentFixture<UserEntityCrudComponent>;
+  let component!: UserEntityCrudComponent;
+  let componentRef!: ComponentRef<UserEntityCrudComponent>;
+
+  beforeEach(async () => {
+    TestBed.configureTestingModule({
+      imports: [NoopAnimationsModule, SPMatEntityCrudTestComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {params: {id: '100'}}
+          }
+        }
+      ],
+    });
+    testComponentFixture = TestBed.createComponent(SPMatEntityCrudTestComponent);
+    testComponent = testComponentFixture.componentInstance;
+    testComponentRef = testComponentFixture.componentRef;
+    component = testComponent.spEntityCrudComponent()!;
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    testComponentFixture.autoDetectChanges()
+  });
+
+  it('should take matColumnDef from projected content', async () => {
+    const rows = testComponentFixture.debugElement.nativeElement.querySelectorAll('tr');
+    // +1 for the <tr> in <thead>
+    expect(rows.length).toEqual(USER_DATA.length+1);
+    const paginator = testComponentFixture.debugElement.nativeElement.querySelector('mat-paginator');
+    expect(paginator).toBeFalsy();
+
+    const theadRows: Element[] = testComponentFixture.debugElement.nativeElement.querySelectorAll('thead tr th');
+    expect(theadRows.length).toEqual(USER_COLUMNS.length);
+    const nameRow = theadRows[0];
+    // Column title set from content project <ng-container matColumnDef..>
+    expect(nameRow.textContent).toEqual('FULL NAME');
+  });
+
+  it('should show preview pane when a row is clicked', async () => {
+    expect(component).toBeTruthy();
+    const rows: HTMLElement[] = testComponentFixture.debugElement.nativeElement.querySelectorAll('tbody tr');
+    expect(rows.length).toEqual(USER_DATA.length);
+    rows[0].click();  // click the first row
+    testComponentFixture.detectChanges();
+    await new Promise(res => setTimeout(res, 100));
+    const previewPane = testComponentFixture.debugElement.nativeElement.querySelector('sp-mat-entity-crud-preview-pane');
+    expect(previewPane).toBeTruthy();
+    // preview Pane should have the full name of the clicked user
+    const h1 = previewPane.querySelector('h1');
+    expect(h1).toBeTruthy();
+    expect(h1.textContent).toEqual(USER_DATA[0].name.first + ' ' + USER_DATA[0].name.last);
+  });
+
+  it('should show the create form when New button is selected', async () => {
+    const matButton = testComponentFixture.debugElement.query(By.directive(MatButton))
+    matButton.nativeElement.click();
+    testComponentFixture.detectChanges();
+    const createEditHost = testComponentFixture.debugElement.query(By.directive(CreateEditUserComponent));
+    expect(createEditHost).toBeTruthy();
+  });
+
+  it('should show the edit form when Edit context menu item is selected', async () => {
+    let editFormComponent = testComponentFixture.debugElement.query(By.directive(CreateEditUserComponent));
+    expect(editFormComponent).toBeFalsy();
+    // simulate item action by calling the mat-context-menu method directly
+    component.onItemAction('_update_', USER_DATA[0]);
+    editFormComponent = testComponentFixture.debugElement.query(By.directive(CreateEditUserComponent));
+    expect(editFormComponent).toBeTruthy();
   });
 
 });
