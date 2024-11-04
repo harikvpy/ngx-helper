@@ -7,13 +7,27 @@ import { MatTableModule } from '@angular/material/table';
 import { ActivatedRoute, Router } from "@angular/router";
 import { getEntitiesIds } from '@ngneat/elf-entities';
 import { SPContextMenuItem } from '@smallpearl/ngx-helper/mat-context-menu';
-import { SPMatEntityCrudComponent } from '@smallpearl/ngx-helper/mat-entity-crud';
+import { SP_MAT_ENTITY_CRUD_CONFIG, SPMatEntityCrudComponent, SPMatEntityCrudConfig } from '@smallpearl/ngx-helper/mat-entity-crud';
 import { SPMatEntityListColumn } from '@smallpearl/ngx-helper/mat-entity-list';
 import { of } from 'rxjs';
 import { SPMatEntityCrudPreviewPaneComponent } from "../../../projects/smallpearl/ngx-helper/mat-entity-crud/src/preview-pane.component";
 import { MyPaginator } from '../entity-list-demo/paginater';
 import { User } from '../entity-list-demo/user';
 import { CreateEditEntityDemoComponent } from "./create-edit-entity-demo.component";
+
+const EntityCrudConfig: SPMatEntityCrudConfig = {
+  i18n: {
+    newItemLabel: (itemLabel: string) => 'New USER',
+    editItemLabel: (itemLabel: string) => 'Edit USER',
+    edit: 'Update',
+    delete: 'Remove',
+    deleteItemHeader: 'Delete User?',
+    deleteItemMessage: 'Are you sure you want to delete this user?',
+    itemDeletedNotification: 'User deleted.',
+    createdItemNotification: 'User created.',
+    updatedItemNotification: 'User updated'
+  }
+}
 
 @Component({
   standalone: true,
@@ -26,7 +40,10 @@ import { CreateEditEntityDemoComponent } from "./create-edit-entity-demo.compone
     SPMatEntityCrudComponent,
     CreateEditEntityDemoComponent,
     SPMatEntityCrudPreviewPaneComponent
-],
+  ],
+  providers: [
+    { provide: SP_MAT_ENTITY_CRUD_CONFIG, useValue: EntityCrudConfig }
+  ],
   selector: 'app-entity-crud-demo',
   template: `
   <div style="width: 100%; height: 100%;">
@@ -108,7 +125,7 @@ export class EntityCrudDemoComponent implements OnInit {
     { name: 'name', label: 'NAME', valueFn: (user: User) => user.name.first },
     { name: 'gender', label: 'GENDER' },
     { name: 'cell', label: 'CELL' },
-    { name: 'action', label: 'ACTION' },
+    // { name: 'action', label: 'ACTION' },
   ];
   itemActions: SPContextMenuItem[] = [
     { label: 'Edit', role: '_update_', },

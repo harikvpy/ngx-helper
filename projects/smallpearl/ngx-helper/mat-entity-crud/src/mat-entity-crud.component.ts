@@ -29,6 +29,7 @@ import {
 } from '@smallpearl/ngx-helper/mat-context-menu';
 import {
   SP_MAT_ENTITY_LIST_CONFIG,
+  SPMatEntityListColumn,
   SPMatEntityListComponent,
   SPMatEntityListConfig,
 } from '@smallpearl/ngx-helper/mat-entity-list';
@@ -82,7 +83,7 @@ import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
             [_deferViewInit]="true"
             [endpoint]="endpoint()"
             [entityLoaderFn]="entityLoaderFn()"
-            [columns]="columns()"
+            [columns]="columnsWithAction()"
             [idKey]="idKey()"
             [pagination]="pagination()"
             [paginator]="paginator()"
@@ -103,9 +104,9 @@ import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
         <ng-container matColumnDef="action">
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let element">
-            @if (itemActions().length) {
+            @if (_itemActions().length) {
             <sp-mat-context-menu
-              [menuItems]="itemActions()"
+              [menuItems]="_itemActions()"
               (selected)="onItemAction($event, element)"
               [contextData]="element"
             ></sp-mat-context-menu>
@@ -204,6 +205,11 @@ export class SPMatEntityCrudComponent<
    * Create/Edit form)
    */
   createEditFormTemplate = input<TemplateRef<any>|null>(null);
+  /**
+   * Disables the per item actions column, preventing 'Edit' & 'Delete'
+   * (and other user defined) item operations.
+   */
+  disableItemActions = input<boolean>(false);
 
   // This is the internal component that will host the createEditFormTemplate
   createEditHostComponent = viewChild(FormViewHostComponent);
@@ -219,6 +225,25 @@ export class SPMatEntityCrudComponent<
   previewPaneWidth = signal<number>(50);
   entitiesPaneWidth = computed(() => 100 - this.previewPaneWidth())
 
+  defaultItemCrudActions = signal<SPContextMenuItem[]>([]);
+  columnsWithAction = computed(() => {
+    const cols: Array<SPMatEntityListColumn<TEntity, IdKey> | string> =
+      JSON.parse(JSON.stringify(this.columns()));
+    const actionDefined =
+      cols.find((c) =>
+        typeof c === 'string' ? c === 'action' : c.name === 'action'
+      ) !== undefined;
+    if (!actionDefined && !this.disableItemActions()) {
+      cols.push('action');
+    }
+    return cols;
+  })
+  _itemActions = computed(() => {
+    const ret = this.itemActions() && this.itemActions().length ? this.itemActions() : this.defaultItemCrudActions();
+    console.log(`itemActions: ${JSON.stringify(ret)}`);
+    return ret;
+  });
+
   constructor(
     @Optional()
     @Inject(SP_MAT_ENTITY_CRUD_CONFIG)
@@ -231,6 +256,10 @@ export class SPMatEntityCrudComponent<
   ) {
     super(http, entityListConfig);
     this.config = getConfig(crudConfig);
+    this.defaultItemCrudActions.set([
+      { label: this.config.i18n.edit, role: '_update_'},
+      { label: this.config.i18n.delete, role: '_delete_'},
+    ]);
   }
 
   override ngOnInit() {}

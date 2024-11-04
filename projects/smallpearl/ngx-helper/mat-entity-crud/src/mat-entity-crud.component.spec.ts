@@ -96,7 +96,7 @@ const USER_COLUMNS: SPMatEntityListColumn<User, 'cell'>[] = [
   },
   { name: 'gender' },
   { name: 'cell' },
-  { name: 'action', label: 'ACTION' },
+  // { name: 'action', label: 'ACTION' },
 ];
 
 type UserEntityCrudComponent = SPMatEntityCrudComponent<User, 'cell'>;
@@ -332,11 +332,7 @@ describe('SPMatEntityCrudComponent', () => {
     componentRef = fixture.componentRef;
     componentRef.setInput('itemLabel', 'User');
     componentRef.setInput('itemsLabel', 'Users');
-    componentRef.setInput('columns', [
-      { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
-      { name: 'gender' },
-      { name: 'cell' },
-    ]);
+    componentRef.setInput('columns', USER_COLUMNS);
   };
 
   beforeEach(async () => {
@@ -355,11 +351,14 @@ describe('SPMatEntityCrudComponent', () => {
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
     fixture.autoDetectChanges();
     expect(component).toBeTruthy();
-    const rows = fixture.debugElement.nativeElement.querySelectorAll('tr');
+    const rows = fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
     // +1 for the <tr> in <thead>
-    expect(rows.length).toEqual(USER_DATA.length+1);
+    expect(rows.length).toEqual(USER_DATA.length);
     const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
+    const columns = rows[0].querySelectorAll('td');
+    // +1 for action column
+    expect(columns.length).toEqual(USER_COLUMNS.length + 1);
   });
 
   it('should accept hybrid column definitions', async () => {
@@ -377,6 +376,24 @@ describe('SPMatEntityCrudComponent', () => {
     expect(paginator).toBeFalsy();
   });
 
+  it('should not display action column if disableItemActions = true', async () => {
+    // await createCrudComponent();
+    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableItemActions', true);
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    fixture.autoDetectChanges();
+    expect(component).toBeTruthy();
+    const rows = fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
+    // +1 for the <tr> in <thead>
+    expect(rows.length).toEqual(USER_DATA.length);
+    const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
+    expect(paginator).toBeFalsy();
+    const columns = rows[0].querySelectorAll('td');
+    // columns should equal number columns as set in [columns] property value
+    expect(columns.length).toEqual(USER_COLUMNS.length);
+  });
 });
 
 describe('SPMatEntityCrudComponent client configurable behavior', () => {
@@ -416,9 +433,9 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     expect(rows.length).toEqual(USER_DATA.length+1);
     const paginator = testComponentFixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
-
     const theadRows: Element[] = testComponentFixture.debugElement.nativeElement.querySelectorAll('thead tr th');
-    expect(theadRows.length).toEqual(USER_COLUMNS.length);
+    // +1 for 'action' column
+    expect(theadRows.length).toEqual(USER_COLUMNS.length + 1);
     const nameRow = theadRows[0];
     // Column title set from content project <ng-container matColumnDef..>
     expect(nameRow.textContent).toEqual('FULL NAME');
