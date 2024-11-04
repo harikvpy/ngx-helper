@@ -325,16 +325,19 @@ export class SPMatEntityListComponent<
     // Also, this effect handler will be invoked for the initial 'undefined'
     // during which we shouldn't emit the selectEntity event. Therefore we
     // keep another state variable to filter out this state.
-    setTimeout(() => {
-      if (this._prevActiveEntity && !activeEntity) {
+    if (activeEntity || this._prevActiveEntity) {
+      setTimeout(() => {
+        this._prevActiveEntity = activeEntity;
         this.selectEntity.emit(activeEntity);
-      } else if (activeEntity) {
-        this.selectEntity.emit(activeEntity);
-      }
-      this._prevActiveEntity = activeEntity;
-    });
+        // if (this._prevActiveEntity && !activeEntity) {
+        //   this.selectEntity.emit(activeEntity);
+        // } else if (activeEntity) {
+        //   this.selectEntity.emit(activeEntity);
+        // }
+      });
+    }
   });
-  @Output() selectEntity = new EventEmitter<TEntity>();
+  @Output() selectEntity = new EventEmitter<TEntity|undefined>();
 
   constructor(
     protected http: HttpClient,
