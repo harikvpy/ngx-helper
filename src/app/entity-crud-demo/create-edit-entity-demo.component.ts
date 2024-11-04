@@ -24,10 +24,6 @@ import { MOCK_USER, User } from '../entity-list-demo/user';
   ],
   selector: 'app-create-edit-entity-demo',
   template: `
-    <ng-template let-error let-text="text" #tpl>
-      <mat-error>{{ text }}</mat-error>
-    </ng-template>
-
   @if (init$|async) {
     <form
       [formGroup]="form"
