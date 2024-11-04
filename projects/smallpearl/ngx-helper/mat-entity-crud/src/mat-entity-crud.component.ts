@@ -270,10 +270,14 @@ export class SPMatEntityCrudComponent<
   ) {
     super(http, entityListConfig);
     this.config = getConfig(crudConfig);
-    this.defaultItemCrudActions.set([
-      { label: this.config.i18n.edit, role: '_update_' },
-      { label: this.config.i18n.delete, role: '_delete_' },
-    ]);
+    if (this.config?.defaultItemActions) {
+      this.defaultItemCrudActions.set(this.config?.defaultItemActions);
+    } else {
+      this.defaultItemCrudActions.set([
+        { label: this.config.i18n.edit, role: '_update_' },
+        { label: this.config.i18n.delete, role: '_delete_' },
+      ]);
+    }
   }
 
   override ngOnInit() {}

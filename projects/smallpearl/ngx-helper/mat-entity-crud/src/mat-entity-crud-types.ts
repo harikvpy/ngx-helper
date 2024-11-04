@@ -1,3 +1,4 @@
+import { SPContextMenuItem } from "@smallpearl/ngx-helper/mat-context-menu";
 import { Observable } from "rxjs";
 
 /**
@@ -16,6 +17,7 @@ export interface SPMatEntityCrudConfig {
     updatedItemNotification: string;
   }
   i18nTranslate?: (label: string, context?: any) => string;
+  defaultItemActions?: SPContextMenuItem[];
 }
 
 /**
