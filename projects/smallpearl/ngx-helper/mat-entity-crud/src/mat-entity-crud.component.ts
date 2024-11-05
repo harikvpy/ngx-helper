@@ -15,14 +15,17 @@ import {
   signal,
   TemplateRef,
   viewChild,
-  viewChildren
+  viewChildren,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatSortModule } from '@angular/material/sort';
 import { MatColumnDef, MatTableModule } from '@angular/material/table';
 import { RouterModule } from '@angular/router';
-import { showBusyWheelUntilComplete, SPBusyWheelModule } from '@smallpearl/ngx-helper/mat-busy-wheel';
+import {
+  showBusyWheelUntilComplete,
+  SPBusyWheelModule,
+} from '@smallpearl/ngx-helper/mat-busy-wheel';
 import {
   SPContextMenuItem,
   SPMatContextMenuComponent,
@@ -353,10 +356,7 @@ export class SPMatEntityCrudComponent<
         if (entity) {
           this.spEntitiesList()?.addEntity(entity);
           this.snackBar.open(
-            this.config.i18nTranslate!(
-              this.config.i18n.createdItemNotification,
-              { item: this.itemLabel() }
-            )
+            this.config.i18n.createdItemNotification(this.itemLabel())
           );
         }
       })
@@ -380,14 +380,9 @@ export class SPMatEntityCrudComponent<
       tap((entity) => {
         if (entity) {
           this.spEntitiesList()?.updateEntity(id, entity);
-          if (this.config.i18nTranslate) {
-            this.snackBar.open(
-              this.config.i18nTranslate(
-                this.config.i18n.updatedItemNotification,
-                { item: this.itemLabel() }
-              )
-            );
-          }
+          this.snackBar.open(
+            this.config.i18n.updatedItemNotification(this.itemLabel())
+          );
         }
       })
     );
@@ -445,9 +440,8 @@ export class SPMatEntityCrudComponent<
     // Do the delete prompt asynchronously so that the context menu is
     // dismissed before the prompt is displayed.
     setTimeout(() => {
-      const deletedItemPrompt = this.config?.i18nTranslate!(
-        this.config.i18n.deleteItemMessage,
-        { item: this.itemLabel() }
+      const deletedItemPrompt = this.config.i18n.deleteItemMessage(
+        this.itemLabel()
       );
       const yes = confirm(deletedItemPrompt);
       if (yes) {
@@ -471,9 +465,8 @@ export class SPMatEntityCrudComponent<
               tap(() => {
                 this.spEntitiesList()!.removeEntity(entityId);
                 // TODO: customize by providing an interface via SPMatEntityCrudConfig?
-                const deletedMessage = this.config.i18nTranslate!(
-                  this.config.i18n.itemDeletedNotification,
-                  { item: this.itemLabel() }
+                const deletedMessage = this.config.i18n.itemDeletedNotification(
+                  this.itemLabel()
                 );
                 this.snackBar.open(deletedMessage);
               })

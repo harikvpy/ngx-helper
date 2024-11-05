@@ -6,11 +6,11 @@ export const DefaultSPMatEntityCrudConfig: SPMatEntityCrudConfig = {
     editItemLabel: (itemLabel: string) => `Edit ${itemLabel}`,
     edit: 'Edit',
     delete: 'Delete',
-    deleteItemHeader: 'Confirm Delete {{ item }}',
-    deleteItemMessage: 'Are you sure you want to delete this {{ item }}',
-    itemDeletedNotification: '{{ item }} deleted.',
-    createdItemNotification: '{{ item }} created.',
-    updatedItemNotification: '{{ item }} saved.'
+    deleteItemHeader: (itemLabel: string) => `Confirm Delete ${itemLabel}`,
+    deleteItemMessage: (itemLabel: string) => `Are you sure you want to delete this ${itemLabel}`,
+    itemDeletedNotification: (itemLabel: string) => `${itemLabel} deleted`,
+    createdItemNotification: (itemLabel: string) => `${itemLabel} created.`,
+    updatedItemNotification: (itemLabel: string) => `${ itemLabel } saved.`
   },
   i18nTranslate: (label: string, context?: any) => {
     let XlatedString = label;

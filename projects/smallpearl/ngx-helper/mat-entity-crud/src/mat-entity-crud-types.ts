@@ -10,11 +10,11 @@ export interface SPMatEntityCrudConfig {
     editItemLabel: (itemLabel: string) => string;
     edit: string;
     delete: string;
-    deleteItemHeader: string;
-    deleteItemMessage: string;
-    itemDeletedNotification: string;
-    createdItemNotification: string;
-    updatedItemNotification: string;
+    deleteItemHeader: (itemLabel: string) => string;
+    deleteItemMessage: (itemLabel: string) => string;
+    itemDeletedNotification: (itemLabel: string) => string;
+    createdItemNotification: (itemLabel: string) => string;
+    updatedItemNotification: (itemLabel: string) => string;
   }
   i18nTranslate?: (label: string, context?: any) => string;
   defaultItemActions?: SPContextMenuItem[];

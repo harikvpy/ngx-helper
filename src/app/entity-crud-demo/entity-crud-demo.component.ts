@@ -21,11 +21,11 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
     editItemLabel: (itemLabel: string) => 'Edit USER',
     edit: 'Update',
     delete: 'Remove',
-    deleteItemHeader: 'Delete User?',
-    deleteItemMessage: 'Are you sure you want to delete this user?',
-    itemDeletedNotification: 'User deleted.',
-    createdItemNotification: 'User created.',
-    updatedItemNotification: 'User updated'
+    deleteItemHeader: (itemLabel: string) => `Delete ${itemLabel}?`,
+    deleteItemMessage: (itemLabel: string) => `Are you sure you want to delete this ${itemLabel.toLocaleLowerCase()}?`,
+    itemDeletedNotification: (itemLabel: string) => `${itemLabel} deleted.`,
+    createdItemNotification: (itemLabel: string) => `${itemLabel} created.`,
+    updatedItemNotification: (itemLabel: string) => `${itemLabel} updated.`,
   }
 }
 
@@ -56,7 +56,6 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
       [paginator]="paginator"
       itemLabel="User"
       itemsLabel="Users"
-      [itemActions]="itemActions"
       (action)="onItemAction($event)"
       [createEditFormTemplate]="createEdit"
       [crudOpFn]="crudOpFn"
