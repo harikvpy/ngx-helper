@@ -22,6 +22,7 @@ import { of } from 'rxjs';
 import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
 import { SPMatEntityCrudComponent } from './mat-entity-crud.component';
 import { SPMatEntityCrudPreviewPaneComponent } from './preview-pane.component';
+import { getEntitiesCount } from '@ngneat/elf-entities';
 
 interface User {
   name: { title: string; first: string; last: string };
@@ -103,7 +104,15 @@ type UserEntityCrudComponent = SPMatEntityCrudComponent<User, 'cell'>;
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, FormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatSelectModule,
+  ],
   selector: 'create-edit-user-demo',
   template: `
     <form
@@ -124,7 +133,7 @@ type UserEntityCrudComponent = SPMatEntityCrudComponent<User, 'cell'>;
       </div>
       <mat-form-field>
         <mat-label>Gender</mat-label>
-        <mat-select formControlName="gender" >
+        <mat-select formControlName="gender">
           <mat-option value="male">Male</mat-option>
           <mat-option value="female">Female</mat-option>
         </mat-select>
@@ -135,7 +144,14 @@ type UserEntityCrudComponent = SPMatEntityCrudComponent<User, 'cell'>;
       </mat-form-field>
 
       <div class="mt-2 d-flex gap-2">
-        <button type="button" color="secondary" mat-raised-button (click)="form.reset()">Reset</button>
+        <button
+          type="button"
+          color="secondary"
+          mat-raised-button
+          (click)="form.reset()"
+        >
+          Reset
+        </button>
         <button
           type="submit"
           color="primary"
@@ -146,22 +162,22 @@ type UserEntityCrudComponent = SPMatEntityCrudComponent<User, 'cell'>;
         </button>
       </div>
     </form>
-  `
+  `,
 })
 export class CreateEditUserComponent implements OnInit {
   form!: FormGroup<{
-    first: FormControl<string>,
-    last: FormControl<string>,
-    gender: FormControl<string>,
-    cell: FormControl<string>,
+    first: FormControl<string>;
+    last: FormControl<string>;
+    gender: FormControl<string>;
+    cell: FormControl<string>;
   }>;
   bridge = input<SPMatEntityCrudCreateEditBridge>();
   entity = input<User>();
-  creating = computed(() => !this.entity()|| !this.entity()?.cell)
+  creating = computed(() => !this.entity() || !this.entity()?.cell);
 
   canCancelEdit = () => {
     return this._canCancelEdit();
-  }
+  };
 
   _canCancelEdit() {
     if (this.form.touched) {
@@ -173,7 +189,7 @@ export class CreateEditUserComponent implements OnInit {
   constructor() {}
 
   ngOnInit(): void {
-    this.form = this.createForm(this.entity())
+    this.form = this.createForm(this.entity());
     this.bridge()?.registerCanCancelEditCallback(this.canCancelEdit);
   }
 
@@ -199,7 +215,12 @@ export class CreateEditUserComponent implements OnInit {
   }
 
   onNgSubmit() {
-
+    const value = this.form.value;
+    const bridge = this.bridge();
+    const obs = this.creating()
+      ? bridge?.create(value)
+      : bridge?.update(this.entity()?.cell, value);
+    obs?.pipe().subscribe();
   }
 }
 
@@ -227,6 +248,7 @@ export class CreateEditUserComponent implements OnInit {
         idKey="cell"
         [createEditFormTemplate]="createEdit"
         [previewTemplate]="userPreview"
+        [pageSize]="50"
       >
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef>FULL NAME</th>
@@ -469,11 +491,45 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
   });
 
   it('should show the create form when New button is selected', async () => {
+    const http = TestBed.inject(HttpClient);
+    const JOHN_SMITH: User = {
+      name: {title: 'mr', first: 'John', last: 'Smith'},
+      gender: 'female',
+      cell: '93039309'
+    };
+    spyOn(http, 'post').and.returnValue(of(JOHN_SMITH));
+    const spEntityCrudComp = testComponent.spEntityCrudComponent();
+    let spEntityCrudCompSpy = undefined;
+    if (spEntityCrudComp) {
+      spEntityCrudCompSpy = spyOn(spEntityCrudComp, 'create').and.callThrough();
+    }
     const matButton = testComponentFixture.debugElement.query(By.directive(MatButton))
     matButton.nativeElement.click();
     testComponentFixture.detectChanges();
     const createEditHost = testComponentFixture.debugElement.query(By.directive(CreateEditUserComponent));
     expect(createEditHost).toBeTruthy();
+    const inputs = testComponentFixture.debugElement.nativeElement.querySelectorAll('input');
+    inputs[0].value = JOHN_SMITH.name.first;
+    inputs[1].value = JOHN_SMITH.name.last;
+    inputs[2].value = JOHN_SMITH.cell;
+    inputs.forEach((input: HTMLInputElement) => {
+      input.dispatchEvent(new Event('input'));
+    });
+    // I can't simulate MatSelect selection this way. So setting the gender
+    // form control's value directly.
+    // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
+    // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
+    (createEditHost.componentInstance as CreateEditUserComponent).form.controls['gender'].setValue('female');
+    testComponentFixture.detectChanges();
+    const submitButton = testComponentFixture.debugElement.nativeElement.querySelector("button[type='submit']");
+    submitButton.click();
+    testComponentFixture.detectChanges();
+    // verify that create method has been called.
+    expect(spEntityCrudCompSpy).toHaveBeenCalled();
+    if (spEntityCrudComp) {
+      const newCount = spEntityCrudComp.spEntitiesList()?.store.query(getEntitiesCount());
+      expect(newCount).toEqual(USER_DATA.length+1);
+    }
   });
 
   it('should show the edit form when Edit context menu item is selected', async () => {
