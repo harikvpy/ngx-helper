@@ -194,7 +194,8 @@ export class SPMatEntityListComponent<
    * specified instead. That is, the value of this property is a heterogeneous
    * array consisting of SPMatEntityListColumn<> objects and strings.
    */
-  columns = input.required<Array<SPMatEntityListColumn<TEntity, IdKey>|string>>();
+  columns =
+    input.required<Array<SPMatEntityListColumn<TEntity, IdKey> | string>>();
   /**
    * Number of entities per page. If this is not set and paginator is defined,
    * the number of entities int in the first request, will be taken as the
@@ -264,18 +265,20 @@ export class SPMatEntityListComponent<
   // Mechanism to default pageSize to last entities length.
   lastFetchedEntitiesCount = signal<number>(0);
   _pageSize = computed<number>(() =>
-    this.pageSize() ? this.pageSize() : this.lastFetchedEntitiesCount()
+    this.pageSize()
+      ? this.pageSize()
+      : this.config.defaultPageSize ?? this.lastFetchedEntitiesCount()
   );
   // Effective columns, derived from columns(), which can either be an array
   // of objects of array of strings.
   _columns = computed<SPMatEntityListColumn<TEntity, IdKey>[]>(() => {
     const columns = this.columns();
-    let cols: SPMatEntityListColumn<TEntity, IdKey>[] = []
-    columns.forEach(colDef => {
+    let cols: SPMatEntityListColumn<TEntity, IdKey>[] = [];
+    columns.forEach((colDef) => {
       if (typeof colDef === 'string') {
-        cols.push({ name: String(colDef) })
+        cols.push({ name: String(colDef) });
       } else if (typeof colDef === 'object') {
-        cols.push(colDef as SPMatEntityListColumn<TEntity, IdKey>)
+        cols.push(colDef as SPMatEntityListColumn<TEntity, IdKey>);
       }
     });
     return cols;
@@ -314,9 +317,11 @@ export class SPMatEntityListComponent<
   // We will update this after every load and pagination() == 'infinite'
   hasMore = signal<boolean>(true);
 
-  activeEntity = signal<TEntity|undefined>(undefined);
-  activeEntityId = computed(() => this.activeEntity() ? (this.activeEntity() as any)[this.idKey()] : undefined);
-  _prevActiveEntity!: TEntity|undefined;
+  activeEntity = signal<TEntity | undefined>(undefined);
+  activeEntityId = computed(() =>
+    this.activeEntity() ? (this.activeEntity() as any)[this.idKey()] : undefined
+  );
+  _prevActiveEntity!: TEntity | undefined;
   _activeEntityChange = effect(() => {
     const activeEntity = this.activeEntity();
     // Though we can raise the selectEntity event directly from effect handler,
@@ -337,13 +342,13 @@ export class SPMatEntityListComponent<
       });
     }
   });
-  @Output() selectEntity = new EventEmitter<TEntity|undefined>();
+  @Output() selectEntity = new EventEmitter<TEntity | undefined>();
 
   constructor(
     protected http: HttpClient,
     @Optional()
     @Inject(SP_MAT_ENTITY_LIST_CONFIG)
-    protected config: SPMatEntityListConfig,
+    protected config: SPMatEntityListConfig
   ) {
     if (!this.config) {
       this.config = new DefaultSPMatEntityListConfig();
@@ -390,9 +395,13 @@ export class SPMatEntityListComponent<
   }
 
   addEntity(entity: TEntity) {
-    const pagination = this.pagination()
-    const count = this.store.query(getEntitiesCount())
-    if (pagination === 'infinite' || pagination === 'none' || count < this.pageSize()) {
+    const pagination = this.pagination();
+    const count = this.store.query(getEntitiesCount());
+    if (
+      pagination === 'infinite' ||
+      pagination === 'none' ||
+      count < this._pageSize()
+    ) {
       this.store.update(addEntities(entity));
     } else {
       // 'discrete' pagination, refresh the crud items from the beginning.
@@ -443,7 +452,7 @@ export class SPMatEntityListComponent<
           // No more entities in this page
           // Go back one page
           if (this.pageIndex() > 0) {
-            this.pageIndex.set(this.pageIndex()-1);
+            this.pageIndex.set(this.pageIndex() - 1);
           }
         }
         // load the page again
@@ -556,7 +565,9 @@ export class SPMatEntityListComponent<
     const obs =
       loaderFn !== undefined
         ? loaderFn({ params: pageParams })
-        : this.http.get<any>(this.getUrl(this.endpoint()), { params: pageParams });
+        : this.http.get<any>(this.getUrl(this.endpoint()), {
+            params: pageParams,
+          });
 
     this.loading.set(true);
     this.subs$.add(
@@ -629,7 +640,9 @@ export class SPMatEntityListComponent<
   }
 
   getUrl(endpoint: string) {
-    return this.config?.urlResolver ? this.config?.urlResolver(endpoint) : endpoint;
+    return this.config?.urlResolver
+      ? this.config?.urlResolver(endpoint)
+      : endpoint;
   }
 
   handleRowClick(entity: TEntity) {
