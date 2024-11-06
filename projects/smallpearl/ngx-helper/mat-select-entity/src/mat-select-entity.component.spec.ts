@@ -364,19 +364,29 @@ import { MatFormFieldModule } from '@angular/material/form-field';
     <mat-form-field>
       <mat-label>Select User1 (Remote)</mat-label>
       <sp-mat-select-entity
-        [url]="remoteUsersUrl"
+        [url]="remoteUsersUrl1"
         [entityLabelFn]="remoteUserLabelFn"
-        entityName="Remote User 1"
+        entityName="Remote User"
         formControlName="remoteUser1"
       ></sp-mat-select-entity>
     </mat-form-field>
     <mat-form-field>
       <mat-label>Select User2 (Remote)</mat-label>
       <sp-mat-select-entity
-        [url]="remoteUsersUrl"
+        [url]="remoteUsersUrl1"
         [entityLabelFn]="remoteUserLabelFn"
-        entityName="Remote User 2"
+        entityName="Remote User"
         formControlName="remoteUser2"
+      ></sp-mat-select-entity>
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Select User3 (Remote)</mat-label>
+      <sp-mat-select-entity
+        [url]="remoteUsersUrl2"
+        [entityLabelFn]="remoteUserLabelFn"
+        entityName="Remote User"
+        formControlName="remoteUser3"
       ></sp-mat-select-entity>
     </mat-form-field>
   </form>
@@ -386,9 +396,12 @@ export class SelectEntityDemoComponent implements OnInit {
   form = new FormGroup({
     remoteUser1: new FormControl<number>(0),
     remoteUser2: new FormControl<number>(0),
+    remoteUser3: new FormControl<number>(0),
   })
-  remoteUsersUrl = 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb';
+  remoteUsersUrl1 = 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb';
   remoteUserLabelFn = (user: any) => `${user.name}`;
+
+  remoteUsersUrl2 = 'https://randomuser.me/api/?results=100&nat=us,dk,fr';
 
   constructor() { }
 
@@ -419,12 +432,20 @@ describe('MatSelectEntityComponent Entities Cache', () => {
     const spMatSelects = demoFixture.debugElement.queryAll(By.directive(SPMatSelectEntityComponent));
     const spMatSelect1 = spMatSelects[0];
     const spMatSelect2 = spMatSelects[1];
+    const spMatSelect3 = spMatSelects[2];
     expect(spMatSelect1).toBeTruthy();
     expect(spMatSelect2).toBeTruthy();
     await openMatSelect(spMatSelect1);
     expect(getUsersSpy).toHaveBeenCalled();
     await openMatSelect(spMatSelect2);
     expect(getUsersSpy).toHaveBeenCalledTimes(1);
+    // Now open 3rd sp-mat-select-entity. Since it has a different URL than the
+    // first two, it should result in HtttpClient.get being called. Therefore
+    // the get should've been called a total of 2 times - once for the first
+    // two instances of sp-mat-select-entity and once for the third
+    // sp-mat-select-entity.
+    await openMatSelect(spMatSelect3);
+    expect(getUsersSpy).toHaveBeenCalledTimes(2);
     // Destroy the DemoComponent, causing the two SPMatSelectEntityComponent
     // instances to be destroyed as well. Verify that the endpoint is removed
     // from the cache.
