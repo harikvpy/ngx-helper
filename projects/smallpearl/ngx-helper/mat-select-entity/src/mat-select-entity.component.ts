@@ -111,7 +111,7 @@ type EntityGroup<T> = {
           }
         </span>
       </ng-template>
-      
+
       <mat-option *ngIf="!multiple && inlineNew" class="add-item-option" value="0" (click)="$event.stopPropagation()"
         >⊕ {{ addItemText }}</mat-option
       >
@@ -142,6 +142,16 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
     ControlValueAccessor,
     MatFormFieldControl<string | number | string[] | number[]>
 {
+  // We cache the entities that we fetch from remote here. Cache is indexed
+  // by the endpoint. Each endpoint also keeps a refCount, which is incremented
+  // for each instance of the component using the same endpoint. When this
+  // refcount reaches 0, the endpoint is removed from the cache.
+  //
+  // This mechanism is to suppress multiple fetches from the remote from the
+  // same endpoint as that can occur if a form has multiple instances of
+  // this component, with the same endpoint.
+  static _entitiesCache = new Map<string, { refCount: number; entities: Array<any> }>();
+
   @ViewChild(MatSelect) matSel!: MatSelect;
 
   // REQUIRED PROPERTIES //
@@ -188,7 +198,7 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   // would be an array of entity ids.
   @Input({ required: false }) multiple = false;
   /*
-    Whether to group options using <mat-optgroup></mat-optgroup>. 
+    Whether to group options using <mat-optgroup></mat-optgroup>.
     If set to true, the response from the server should be an array of
     groups of TEntity objects, where each object is of the form:
       [
@@ -228,7 +238,7 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
 
   private _entities = new Map<PropertyKey, TEntity>();
   private _groupedEntities = new Array<EntityGroup<TEntity>>();
-  
+
   stateChanges = new Subject<void>();
   focused = false;
   touched = false;
@@ -302,9 +312,10 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   }
   ngOnDestroy(): void {
     this.destroy.next();
+    this.removeFromCache();
     this.stateChanges.complete();
   }
-  
+
   ngAfterViewInit(): void {
   }
 
@@ -548,8 +559,8 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
    * However, if the search string only matches certain entities, only those
    * groups are to be included and within those groups, only entities whose
    * label matches the search string are to be included in the result set.
-   * @param search 
-   * @returns 
+   * @param search
+   * @returns
    */
   filterGroupedValues(search: string) {
     const searchLwr = search.toLocaleLowerCase();
@@ -593,7 +604,7 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
       // in the options list. If not, options would be empty.
       return of(this.group ? this.groupEntities : this.entities);
     }
-
+    let cacheKey!: string;
     let obs: Observable<TEntity[]>;
     if (this.loadFromRemoteFn) {
       obs = this.loadFromRemoteFn(this.injector);
@@ -607,7 +618,12 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
         params = new HttpParams();
       }
       params = params.set('paginate', false)
-      obs = this.http.get<TEntity[]>(this.url, { params });
+      cacheKey = this.getCacheKey();
+      if (this.existsInCache()) {
+        obs = of(this.getFromCache())
+      } else {
+        obs = this.http.get<TEntity[]>(this.url, { params });
+      }
     }
     return obs.pipe(
       tap((entities) => {
@@ -625,6 +641,7 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
           // }
         }
         this.loaded = true;
+        this.addToCache(entities);
         this.cdr.detectChanges();
       })
     );
@@ -639,7 +656,7 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
       const labelField = standardLabelFields[index];
       if ((group as any)[labelField]) {
         return (group as any)[labelField];
-      }      
+      }
     }
     return `Group ${String(group.id)}`;
   }
@@ -654,7 +671,60 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
     const pluralize = (noun: string) =>
       `${noun}${noun.endsWith('s') || noun.endsWith('z') || noun.endsWith('x') ? 'es' : 's'}`;
 
-    return this.groupOptionsKey ? this.groupOptionsKey 
+    return this.groupOptionsKey ? this.groupOptionsKey
       : (this.entityName ? pluralize(this.entityName.toLocaleLowerCase()) : 'items');
+  }
+
+  private existsInCache() {
+    const cacheKey = this.getCacheKey();
+    if (cacheKey) {
+      return SPMatSelectEntityComponent._entitiesCache.has(cacheKey);
+    }
+    return false;
+  }
+
+  private getCacheKey() {
+    if (!this.loadFromRemoteFn) {
+      let params!: HttpParams;
+      if (this.httpParams) {
+        params = new HttpParams({
+          fromString: this.httpParams.toString()
+        })
+      } else {
+        params = new HttpParams();
+      }
+      // params = params.set('paginate', false)
+      return `${this.url}?${params.toString()}`;
+    }
+    return ''; // empty string evalutes to boolean(false)
+  }
+  private getFromCache() {
+    const cacheKey = this.getCacheKey();
+    if (cacheKey && SPMatSelectEntityComponent._entitiesCache.has(cacheKey)) {
+      return SPMatSelectEntityComponent._entitiesCache.get(cacheKey)?.entities as TEntity[]
+    }
+    return [];
+  }
+  private addToCache(entities: TEntity[]) {
+    const cacheKey = this.getCacheKey();
+    if (cacheKey) {
+      if (!SPMatSelectEntityComponent._entitiesCache.has(cacheKey)) {
+        SPMatSelectEntityComponent._entitiesCache.set(cacheKey, {refCount: 0, entities});
+      }
+      const cacheEntry = SPMatSelectEntityComponent._entitiesCache.get(cacheKey);
+      cacheEntry!.refCount += 1;
+    }
+  }
+  private removeFromCache() {
+    const cacheKey = this.getCacheKey();
+    if (cacheKey) {
+      const cacheEntry = SPMatSelectEntityComponent._entitiesCache.get(cacheKey);
+      if (cacheEntry) {
+        cacheEntry!.refCount -= 1;
+        if (cacheEntry.refCount <= 0) {
+          SPMatSelectEntityComponent._entitiesCache.delete(cacheKey);
+        }
+      }
+    }
   }
 }

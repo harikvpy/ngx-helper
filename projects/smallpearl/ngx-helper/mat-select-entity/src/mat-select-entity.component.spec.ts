@@ -1,8 +1,8 @@
 import { HttpClient, HttpParams, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { Injector } from '@angular/core';
+import { DebugElement, Injector } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormControl, FormsModule, NgControl } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatOptgroup, MatOption } from '@angular/material/core';
 import { MatSelect } from '@angular/material/select';
 import { By } from '@angular/platform-browser';
@@ -71,10 +71,16 @@ const DEBOUNCE_TIMEOUT = 400;
 
 type SelectEntityComponent = SPMatSelectEntityComponent<User>;
 
-async function openMatSelect(fixture: ComponentFixture<SelectEntityComponent>, waitForDebounce=true) {
+async function openMatSelect(fixture: ComponentFixture<SelectEntityComponent>|DebugElement, waitForDebounce=true) {
   // Open the mat-select. To open the mat-select, get it's mat-select-trigger child
   // and click on it. mat-select-trigger is <div class='mat-mdc-select-trigger'>
-  const triggerElem = fixture.debugElement.query(
+  let debugElement: DebugElement;
+  if (fixture instanceof ComponentFixture) {
+    debugElement = fixture.debugElement;
+  } else {
+    debugElement = fixture;
+  }
+  const triggerElem = debugElement.query(
     By.css('.mat-mdc-select-trigger')
   );
   if (triggerElem) {
@@ -105,8 +111,8 @@ describe('MatSelectEntityComponent (single selection)', () => {
     });
     fixture = TestBed.createComponent(SPMatSelectEntityComponent<User>);
     component = fixture.componentInstance;
-    component.url = 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb';
-    component.entityLabelFn = (user: User) => user.name;
+    fixture.componentRef.setInput('url', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    fixture.componentRef.setInput('entityLabelFn', (user: User) => user.name);
     fixture.autoDetectChanges();
     matSel = fixture.debugElement.query(
       By.directive(MatSelect)
@@ -338,6 +344,94 @@ describe('MatSelectEntityComponent (single selection)', () => {
     expect(matSel.value).toEqual(currentSel);
   });
 
+});
+
+import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
+
+@Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    SPMatSelectEntityComponent
+  ],
+  selector: 'test-mat-select-entity-demo',
+  template: `
+  <form [formGroup]="form">
+    <mat-form-field>
+      <mat-label>Select User1 (Remote)</mat-label>
+      <sp-mat-select-entity
+        [url]="remoteUsersUrl"
+        [entityLabelFn]="remoteUserLabelFn"
+        entityName="Remote User 1"
+        formControlName="remoteUser1"
+      ></sp-mat-select-entity>
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Select User2 (Remote)</mat-label>
+      <sp-mat-select-entity
+        [url]="remoteUsersUrl"
+        [entityLabelFn]="remoteUserLabelFn"
+        entityName="Remote User 2"
+        formControlName="remoteUser2"
+      ></sp-mat-select-entity>
+    </mat-form-field>
+  </form>
+  `
+})
+export class SelectEntityDemoComponent implements OnInit {
+  form = new FormGroup({
+    remoteUser1: new FormControl<number>(0),
+    remoteUser2: new FormControl<number>(0),
+  })
+  remoteUsersUrl = 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb';
+  remoteUserLabelFn = (user: any) => `${user.name}`;
+
+  constructor() { }
+
+  ngOnInit() { }
+}
+
+describe('MatSelectEntityComponent Entities Cache', () => {
+  let demoComponent!: SelectEntityDemoComponent;
+  let demoFixture!: ComponentFixture<SelectEntityDemoComponent>;
+
+  beforeEach(async () => {
+    TestBed.configureTestingModule({
+      imports: [
+        NoopAnimationsModule,
+        FormsModule,
+        SelectEntityDemoComponent,
+      ],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    demoFixture = TestBed.createComponent(SelectEntityDemoComponent);
+    demoComponent = demoFixture.componentInstance;
+  });
+
+  it('should fetch data from the same endpoint only once', async () => {
+    const http = TestBed.inject(HttpClient);
+    const getUsersSpy = spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    demoFixture.autoDetectChanges();
+    const spMatSelects = demoFixture.debugElement.queryAll(By.directive(SPMatSelectEntityComponent));
+    const spMatSelect1 = spMatSelects[0];
+    const spMatSelect2 = spMatSelects[1];
+    expect(spMatSelect1).toBeTruthy();
+    expect(spMatSelect2).toBeTruthy();
+    await openMatSelect(spMatSelect1);
+    expect(getUsersSpy).toHaveBeenCalled();
+    await openMatSelect(spMatSelect2);
+    expect(getUsersSpy).toHaveBeenCalledTimes(1);
+    // Destroy the DemoComponent, causing the two SPMatSelectEntityComponent
+    // instances to be destroyed as well. Verify that the endpoint is removed
+    // from the cache.
+    demoFixture.destroy();
+    console.log(SPMatSelectEntityComponent._entitiesCache.size);
+    expect(SPMatSelectEntityComponent._entitiesCache.size).toEqual(0);
+  });
 });
 
 /**

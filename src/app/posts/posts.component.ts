@@ -193,10 +193,37 @@ const BLOCKS: Block[] = [
                   ></sp-mat-select-entity>
                 </mat-form-field>
               </div>
+              <div class="p-2">
+                <mat-form-field>
+                  <mat-label>Select User1 (Remote)</mat-label>
+                  <sp-mat-select-entity
+                    [url]="remoteUsersUrl"
+                    [entityLabelFn]="remoteUserLabelFn"
+                    entityName="Remtve User"
+                    formControlName="remoteUser1"
+                    (selectionChange)="onRemoteUserSelected1($event)"
+                  ></sp-mat-select-entity>
+                </mat-form-field>
+              </div>
+
+              <div class="p-2">
+                <mat-form-field>
+                  <mat-label>Select User2 (Remote)</mat-label>
+                  <sp-mat-select-entity
+                    [url]="remoteUsersUrl"
+                    [entityLabelFn]="remoteUserLabelFn"
+                    entityName="Remtve User"
+                    formControlName="remoteUser2"
+                    (selectionChange)="onRemoteUserSelected2($event)"
+                  ></sp-mat-select-entity>
+                </mat-form-field>
+              </div>
             </form>
           </div>
         </div>
-        <div class="posts-row-2"></div>
+        <div class="posts-row-2">
+
+        </div>
         <div class="posts-row-3"></div>
       </div>
     </div>
@@ -223,11 +250,11 @@ const BLOCKS: Block[] = [
     background-color: yellow;
   }
   .posts-row-2 {
-    height: 500px;    
+    height: 500px;
     background-color: cyan;
   }
   .posts-row-3 {
-    height: 500px;    
+    height: 500px;
     background-color: indigo;
   }
   .h2 {
@@ -248,9 +275,14 @@ export class PostsComponent {
   @ViewChild(SPMatSelectEntityComponent)
   selectEntityCtrl!: SPMatSelectEntityComponent<User>;
 
+  remoteUsersUrl = 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb';
+  remoteUserLabelFn = (user: any) => `${user.name.title}. ${user.name.first} ${user.name.last}`;
+
   constructor(private fb: FormBuilder, private host: ElementRef) {
     this.form = this.fb.group({
       user: [undefined],
+      remoteUser1: [undefined],
+      remoteUser2: [undefined],
       unit: [undefined],
     });
     this.form.valueChanges
@@ -280,6 +312,14 @@ export class PostsComponent {
 
   onUserSelected(ev: User | User[]) {
     console.log(`onUserSelected - ev: ${JSON.stringify(ev)}`);
+  }
+
+  onRemoteUserSelected1(ev: any) {
+    console.log(`onRemoteUserSelected1 - ev: ${JSON.stringify(ev)}`);
+  }
+
+  onRemoteUserSelected2(ev: any) {
+    console.log(`onRemoteUserSelected2 - ev: ${JSON.stringify(ev)}`);
   }
 
   onCreateNewUser(ev: any) {
