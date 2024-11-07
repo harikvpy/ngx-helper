@@ -6,7 +6,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatTableModule } from '@angular/material/table';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
-import { SPMatEntityListColumn, SPMatEntityListConfig, SPMatEntityListPaginator } from './mat-entity-list-types';
+import { COLUMN_VALUE_FN, SPMatEntityListColumn, SPMatEntityListConfig, SPMatEntityListPaginator } from './mat-entity-list-types';
 import { SPMatEntityListComponent } from './mat-entity-list.component';
 import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
 
@@ -278,6 +278,7 @@ describe('SPMatEntityListComponent', () => {
    *    urlResolver
    *    paginator
    *    i18nTranslate
+   *    columnValueFns
    */
   it('should use global config object', async () => {
     TestBed.resetTestingModule();
@@ -287,8 +288,16 @@ describe('SPMatEntityListComponent', () => {
       paginator = myPaginator
       i18nTranslate = (label: string, context?: any) => {
         return label;
+      };
+      columnValueFns = new Map<string, COLUMN_VALUE_FN>();
+
+      constructor() {
+        this.columnValueFns.set('gender', (entity: User, column: string) => {
+          return entity.gender === 'F' ? 'പെണ്ണ്' : 'ആണ്';
+        })
       }
     };
+
     let globalPaginatorGetEntitiesFromResponseCalled = false;
     spyOn(myPaginator, 'parseRequestResponse').and.callFake((endpoint: string, params: any, resp: any) => {
       globalPaginatorGetEntitiesFromResponseCalled = true;
@@ -338,12 +347,20 @@ describe('SPMatEntityListComponent', () => {
     ));
     fixture.autoDetectChanges();
     expect(component).toBeTruthy();
-    const rows = fixture.debugElement.nativeElement.querySelectorAll('tr');
+    const rows = fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
     // +1 for the <tr> in <thead>
-    expect(rows.length).toEqual(USER_DATA.length+1);
+    expect(rows.length).toEqual(USER_DATA.length);
     // Verify that global paginator's 'getEntitiesFromResponse' was called.
     expect(globalPaginatorGetEntitiesFromResponseCalled).toBeTrue();
     expect(globalUrlResolverCalled).toBeTrue();
     expect(globali18nTranslateCalled).toBeTrue();
+    // Verify that global value function specified via SPMatEntityListConfig
+    // is used for matching columns without any explicit value function or
+    // client projected ng-template.
+    const columns = fixture.debugElement.nativeElement.querySelectorAll('tbody td:nth-child(2)');
+    for (let index = 0; index < columns.length; index++) {
+      const colValue = columns[index].innerText;
+      expect(colValue).toEqual(USER_DATA[index].gender === 'F' ? 'പെണ്ണ്' : 'ആണ്');
+    }
   });
 });

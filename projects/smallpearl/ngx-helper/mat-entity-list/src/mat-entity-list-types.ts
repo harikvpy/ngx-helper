@@ -19,7 +19,7 @@ export type SPMatEntityListColumn<TEntity extends { [P in IdKey]: PropertyKey },
   };
   // If the column value cannot be derived by simple TEntity[name] lookup,
   // use this function to return a custom computed or formatted value.
-  valueFn?: (t: TEntity) => string|number|Date|boolean;
+  valueFn?: (item: TEntity) => string|number|Date|boolean;
 }
 
 /**
@@ -50,6 +50,13 @@ export interface SPMatEntityListPaginator {
 }
 
 /**
+ * 'entity' is really TEntity arg of SPMatEntityListComponent<TEntity>.
+ * 'column' is the column name. This allows the same value function to support
+ * multiple columns further enabing DRY.
+ */
+export type COLUMN_VALUE_FN = (entity: any, column: string) => string|number|Date|boolean;
+
+/**
  * Global config for SPMatEntityList component.
  */
 export interface SPMatEntityListConfig {
@@ -58,6 +65,19 @@ export interface SPMatEntityListConfig {
   defaultPageSize?: number;
   pageSizes?: Array<number>;
   i18nTranslate?: (label: string, context?: any) => string;
+  /**
+   * These are global column value functions.
+   *
+   * If a value function for a column is not explicitly specified, this map is
+   * looked up with the column name. If an entry exists in this table, it will
+   * be used to render the column's value.
+   *
+   * This is useful for formatting certain column types which tends to have the
+   * same name across the app. For instance columns such as 'amount', 'total'
+   * or 'balance'. Or 'date', 'timestamp', etc. The return value from the
+   * column value functions are deemed safe and therefore
+   */
+  columnValueFns?: Map<string, COLUMN_VALUE_FN>;
 }
 
 /**

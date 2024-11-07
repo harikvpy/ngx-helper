@@ -43,6 +43,7 @@ import {
   SPMatEntityListPaginator,
 } from './mat-entity-list-types';
 import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
+import { DomSanitizer } from '@angular/platform-browser';
 
 /**
  * A component to display a list of entities loaded from remote.
@@ -122,9 +123,7 @@ import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
           {{ getColumnLabel(column) }}
         </th>
         }
-        <td mat-cell *matCellDef="let element">
-          {{ getColumnValue(element, column) }}
-        </td>
+        <td mat-cell *matCellDef="let element" [innerHtml]="getColumnValue(element, column)"></td>
       </ng-container>
       }
     </span>
@@ -348,7 +347,8 @@ export class SPMatEntityListComponent<
     protected http: HttpClient,
     @Optional()
     @Inject(SP_MAT_ENTITY_LIST_CONFIG)
-    protected config: SPMatEntityListConfig
+    protected config: SPMatEntityListConfig,
+    private sanitizer: DomSanitizer,
   ) {
     if (!this.config) {
       this.config = new DefaultSPMatEntityListConfig();
@@ -470,7 +470,11 @@ export class SPMatEntityListComponent<
   ) {
     let val = undefined;
     if (!column.valueFn) {
-      val = (entity as any)[column.name];
+      if (this.config?.columnValueFns && this.config.columnValueFns.has(column.name)) {
+        val = this.config.columnValueFns.get(column.name)!(entity, column.name);
+      } else {
+        val = (entity as any)[column.name];
+      }
     } else {
       val = column.valueFn(entity);
     }

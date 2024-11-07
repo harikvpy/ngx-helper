@@ -6,11 +6,35 @@ import { MatColumnDef, MatTable, MatTableDataSource, MatTableModule } from '@ang
 import { MatTabsModule } from '@angular/material/tabs';
 import { SPMatContextMenuComponent } from '@smallpearl/ngx-helper/mat-context-menu';
 import {
+  COLUMN_VALUE_FN,
+  SP_MAT_ENTITY_LIST_CONFIG,
   SPMatEntityListColumn,
-  SPMatEntityListComponent
+  SPMatEntityListComponent,
+  SPMatEntityListConfig
 } from '@smallpearl/ngx-helper/mat-entity-list';
 import { MyPaginator } from './paginater';
 import { User } from './user';
+
+function provideMatEntityListConfig(): SPMatEntityListConfig {
+  return {
+    urlResolver: (endpoint: string) => {
+      return endpoint;
+    },
+    paginator: new MyPaginator(),
+    defaultPageSize: 50,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+    i18nTranslate: (label: string, context?: any) => {
+      return label;
+    },
+    columnValueFns: new Map<string, COLUMN_VALUE_FN>([
+      [
+        'gender',
+        (entity: User, column: string) =>
+          entity.gender === 'female' ? `<div class="text-danger fs-6">പെണ്ണ്</div>` : 'ആണ്',
+      ],
+    ]),
+  };
+}
 
 const USER_DATA: User[] = [
   { id: 1, name: { title: 'Ms', first: 'Mariam', last: 'Trevarthen' }, cell: '2323234', gender: 'F' },
@@ -55,6 +79,12 @@ const ELEMENT_DATA: PeriodicElement[] = [
     MatSortModule,
     MatTabsModule,
     SPMatContextMenuComponent,
+  ],
+  providers: [
+    {
+      provide: SP_MAT_ENTITY_LIST_CONFIG,
+      useFactory: provideMatEntityListConfig
+    }
   ],
   selector: 'app-entity-list-demo',
   template: `

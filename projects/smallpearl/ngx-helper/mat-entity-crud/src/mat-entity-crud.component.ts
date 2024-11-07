@@ -44,6 +44,7 @@ import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
 import { CRUD_OP_FN, SPMatEntityCrudConfig } from './mat-entity-crud-types';
 import { PreviewHostComponent } from './preview-host.component';
 import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   standalone: true,
@@ -269,9 +270,10 @@ export class SPMatEntityCrudComponent<
     @Inject(SP_MAT_ENTITY_LIST_CONFIG)
     private entityListConfig: SPMatEntityListConfig,
     http: HttpClient,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    sanitizer: DomSanitizer,
   ) {
-    super(http, entityListConfig);
+    super(http, entityListConfig, sanitizer);
     this.config = getConfig(crudConfig);
     if (this.config?.defaultItemActions) {
       this.defaultItemCrudActions.set(this.config?.defaultItemActions);
