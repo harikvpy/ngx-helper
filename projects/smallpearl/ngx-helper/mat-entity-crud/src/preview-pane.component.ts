@@ -31,7 +31,7 @@ import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
   </div>
   `,
   styles: [`
-    .preview-pane-wrapper {
+    .preview-wrapper {
       display: flex;
       flex-direction: column;
       height: 100%;
