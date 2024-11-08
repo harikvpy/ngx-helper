@@ -66,7 +66,7 @@ import { DomSanitizer } from '@angular/platform-browser';
   template: `
     <as-split direction="horizontal" [gutterSize]="6">
       <as-split-area [size]="entitiesPaneWidth()">
-        <div
+        <div [class]="config.listPaneWrapperClass"
           [ngStyle]="{ display: !createEditViewActive() ? 'inherit' : 'none' }"
         >
           <div class="action-bar">
@@ -123,6 +123,7 @@ import { DomSanitizer } from '@angular/platform-browser';
         </ng-container>
 
         <div
+          [class]="config.listPaneWrapperClass"
           [ngStyle]="{ display: createEditViewActive() ? 'inherit' : 'none' }"
           spHostBusyWheel="formBusyWheel"
         >
@@ -136,12 +137,14 @@ import { DomSanitizer } from '@angular/platform-browser';
       </as-split-area>
       <as-split-area [size]="previewPaneWidth()" [visible]="previewActive()">
         @if (previewActive()) {
-        <sp-entity-crud-preview-host
-          (closePreview)="closePreview()"
-          [entityCrudComponent]="this"
-          [previewTemplate]="previewTemplate()!"
-          [previewedEntity]="previewedEntity()"
-        ></sp-entity-crud-preview-host>
+        <div [class]="config.previewPaneWrapperClass">
+          <sp-entity-crud-preview-host
+            (closePreview)="closePreview()"
+            [entityCrudComponent]="this"
+            [previewTemplate]="previewTemplate()!"
+            [previewedEntity]="previewedEntity()"
+          ></sp-entity-crud-preview-host>
+        </div>
         }
       </as-split-area>
     </as-split>

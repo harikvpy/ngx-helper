@@ -18,6 +18,9 @@ export interface SPMatEntityCrudConfig {
   }
   i18nTranslate?: (label: string, context?: any) => string;
   defaultItemActions?: SPContextMenuItem[];
+  listPaneWrapperClass?: string;
+  previewPaneWrapperClass?: string;
+  previewPaneContentClass?: string;
 }
 
 /**

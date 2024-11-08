@@ -1,8 +1,11 @@
-import { ChangeDetectionStrategy, Component, input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Inject, input, OnInit, Optional } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
+import { SPMatEntityCrudConfig } from './mat-entity-crud-types';
+import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
+import { getConfig } from './default-config';
 
 /**
  * A preview pane container to provide a consistent UX for all preview panes.
@@ -25,7 +28,7 @@ import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
         </button>
       </mat-toolbar-row>
     </mat-toolbar>
-    <div class="preview-content">
+    <div [class]="'preview-content ' + (config.previewPaneContentClass ?? '')">
       <ng-content select="[previewContent]"></ng-content>
     </div>
   </div>
@@ -50,6 +53,15 @@ export class SPMatEntityCrudPreviewPaneComponent implements OnInit {
 
   title = input.required<string>();
   entityCrudComponent = input.required<SPMatEntityCrudComponentBase>();
+  config!: SPMatEntityCrudConfig;
+
+  constructor(
+    @Optional()
+    @Inject(SP_MAT_ENTITY_CRUD_CONFIG)
+    crudConfig: SPMatEntityCrudConfig,
+  ) {
+    this.config = getConfig(crudConfig);
+  }
 
   ngOnInit() {}
 

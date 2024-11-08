@@ -26,7 +26,10 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
     itemDeletedNotification: (itemLabel: string) => `${itemLabel} deleted.`,
     createdItemNotification: (itemLabel: string) => `${itemLabel} created.`,
     updatedItemNotification: (itemLabel: string) => `${itemLabel} updated.`,
-  }
+  },
+  listPaneWrapperClass: 'sp-mat-crud-list-pane-wrapper-class',
+  previewPaneContentClass: 'sp-mat-crud-preview-pane-content-class'
+
 }
 
 @Component({

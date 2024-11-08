@@ -9,7 +9,6 @@ import { NavItem, SPMatMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-si
       brandingImage="assets/angular.png"
       brandingText="SMALLPEARL"
       appTitle="QQBOOKS"
-      contentContainerClass="ex-content-container"
       [menuItems]="menuItems"
       [menuPaneFooterContent]="versionInfoFooter"
       [toolbarEndContent]="toolbarEndContent"

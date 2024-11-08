@@ -132,3 +132,10 @@ $my-theme: mat.define-light-theme((
   height: 100%;
   overflow: scroll !important;
 }
+.sp-mat-crud-list-pane-wrapper-class {
+  padding: 0.4em;
+}
+
+.sp-mat-crud-preview-pane-content-class {
+  padding: 0.4em;
+}
