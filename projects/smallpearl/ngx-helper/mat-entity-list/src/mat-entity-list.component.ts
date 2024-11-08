@@ -81,11 +81,11 @@ import { DomSanitizer } from '@angular/platform-browser';
         <ng-container *ngTemplateOutlet="busySpinner"></ng-container>
       </div>
       <table mat-table [dataSource]="dataSource()">
-        <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+        <tr mat-header-row *matHeaderRowDef="_displayedColumns()"></tr>
         <tr
           mat-row
           [class.active-row]="activeEntityId() === row[this.idKey()]"
-          *matRowDef="let row; columns: displayedColumns()"
+          *matRowDef="let row; columns: _displayedColumns()"
           (click)="handleRowClick(row)"
         ></tr>
       </table>
@@ -123,7 +123,11 @@ import { DomSanitizer } from '@angular/platform-browser';
           {{ getColumnLabel(column) }}
         </th>
         }
-        <td mat-cell *matCellDef="let element" [innerHtml]="getColumnValue(element, column)"></td>
+        <td
+          mat-cell
+          *matCellDef="let element"
+          [innerHtml]="getColumnValue(element, column)"
+        ></td>
       </ng-container>
       }
     </span>
@@ -195,6 +199,13 @@ export class SPMatEntityListComponent<
    */
   columns =
     input.required<Array<SPMatEntityListColumn<TEntity, IdKey> | string>>();
+
+  /**
+   * Names of columns that are displayed. This will default to all the columns
+   * listed in columns.
+   */
+  displayedColumns = input<string[]>([]); // ['name', 'cell', 'gender'];
+
   /**
    * Number of entities per page. If this is not set and paginator is defined,
    * the number of entities int in the first request, will be taken as the
@@ -235,9 +246,15 @@ export class SPMatEntityListComponent<
   // *** INTERNAL *** //
   _deferViewInit = input<boolean>(false);
   firstLoadDone = false;
-  // Names of columns that are displayed.
-  displayedColumns = signal<string[]>([]); // ['name', 'cell', 'gender'];
-
+  allColumnNames = signal<string[]>([]);
+  _displayedColumns = computed(() =>
+    this.displayedColumns().length > 0
+      ? this.displayedColumns().filter(
+          (colName) =>
+            this.allColumnNames().find((name) => name === colName) !== undefined
+        )
+      : this.allColumnNames()
+  );
   dataSource = signal<MatTableDataSource<TEntity>>(
     new MatTableDataSource<TEntity>()
   );
@@ -348,7 +365,7 @@ export class SPMatEntityListComponent<
     @Optional()
     @Inject(SP_MAT_ENTITY_LIST_CONFIG)
     protected config: SPMatEntityListConfig,
-    private sanitizer: DomSanitizer,
+    private sanitizer: DomSanitizer
   ) {
     if (!this.config) {
       this.config = new DefaultSPMatEntityListConfig();
@@ -470,7 +487,10 @@ export class SPMatEntityListComponent<
   ) {
     let val = undefined;
     if (!column.valueFn) {
-      if (this.config?.columnValueFns && this.config.columnValueFns.has(column.name)) {
+      if (
+        this.config?.columnValueFns &&
+        this.config.columnValueFns.has(column.name)
+      ) {
         val = this.config.columnValueFns.get(column.name)!(entity, column.name);
       } else {
         val = (entity as any)[column.name];
@@ -512,7 +532,7 @@ export class SPMatEntityListComponent<
     const matTable = this.table();
 
     if (matTable) {
-      const columnNames = new Set();
+      const columnNames = new Set<string>();
       const columnDefs: MatColumnDef[] = [];
 
       this._columns().forEach((colDef) => {
@@ -534,7 +554,8 @@ export class SPMatEntityListComponent<
         matTable.addColumnDef(cd);
       });
 
-      this.displayedColumns.set(Array.from(columnNames) as string[]);
+      this.allColumnNames.set(Array.from(columnNames));
+      // this.displayedColumns.set(Array.from(columnNames) as string[]);
     }
   }
 

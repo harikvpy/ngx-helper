@@ -66,7 +66,8 @@ import { DomSanitizer } from '@angular/platform-browser';
   template: `
     <as-split direction="horizontal" [gutterSize]="6">
       <as-split-area [size]="entitiesPaneWidth()">
-        <div [class]="config.listPaneWrapperClass"
+        <div
+          [class]="config.listPaneWrapperClass"
           [ngStyle]="{ display: !createEditViewActive() ? 'inherit' : 'none' }"
         >
           <div class="action-bar">
@@ -92,6 +93,7 @@ import { DomSanitizer } from '@angular/platform-browser';
             [endpoint]="endpoint()"
             [entityLoaderFn]="entityLoaderFn()"
             [columns]="columnsWithAction()"
+            [displayedColumns]="visibleColumns()"
             [idKey]="idKey()"
             [pagination]="pagination()"
             [paginator]="paginator()"
@@ -264,6 +266,19 @@ export class SPMatEntityCrudComponent<
       ? this.itemActions()
       : this.defaultItemCrudActions()
   );
+  // This uses the previewActive signal to compute the visible columns
+  // when preview is activated. For now we just hide the 'action' column when
+  // preview is active. We can further customize this logic by allowing the
+  // client to specify the columns to display when preview is active thereby
+  // reducing column clutter when the table width becomes narrower owing to
+  // preview pane taking up screen space.
+  visibleColumns = computed(() =>
+    this.previewActive()
+      ? this.columnsWithAction()
+          .map((col) => (typeof col === 'string' ? col : col.name))
+          .filter((name) => name !== 'action')
+      : []
+  );
 
   constructor(
     @Optional()
@@ -274,7 +289,7 @@ export class SPMatEntityCrudComponent<
     private entityListConfig: SPMatEntityListConfig,
     http: HttpClient,
     private snackBar: MatSnackBar,
-    sanitizer: DomSanitizer,
+    sanitizer: DomSanitizer
   ) {
     super(http, entityListConfig, sanitizer);
     this.config = getConfig(crudConfig);
