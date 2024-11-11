@@ -11,6 +11,7 @@ import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 import { getEntitiesIds } from '@ngneat/elf-entities';
+import { spFormatCurrency } from '@smallpearl/ngx-helper/locale';
 import { SPContextMenuItem } from '@smallpearl/ngx-helper/mat-context-menu';
 import {
   SP_MAT_ENTITY_CRUD_CONFIG,
@@ -23,11 +24,6 @@ import { SPMatEntityCrudPreviewPaneComponent } from '../../../projects/smallpear
 import { MyPaginator } from '../entity-list-demo/paginater';
 import { User } from '../entity-list-demo/user';
 import { CreateEditEntityDemoComponent } from './create-edit-entity-demo.component';
-import {
-  SPEntityFieldSpec,
-  StationaryWithLineItemsComponent,
-} from '@smallpearl/ngx-helper/stationary-with-line-items';
-import { spFormatCurrency } from '@smallpearl/ngx-helper/locale';
 import { Invoice, INVOICES } from './data';
 import { PreviewInvoiceComponent } from './preview-demo.component';
 
@@ -59,7 +55,6 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
     SPMatEntityCrudComponent,
     CreateEditEntityDemoComponent,
     SPMatEntityCrudPreviewPaneComponent,
-    StationaryWithLineItemsComponent,
     PreviewInvoiceComponent,
   ],
   providers: [
