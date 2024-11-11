@@ -1,20 +1,32 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
-import { ActivatedRoute, Router } from "@angular/router";
+import { ActivatedRoute, Router } from '@angular/router';
 import { getEntitiesIds } from '@ngneat/elf-entities';
 import { SPContextMenuItem } from '@smallpearl/ngx-helper/mat-context-menu';
-import { SP_MAT_ENTITY_CRUD_CONFIG, SPMatEntityCrudComponent, SPMatEntityCrudConfig } from '@smallpearl/ngx-helper/mat-entity-crud';
+import {
+  SP_MAT_ENTITY_CRUD_CONFIG,
+  SPMatEntityCrudComponent,
+  SPMatEntityCrudConfig,
+} from '@smallpearl/ngx-helper/mat-entity-crud';
 import { SPMatEntityListColumn } from '@smallpearl/ngx-helper/mat-entity-list';
 import { of } from 'rxjs';
-import { SPMatEntityCrudPreviewPaneComponent } from "../../../projects/smallpearl/ngx-helper/mat-entity-crud/src/preview-pane.component";
+import { SPMatEntityCrudPreviewPaneComponent } from '../../../projects/smallpearl/ngx-helper/mat-entity-crud/src/preview-pane.component';
 import { MyPaginator } from '../entity-list-demo/paginater';
 import { User } from '../entity-list-demo/user';
-import { CreateEditEntityDemoComponent } from "./create-edit-entity-demo.component";
-import { SPEntityFieldSpec, StationaryWithLineItemsComponent } from '@smallpearl/ngx-helper/stationary-with-line-items';
+import { CreateEditEntityDemoComponent } from './create-edit-entity-demo.component';
+import {
+  SPEntityFieldSpec,
+  StationaryWithLineItemsComponent,
+} from '@smallpearl/ngx-helper/stationary-with-line-items';
 import { spFormatCurrency } from '@smallpearl/ngx-helper/locale';
 import { Invoice, INVOICES } from './data';
 import { PreviewInvoiceComponent } from './preview-demo.component';
@@ -26,15 +38,15 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
     edit: 'Update',
     delete: 'Remove',
     deleteItemHeader: (itemLabel: string) => `Delete ${itemLabel}?`,
-    deleteItemMessage: (itemLabel: string) => `Are you sure you want to delete this ${itemLabel.toLocaleLowerCase()}?`,
+    deleteItemMessage: (itemLabel: string) =>
+      `Are you sure you want to delete this ${itemLabel.toLocaleLowerCase()}?`,
     itemDeletedNotification: (itemLabel: string) => `${itemLabel} deleted.`,
     createdItemNotification: (itemLabel: string) => `${itemLabel} created.`,
     updatedItemNotification: (itemLabel: string) => `${itemLabel} updated.`,
   },
   listPaneWrapperClass: 'sp-mat-crud-list-pane-wrapper-class',
-  previewPaneContentClass: 'sp-mat-crud-preview-pane-content-class'
-
-}
+  previewPaneContentClass: 'sp-mat-crud-preview-pane-content-class',
+};
 
 @Component({
   standalone: true,
@@ -57,10 +69,9 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
   template: `
     <div style="width: 100%; height: 100%;">
       <sp-mat-entity-crud
-        [entityLoaderFn]="entityLoaderFn"
-        [endpoint]="endpoint"
+        [entityLoaderFn]="invoicesLoaderFn"
         [columns]="invoiceColumns"
-        [pageSize]="40"
+        [pageSize]="10"
         idKey="id"
         pagination="discrete"
         [paginator]="paginator"
@@ -93,7 +104,10 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
         [title]="data.entity.number"
         [entityCrudComponent]="spEntityCrudComponent()!"
       >
-        <app-invoice-preview previewContent [invoice]="data.entity"></app-invoice-preview>
+        <app-invoice-preview
+          previewContent
+          [invoice]="data.entity"
+        ></app-invoice-preview>
       </sp-mat-entity-crud-preview-pane>
     </ng-template>
   `,
@@ -102,15 +116,15 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EntityCrudDemoComponent implements OnInit {
-  entityLoaderFn = (params: any) =>
-    of({ count: 2, next: null, previous: null, results: INVOICES });
-  endpoint = 'https://randomuser.me/api/?nat=us,gb';
-  columns: SPMatEntityListColumn<User>[] = [
+  userEndpoint = 'https://randomuser.me/api/?nat=us,gb';
+  userColumns: SPMatEntityListColumn<User>[] = [
     { name: 'name', label: 'NAME', valueFn: (user: User) => user.name.first },
     { name: 'gender', label: 'GENDER' },
     { name: 'cell', label: 'CELL' },
   ];
 
+  invoicesLoaderFn = (params: any) =>
+    of({ count: 2, next: null, previous: null, results: INVOICES });
   invoiceColumns: SPMatEntityListColumn<Invoice>[] = [
     { name: 'id' },
     { name: 'date' },
@@ -121,28 +135,6 @@ export class EntityCrudDemoComponent implements OnInit {
       valueFn: (item: Invoice) => spFormatCurrency(item.balance) ?? '',
     },
   ];
-  invoicePreviewLeftHeader = (invoice: Invoice) => invoice.customerDetail.name;
-  invoicePreviewRightHeaderFields: SPEntityFieldSpec<Invoice>[] = [
-    { name: 'date' },
-    { name: 'terms' },
-    {
-      name: 'balance',
-      valueFn: (item: Invoice) => spFormatCurrency(item.balance) ?? '',
-    },
-  ];
-  invoicePreviewItemColumns: SPEntityFieldSpec<Invoice>[] = [
-    {
-      name: 'product',
-      valueFn: (lineItem: any) => lineItem.productDetail.name,
-    },
-    { name: 'quantity' },
-    { name: 'unitPrice' },
-    {
-      name: 'total',
-      valueFn: (lineItem: any) => spFormatCurrency(lineItem.quantity * lineItem.unitPrice) ?? '',
-    },
-  ];
-
   itemActions: SPContextMenuItem[] = [
     { label: 'Edit', role: '_update_' },
     {
@@ -152,25 +144,6 @@ export class EntityCrudDemoComponent implements OnInit {
     },
   ];
   spEntityCrudComponent = viewChild(SPMatEntityCrudComponent);
-
-  rightHeaderFields: SPEntityFieldSpec<User>[] = [
-    { name: 'name', label: 'NAME', valueFn: (user: User) => user.name.first },
-    { name: 'gender', label: 'GENDER' },
-    { name: 'cell', label: 'CELL' },
-  ];
-  rightFooterFields: SPEntityFieldSpec<Invoice>[] = [
-    {
-      name: 'total',
-      label: 'TOTAL',
-      valueFn: (invoice: Invoice) => {
-        let total = 0;
-        invoice.items.forEach(
-          (item) => (total += item.unitPrice * item.quantity)
-        );
-        return spFormatCurrency(total) ?? '';
-      },
-    },
-  ];
   paginator = new MyPaginator();
 
   crudOpFn(
@@ -232,29 +205,5 @@ export class EntityCrudDemoComponent implements OnInit {
     console.log(
       `handleSelectEntity - user: ${user ? user.name.first : undefined}`
     );
-  }
-
-  getItems(entity: Invoice) {
-    return entity.items;
-    // return [
-    //   {
-    //     product: 'Management Fee',
-    //     quantity: '21',
-    //     unitPrice: '100',
-    //     total: '2100',
-    //   },
-    //   {
-    //     product: 'Carpark Fee',
-    //     quantity: '1',
-    //     unitPrice: '900',
-    //     total: '900',
-    //   },
-    //   {
-    //     product: 'Garbage Fee',
-    //     quantity: '1',
-    //     unitPrice: '300',
-    //     total: '300',
-    //   },
-    // ];
   }
 }
