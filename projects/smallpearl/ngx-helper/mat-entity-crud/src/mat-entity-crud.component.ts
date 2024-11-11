@@ -252,6 +252,22 @@ export class SPMatEntityCrudComponent<
   columnsWithAction = computed(() => {
     const cols: Array<SPMatEntityListColumn<TEntity, IdKey> | string> =
       JSON.parse(JSON.stringify(this.columns()));
+    // JSON.parse(JSON.strigify()) does not clone function objects. So
+    // explicitly copy these over. So this is really a shallow clone as
+    // the cloned objects still refers to the function objects in the original
+    // object.
+    this.columns().forEach((col, index: number, orgColumns) => {
+      const orgCol = orgColumns[index];
+      if (typeof orgCol !== 'string') {
+        const newColumn = (cols[index] as SPMatEntityListColumn<TEntity, IdKey>);
+        if (orgCol.valueFn) {
+          newColumn.valueFn = orgCol.valueFn;
+        }
+        if (orgCol.valueOptions) {
+          newColumn.valueOptions = orgCol.valueOptions;
+        }
+      }
+    });
     const actionDefined =
       cols.find((c) =>
         typeof c === 'string' ? c === 'action' : c.name === 'action'
