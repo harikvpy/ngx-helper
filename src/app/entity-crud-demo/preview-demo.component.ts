@@ -1,8 +1,7 @@
-import { Component, input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, input, OnInit } from '@angular/core';
+import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
+import { StationaryWithLineItemsComponent } from '@smallpearl/ngx-helper/stationary-with-line-items';
 import { Invoice } from './data';
-import { SPEntityFieldSpec, StationaryWithLineItemsComponent } from '@smallpearl/ngx-helper/stationary-with-line-items';
-import { spFormatCurrency } from '@smallpearl/ngx-helper/locale';
-import { SPMatEntityListColumn } from '@smallpearl/ngx-helper/mat-entity-list';
 
 @Component({
   standalone: true,
@@ -29,10 +28,7 @@ export class PreviewInvoiceComponent implements OnInit {
     { name: 'terms' },
     {
       name: 'balance',
-      valueFn: (spec: SPEntityFieldSpec<Invoice>, entity: Invoice) => {
-        if (spec.valueOptions?.class) {
-          spec.valueOptions.class += entity.balance > 0 ? 'text-red' : 'text-green';
-        }
+      valueFn: (entity: Invoice, cdr?: ChangeDetectorRef) => {
         return entity.balance;
       },
       valueOptions: { isCurrency: true, class: "text-larger " },
@@ -41,7 +37,7 @@ export class PreviewInvoiceComponent implements OnInit {
   invoicePreviewItemColumns: SPEntityFieldSpec<Invoice>[] = [
     {
       name: 'product',
-      valueFn: (spec: SPEntityFieldSpec<Invoice>, lineItem: any) => {
+      valueFn: (lineItem: any) => {
         return lineItem.productDetail.name
       },
     },
@@ -49,7 +45,7 @@ export class PreviewInvoiceComponent implements OnInit {
     { name: 'unitPrice' },
     {
       name: 'total',
-      valueFn: (spec: SPEntityFieldSpec<Invoice>, lineItem: any) => lineItem.quantity * lineItem.unitPrice,
+      valueFn: (lineItem: any) => lineItem.quantity * lineItem.unitPrice,
       valueOptions: { isCurrency: true, class: 'text-end' },
     },
   ];
@@ -57,7 +53,7 @@ export class PreviewInvoiceComponent implements OnInit {
     {
       name: 'total',
       label: 'TOTAL',
-      valueFn: (fs: SPEntityFieldSpec<Invoice>, invoice: Invoice) => {
+      valueFn: (invoice: Invoice) => {
         let total = 0;
         invoice.items.forEach(
           (item) => (total += item.unitPrice * item.quantity)

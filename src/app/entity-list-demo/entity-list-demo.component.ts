@@ -8,12 +8,12 @@ import { SPMatContextMenuComponent } from '@smallpearl/ngx-helper/mat-context-me
 import {
   COLUMN_VALUE_FN,
   SP_MAT_ENTITY_LIST_CONFIG,
-  SPMatEntityListColumn,
   SPMatEntityListComponent,
   SPMatEntityListConfig
 } from '@smallpearl/ngx-helper/mat-entity-list';
 import { MyPaginator } from './paginater';
 import { User } from './user';
+import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 
 function provideMatEntityListConfig(): SPMatEntityListConfig {
   return {
@@ -222,7 +222,7 @@ const ELEMENT_DATA: PeriodicElement[] = [
 export class EntityListDemoComponent implements OnInit, AfterViewInit {
 
   endpoint = 'https://randomuser.me/api/?nat=us,gb';
-  homoColumnDefs: SPMatEntityListColumn<User>[] = [
+  homoColumnDefs: SPEntityFieldSpec<User>[] = [
     { name: 'name', label: 'NAME', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
     { name: 'gender', label: 'GENDER' },
     { name: 'cell', label: 'CELL' },

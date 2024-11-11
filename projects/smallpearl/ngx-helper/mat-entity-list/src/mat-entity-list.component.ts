@@ -37,13 +37,13 @@ import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { finalize, Observable, Subscription, tap } from 'rxjs';
 import { DefaultSPMatEntityListConfig } from './config';
 import {
-  SPMatEntityListColumn,
   SPMatEntityListConfig,
   SPMatEntityListEntityLoaderFn,
   SPMatEntityListPaginator,
 } from './mat-entity-list-types';
 import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
 import { DomSanitizer } from '@angular/platform-browser';
+import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 
 /**
  * A component to display a list of entities loaded from remote.
@@ -192,13 +192,13 @@ export class SPMatEntityListComponent<
   entityLoaderFn = input<SPMatEntityListEntityLoaderFn | undefined>(undefined);
   /**
    * The columns of the entity to be displayed. This is an array of
-   * SPMatEntityListColumn objects. If there's a one-to-one mapping between the
+   * SPEntityFieldSpec objects. If there's a one-to-one mapping between the
    * column's field name, its title & the rendered value, a string can be
    * specified instead. That is, the value of this property is a heterogeneous
-   * array consisting of SPMatEntityListColumn<> objects and strings.
+   * array consisting of SPEntityFieldSpec<> objects and strings.
    */
   columns =
-    input.required<Array<SPMatEntityListColumn<TEntity, IdKey> | string>>();
+    input.required<Array<SPEntityFieldSpec<TEntity> | string>>();
 
   /**
    * Names of columns that are displayed. This will default to all the columns
@@ -287,14 +287,14 @@ export class SPMatEntityListComponent<
   );
   // Effective columns, derived from columns(), which can either be an array
   // of objects of array of strings.
-  _columns = computed<SPMatEntityListColumn<TEntity, IdKey>[]>(() => {
+  _columns = computed<SPEntityFieldSpec<TEntity>[]>(() => {
     const columns = this.columns();
-    let cols: SPMatEntityListColumn<TEntity, IdKey>[] = [];
+    let cols: SPEntityFieldSpec<TEntity>[] = [];
     columns.forEach((colDef) => {
       if (typeof colDef === 'string') {
         cols.push({ name: String(colDef) });
       } else if (typeof colDef === 'object') {
-        cols.push(colDef as SPMatEntityListColumn<TEntity, IdKey>);
+        cols.push(colDef as SPEntityFieldSpec<TEntity>);
       }
     });
     return cols;
@@ -483,7 +483,7 @@ export class SPMatEntityListComponent<
 
   getColumnValue(
     entity: TEntity,
-    column: SPMatEntityListColumn<TEntity, IdKey>
+    column: SPEntityFieldSpec<TEntity>
   ) {
     let val = undefined;
     if (!column.valueFn) {
@@ -506,7 +506,7 @@ export class SPMatEntityListComponent<
     return val;
   }
 
-  getColumnLabel(column: SPMatEntityListColumn<TEntity, IdKey>) {
+  getColumnLabel(column: SPEntityFieldSpec<TEntity>) {
     return this.config && this.config?.i18nTranslate
       ? this.config.i18nTranslate(column?.label || column.name)
       : column?.label || column.name;

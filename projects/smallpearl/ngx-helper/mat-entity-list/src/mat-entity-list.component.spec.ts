@@ -6,9 +6,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatTableModule } from '@angular/material/table';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
-import { COLUMN_VALUE_FN, SPMatEntityListColumn, SPMatEntityListConfig, SPMatEntityListPaginator } from './mat-entity-list-types';
+import { COLUMN_VALUE_FN, SPMatEntityListConfig, SPMatEntityListPaginator } from './mat-entity-list-types';
 import { SPMatEntityListComponent } from './mat-entity-list.component';
 import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
+import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 
 interface User {
   name: { title: string, first: string, last: string },
@@ -65,7 +66,7 @@ class SPMatEntityListTestComponent implements OnInit {
 
   displayedColumns = signal<string[]>([]);
   endpoint = 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb';
-  columns: SPMatEntityListColumn<User, 'cell'>[] = [
+  columns: SPEntityFieldSpec<User>[] = [
     { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
     { name: 'gender' },
     { name: 'cell' },

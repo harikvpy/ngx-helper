@@ -32,10 +32,10 @@ import {
 } from '@smallpearl/ngx-helper/mat-context-menu';
 import {
   SP_MAT_ENTITY_LIST_CONFIG,
-  SPMatEntityListColumn,
   SPMatEntityListComponent,
   SPMatEntityListConfig,
 } from '@smallpearl/ngx-helper/mat-entity-list';
+
 import { AngularSplitModule } from 'angular-split';
 import { Observable, Subscription, tap } from 'rxjs';
 import { getConfig } from './default-config';
@@ -45,6 +45,7 @@ import { CRUD_OP_FN, SPMatEntityCrudConfig } from './mat-entity-crud-types';
 import { PreviewHostComponent } from './preview-host.component';
 import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
 import { DomSanitizer } from '@angular/platform-browser';
+import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 
 @Component({
   standalone: true,
@@ -250,7 +251,7 @@ export class SPMatEntityCrudComponent<
 
   defaultItemCrudActions = signal<SPContextMenuItem[]>([]);
   columnsWithAction = computed(() => {
-    const cols: Array<SPMatEntityListColumn<TEntity, IdKey> | string> =
+    const cols: Array<SPEntityFieldSpec<TEntity> | string> =
       JSON.parse(JSON.stringify(this.columns()));
     // JSON.parse(JSON.strigify()) does not clone function objects. So
     // explicitly copy these over. So this is really a shallow clone as
@@ -259,7 +260,7 @@ export class SPMatEntityCrudComponent<
     this.columns().forEach((col, index: number, orgColumns) => {
       const orgCol = orgColumns[index];
       if (typeof orgCol !== 'string') {
-        const newColumn = (cols[index] as SPMatEntityListColumn<TEntity, IdKey>);
+        const newColumn = (cols[index] as SPEntityFieldSpec<TEntity>);
         if (orgCol.valueFn) {
           newColumn.valueFn = orgCol.valueFn;
         }

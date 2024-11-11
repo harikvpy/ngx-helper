@@ -14,7 +14,6 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { SPContextMenuItem } from '@smallpearl/ngx-helper/mat-context-menu';
 import {
-  SPMatEntityListColumn,
   SPMatEntityListComponent,
   SPMatEntityListPaginator,
 } from '@smallpearl/ngx-helper/mat-entity-list';
@@ -23,6 +22,7 @@ import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
 import { SPMatEntityCrudComponent } from './mat-entity-crud.component';
 import { SPMatEntityCrudPreviewPaneComponent } from './preview-pane.component';
 import { getEntitiesCount } from '@ngneat/elf-entities';
+import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 
 interface User {
   name: { title: string; first: string; last: string };
@@ -89,7 +89,7 @@ const USER_DATA: User[] = [
   },
 ];
 
-const USER_COLUMNS: SPMatEntityListColumn<User, 'cell'>[] = [
+const USER_COLUMNS: SPEntityFieldSpec<User>[] = [
   {
     name: 'name',
     valueFn: (user: User) => user.name.first + ' ' + user.name.last,

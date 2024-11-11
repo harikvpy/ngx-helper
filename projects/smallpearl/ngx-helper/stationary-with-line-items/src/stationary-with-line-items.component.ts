@@ -1,7 +1,7 @@
 import { CommonModule, UpperCasePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, OnInit, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, input, OnInit, TemplateRef } from '@angular/core';
 import { getNgxHelperConfig } from '@smallpearl/ngx-helper/core';
-import { SPEntityField, SPEntityFieldSpec } from './stationary-types';
+import { SPEntityField, SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 
 
 @Component({
@@ -97,7 +97,7 @@ export class FieldsRendererComponent<TEntity> implements OnInit {
 
   ngxHelperConfig = getNgxHelperConfig();
 
-  constructor() {}
+  constructor(public cdr: ChangeDetectorRef) {}
 
   ngOnInit() {}
 }

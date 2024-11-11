@@ -18,7 +18,6 @@ import {
   SPMatEntityCrudComponent,
   SPMatEntityCrudConfig,
 } from '@smallpearl/ngx-helper/mat-entity-crud';
-import { SPMatEntityListColumn } from '@smallpearl/ngx-helper/mat-entity-list';
 import { of } from 'rxjs';
 import { SPMatEntityCrudPreviewPaneComponent } from '../../../projects/smallpearl/ngx-helper/mat-entity-crud/src/preview-pane.component';
 import { MyPaginator } from '../entity-list-demo/paginater';
@@ -26,6 +25,7 @@ import { User } from '../entity-list-demo/user';
 import { CreateEditEntityDemoComponent } from './create-edit-entity-demo.component';
 import { Invoice, INVOICES } from './data';
 import { PreviewInvoiceComponent } from './preview-demo.component';
+import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 
 const EntityCrudConfig: SPMatEntityCrudConfig = {
   i18n: {
@@ -103,7 +103,7 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
 })
 export class EntityCrudDemoComponent implements OnInit {
   userEndpoint = 'https://randomuser.me/api/?nat=us,gb';
-  userColumns: SPMatEntityListColumn<User>[] = [
+  userColumns: SPEntityFieldSpec<User>[] = [
     { name: 'name', label: 'NAME', valueFn: (user: User) => user.name.first },
     { name: 'gender', label: 'GENDER' },
     { name: 'cell', label: 'CELL' },
@@ -111,7 +111,7 @@ export class EntityCrudDemoComponent implements OnInit {
 
   invoicesLoaderFn = (params: any) =>
     of({ count: 2, next: null, previous: null, results: INVOICES });
-  invoiceColumns: SPMatEntityListColumn<Invoice>[] = [
+  invoiceColumns: SPEntityFieldSpec<Invoice>[] = [
     { name: 'id' },
     { name: 'date' },
     { name: 'customer', valueFn: (item: Invoice) => item.customerDetail.name },
