@@ -1,4 +1,4 @@
-import { getNgxHelperConfig } from "@smallpearl/ngx-helper/core";
+import { getNgxHelperConfig, SPNgxHelperConfig } from "@smallpearl/ngx-helper/core";
 import { spFormatCurrency, spFormatDate, SPIntlDateFormat } from "@smallpearl/ngx-helper/locale";
 
 /**
@@ -20,17 +20,18 @@ export type SPEntityFieldSpec<TEntity> = {
                             // spFormatCurrency() using the current currency or
                             // numberCurrency.
     numberCurrency?: string; // currency code
-    alignment?: 'start'|'center'|'end';     // defaults to inherit
+    class?: string;   // css class name, if provided will be applied to field
+                      // value's wrapper element.
   };
   // If the column value cannot be derived by simple TEntity[name] lookup,
   // use this function to return a custom computed or formatted value.
-  valueFn?: (item: TEntity) => string|number|Date|boolean;
+  valueFn?: (fieldSpec: SPEntityFieldSpec<TEntity>, item: TEntity, ) => string|number|Date|boolean;
 }
 
 export class SPEntityField<TEntity> {
   public fieldSpec!: SPEntityFieldSpec<TEntity>;
 
-  constructor(spec: SPEntityFieldSpec<TEntity>|string) {
+  constructor(spec: SPEntityFieldSpec<TEntity>|string, public config: SPNgxHelperConfig) {
     if (typeof spec === 'string') {
       this.fieldSpec = {
         name: spec
@@ -41,8 +42,7 @@ export class SPEntityField<TEntity> {
   }
 
   label() {
-    const config = getNgxHelperConfig();
-    return config.i18nTranslate(
+    return this.config.i18nTranslate(
       this.fieldSpec.label ?? this.fieldSpec.name
     );
   }
@@ -52,15 +52,19 @@ export class SPEntityField<TEntity> {
     if (!this.fieldSpec.valueFn) {
       val = (entity as any)[this.fieldSpec.name];
     } else {
-      val = this.fieldSpec.valueFn(entity);
+      val = this.fieldSpec.valueFn(this.fieldSpec, entity);
     }
     if (val instanceof Date) {
-      return spFormatDate(val);
+      val = spFormatDate(val);
     } else if (typeof val === 'number' && this.fieldSpec?.valueOptions?.isCurrency) {
-      return spFormatCurrency(val, this.fieldSpec?.valueOptions?.numberCurrency)
+      val = spFormatCurrency(val, this.fieldSpec?.valueOptions?.numberCurrency)
     } else if (typeof val === 'boolean') {
-      return val ? '✔' : '✖';
+      val = val ? '✔' : '✖';
     }
     return val;
+  }
+
+  get class() {
+    return this.fieldSpec?.valueOptions?.class ?? '';
   }
 }

@@ -139,3 +139,18 @@ $my-theme: mat.define-light-theme((
 .sp-mat-crud-preview-pane-content-class {
   padding: 0.4em;
 }
+.text-end {
+  text-align: end;
+}
+.text-bold {
+  font-weight: bold;
+}
+.text-larger {
+  font-size: larger;
+}
+.text-green {
+  color: darkgreen;
+}
+.text-red {
+  color: darkred;
+}

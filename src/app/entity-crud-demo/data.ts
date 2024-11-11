@@ -94,6 +94,6 @@ export const INVOICES: Invoice[] = [
         quantity: 1,
       }
     ],
-    balance: 900
+    balance: 0
   }
 ];

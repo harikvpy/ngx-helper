@@ -1,9 +1,7 @@
-import { UpperCasePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, OnInit } from '@angular/core';
+import { CommonModule, UpperCasePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, input, OnInit, TemplateRef } from '@angular/core';
 import { getNgxHelperConfig } from '@smallpearl/ngx-helper/core';
-import { spFormatDate } from '@smallpearl/ngx-helper/locale';
-import { spFormatCurrency } from '@smallpearl/ngx-helper/locale';
-import { SPEntityFieldSpec } from './stationary-types';
+import { SPEntityField, SPEntityFieldSpec } from './stationary-types';
 
 
 @Component({
@@ -59,21 +57,15 @@ export class StringOrObjectRendererComponent implements OnInit {
       <div class="">
         <table>
           <tbody>
-          @for (field of namedFields(); track $index) {
+            @for (field of fields(); track $index) {
             <tr>
-              <td>{{ getFieldLabel(field) }}&colon;</td>
-              <td>{{ getFieldValue(field) }}</td>
+              <td [class]="field.class">{{ field.label() }}&colon;</td>
+              <td [class]="field.class">{{ field.value(entity()) }}</td>
             </tr>
-          }
+            }
           </tbody>
         </table>
       </div>
-      <!-- @for (field of namedFields(); track $index) {
-        <div class="field-values">
-            {{ getFieldLabel(field) }}&colon;&nbsp;&nbsp;&nbsp;&nbsp;
-            {{ getFieldValue(field) }}
-        </div>
-      } -->
     }
   `,
   styles: `
@@ -85,31 +77,13 @@ export class StringOrObjectRendererComponent implements OnInit {
     padding-right: 1em;
   }
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FieldsRendererComponent<
-  TEntity extends { [P in IdKey]: PropertyKey },
-  IdKey extends string = 'id'
-> implements OnInit {
+export class FieldsRendererComponent<TEntity> implements OnInit {
   entity = input.required<TEntity>();
-  fields = input.required<Array<SPEntityFieldSpec<TEntity> | string>|string|undefined>();
-  namedFields = computed<SPEntityFieldSpec<TEntity>[]>(() => {
-    const fields = this.fields();
-    let cols: SPEntityFieldSpec<TEntity>[] = [];
-    if (fields && typeof fields !== 'string') {
-      fields.forEach((colDef) => {
-        if (typeof colDef === 'string') {
-          cols.push({ name: String(colDef) });
-        } else if (typeof colDef === 'object') {
-          cols.push(colDef as SPEntityFieldSpec<TEntity>);
-        }
-      });
-    }
-    return cols;
-  });
+  fields = input.required<SPEntityField<TEntity>[]>();
 
   isString = computed(() => typeof this.fields() === 'string');
-
   // If the field is a single string, looks up entity's properties
   // for matching field name as the string and if it doesn't exist returns
   // the string itself as the value.
@@ -119,48 +93,13 @@ export class FieldsRendererComponent<
       return (this.entity() as any)[fields] ?? fields;
     }
     return '';
-  })
+  });
 
   ngxHelperConfig = getNgxHelperConfig();
 
-  constructor() {
-  }
+  constructor() {}
 
-  ngOnInit() { }
-
-  getFieldLabel(field: SPEntityFieldSpec<TEntity>) {
-    const label = field?.label ? field.label : field.name;
-    return this.ngxHelperConfig && this.ngxHelperConfig?.i18nTranslate
-      ? this.ngxHelperConfig?.i18nTranslate(label)
-      : label;
-  }
-
-  getFieldValue(
-    column: SPEntityFieldSpec<TEntity>
-  ) {
-    let val = undefined;
-    if (!column.valueFn) {
-      // if (
-      //   this.config?.columnValueFns &&
-      //   this.config.columnValueFns.has(column.name)
-      // ) {
-      //   val = this.config.columnValueFns.get(column.name)!(entity, column.name);
-      // } else {
-      //   val = (entity as any)[column.name];
-      // }
-      val = (this.entity() as any)[column.name];
-    } else {
-      val = column.valueFn(this.entity());
-    }
-    if (val instanceof Date) {
-      return spFormatDate(val);
-    } else if (typeof val === 'number' && column?.valueOptions?.isCurrency) {
-      return spFormatCurrency(val, column?.valueOptions?.numberCurrency)
-    } else if (typeof val === 'boolean') {
-      return val ? '✔' : '✖';
-    }
-    return val;
-  }
+  ngOnInit() {}
 }
 
 /**
@@ -181,8 +120,8 @@ export class FieldsRendererComponent<
 @Component({
   standalone: true,
   imports: [
+    CommonModule,
     UpperCasePipe,
-    // StringOrObjectRendererComponent,
     FieldsRendererComponent
 ],
   selector: 'sp-stationary-with-line-items',
@@ -194,33 +133,46 @@ export class FieldsRendererComponent<
     }
     <div class="header">
       <div class="left-header">
-        @if (leftHeader()) {
-          <sp-fields-renderer
-            [entity]="entity()"
-            [fields]="leftHeader()"
-          ></sp-fields-renderer>
-          <!-- <sp-string-or-object-renderer
-            [value]="leftHeader()"
-          ></sp-string-or-object-renderer> -->
+        @if (leftHeaderTemplate()) {
+          <ng-container *ngTemplateOutlet="leftHeaderTemplate() ?? null"></ng-container>
+        } @else {
+          @if (leftHeader()) {
+            @if (isString(leftHeader())) {
+              {{ leftHeader() }}
+            } @else {
+              <sp-fields-renderer
+                [entity]="entity()"
+                [fields]="_leftHeaderFields()"
+              ></sp-fields-renderer>
+            }
+          }
         }
       </div>
       <div class="right-header">
-        @if (rightHeader()) {
-          <sp-fields-renderer
-            [entity]="entity()"
-            [fields]="rightHeader()"
-          ></sp-fields-renderer>
+        @if (rightHeaderTemplate()) {
+          <ng-container *ngTemplateOutlet="rightHeaderTemplate() ?? null"></ng-container>
+        } @else {
+          @if (rightHeader()) {
+            @if (isString(rightHeader())) {
+              {{ rightHeader() }}
+            } @else {
+              <sp-fields-renderer
+                [entity]="entity()"
+                [fields]="_rightHeaderFields()"
+              ></sp-fields-renderer>
+            }
+          }
         }
       </div>
     </div> <!-- end <div class="header"> -->
 
     <!-- items -->
-    @if (itemColumns()) {
+    @if (itemColumnFields()) {
       <div class="items">
         <table>
           <thead>
-            @for (col of _itemColumns(); track $index) {
-              <th>{{ getColumnLabel(col) | uppercase }}</th>
+            @for (field of _itemColumnFields(); track $index) {
+              <th [class]="field.class">{{ field.label() | uppercase }}</th>
             }
           </thead>
           <tbody>
@@ -228,8 +180,8 @@ export class FieldsRendererComponent<
           specified columns for each. -->
             @for (row of _items(); track $index) {
               <tr>
-              @for (col of _itemColumns(); track $index) {
-                <td [innerHtml]="getItemColumnValue(row, col)"></td>
+              @for (field of _itemColumnFields(); track $index) {
+                <td [class]="field.class" [innerHtml]="field.value(row)"></td>
               }
               </tr>
             }
@@ -238,28 +190,39 @@ export class FieldsRendererComponent<
       </div>
     }
     <!-- end items -->
+
     <!-- footer -->
     <div class="footer">
       <div class="left-footer">
-        @if (leftFooter()) {
-          <sp-fields-renderer
-            [entity]="entity()"
-            [fields]="leftFooter()"
-          ></sp-fields-renderer>
-          <!-- <sp-string-or-object-renderer
-            [value]="leftFooter()"
-          ></sp-string-or-object-renderer> -->
+        @if (leftFooterTemplate()) {
+          <ng-container *ngTemplateOutlet="leftFooterTemplate() ?? null"></ng-container>
+        } @else {
+          @if (leftFooter()) {
+            @if (isString(leftFooter())) {
+              {{ leftFooter() }}
+            } @else {
+              <sp-fields-renderer
+                [entity]="entity()"
+                [fields]="_leftFooterFields()"
+              ></sp-fields-renderer>
+            }
+          }
         }
       </div>
       <div class="right-footer">
-        @if (rightFooter()) {
-          <sp-fields-renderer
-            [entity]="entity()"
-            [fields]="rightFooter()"
-          ></sp-fields-renderer>
-          <!-- <sp-string-or-object-renderer
-            [value]="rightFooter()"
-          ></sp-string-or-object-renderer> -->
+        @if (rightFooterTemplate()) {
+          <ng-container *ngTemplateOutlet="rightFooterTemplate() ?? null"></ng-container>
+        } @else {
+          @if (rightFooter()) {
+            @if (isString(rightFooter())) {
+              {{ rightFooter() }}
+            } @else {
+              <sp-fields-renderer
+                [entity]="entity()"
+                [fields]="_rightFooterFields()"
+              ></sp-fields-renderer>
+            }
+          }
         }
       </div>
     </div>
@@ -316,8 +279,7 @@ export class FieldsRendererComponent<
     }
   }
   .items table td {
-    padding: 0.9em;
-    padding-left: 0.4em;
+    padding: 0.8em 0.4em;
     border-bottom: 1px solid lightgray;
     border-right: 0px solid lightgray
   }
@@ -334,30 +296,29 @@ export class StationaryWithLineItemsComponent<
   entity = input.required<TEntity>();
   title = input.required<string>();
   number = input<string|number>();
+
   leftHeader = input<Array<SPEntityFieldSpec<TEntity> | string>|string>();
+  _leftHeaderFields = computed(() => this.getSPEntityFields(this.leftHeader()));
+  leftHeaderTemplate = input<TemplateRef<any>>();
+
   rightHeader = input<Array<SPEntityFieldSpec<TEntity> | string>|string>();
+  _rightHeaderFields = computed(() => this.getSPEntityFields(this.rightHeader()));
+  rightHeaderTemplate = input<TemplateRef<any>>();
 
   items = input<{[key: string]: string}[]>();
 
   leftFooter = input<Array<SPEntityFieldSpec<TEntity> | string>|string>();
+  _leftFooterFields = computed(() => this.getSPEntityFields(this.leftFooter()));
+  leftFooterTemplate = input<TemplateRef<any>>();
+
   rightFooter = input<Array<SPEntityFieldSpec<TEntity> | string>|string>();
+  _rightFooterFields = computed(() => this.getSPEntityFields(this.rightFooter()));
+  rightFooterTemplate = input<TemplateRef<any>>();
 
   itemFieldName = input<string>('items');
-  itemColumns = input<Array<SPEntityFieldSpec<TEntity> | string>>();
-  _itemColumns = computed<SPEntityFieldSpec<TEntity>[]>(() => {
-    let cols: SPEntityFieldSpec<TEntity>[] = [];
-    const columns = this.itemColumns();
-    if (columns) {
-      columns.forEach((colDef) => {
-        if (typeof colDef === 'string') {
-          cols.push({ name: String(colDef) });
-        } else if (typeof colDef === 'object') {
-          cols.push(colDef as SPEntityFieldSpec<TEntity>);
-        }
-      });
-    }
-    return cols;
-  });
+  itemColumnFields = input<Array<SPEntityFieldSpec<TEntity> | string>>();
+  _itemColumnFields = computed(() => this.getSPEntityFields(this.itemColumnFields()));
+
   _items = computed(() => (this.entity() as any)[this.itemFieldName()]);
 
   ngxHelperConfig = getNgxHelperConfig();
@@ -366,55 +327,14 @@ export class StationaryWithLineItemsComponent<
 
   ngOnInit() {}
 
-  getColumnLabel(column: SPEntityFieldSpec<TEntity>) {
-    return this.ngxHelperConfig && this.ngxHelperConfig?.i18nTranslate
-      ? this.ngxHelperConfig.i18nTranslate(column?.label || column.name)
-      : column?.label || column.name;
+  isString(value: any) {
+    return typeof value === 'string';
   }
 
-  getColumnValue(
-    entity: any,
-    column: SPEntityFieldSpec<TEntity>
-  ) {
-    let val = undefined;
-    if (!column.valueFn) {
-      // if (
-      //   this.config?.columnValueFns &&
-      //   this.config.columnValueFns.has(column.name)
-      // ) {
-      //   val = this.config.columnValueFns.get(column.name)!(entity, column.name);
-      // } else {
-      //   val = (entity as any)[column.name];
-      // }
-      val = (entity as any)[column.name];
-    } else {
-      val = column.valueFn(entity);
+  getSPEntityFields(fieldSpecs: Array<SPEntityFieldSpec<TEntity> | string>|string|undefined): Array<SPEntityField<TEntity>> {
+    if (fieldSpecs && typeof fieldSpecs !== 'string') {
+      return fieldSpecs.map(spec => new SPEntityField<TEntity>(spec, this.ngxHelperConfig));
     }
-    if (val instanceof Date) {
-      return spFormatDate(val);
-    } else if (typeof val === 'boolean') {
-      return val ? '✔' : '✖';
-    }
-    return val;
-  }
-
-  getItemColumnValue(
-    itemEntity: any,
-    column: SPEntityFieldSpec<TEntity>
-  ) {
-    let val = undefined;
-    if (!column.valueFn) {
-      val = (itemEntity as any)[column.name];
-    } else {
-      val = column.valueFn(itemEntity);
-    }
-    if (val instanceof Date) {
-      return spFormatDate(val);
-    } else if (typeof val === 'number' && column?.valueOptions?.isCurrency) {
-      return spFormatCurrency(val, column?.valueOptions?.numberCurrency)
-    } else if (typeof val === 'boolean') {
-      return val ? '✔' : '✖';
-    }
-    return val;
+    return [];
   }
 }

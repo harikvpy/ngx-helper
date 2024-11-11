@@ -78,13 +78,6 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
         [previewTemplate]="userPreview"
         matSort
       >
-        <!-- <ng-container matColumnDef="name">
-          <th mat-header-cell mat-sort-header *matHeaderCellDef>FULL NAME</th>
-          <td mat-cell *matCellDef="let element">
-            {{ element.name.title }}. {{ element.name.first }}
-            {{ element.name.last }}
-          </td>
-        </ng-container> -->
       </sp-mat-entity-crud>
     </div>
     <ng-template #createEdit let-data>
@@ -105,8 +98,6 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
         ></app-invoice-preview>
       </sp-mat-entity-crud-preview-pane>
     </ng-template>
-  `,
-  styles: `
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
