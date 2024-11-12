@@ -13,7 +13,7 @@ import {
 } from '@smallpearl/ngx-helper/mat-entity-list';
 import { MyPaginator } from './paginater';
 import { User } from './user';
-import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
+import { FIELD_VALUE_FN, SP_ENTITY_FIELD_CONFIG, SPEntityFieldConfig, SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 
 function provideMatEntityListConfig(): SPMatEntityListConfig {
   return {
@@ -25,15 +25,20 @@ function provideMatEntityListConfig(): SPMatEntityListConfig {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
     i18nTranslate: (label: string, context?: any) => {
       return label;
-    },
-    columnValueFns: new Map<string, COLUMN_VALUE_FN>([
+    }
+  };
+}
+
+function provideEntityFieldConfig(): SPEntityFieldConfig {
+  return {
+    fieldValueFns: new Map<string, FIELD_VALUE_FN>([
       [
         'gender',
-        (entity: User, column: string) =>
-          entity.gender === 'female' ? `<div class="text-danger fs-6">പെണ്ണ്</div>` : 'ആണ്',
+        (entity: User, fieldName: string) =>
+          entity.gender === 'female' ? `<div class="text-danger fs-6">പെണ്ണ്</div>` : 'ആണ്'
       ],
     ]),
-  };
+  }
 }
 
 const USER_DATA: User[] = [
@@ -84,6 +89,10 @@ const ELEMENT_DATA: PeriodicElement[] = [
     {
       provide: SP_MAT_ENTITY_LIST_CONFIG,
       useFactory: provideMatEntityListConfig
+    },
+    {
+      provide: SP_ENTITY_FIELD_CONFIG,
+      useFactory: provideEntityFieldConfig
     }
   ],
   selector: 'app-entity-list-demo',

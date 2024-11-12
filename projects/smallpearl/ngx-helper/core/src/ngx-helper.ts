@@ -19,5 +19,3 @@ export function getNgxHelperConfig(): SPNgxHelperConfig {
     ...(helperConfig ?? {}),
   }
 }
-
-export const VERSION = '0.1.0';

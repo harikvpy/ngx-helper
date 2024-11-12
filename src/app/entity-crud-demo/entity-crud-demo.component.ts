@@ -99,6 +99,12 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
       </sp-mat-entity-crud-preview-pane>
     </ng-template>
   `,
+  styles: `
+    :host ::ng-deep .text-end .mat-sort-header-container {
+      display: flex;
+      justify-content: end;
+    }
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EntityCrudDemoComponent implements OnInit {
@@ -119,6 +125,7 @@ export class EntityCrudDemoComponent implements OnInit {
     {
       name: 'balance',
       valueFn: (item: Invoice) => spFormatCurrency(item.balance) ?? '',
+      valueOptions: { class: 'text-end' }
     },
   ];
   itemActions: SPContextMenuItem[] = [

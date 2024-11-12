@@ -8,6 +8,7 @@ import {
   ContentChildren,
   effect,
   EventEmitter,
+  inject,
   Inject,
   input,
   OnDestroy,
@@ -30,9 +31,11 @@ import {
   MatTableDataSource,
   MatTableModule,
 } from '@angular/material/table';
+import { DomSanitizer } from '@angular/platform-browser';
 import { createStore } from '@ngneat/elf';
 import { addEntities, deleteEntities, getEntitiesCount, hasEntity, selectAllEntities, updateEntities, upsertEntities, withEntities } from '@ngneat/elf-entities';
-import { spFormatDate } from '@smallpearl/ngx-helper/locale';
+import { getNgxHelperConfig } from '@smallpearl/ngx-helper/core';
+import { SP_ENTITY_FIELD_CONFIG, SPEntityField, SPEntityFieldConfig, SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { finalize, Observable, Subscription, tap } from 'rxjs';
 import { DefaultSPMatEntityListConfig } from './config';
@@ -42,8 +45,6 @@ import {
   SPMatEntityListPaginator,
 } from './mat-entity-list-types';
 import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
-import { DomSanitizer } from '@angular/platform-browser';
-import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 
 /**
  * A component to display a list of entities loaded from remote.
@@ -112,21 +113,22 @@ import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
     <!-- We keep the column definitions outside the <table> so that they can
     be dynamically added to the MatTable. -->
     <span matSort="sorter()">
-      @for (column of _columns(); track $index) {
-      <ng-container [matColumnDef]="column.name">
+      @for (column of __columns(); track $index) {
+      <ng-container [matColumnDef]="column.spec.name">
         @if (disableSort()) {
-        <th mat-header-cell *matHeaderCellDef>
-          {{ getColumnLabel(column) }}
+        <th [class]="column.class" mat-header-cell *matHeaderCellDef>
+          {{ column.label() }}
         </th>
         } @else {
-        <th mat-header-cell mat-sort-header *matHeaderCellDef>
-          {{ getColumnLabel(column) }}
+        <th [class]="column.class" mat-header-cell mat-sort-header *matHeaderCellDef>
+          {{ column.label() }}
         </th>
         }
         <td
+          [class]="column.class"
           mat-cell
           *matCellDef="let element"
-          [innerHtml]="getColumnValue(element, column)"
+          [innerHtml]="column.value(element)"
         ></td>
       </ng-container>
       }
@@ -137,40 +139,39 @@ import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
       </div>
     </ng-template>
   `,
-  styles: [
-    `
-      .entities-list-wrapper {
-        position: relative;
-      }
-      .busy-overlay {
-        display: none;
-        height: 100%;
-        width: 100%;
-        position: absolute;
-        top: 0px;
-        left: 0px;
-        z-index: 1000;
-        opacity: 0.6;
-        background-color: transparent;
-      }
-      .show {
-        display: block;
-      }
-      .busy-spinner {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .infinite-scroll-loading {
-        display: none;
-        width: 100%;
-        padding: 8px;
-      }
-      .active-row {
-        font-weight: bold;
-      }
+  styles: [`
+    .entities-list-wrapper {
+      position: relative;
+    }
+    .busy-overlay {
+      display: none;
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      z-index: 1000;
+      opacity: 0.6;
+      background-color: transparent;
+    }
+    .show {
+      display: block;
+    }
+    .busy-spinner {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .infinite-scroll-loading {
+      display: none;
+      width: 100%;
+      padding: 8px;
+    }
+    .active-row {
+      font-weight: bold;
+    }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -289,8 +290,10 @@ export class SPMatEntityListComponent<
   // of objects of array of strings.
   _columns = computed<SPEntityFieldSpec<TEntity>[]>(() => {
     const columns = this.columns();
+    let fields: SPEntityField<TEntity>[] = [];
     let cols: SPEntityFieldSpec<TEntity>[] = [];
     columns.forEach((colDef) => {
+      // fields.push(new SPEntityField(colDef))
       if (typeof colDef === 'string') {
         cols.push({ name: String(colDef) });
       } else if (typeof colDef === 'object') {
@@ -299,6 +302,11 @@ export class SPMatEntityListComponent<
     });
     return cols;
   });
+
+  __columns = computed<SPEntityField<TEntity>[]>(() =>
+    this.columns().map((colDef) => new SPEntityField<TEntity>(colDef, this.ngxHelperConfig, this.fieldConfig))
+  );
+
   // We isolate retrieving items from the remote and providing the items
   // to the component into two distinct operations. The retrieval operation
   // retrieves data asynchronously and then stores the data in a local store.
@@ -360,6 +368,9 @@ export class SPMatEntityListComponent<
   });
   @Output() selectEntity = new EventEmitter<TEntity | undefined>();
 
+  ngxHelperConfig = getNgxHelperConfig();
+  fieldConfig!: SPEntityFieldConfig;
+
   constructor(
     protected http: HttpClient,
     @Optional()
@@ -370,6 +381,7 @@ export class SPMatEntityListComponent<
     if (!this.config) {
       this.config = new DefaultSPMatEntityListConfig();
     }
+    this.fieldConfig = inject(SP_ENTITY_FIELD_CONFIG, {optional: true})!;
   }
 
   ngOnInit() {
@@ -481,36 +493,36 @@ export class SPMatEntityListComponent<
     }
   }
 
-  getColumnValue(
-    entity: TEntity,
-    column: SPEntityFieldSpec<TEntity>
-  ) {
-    let val = undefined;
-    if (!column.valueFn) {
-      if (
-        this.config?.columnValueFns &&
-        this.config.columnValueFns.has(column.name)
-      ) {
-        val = this.config.columnValueFns.get(column.name)!(entity, column.name);
-      } else {
-        val = (entity as any)[column.name];
-      }
-    } else {
-      val = column.valueFn(entity);
-    }
-    if (val instanceof Date) {
-      return spFormatDate(val);
-    } else if (typeof val === 'boolean') {
-      return val ? '✔' : '✖';
-    }
-    return val;
-  }
+  // getColumnValue(
+  //   entity: TEntity,
+  //   column: SPEntityFieldSpec<TEntity>
+  // ) {
+  //   let val = undefined;
+  //   if (!column.valueFn) {
+  //     if (
+  //       this.config?.columnValueFns &&
+  //       this.config.columnValueFns.has(column.name)
+  //     ) {
+  //       val = this.config.columnValueFns.get(column.name)!(entity, column.name);
+  //     } else {
+  //       val = (entity as any)[column.name];
+  //     }
+  //   } else {
+  //     val = column.valueFn(entity);
+  //   }
+  //   if (val instanceof Date) {
+  //     return spFormatDate(val);
+  //   } else if (typeof val === 'boolean') {
+  //     return val ? '✔' : '✖';
+  //   }
+  //   return val;
+  // }
 
-  getColumnLabel(column: SPEntityFieldSpec<TEntity>) {
-    return this.config && this.config?.i18nTranslate
-      ? this.config.i18nTranslate(column?.label || column.name)
-      : column?.label || column.name;
-  }
+  // getColumnLabel(column: SPEntityFieldSpec<TEntity>) {
+  //   return this.config && this.config?.i18nTranslate
+  //     ? this.config.i18nTranslate(column?.label || column.name)
+  //     : column?.label || column.name;
+  // }
 
   /**
    * Build the contentColumnDefs array by enumerating all of client's projected
