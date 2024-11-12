@@ -1,7 +1,7 @@
 import { CommonModule, UpperCasePipe } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, input, OnInit, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, input, OnInit, TemplateRef } from '@angular/core';
 import { getNgxHelperConfig } from '@smallpearl/ngx-helper/core';
-import { SPEntityField, SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
+import { SP_ENTITY_FIELD_CONFIG, SPEntityField, SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 
 
 @Component({
@@ -172,7 +172,7 @@ export class FieldsRendererComponent<TEntity> implements OnInit {
         <table>
           <thead>
             @for (field of _itemColumnFields(); track $index) {
-              <th [class]="field.class">{{ field.label() | uppercase }}</th>
+              <th [class]="field.class" [style.text-align]="field.spec.valueOptions?.alignment">{{ field.label() | uppercase }}</th>
             }
           </thead>
           <tbody>
@@ -181,7 +181,7 @@ export class FieldsRendererComponent<TEntity> implements OnInit {
             @for (row of _items(); track $index) {
               <tr>
               @for (field of _itemColumnFields(); track $index) {
-                <td [class]="field.class" [innerHtml]="field.value(row)"></td>
+                <td [class]="field.class" [style.text-align]="field.spec.valueOptions?.alignment" [innerHtml]="field.value(row)"></td>
               }
               </tr>
             }
@@ -316,12 +316,13 @@ export class StationaryWithLineItemsComponent<
   rightFooterTemplate = input<TemplateRef<any>>();
 
   itemFieldName = input<string>('items');
-  itemColumnFields = input<Array<SPEntityFieldSpec<TEntity> | string>>();
+  itemColumnFields = input<Array<SPEntityFieldSpec<any> | string>>();
   _itemColumnFields = computed(() => this.getSPEntityFields(this.itemColumnFields()));
 
   _items = computed(() => (this.entity() as any)[this.itemFieldName()]);
 
   ngxHelperConfig = getNgxHelperConfig();
+  ngxEntityFieldConfig = inject(SP_ENTITY_FIELD_CONFIG, { optional: true })!;
 
   constructor() {}
 
@@ -333,7 +334,7 @@ export class StationaryWithLineItemsComponent<
 
   getSPEntityFields(fieldSpecs: Array<SPEntityFieldSpec<TEntity> | string>|string|undefined): Array<SPEntityField<TEntity>> {
     if (fieldSpecs && typeof fieldSpecs !== 'string') {
-      return fieldSpecs.map(spec => new SPEntityField<TEntity>(spec, this.ngxHelperConfig));
+      return fieldSpecs.map(spec => new SPEntityField<TEntity>(spec, this.ngxHelperConfig, this.ngxEntityFieldConfig));
     }
     return [];
   }

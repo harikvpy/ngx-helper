@@ -46,7 +46,7 @@ export class PreviewInvoiceComponent implements OnInit {
     {
       name: 'total',
       valueFn: (lineItem: any) => lineItem.quantity * lineItem.unitPrice,
-      valueOptions: { isCurrency: true, class: 'text-end' },
+      valueOptions: { isCurrency: true, alignment: 'end' },
     },
   ];
   rightFooterFields: SPEntityFieldSpec<Invoice>[] = [
