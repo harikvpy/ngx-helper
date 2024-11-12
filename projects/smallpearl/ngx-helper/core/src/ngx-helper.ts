@@ -13,7 +13,7 @@ export function getNgxHelperConfig(): SPNgxHelperConfig {
   const defaultNgxHelperConfig: SPNgxHelperConfig = {
     i18nTranslate: (label: string, context?: any) => label
   }
-  const helperConfig = inject(SP_NGX_HELPER_CONFIG)
+  const helperConfig = inject(SP_NGX_HELPER_CONFIG, {optional: true});
   return {
     ...defaultNgxHelperConfig,
     ...(helperConfig ?? {}),

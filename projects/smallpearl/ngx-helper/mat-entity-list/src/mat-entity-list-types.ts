@@ -42,7 +42,6 @@ export interface SPMatEntityListConfig {
   paginator?: SPMatEntityListPaginator;
   defaultPageSize?: number;
   pageSizes?: Array<number>;
-  i18nTranslate?: (label: string, context?: any) => string;
   /**
    * These are global column value functions.
    *

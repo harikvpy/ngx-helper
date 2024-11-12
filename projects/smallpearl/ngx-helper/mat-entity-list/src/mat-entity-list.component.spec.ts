@@ -5,11 +5,12 @@ import { Component, ComponentRef, OnInit, signal, viewChild } from '@angular/cor
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatTableModule } from '@angular/material/table';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { SP_NGX_HELPER_CONFIG, SPNgxHelperConfig } from '@smallpearl/ngx-helper/core';
+import { FIELD_VALUE_FN, SP_ENTITY_FIELD_CONFIG, SPEntityFieldConfig, SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { of } from 'rxjs';
-import { COLUMN_VALUE_FN, SPMatEntityListConfig, SPMatEntityListPaginator } from './mat-entity-list-types';
+import { SPMatEntityListConfig, SPMatEntityListPaginator } from './mat-entity-list-types';
 import { SPMatEntityListComponent } from './mat-entity-list.component';
 import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
-import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 
 interface User {
   name: { title: string, first: string, last: string },
@@ -284,19 +285,34 @@ describe('SPMatEntityListComponent', () => {
   it('should use global config object', async () => {
     TestBed.resetTestingModule();
     const myPaginator = new DRFPaginator()
+
+    const helperConfig: SPNgxHelperConfig = {
+      i18nTranslate: (label: string, context?: any) => {
+        return label;
+      },
+    };
+
+    let globalFieldValueFnsCalled = false;
+    const entityFieldConfig: SPEntityFieldConfig = {
+      fieldValueFns: new Map<string, FIELD_VALUE_FN>([
+        [
+          'gender',
+          (entity: User, column: string) => {
+            globalFieldValueFnsCalled = true;
+            return entity.gender === 'F' ? 'പെണ്ണ്' : 'ആണ്';
+          },
+        ],
+      ]),
+    };
+
     class EntityListConfig implements SPMatEntityListConfig {
       urlResolver = (endpoint: string) => endpoint;
       paginator = myPaginator
       i18nTranslate = (label: string, context?: any) => {
         return label;
       };
-      columnValueFns = new Map<string, COLUMN_VALUE_FN>();
 
-      constructor() {
-        this.columnValueFns.set('gender', (entity: User, column: string) => {
-          return entity.gender === 'F' ? 'പെണ്ണ്' : 'ആണ്';
-        })
-      }
+      constructor() {}
     };
 
     let globalPaginatorGetEntitiesFromResponseCalled = false;
@@ -314,16 +330,19 @@ describe('SPMatEntityListComponent', () => {
       return endpoint;
     });
     let globali18nTranslateCalled = false;
-    spyOn(entityListConfig, 'i18nTranslate').and.callFake((label: string, context?: any) => {
+    spyOn(helperConfig, 'i18nTranslate').and.callFake((label: string, context?: any) => {
       globali18nTranslateCalled = true;
       return label;
     });
+
     TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, SPMatEntityListComponent, SPMatEntityListTestComponent],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: SP_MAT_ENTITY_LIST_CONFIG, useValue: entityListConfig }
+        { provide: SP_NGX_HELPER_CONFIG, useValue: helperConfig },
+        { provide: SP_MAT_ENTITY_LIST_CONFIG, useValue: entityListConfig },
+        { provide: SP_ENTITY_FIELD_CONFIG, useValue: entityFieldConfig }
       ],
     });
     fixture = TestBed.createComponent(SPMatEntityListComponent<User, 'cell'>);
@@ -363,5 +382,7 @@ describe('SPMatEntityListComponent', () => {
       const colValue = columns[index].innerText;
       expect(colValue).toEqual(USER_DATA[index].gender === 'F' ? 'പെണ്ണ്' : 'ആണ്');
     }
+    // global fieldValue function for 'gender' should've been called.
+    expect(globalFieldValueFnsCalled).toBeTrue();
   });
 });

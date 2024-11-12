@@ -22,10 +22,6 @@ function provideMatEntityListConfig(): SPMatEntityListConfig {
     },
     paginator: new MyPaginator(),
     defaultPageSize: 50,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
-    i18nTranslate: (label: string, context?: any) => {
-      return label;
-    }
   };
 }
 

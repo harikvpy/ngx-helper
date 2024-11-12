@@ -16,7 +16,6 @@ export interface SPMatEntityCrudConfig {
     createdItemNotification: (itemLabel: string) => string;
     updatedItemNotification: (itemLabel: string) => string;
   }
-  i18nTranslate?: (label: string, context?: any) => string;
   defaultItemActions?: SPContextMenuItem[];
   listPaneWrapperClass?: string;
   previewPaneWrapperClass?: string;

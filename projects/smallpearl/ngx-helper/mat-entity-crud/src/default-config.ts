@@ -11,20 +11,7 @@ export const DefaultSPMatEntityCrudConfig: SPMatEntityCrudConfig = {
     itemDeletedNotification: (itemLabel: string) => `${itemLabel} deleted`,
     createdItemNotification: (itemLabel: string) => `${itemLabel} created.`,
     updatedItemNotification: (itemLabel: string) => `${ itemLabel } saved.`
-  },
-  i18nTranslate: (label: string, context?: any) => {
-    let XlatedString = label;
-    if (context) {
-      for (const key in context) {
-        const value = context[key];
-        if (value) {
-          const re = new RegExp('\\{\\{\\s*' + key + '\\s*\\}\\}');
-          XlatedString = XlatedString.replace(re, value);
-        }
-      }
-    }
-    return XlatedString;
-  },
+  }
 };
 
 export function getConfig(userConfig: SPMatEntityCrudConfig): SPMatEntityCrudConfig {

@@ -68,7 +68,7 @@ import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
     <as-split direction="horizontal" [gutterSize]="6">
       <as-split-area [size]="entitiesPaneWidth()">
         <div
-          [class]="config.listPaneWrapperClass"
+          [class]="crudConfig.listPaneWrapperClass"
           [ngStyle]="{ display: !createEditViewActive() ? 'inherit' : 'none' }"
         >
           <div class="action-bar">
@@ -84,7 +84,7 @@ import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
                 (click)="onCreate($event)"
                 [routerLink]="newItemLink()"
               >
-                {{ config.i18n.newItemLabel(this.itemLabel()) }}
+                {{ crudConfig.i18n.newItemLabel(this.itemLabel()) }}
               </button>
               }
             </div>
@@ -126,7 +126,7 @@ import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
         </ng-container>
 
         <div
-          [class]="config.listPaneWrapperClass"
+          [class]="crudConfig.listPaneWrapperClass"
           [ngStyle]="{ display: createEditViewActive() ? 'inherit' : 'none' }"
           spHostBusyWheel="formBusyWheel"
         >
@@ -140,7 +140,7 @@ import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
       </as-split-area>
       <as-split-area [size]="previewPaneWidth()" [visible]="previewActive()">
         @if (previewActive()) {
-        <div [class]="config.previewPaneWrapperClass">
+        <div [class]="crudConfig.previewPaneWrapperClass">
           <sp-entity-crud-preview-host
             (closePreview)="closePreview()"
             [entityCrudComponent]="this"
@@ -207,7 +207,7 @@ export class SPMatEntityCrudComponent<
   busyWheelId = `entityCrudBusyWheel-${Date.now()}`;
   sub$ = new Subscription();
   spEntitiesList = viewChild(SPMatEntityListComponent<TEntity, IdKey>);
-  override config!: SPMatEntityCrudConfig;
+  crudConfig!: SPMatEntityCrudConfig;
 
   /**
    * An ng-template name that contains the component which provides the
@@ -301,21 +301,18 @@ export class SPMatEntityCrudComponent<
     @Optional()
     @Inject(SP_MAT_ENTITY_CRUD_CONFIG)
     crudConfig: SPMatEntityCrudConfig,
-    @Optional()
-    @Inject(SP_MAT_ENTITY_LIST_CONFIG)
-    private entityListConfig: SPMatEntityListConfig,
     http: HttpClient,
     private snackBar: MatSnackBar,
     sanitizer: DomSanitizer
   ) {
-    super(http, entityListConfig, sanitizer);
-    this.config = getConfig(crudConfig);
-    if (this.config?.defaultItemActions) {
-      this.defaultItemCrudActions.set(this.config?.defaultItemActions);
+    super(http, sanitizer);
+    this.crudConfig = getConfig(crudConfig);
+    if (this.crudConfig?.defaultItemActions) {
+      this.defaultItemCrudActions.set(this.crudConfig?.defaultItemActions);
     } else {
       this.defaultItemCrudActions.set([
-        { label: this.config.i18n.edit, role: '_update_' },
-        { label: this.config.i18n.delete, role: '_delete_' },
+        { label: this.crudConfig.i18n.edit, role: '_update_' },
+        { label: this.crudConfig.i18n.delete, role: '_delete_' },
       ]);
     }
   }
@@ -393,7 +390,7 @@ export class SPMatEntityCrudComponent<
         if (entity) {
           this.spEntitiesList()?.addEntity(entity);
           this.snackBar.open(
-            this.config.i18n.createdItemNotification(this.itemLabel())
+            this.crudConfig.i18n.createdItemNotification(this.itemLabel())
           );
         }
       })
@@ -418,7 +415,7 @@ export class SPMatEntityCrudComponent<
         if (entity) {
           this.spEntitiesList()?.updateEntity(id, entity);
           this.snackBar.open(
-            this.config.i18n.updatedItemNotification(this.itemLabel())
+            this.crudConfig.i18n.updatedItemNotification(this.itemLabel())
           );
         }
       })
@@ -477,7 +474,7 @@ export class SPMatEntityCrudComponent<
     // Do the delete prompt asynchronously so that the context menu is
     // dismissed before the prompt is displayed.
     setTimeout(() => {
-      const deletedItemPrompt = this.config.i18n.deleteItemMessage(
+      const deletedItemPrompt = this.crudConfig.i18n.deleteItemMessage(
         this.itemLabel()
       );
       const yes = confirm(deletedItemPrompt);
@@ -502,7 +499,7 @@ export class SPMatEntityCrudComponent<
               tap(() => {
                 this.spEntitiesList()!.removeEntity(entityId);
                 // TODO: customize by providing an interface via SPMatEntityCrudConfig?
-                const deletedMessage = this.config.i18n.itemDeletedNotification(
+                const deletedMessage = this.crudConfig.i18n.itemDeletedNotification(
                   this.itemLabel()
                 );
                 this.snackBar.open(deletedMessage);

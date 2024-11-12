@@ -9,11 +9,9 @@ import {
   effect,
   EventEmitter,
   inject,
-  Inject,
   input,
   OnDestroy,
   OnInit,
-  Optional,
   Output,
   QueryList,
   signal,
@@ -38,13 +36,11 @@ import { getNgxHelperConfig } from '@smallpearl/ngx-helper/core';
 import { SP_ENTITY_FIELD_CONFIG, SPEntityField, SPEntityFieldConfig, SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { finalize, Observable, Subscription, tap } from 'rxjs';
-import { DefaultSPMatEntityListConfig } from './config';
+import { getEntityListConfig } from './config';
 import {
-  SPMatEntityListConfig,
   SPMatEntityListEntityLoaderFn,
-  SPMatEntityListPaginator,
+  SPMatEntityListPaginator
 } from './mat-entity-list-types';
-import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
 
 /**
  * A component to display a list of entities loaded from remote.
@@ -284,7 +280,7 @@ export class SPMatEntityListComponent<
   _pageSize = computed<number>(() =>
     this.pageSize()
       ? this.pageSize()
-      : this.config.defaultPageSize ?? this.lastFetchedEntitiesCount()
+      : this.entityListConfig.defaultPageSize ?? this.lastFetchedEntitiesCount()
   );
   // Effective columns, derived from columns(), which can either be an array
   // of objects of array of strings.
@@ -370,18 +366,16 @@ export class SPMatEntityListComponent<
 
   ngxHelperConfig = getNgxHelperConfig();
   fieldConfig!: SPEntityFieldConfig;
+  entityListConfig = getEntityListConfig();
 
   constructor(
     protected http: HttpClient,
-    @Optional()
-    @Inject(SP_MAT_ENTITY_LIST_CONFIG)
-    protected config: SPMatEntityListConfig,
     private sanitizer: DomSanitizer
   ) {
-    if (!this.config) {
-      this.config = new DefaultSPMatEntityListConfig();
-    }
-    this.fieldConfig = inject(SP_ENTITY_FIELD_CONFIG, {optional: true})!;
+    // if (!this.config) {
+    //   this.config = new DefaultSPMatEntityListConfig();
+    // }
+    this.fieldConfig = inject(SP_ENTITY_FIELD_CONFIG, { optional: true })!;
   }
 
   ngOnInit() {
@@ -394,7 +388,7 @@ export class SPMatEntityListComponent<
     this.entities$ = this.store.pipe(selectAllEntities());
     this._paginator = this.paginator()
       ? this.paginator()
-      : this.config?.paginator;
+      : this.entityListConfig?.paginator;
 
     this.subs$.add(
       this.entities$
@@ -677,8 +671,8 @@ export class SPMatEntityListComponent<
   }
 
   getUrl(endpoint: string) {
-    return this.config?.urlResolver
-      ? this.config?.urlResolver(endpoint)
+    return this.entityListConfig?.urlResolver
+      ? this.entityListConfig?.urlResolver(endpoint)
       : endpoint;
   }
 
