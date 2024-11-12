@@ -100,10 +100,6 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
     </ng-template>
   `,
   styles: `
-    :host ::ng-deep .text-end .mat-sort-header-container {
-      display: flex;
-      justify-content: end;
-    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -121,11 +117,11 @@ export class EntityCrudDemoComponent implements OnInit {
     { name: 'id' },
     { name: 'date' },
     { name: 'customer', valueFn: (item: Invoice) => item.customerDetail.name },
-    { name: 'terms' },
+    { name: 'terms', valueOptions: { alignment: 'center' } },
     {
       name: 'balance',
       valueFn: (item: Invoice) => spFormatCurrency(item.balance) ?? '',
-      valueOptions: { class: 'text-end' }
+      valueOptions: { alignment: 'end' }
     },
   ];
   itemActions: SPContextMenuItem[] = [

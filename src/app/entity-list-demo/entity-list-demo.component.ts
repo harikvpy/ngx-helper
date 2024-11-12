@@ -4,16 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatColumnDef, MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
+import { FIELD_VALUE_FN, SP_ENTITY_FIELD_CONFIG, SPEntityFieldConfig, SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { SPMatContextMenuComponent } from '@smallpearl/ngx-helper/mat-context-menu';
 import {
-  COLUMN_VALUE_FN,
   SP_MAT_ENTITY_LIST_CONFIG,
   SPMatEntityListComponent,
   SPMatEntityListConfig
 } from '@smallpearl/ngx-helper/mat-entity-list';
 import { MyPaginator } from './paginater';
 import { User } from './user';
-import { FIELD_VALUE_FN, SP_ENTITY_FIELD_CONFIG, SPEntityFieldConfig, SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 
 function provideMatEntityListConfig(): SPMatEntityListConfig {
   return {

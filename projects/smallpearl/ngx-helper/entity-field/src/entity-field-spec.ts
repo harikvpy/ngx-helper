@@ -23,12 +23,15 @@ export type SPEntityFieldSpec<TEntity> = {
   valueOptions?: {
     // Specify the same format string argument that is passed to DatePipe.
     dateTimeFormat?: SPIntlDateFormat;
-    isCurrency?: boolean; // if boolean, number field will be formatted using
-    // spFormatCurrency() using the current currency or
-    // numberCurrency.
-    currency?: string; // currency code
-    class?: string; // css class name, if provided will be applied to field
-    // value's wrapper element.
+    // If boolean, number field will be formatted using spFormatCurrency()
+    // using the current currency or 'currency' value below.
+    isCurrency?: boolean;
+    // Currency code, if different from default locale.
+    currency?: string;
+    // CSS class name; if provided will be applied to field value's wrapper
+    // element. This will be <td> & <th>.
+    class?: string;
+    // Alignment options. Field's value will be aligned based on this.
     alignment?: 'start'|'center'|'end';
   };
   // If the column value cannot be derived by simple TEntity[name] lookup,

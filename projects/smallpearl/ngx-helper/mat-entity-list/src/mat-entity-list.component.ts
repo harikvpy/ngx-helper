@@ -7,6 +7,7 @@ import {
   computed,
   ContentChildren,
   effect,
+  ElementRef,
   EventEmitter,
   inject,
   input,
@@ -42,6 +43,32 @@ import {
   SPMatEntityListPaginator
 } from './mat-entity-list-types';
 
+import { Directive } from '@angular/core';
+
+@Directive({
+  selector: '[headerAlignment]',
+  standalone: true
+})
+export class HeaderAlignmentDirective implements AfterViewInit {
+
+  headerAlignment = input<string>();
+
+  constructor(private el: ElementRef) {
+    // this.el.nativeElement.style.backgroundColor = 'yellow';
+  }
+
+  ngAfterViewInit(): void {
+    if (this.headerAlignment()) {
+      const sortHeader = this.el.nativeElement.querySelector('.mat-sort-header-container');
+      if (sortHeader) {
+        sortHeader.style.justifyContent = this.headerAlignment();
+      } else {
+        this.el.nativeElement.style.justifyContent = this.headerAlignment();
+      }
+    }
+  }
+}
+
 /**
  * A component to display a list of entities loaded from remote.
  */
@@ -56,6 +83,7 @@ import {
     MatInputModule,
     MatProgressSpinnerModule,
     InfiniteScrollDirective,
+    HeaderAlignmentDirective,
   ],
   selector: 'sp-mat-entity-list',
   template: `
@@ -112,16 +140,17 @@ import {
       @for (column of __columns(); track $index) {
       <ng-container [matColumnDef]="column.spec.name">
         @if (disableSort()) {
-        <th [class]="column.class" mat-header-cell *matHeaderCellDef>
+        <th [class]="column.class" [headerAlignment]="column.spec.valueOptions?.alignment" mat-header-cell *matHeaderCellDef>
           {{ column.label() }}
         </th>
         } @else {
-        <th [class]="column.class" mat-header-cell mat-sort-header *matHeaderCellDef>
+        <th [class]="column.class" [headerAlignment]="column.spec.valueOptions?.alignment" mat-header-cell mat-sort-header *matHeaderCellDef>
           {{ column.label() }}
         </th>
         }
         <td
           [class]="column.class"
+          [style.text-align]="column.spec.valueOptions?.alignment"
           mat-cell
           *matCellDef="let element"
           [innerHtml]="column.value(element)"
