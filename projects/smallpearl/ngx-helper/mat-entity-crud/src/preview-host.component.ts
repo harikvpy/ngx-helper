@@ -21,11 +21,11 @@ import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
   template: ` <ng-container #previewComponent></ng-container> `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PreviewHostComponent implements OnInit, OnDestroy {
+export class PreviewHostComponent<TEntity> implements OnInit, OnDestroy {
   vc = viewChild('previewComponent', { read: ViewContainerRef });
   @Output() closePreview = new EventEmitter<void>();
 
-  entityCrudComponent = input.required<SPMatEntityCrudComponentBase>();
+  entityCrudComponent = input.required<SPMatEntityCrudComponentBase<TEntity>>();
   previewTemplate = input.required<TemplateRef<any>>();
   previewedEntity = input.required<any>();
   embeddedView!: EmbeddedViewRef<any>;

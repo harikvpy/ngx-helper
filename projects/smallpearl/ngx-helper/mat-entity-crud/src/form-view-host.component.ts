@@ -62,12 +62,9 @@ import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FormViewHostComponent<
-  TEntity extends { [P in IdKey]: PropertyKey },
-  IdKey extends string = 'id'
-> implements SPMatEntityCrudCreateEditBridge, OnInit, OnDestroy
+export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEditBridge, OnInit, OnDestroy
 {
-  entityCrudComponentBase = input.required<SPMatEntityCrudComponentBase>();
+  entityCrudComponentBase = input.required<SPMatEntityCrudComponentBase<TEntity>>();
   clientViewTemplate = input<TemplateRef<any> | null>(null);
   itemLabel = input.required<string>();
   itemsLabel = input.required<string>();

@@ -4,47 +4,47 @@ import { getNgxHelperConfig } from '@smallpearl/ngx-helper/core';
 import { SP_ENTITY_FIELD_CONFIG, SPEntityField, SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 
 
-@Component({
-  standalone: true,
-  imports: [],
-  selector: 'sp-string-or-object-renderer',
-  template: `
-    @if (isString()) {
-      {{ value() }}
-    } @else {
-      <table>
-        @for (row of objectAsArray(); track $index) {
-          <tr>
-            @for (col of row; track $index) {
-              <td [style]="'text-align: ' + valueAlignment()">{{ col }}</td>
-            }
-          </tr>
-        }
-      </table>
-    }
-  `,
-  changeDetection: ChangeDetectionStrategy.OnPush
-})
-export class StringOrObjectRendererComponent implements OnInit {
-  value = input.required<any>();
-  valueAlignment = input<string>()
-  isString = computed(() => typeof this.value() === 'string');
-  objectAsArray = computed(() => {
-    const arrayValues = [];
-    const value = this.value();
-    if (typeof value !== 'string') {
-      for (const key in this.value()) {
-        const keyValue = this.value()[key];
-        arrayValues.push([key, keyValue]);
-      }
-    }
-    return arrayValues;
-  });
+// @Component({
+//   standalone: true,
+//   imports: [],
+//   selector: 'sp-string-or-object-renderer',
+//   template: `
+//     @if (isString()) {
+//       {{ value() }}
+//     } @else {
+//       <table>
+//         @for (row of objectAsArray(); track $index) {
+//           <tr>
+//             @for (col of row; track $index) {
+//               <td [style]="'text-align: ' + valueAlignment()">{{ col }}</td>
+//             }
+//           </tr>
+//         }
+//       </table>
+//     }
+//   `,
+//   changeDetection: ChangeDetectionStrategy.OnPush
+// })
+// export class StringOrObjectRendererComponent implements OnInit {
+//   value = input.required<any>();
+//   valueAlignment = input<string>()
+//   isString = computed(() => typeof this.value() === 'string');
+//   objectAsArray = computed(() => {
+//     const arrayValues = [];
+//     const value = this.value();
+//     if (typeof value !== 'string') {
+//       for (const key in this.value()) {
+//         const keyValue = this.value()[key];
+//         arrayValues.push([key, keyValue]);
+//       }
+//     }
+//     return arrayValues;
+//   });
 
-  constructor() { }
+//   constructor() { }
 
-  ngOnInit() { }
-}
+//   ngOnInit() { }
+// }
 
 @Component({
   standalone: true,
@@ -289,10 +289,7 @@ export class FieldsRendererComponent<TEntity> implements OnInit {
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class StationaryWithLineItemsComponent<
-  TEntity extends { [P in IdKey]: PropertyKey },
-  IdKey extends string = 'id'
-> implements OnInit {
+export class StationaryWithLineItemsComponent<TEntity, TEntityLineItem = any> implements OnInit {
   entity = input.required<TEntity>();
   title = input.required<string>();
   number = input<string|number>();
@@ -316,7 +313,7 @@ export class StationaryWithLineItemsComponent<
   rightFooterTemplate = input<TemplateRef<any>>();
 
   itemFieldName = input<string>('items');
-  itemColumnFields = input<Array<SPEntityFieldSpec<any> | string>>();
+  itemColumnFields = input<Array<SPEntityFieldSpec<TEntityLineItem> | string>>();
   _itemColumnFields = computed(() => this.getSPEntityFields(this.itemColumnFields()));
 
   _items = computed(() => (this.entity() as any)[this.itemFieldName()]);
@@ -332,9 +329,15 @@ export class StationaryWithLineItemsComponent<
     return typeof value === 'string';
   }
 
-  getSPEntityFields(fieldSpecs: Array<SPEntityFieldSpec<TEntity> | string>|string|undefined): Array<SPEntityField<TEntity>> {
+  /**
+   * Make the method a generic as we'll be using it for both TEntity and its
+   * child TEntityLineItem objects.
+   * @param fieldSpecs
+   * @returns
+   */
+  getSPEntityFields<T>(fieldSpecs: Array<SPEntityFieldSpec<T> | string>|string|undefined): Array<SPEntityField<T>> {
     if (fieldSpecs && typeof fieldSpecs !== 'string') {
-      return fieldSpecs.map(spec => new SPEntityField<TEntity>(spec, this.ngxHelperConfig, this.ngxEntityFieldConfig));
+      return fieldSpecs.map(spec => new SPEntityField<T>(spec, this.ngxHelperConfig, this.ngxEntityFieldConfig));
     }
     return [];
   }
