@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -7,9 +7,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { errorTailorImports } from '@ngneat/error-tailor';
 import { SPMatEntityCrudCreateEditBridge } from '@smallpearl/ngx-helper/mat-entity-crud';
-import { showServerValidationErrors } from './validation-error-handler';
 import { Observable, of } from 'rxjs';
-import { MOCK_USER, User } from '../entity-list-demo/user';
+import { MOCK_USER } from '../entity-list-demo/user';
+import { Invoice } from './data';
 
 @Component({
   standalone: true,
@@ -31,38 +31,17 @@ import { MOCK_USER, User } from '../entity-list-demo/user';
       class="d-flex flex-column align-items-start"
       errorTailor
     >
-      <div class="d-flex flex-row gap-1">
-        <mat-form-field>
-          <mat-label>Firstname</mat-label>
-          <input matInput formControlName="firstName" [controlErrorAnchor]="errorAnchorFirstName" />
-          <mat-error>
-            <ng-template controlErrorAnchor #errorAnchorFirstName="controlErrorAnchor"></ng-template>
-          </mat-error>
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>Lastname</mat-label>
-          <input matInput formControlName="lastName" [controlErrorAnchor]="errorAnchorLastName" />
-          <mat-error>
-            <ng-template controlErrorAnchor #errorAnchorLastName="controlErrorAnchor"></ng-template>
-          </mat-error>
-        </mat-form-field>
-      </div>
       <mat-form-field>
-        <mat-label>Gender</mat-label>
-        <mat-select formControlName="gender" [controlErrorAnchor]="errorAnchorGender" >
-          <mat-option value="male">Male</mat-option>
-          <mat-option value="female">Female</mat-option>
-        </mat-select>
-        <mat-error>
-          <ng-template controlErrorAnchor #errorAnchorGender="controlErrorAnchor"></ng-template>
-        </mat-error>
+        <mat-label>Date</mat-label>
+        <input matInput type="date" formControlName="date"/>
       </mat-form-field>
       <mat-form-field>
-        <mat-label>Cell</mat-label>
-        <input matInput formControlName="cell" [controlErrorAnchor]="errorAnchorCell" />
-        <mat-error>
-          <ng-template controlErrorAnchor #errorAnchorCell="controlErrorAnchor"></ng-template>
-        </mat-error>
+        <mat-label>Number</mat-label>
+        <input matInput type="number" formControlName="number"/>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Terms</mat-label>
+        <input matInput type="number" formControlName="terms"/>
       </mat-form-field>
 
       <div class="mt-2 d-flex gap-2">
@@ -82,18 +61,18 @@ import { MOCK_USER, User } from '../entity-list-demo/user';
   styles: `
 
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CreateEditEntityDemoComponent implements OnInit, OnDestroy {
   form!: FormGroup<{
-    firstName: FormControl<string>,
-    lastName: FormControl<string>,
-    gender: FormControl<string>,
-    cell: FormControl<string>,
+    date: FormControl<Date>,
+    number: FormControl<number>,
+    terms: FormControl<number>,
   }>;
   // update = false;
   init$!: Observable<any>;
   bridge = input<SPMatEntityCrudCreateEditBridge>();
-  entity = input<User>();
+  entity = input<Invoice>();
   creating = computed(() => !this.entity()|| !this.entity()?.id)
 
   canCancelEdit = () => {
@@ -122,21 +101,17 @@ export class CreateEditEntityDemoComponent implements OnInit, OnDestroy {
     console.log(`CreateEditEntityDemoComponent.ngOnDestroy`);
   }
 
-  createForm(entity?: User) {
+  createForm(entity?: Invoice) {
     return new FormGroup({
-      firstName: new FormControl(entity ? entity.name.first : '', {
+      date: new FormControl<Date>(entity ? entity.date : new Date(), {
         nonNullable: true,
         validators: Validators.required,
       }),
-      lastName: new FormControl(entity ? entity.name.last : '', {
+      number: new FormControl<number>(entity ? entity.number : 0, {
         nonNullable: true,
         validators: Validators.required,
       }),
-      gender: new FormControl(entity ? entity.gender : '', {
-        nonNullable: true,
-        validators: Validators.required,
-      }),
-      cell: new FormControl(entity ? entity.cell : '', {
+      terms: new FormControl<number>(entity ? entity.terms : 0, {
         nonNullable: true,
         validators: Validators.required,
       }),
@@ -145,9 +120,9 @@ export class CreateEditEntityDemoComponent implements OnInit, OnDestroy {
   onSubmit() {
     const value = this.form.value;
     const bridge = this.bridge();
-    const obs = this.creating() ? bridge?.create(value) : bridge?.update(this.entity()?.cell, value);
-    obs?.pipe(
-      showServerValidationErrors(this.form)
-    ).subscribe();
+    // const obs = this.creating() ? bridge?.create(value) : bridge?.update(this.entity()?.cell, value);
+    // obs?.pipe(
+    //   showServerValidationErrors(this.form)
+    // ).subscribe();
   }
 }

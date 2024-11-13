@@ -31,6 +31,16 @@ export interface SPMatEntityCrudComponentBase {
    */
   registerCanCancelEditCallback: (callback: () => boolean) => void;
   /**
+   * Initiates update on the given entity.
+   * @returns
+   */
+  triggerEntityUpdate: (entity: any) => void;
+  /**
+   * Initiates entity delete.
+   * @returns
+   */
+  triggerEntityDelete: (entity: any) => void;
+  /**
    * Called by client form-view host component to close a new entity.
    * @param entityValue The ReactiveForm.value object that the server expects
    * to create a new object.

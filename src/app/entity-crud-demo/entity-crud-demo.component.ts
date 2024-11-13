@@ -79,6 +79,7 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
         (action)="onItemAction($event)"
         [crudOpFn]="crudOpFn"
         (selectEntity)="handleSelectEntity($event)"
+        [createEditFormTemplate]="createEdit"
         [previewTemplate]="userPreview"
         matSort
       >
@@ -93,12 +94,12 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
 
     <ng-template #userPreview let-data>
       <sp-mat-entity-crud-preview-pane
+        [entity]="data.entity"
         [entityCrudComponent]="spEntityCrudComponent()!"
+        [hideUpdate]="true"
+        [disableDelete]="true"
       >
         <span previewToolbarContent>
-          <button mat-icon-button title="Edit">
-            <mat-icon>edit</mat-icon>
-          </button>
           <button mat-icon-button title="Print">
             <mat-icon>print</mat-icon>
           </button>

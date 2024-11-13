@@ -23,6 +23,16 @@ import { getConfig } from './default-config';
         @if (title()) {
           <h2>{{ title() }}</h2>&nbsp;
         }
+        @if (!hideUpdate()) {
+          <button mat-icon-button aria-label="Edit" (click)="onEdit()" [disabled]="disableUpdate()">
+            <mat-icon>edit</mat-icon>
+          </button>
+        }
+        @if (!hideDelete()) {
+          <button mat-icon-button aria-label="Delete" (click)="onDelete()" [disabled]="disableDelete()">
+            <mat-icon>delete</mat-icon>
+          </button>
+        }
         <ng-content select="[previewToolbarContent]"></ng-content>
         <span class="spacer"></span>
         <button mat-icon-button aria-label="Close" (click)="onClose()">
@@ -53,8 +63,13 @@ import { getConfig } from './default-config';
 })
 export class SPMatEntityCrudPreviewPaneComponent implements OnInit {
 
-  title = input<string>();
+  entity = input.required<any>();
   entityCrudComponent = input.required<SPMatEntityCrudComponentBase>();
+  title = input<string>();
+  disableUpdate = input<boolean>(false);
+  hideUpdate = input<boolean>(false);
+  disableDelete = input<boolean>(false);
+  hideDelete = input<boolean>(false);
   config!: SPMatEntityCrudConfig;
 
   constructor(
@@ -66,6 +81,14 @@ export class SPMatEntityCrudPreviewPaneComponent implements OnInit {
   }
 
   ngOnInit() {}
+
+  onEdit() {
+    this.entityCrudComponent().triggerEntityUpdate(this.entity());
+  }
+
+  onDelete() {
+    this.entityCrudComponent().triggerEntityDelete(this.entity());
+  }
 
   onClose() {
     this.entityCrudComponent().closePreview();

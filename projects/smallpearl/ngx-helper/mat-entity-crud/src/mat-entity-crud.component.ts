@@ -31,11 +31,11 @@ import {
   SPMatContextMenuComponent,
 } from '@smallpearl/ngx-helper/mat-context-menu';
 import {
-  SP_MAT_ENTITY_LIST_CONFIG,
-  SPMatEntityListComponent,
-  SPMatEntityListConfig,
+  SPMatEntityListComponent
 } from '@smallpearl/ngx-helper/mat-entity-list';
 
+import { DomSanitizer } from '@angular/platform-browser';
+import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { AngularSplitModule } from 'angular-split';
 import { Observable, Subscription, tap } from 'rxjs';
 import { getConfig } from './default-config';
@@ -44,8 +44,6 @@ import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
 import { CRUD_OP_FN, SPMatEntityCrudConfig } from './mat-entity-crud-types';
 import { PreviewHostComponent } from './preview-host.component';
 import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
-import { DomSanitizer } from '@angular/platform-browser';
-import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 
 @Component({
   standalone: true,
@@ -371,6 +369,14 @@ export class SPMatEntityCrudComponent<
     this.canCancelEditCallback = callback;
   }
 
+  triggerEntityUpdate(entity: TEntity) {
+    this.onUpdate(entity);
+  }
+
+  triggerEntityDelete(entity: TEntity) {
+    this.onDelete(entity);
+  }
+
   create(entityValue: any) {
     let obs!: Observable<TEntity | null>;
     const crudOpFn = this.crudOpFn();
@@ -446,24 +452,33 @@ export class SPMatEntityCrudComponent<
       event.preventDefault();
       event.stopImmediatePropagation();
       const tmpl = this.createEditFormTemplate();
-      const createEditHost = this.createEditHostComponent();
-      if (tmpl && createEditHost) {
-        createEditHost.show(undefined);
+      if (tmpl) {
+        // If preview is active deactivate it
+        if (this.previewActive()) {
+          this.closePreview();
+        }
+        const createEditHost = this.createEditHostComponent();
+        createEditHost!.show(undefined);
         this.createEditViewActive.set(true);
       }
-      if (!this.createEditViewActive()) {
-        this.action.emit({ role: '_new_' });
-      }
     }
-    // fall through to let routerLink act
+    if (!this.createEditViewActive()) {
+      this.action.emit({ role: '_new_' });
+    }
   }
 
   onUpdate(entity: TEntity) {
     const tmpl = this.createEditFormTemplate();
-    const createEditHost = this.createEditHostComponent();
-    if (tmpl && createEditHost) {
-      createEditHost.show(entity);
-      this.createEditViewActive.set(true);
+    if (tmpl) {
+      // If preview is active deactivate it
+      if (this.previewActive()) {
+        this.closePreview();
+      }
+      const createEditHost = this.createEditHostComponent();
+      if (tmpl && createEditHost) {
+        createEditHost.show(entity);
+        this.createEditViewActive.set(true);
+      }
     }
     if (!this.createEditViewActive()) {
       this.action.emit({ role: '_update_' });
@@ -480,6 +495,11 @@ export class SPMatEntityCrudComponent<
       const yes = confirm(deletedItemPrompt);
       if (yes) {
         const entityId = (entity as any)[this.idKey()];
+
+        // If preview is active deactivate it
+        if (this.previewActive()) {
+          this.closePreview();
+        }
 
         let obs!: Observable<any>;
         const crudOpFn = this.crudOpFn();
