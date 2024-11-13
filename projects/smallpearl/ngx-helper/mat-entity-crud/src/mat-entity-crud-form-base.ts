@@ -1,7 +1,7 @@
 import { Directive, input, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { showServerValidationErrors } from 'src/app/entity-crud-demo/validation-error-handler';
+import { showServerValidationErrors } from './form-validation-error-handler';
 import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
 
 /**
