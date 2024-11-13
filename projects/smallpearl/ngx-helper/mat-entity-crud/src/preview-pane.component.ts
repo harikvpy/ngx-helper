@@ -61,10 +61,10 @@ import { getConfig } from './default-config';
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SPMatEntityCrudPreviewPaneComponent implements OnInit {
+export class SPMatEntityCrudPreviewPaneComponent<TEntity> implements OnInit {
 
-  entity = input.required<any>();
-  entityCrudComponent = input.required<SPMatEntityCrudComponentBase>();
+  entity = input.required<TEntity>();
+  entityCrudComponent = input.required<SPMatEntityCrudComponentBase<TEntity>>();
   title = input<string>();
   disableUpdate = input<boolean>(false);
   hideUpdate = input<boolean>(false);

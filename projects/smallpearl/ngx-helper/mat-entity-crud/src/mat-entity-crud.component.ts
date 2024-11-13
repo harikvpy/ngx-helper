@@ -184,7 +184,7 @@ export class SPMatEntityCrudComponent<
     IdKey extends string = 'id'
   >
   extends SPMatEntityListComponent<TEntity, IdKey>
-  implements SPMatEntityCrudComponentBase, AfterViewInit
+  implements SPMatEntityCrudComponentBase<TEntity>, AfterViewInit
 {
   itemLabel = input.required<string>();
   itemsLabel = input.required<string>();

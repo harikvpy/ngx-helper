@@ -6,7 +6,7 @@ import { Observable } from "rxjs";
  * component would use the hideCreateEdit() to close itself, when user cancels
  * the create/edit operation.
  */
-export interface SPMatEntityCrudComponentBase {
+export interface SPMatEntityCrudComponentBase<TEntity> {
   /**
    * FormViewHostComponent will call this to close the Create/Edit pane.
    * SPMatEntityCrudComponentBase implementor will destroy the client form
@@ -34,12 +34,12 @@ export interface SPMatEntityCrudComponentBase {
    * Initiates update on the given entity.
    * @returns
    */
-  triggerEntityUpdate: (entity: any) => void;
+  triggerEntityUpdate: (entity: TEntity) => void;
   /**
    * Initiates entity delete.
    * @returns
    */
-  triggerEntityDelete: (entity: any) => void;
+  triggerEntityDelete: (entity: TEntity) => void;
   /**
    * Called by client form-view host component to close a new entity.
    * @param entityValue The ReactiveForm.value object that the server expects
