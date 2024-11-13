@@ -33,9 +33,29 @@ import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
  *    createForm() method returing the FormGroup<> instance that matches
  *    the FormGroup concrete type above.
  *
+ *    ```
+ *    class MyFormComponent extends SPMatEntityCrudFormBase<MyForm, MyEntity> {
+ *      constructor() {
+ *        super()
+ *      }
+ *
+ *      createForm() {
+ *        return new FormGroup([...])
+ *      }
+ *    }
+ *    ```
+ *
  * 3. If you form's value requires manipulation before being sent to the
  *    server, override getFormValue() method and do it there before returning
  *    the modified values.
+ *
+ * 4. Wire up the form in the template as:
+ *
+ *    ```
+ *    <form [formGroup]='form'.. (ngSubmit)="onSubmit()">
+ *      <button type="submit">Submit</button>
+ *    </form>
+ *    ```
  */
 @Directive({ selector: '_#_sp-mat-entity-crud-form-base_#_' })
 abstract class SPMatEntityCrudFormBase<
