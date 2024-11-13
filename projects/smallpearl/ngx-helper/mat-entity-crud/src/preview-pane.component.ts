@@ -20,7 +20,9 @@ import { getConfig } from './default-config';
   <div class="preview-wrapper">
     <mat-toolbar>
       <mat-toolbar-row>
-        <h2>{{ title() }}</h2>&nbsp;
+        @if (title()) {
+          <h2>{{ title() }}</h2>&nbsp;
+        }
         <ng-content select="[previewToolbarContent]"></ng-content>
         <span class="spacer"></span>
         <button mat-icon-button aria-label="Close" (click)="onClose()">
@@ -51,7 +53,7 @@ import { getConfig } from './default-config';
 })
 export class SPMatEntityCrudPreviewPaneComponent implements OnInit {
 
-  title = input.required<string>();
+  title = input<string>();
   entityCrudComponent = input.required<SPMatEntityCrudComponentBase>();
   config!: SPMatEntityCrudConfig;
 
