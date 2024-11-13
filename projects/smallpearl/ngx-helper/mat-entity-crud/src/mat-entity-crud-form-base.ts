@@ -1,4 +1,4 @@
-import { Directive, input, OnDestroy, OnInit } from '@angular/core';
+import { Component, input, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { showServerValidationErrors } from './form-validation-error-handler';
@@ -15,7 +15,7 @@ import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
  * checking form.touched), then a 'Lose Changes' prompt is displayed allowing
  * the user to cancel the closure.
  *
- * The @Directive is fake just to keep the VSCode angular linter quiet.
+ * The @Component is fake just to keep the VSCode angular linter quiet.
  *
  * To use this class:-
  *
@@ -57,14 +57,14 @@ import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
  *    </form>
  *    ```
  */
-@Directive({ selector: '_#_sp-mat-entity-crud-form-base_#_' })
-abstract class SPMatEntityCrudFormBase<
+@Component({ selector: '_#_sp-mat-entity-crud-form-base_#_', template: `` })
+export abstract class SPMatEntityCrudFormBase<
   TFormGroup extends AbstractControl,
   TEntity extends { [P in IdKey]: PropertyKey },
   IdKey extends string = 'id'
 > implements OnInit, OnDestroy
 {
-  form!: TFormGroup;
+  _form!: TFormGroup;
   entity = input<TEntity>();
   bridge = input<SPMatEntityCrudCreateEditBridge>();
   sub$ = new Subscription();
@@ -74,19 +74,23 @@ abstract class SPMatEntityCrudFormBase<
   };
 
   _canCancelEdit() {
-    if (this.form.touched) {
+    if (this._form.touched) {
       return window.confirm('Lose Changes?');
     }
     return true;
   }
 
   ngOnInit() {
-    this.form = this.createForm(this.entity());
+    this._form = this.createForm(this.entity());
     this.bridge()?.registerCanCancelEditCallback(this.canCancelEdit);
   }
 
   ngOnDestroy() {
     this.sub$.unsubscribe();
+  }
+
+  get form(): TFormGroup|undefined {
+    return this._form;
   }
 
   /**
@@ -111,7 +115,7 @@ abstract class SPMatEntityCrudFormBase<
    * @returns
    */
   getFormValue() {
-    return this.form.value;
+    return this._form.value;
   }
 
   onSubmit() {
@@ -122,7 +126,7 @@ abstract class SPMatEntityCrudFormBase<
     this.sub$.add(
       obs
         ?.pipe(
-          showServerValidationErrors(this.form as unknown as UntypedFormGroup)
+          showServerValidationErrors(this._form as unknown as UntypedFormGroup)
         )
         .subscribe()
     );
