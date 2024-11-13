@@ -6,11 +6,14 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 import { getEntitiesIds } from '@ngneat/elf-entities';
+import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { spFormatCurrency } from '@smallpearl/ngx-helper/locale';
 import { SPContextMenuItem } from '@smallpearl/ngx-helper/mat-context-menu';
 import {
@@ -25,7 +28,6 @@ import { User } from '../entity-list-demo/user';
 import { CreateEditEntityDemoComponent } from './create-edit-entity-demo.component';
 import { Invoice, INVOICES } from './data';
 import { PreviewInvoiceComponent } from './preview-demo.component';
-import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 
 const EntityCrudConfig: SPMatEntityCrudConfig = {
   i18n: {
@@ -52,6 +54,8 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
     MatTableModule,
     MatSortModule,
     MatProgressSpinnerModule,
+    MatIconModule,
+    MatButtonModule,
     SPMatEntityCrudComponent,
     CreateEditEntityDemoComponent,
     SPMatEntityCrudPreviewPaneComponent,
@@ -89,9 +93,17 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
 
     <ng-template #userPreview let-data>
       <sp-mat-entity-crud-preview-pane
-        [title]="data.entity.number"
         [entityCrudComponent]="spEntityCrudComponent()!"
       >
+        <span previewToolbarContent>
+          <button mat-icon-button title="Edit">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button title="Print">
+            <mat-icon>print</mat-icon>
+          </button>
+        </span>
+
         <app-invoice-preview
           previewContent
           [invoice]="data.entity"
