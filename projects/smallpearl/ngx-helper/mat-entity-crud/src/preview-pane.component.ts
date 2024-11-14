@@ -5,7 +5,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
 import { SPMatEntityCrudConfig } from './mat-entity-crud-types';
 import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
-import { getConfig } from './default-config';
+import { getEntityCrudConfig } from './default-config';
 
 /**
  * A preview pane container to provide a consistent UX for all preview panes.
@@ -72,12 +72,8 @@ export class SPMatEntityCrudPreviewPaneComponent<TEntity> implements OnInit {
   hideDelete = input<boolean>(false);
   config!: SPMatEntityCrudConfig;
 
-  constructor(
-    @Optional()
-    @Inject(SP_MAT_ENTITY_CRUD_CONFIG)
-    crudConfig: SPMatEntityCrudConfig,
-  ) {
-    this.config = getConfig(crudConfig);
+  constructor() {
+    this.config = getEntityCrudConfig();
   }
 
   ngOnInit() {}

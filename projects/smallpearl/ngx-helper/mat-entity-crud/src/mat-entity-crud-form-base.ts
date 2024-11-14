@@ -3,6 +3,7 @@ import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { showServerValidationErrors } from './form-validation-error-handler';
 import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
+import { getEntityCrudConfig } from './default-config';
 
 /**
  * This is a convenience base class that clients can derive from to implement
@@ -69,13 +70,15 @@ export abstract class SPMatEntityCrudFormBase<
   bridge = input<SPMatEntityCrudCreateEditBridge>();
   sub$ = new Subscription();
 
+  crudConfig = getEntityCrudConfig();
+
   canCancelEdit = () => {
     return this._canCancelEdit();
   };
 
   _canCancelEdit() {
     if (this._form.touched) {
-      return window.confirm('Lose Changes?');
+      return window.confirm(this.crudConfig.i18n.loseChangesPrompt);
     }
     return true;
   }

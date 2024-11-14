@@ -38,7 +38,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { AngularSplitModule } from 'angular-split';
 import { Observable, Subscription, tap } from 'rxjs';
-import { getConfig } from './default-config';
+import { getEntityCrudConfig } from './default-config';
 import { FormViewHostComponent } from './form-view-host.component';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
 import { CRUD_OP_FN, SPMatEntityCrudConfig } from './mat-entity-crud-types';
@@ -296,15 +296,12 @@ export class SPMatEntityCrudComponent<
   );
 
   constructor(
-    @Optional()
-    @Inject(SP_MAT_ENTITY_CRUD_CONFIG)
-    crudConfig: SPMatEntityCrudConfig,
     http: HttpClient,
     private snackBar: MatSnackBar,
     sanitizer: DomSanitizer
   ) {
     super(http, sanitizer);
-    this.crudConfig = getConfig(crudConfig);
+    this.crudConfig = getEntityCrudConfig();
     if (this.crudConfig?.defaultItemActions) {
       this.defaultItemCrudActions.set(this.crudConfig?.defaultItemActions);
     } else {

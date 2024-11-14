@@ -17,7 +17,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { SPBusyWheelModule } from '@smallpearl/ngx-helper/mat-busy-wheel';
 import { Subscription, tap } from 'rxjs';
-import { getConfig } from './default-config';
+import { getEntityCrudConfig } from './default-config';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
 import { SPMatEntityCrudConfig, SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
 import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
@@ -76,12 +76,8 @@ export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEdit
   config!: SPMatEntityCrudConfig;
   sub$ = new Subscription();
 
-  constructor(
-    @Optional()
-    @Inject(SP_MAT_ENTITY_CRUD_CONFIG)
-    userConfig: SPMatEntityCrudConfig
-  ) {
-    this.config = getConfig(userConfig);
+  constructor() {
+    this.config = getEntityCrudConfig();
   }
 
   ngOnInit() {}

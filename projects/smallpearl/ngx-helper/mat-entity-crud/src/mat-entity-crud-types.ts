@@ -15,6 +15,7 @@ export interface SPMatEntityCrudConfig {
     itemDeletedNotification: (itemLabel: string) => string;
     createdItemNotification: (itemLabel: string) => string;
     updatedItemNotification: (itemLabel: string) => string;
+    loseChangesPrompt: string;
   }
   defaultItemActions?: SPContextMenuItem[];
   listPaneWrapperClass?: string;

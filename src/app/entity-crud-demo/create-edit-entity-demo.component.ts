@@ -1,15 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { errorTailorImports } from '@ngneat/error-tailor';
-import { SPMatEntityCrudCreateEditBridge } from '@smallpearl/ngx-helper/mat-entity-crud';
-import { Observable, of } from 'rxjs';
-import { MOCK_USER } from '../entity-list-demo/user';
+import { SPMatEntityCrudFormBase } from '@smallpearl/ngx-helper/mat-entity-crud';
 import { Invoice } from './data';
+
+type MyFormGroup = FormGroup<{
+  date: FormControl<Date>;
+  number: FormControl<number>;
+  terms: FormControl<number>;
+}>;
 
 @Component({
   standalone: true,
@@ -24,9 +28,8 @@ import { Invoice } from './data';
   ],
   selector: 'app-create-edit-entity-demo',
   template: `
-  @if (init$|async) {
     <form
-      [formGroup]="form"
+      [formGroup]="form!"
       (ngSubmit)="onSubmit()"
       class="d-flex flex-column align-items-start"
       errorTailor
@@ -45,60 +48,27 @@ import { Invoice } from './data';
       </mat-form-field>
 
       <div class="mt-2 d-flex gap-2">
-        <button type="button" color="secondary" mat-raised-button (click)="form.reset()">Reset</button>
+        <button type="button" color="secondary" mat-raised-button (click)="form!.reset()">Reset</button>
         <button
           type="submit"
           color="primary"
           mat-raised-button
-          [disabled]="form.invalid"
+          [disabled]="form!.invalid"
         >
           Save
         </button>
       </div>
     </form>
-  }
   `,
   styles: `
 
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CreateEditEntityDemoComponent implements OnInit, OnDestroy {
-  form!: FormGroup<{
-    date: FormControl<Date>,
-    number: FormControl<number>,
-    terms: FormControl<number>,
-  }>;
-  // update = false;
-  init$!: Observable<any>;
-  bridge = input<SPMatEntityCrudCreateEditBridge>();
-  entity = input<Invoice>();
-  creating = computed(() => !this.entity()|| !this.entity()?.id)
+export class CreateEditEntityDemoComponent extends SPMatEntityCrudFormBase<MyFormGroup, any> {
 
-  canCancelEdit = () => {
-    return this._canCancelEdit();
-  }
-
-  _canCancelEdit() {
-    if (this.form.touched) {
-      return window.confirm('Lose Changes?');
-    }
-    return true;
-  }
-
-  constructor(
-    private fb: FormBuilder,
-  ) {}
-
-  ngOnInit() {
-    console.log(`CreateEditEntityDemoComponent.ngOnInit`);
-    this.init$ = of(this.entity() ? this.entity() : MOCK_USER)
-    this.form = this.createForm(this.entity())
-    this.bridge()?.registerCanCancelEditCallback(this.canCancelEdit);
-  }
-
-  ngOnDestroy(): void {
-    console.log(`CreateEditEntityDemoComponent.ngOnDestroy`);
+  constructor(private fb: FormBuilder) {
+    super();
   }
 
   createForm(entity?: Invoice) {
@@ -117,8 +87,10 @@ export class CreateEditEntityDemoComponent implements OnInit, OnDestroy {
       }),
     });
   }
-  onSubmit() {
-    const value = this.form.value;
+
+  // Override so that we don't actually create the object.
+  override onSubmit() {
+    const value = this.form!.value;
     const bridge = this.bridge();
     // const obs = this.creating() ? bridge?.create(value) : bridge?.update(this.entity()?.cell, value);
     // obs?.pipe(
