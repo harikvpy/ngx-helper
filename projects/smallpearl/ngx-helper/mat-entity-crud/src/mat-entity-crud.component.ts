@@ -7,15 +7,13 @@ import {
   computed,
   ContentChildren,
   EventEmitter,
-  Inject,
   input,
-  Optional,
   Output,
   QueryList,
   signal,
   TemplateRef,
   viewChild,
-  viewChildren,
+  viewChildren
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -41,9 +39,8 @@ import { Observable, Subscription, tap } from 'rxjs';
 import { getEntityCrudConfig } from './default-config';
 import { FormViewHostComponent } from './form-view-host.component';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
-import { CRUD_OP_FN, SPMatEntityCrudConfig } from './mat-entity-crud-types';
+import { ALLOW_ITEM_ACTION_FN, CRUD_OP_FN, SPMatEntityCrudConfig } from './mat-entity-crud-types';
 import { PreviewHostComponent } from './preview-host.component';
-import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
 
 @Component({
   standalone: true,
@@ -192,7 +189,7 @@ export class SPMatEntityCrudComponent<
   newItemLink = input<string | string[]>();
   crudOpFn = input<CRUD_OP_FN<TEntity, IdKey>>();
   previewTemplate = input<TemplateRef<any>>();
-
+  allowEntityActionFn = input<ALLOW_ITEM_ACTION_FN<TEntity>>();
   componentColumns = viewChildren(MatColumnDef);
   @ContentChildren(MatColumnDef) _clientColumnDefs!: QueryList<MatColumnDef>;
 
@@ -276,11 +273,22 @@ export class SPMatEntityCrudComponent<
     }
     return cols;
   });
-  _itemActions = computed(() =>
-    this.itemActions() && this.itemActions().length
+  _itemActions = computed(() => {
+    const actions = this.itemActions() && this.itemActions().length
       ? this.itemActions()
       : this.defaultItemCrudActions()
-  );
+    let actionsCopy: SPContextMenuItem[] = JSON.parse(JSON.stringify(actions));
+    actionsCopy.forEach(action => {
+      action.disable = (entity: TEntity) => {
+        const allowItemActionFn = this.allowEntityActionFn();
+        if (allowItemActionFn) {
+          return allowItemActionFn(entity, action.role ?? action.label);
+        }
+        return false;
+      }
+    })
+    return actionsCopy;
+  });
   // This uses the previewActive signal to compute the visible columns
   // when preview is activated. For now we just hide the 'action' column when
   // preview is active. We can further customize this logic by allowing the

@@ -79,3 +79,6 @@ export type CRUD_OP_FN<
   entityValue: any,
   entityCrudComponent: any
 ) => Observable<TEntity | null>;
+
+
+export type ALLOW_ITEM_ACTION_FN<TEntity> = (entity: TEntity, action: string) => boolean;
