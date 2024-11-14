@@ -189,6 +189,10 @@ export class SPMatEntityCrudComponent<
   newItemLink = input<string | string[]>();
   crudOpFn = input<CRUD_OP_FN<TEntity, IdKey>>();
   previewTemplate = input<TemplateRef<any>>();
+  /**
+   * Whether to allow a context menu action or not. Return false to disable
+   * the action.
+   */
   allowEntityActionFn = input<ALLOW_ITEM_ACTION_FN<TEntity>>();
   componentColumns = viewChildren(MatColumnDef);
   @ContentChildren(MatColumnDef) _clientColumnDefs!: QueryList<MatColumnDef>;
@@ -282,7 +286,7 @@ export class SPMatEntityCrudComponent<
       action.disable = (entity: TEntity) => {
         const allowItemActionFn = this.allowEntityActionFn();
         if (allowItemActionFn) {
-          return allowItemActionFn(entity, action.role ?? action.label);
+          return !allowItemActionFn(entity, action.role ?? action.label);
         }
         return false;
       }
