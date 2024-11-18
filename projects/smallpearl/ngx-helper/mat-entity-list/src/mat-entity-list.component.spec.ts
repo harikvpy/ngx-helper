@@ -5,6 +5,7 @@ import { Component, ComponentRef, OnInit, signal, viewChild } from '@angular/cor
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatTableModule } from '@angular/material/table';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideRouter } from '@angular/router';
 import { SP_NGX_HELPER_CONFIG, SPNgxHelperConfig } from '@smallpearl/ngx-helper/core';
 import { FIELD_VALUE_FN, SP_ENTITY_FIELD_CONFIG, SPEntityFieldConfig, SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { of } from 'rxjs';
@@ -146,7 +147,7 @@ describe('SPMatEntityListComponent', () => {
   beforeEach(async () => {
     TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, SPMatEntityListComponent, SPMatEntityListTestComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
     fixture = TestBed.createComponent(SPMatEntityListComponent<User, 'cell'>);
     component = fixture.componentInstance;
@@ -340,6 +341,7 @@ describe('SPMatEntityListComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideRouter([]),
         { provide: SP_NGX_HELPER_CONFIG, useValue: helperConfig },
         { provide: SP_MAT_ENTITY_LIST_CONFIG, useValue: entityListConfig },
         { provide: SP_ENTITY_FIELD_CONFIG, useValue: entityFieldConfig }
