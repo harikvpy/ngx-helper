@@ -17,6 +17,7 @@ import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { spFormatCurrency } from '@smallpearl/ngx-helper/locale';
 import { SPContextMenuItem } from '@smallpearl/ngx-helper/mat-context-menu';
 import {
+  NewItemSubType,
   SP_MAT_ENTITY_CRUD_CONFIG,
   SPMatEntityCrudComponent,
   SPMatEntityCrudConfig,
@@ -72,6 +73,7 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
         [entityLoaderFn]="invoicesLoaderFn"
         [columns]="invoiceColumns"
         [pageSize]="10"
+        [newItemSubTypes]="newSubTypes"
         idKey="id"
         pagination="discrete"
         [paginator]="paginator"
@@ -90,6 +92,7 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
       <app-create-edit-entity-demo
         [bridge]="data.bridge"
         [entity]="data.entity"
+        [params]="data.params"
       ></app-create-edit-entity-demo>
     </ng-template>
 
@@ -148,7 +151,37 @@ export class EntityCrudDemoComponent implements OnInit {
   ];
   spEntityCrudComponent = viewChild(SPMatEntityCrudComponent);
   paginator = new MyPaginator();
-
+  newSubTypes: NewItemSubType[] = [
+    {
+      role: '',
+      label: 'INCOME'
+    },
+    {
+      role: '_new_',
+      label: 'Customer Payment',
+      params: {
+        type: 'customer_payment'
+      }
+    },
+    {
+      role: '_new_',
+      label: 'Customer Advance',
+      params: {
+        type: 'customer_advance'
+      }
+    },
+    {
+      role: '',
+      label: 'EXPENSE'
+    },
+    {
+      role: '_new_',
+      label: 'Bill Payment',
+      params: {
+        type: 'bill_payment'
+      }
+    },
+  ]
   crudOpFn(
     op: string,
     entityValue: any,

@@ -66,8 +66,9 @@ export abstract class SPMatEntityCrudFormBase<
 > implements OnInit, OnDestroy
 {
   _form!: TFormGroup;
-  entity = input<TEntity>();
-  bridge = input<SPMatEntityCrudCreateEditBridge>();
+  entity = input.required<TEntity>();
+  bridge = input.required<SPMatEntityCrudCreateEditBridge>();
+  params = input<any>();
   sub$ = new Subscription();
 
   crudConfig = getEntityCrudConfig();

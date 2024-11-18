@@ -18,11 +18,12 @@ import {
   SPMatEntityListPaginator,
 } from '@smallpearl/ngx-helper/mat-entity-list';
 import { of } from 'rxjs';
-import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
+import { NewItemSubType, SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
 import { SPMatEntityCrudComponent } from './mat-entity-crud.component';
 import { SPMatEntityCrudPreviewPaneComponent } from './preview-pane.component';
 import { getEntitiesCount } from '@ngneat/elf-entities';
 import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
+import { MatMenu, MatMenuItem } from '@angular/material/menu';
 
 interface User {
   name: { title: string; first: string; last: string };
@@ -244,11 +245,13 @@ export class CreateEditUserComponent implements OnInit {
         itemsLabel="Users"
         [endpoint]="endpoint"
         [columns]="columns"
+        [newItemSubTypes]="newSubTypes()"
         [itemActions]="itemActions"
         idKey="cell"
         [createEditFormTemplate]="createEdit"
         [previewTemplate]="userPreview"
         [pageSize]="50"
+        (action)="onAction($event)"
       >
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef>FULL NAME</th>
@@ -284,10 +287,16 @@ class SPMatEntityCrudTestComponent implements OnInit {
     { label: 'Edit', role: '_update_', },
     { label: 'Delete', role: '_delete_', disable: (user: User) => user.cell.startsWith('(') }
   ];
+  newSubTypes = input<NewItemSubType[]>();
 
   spEntityCrudComponent = viewChild(SPMatEntityCrudComponent<User, 'cell'>);
+  lastAction!: any;
 
   ngOnInit(): void {}
+
+  onAction(action: {role: string, entity?: User}) {
+    this.lastAction = action;
+  }
 }
 
 /**
@@ -530,6 +539,39 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
       const newCount = spEntityCrudComp.spEntitiesList()?.store.query(getEntitiesCount());
       expect(newCount).toEqual(USER_DATA.length+1);
     }
+  });
+
+  it('should show the new subtypes when New button is selected', async () => {
+    const http = TestBed.inject(HttpClient);
+    const JOHN_SMITH: User = {
+      name: {title: 'mr', first: 'John', last: 'Smith'},
+      gender: 'female',
+      cell: '93039309'
+    };
+    spyOn(http, 'post').and.returnValue(of(JOHN_SMITH));
+    testComponentFixture.componentRef.setInput('newSubTypes', [
+      { role: 'car', label: 'Car' },
+      { role: 'bike', label: 'Bike' },
+    ]);
+    testComponentFixture.detectChanges();
+    const spEntityCrudComp = testComponent.spEntityCrudComponent();
+    let spEntityCrudCompSpy = undefined;
+    if (spEntityCrudComp) {
+      spEntityCrudCompSpy = spyOn(spEntityCrudComp, 'create').and.callThrough();
+    }
+    const matButton = testComponentFixture.debugElement.query(By.directive(MatButton))
+    matButton.nativeElement.click();
+    testComponentFixture.detectChanges();
+    const matMenu = testComponentFixture.debugElement.query(By.directive(MatMenu));
+    expect(matMenu).toBeTruthy();
+    const matMenuItems = testComponentFixture.debugElement.queryAll(By.directive(MatMenuItem));
+    expect(matMenuItems.length).toEqual(2);
+    expect((matMenuItems[0].nativeElement as HTMLElement).innerText).toEqual('Car');
+    expect((matMenuItems[1].nativeElement as HTMLElement).innerText).toEqual('Bike');
+    (matMenuItems[0].nativeElement as HTMLElement).click();
+    expect(testComponent.lastAction.role).toEqual('car');
+    (matMenuItems[1].nativeElement as HTMLElement).click();
+    expect(testComponent.lastAction.role).toEqual('bike');
   });
 
   it('should show the edit form when Edit context menu item is selected', async () => {

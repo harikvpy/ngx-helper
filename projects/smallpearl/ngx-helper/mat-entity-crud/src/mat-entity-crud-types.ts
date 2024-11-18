@@ -82,3 +82,41 @@ export type CRUD_OP_FN<
 
 
 export type ALLOW_ITEM_ACTION_FN<TEntity> = (entity: TEntity, action: string) => boolean;
+
+/**
+ * This interface is used to define sub types for the "New {{item}}" button on
+ * top of the CRUD UI. An array of these is provided as the value to the
+ * component property 'newItemSubTypes'.
+ */
+export interface NewItemSubType {
+  /**
+   * A role string that will be passed as argument to the (action) event
+   * handler. This string allows the event handler to distinguish the selected
+   * sub-type.
+   *
+   * The special keyword '_new_' can be used to activate the
+   * `createEditTemplate` template if one is provided. In this case the params
+   * element value (see below) can be used in the template to distinguish
+   * between different menu items.
+   */
+  role: string;
+  /**
+   * Label displayed in the menu representing this role.
+   */
+  label: string;
+  /**
+   * Arbitrary value that will be passed to the 'createEditTemplate' in the
+   * $implicit template context as 'params'. You can access this in the
+   * template like below (see `data.params`):-
+      ```
+      <ng-template #createEdit let-data>
+        <app-create-edit-entity-demo
+          [bridge]="data.bridge"
+          [entity]="data.entity"
+          [params]="data.params"
+        ></app-create-edit-entity-demo>
+      </ng-template>
+      ```
+   */
+  params?: any;
+}

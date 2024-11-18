@@ -112,38 +112,6 @@ describe('SPMatEntityListComponent', () => {
   let component!: UserEntityListComponent;
   let componentRef!: ComponentRef<UserEntityListComponent>;
 
-  const createTestComponent = async () => {
-    TestBed.configureTestingModule({
-      imports: [NoopAnimationsModule, SPMatEntityListTestComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
-    });
-    testComponentFixture = TestBed.createComponent(
-      SPMatEntityListTestComponent
-    );
-    testComponentRef = testComponentFixture.componentRef;
-    testComponent = testComponentFixture.componentInstance;
-    component = (testComponent.spEntityListComponent as any) as UserEntityListComponent;
-  }
-
-  const createComponent = async () => {
-    TestBed.configureTestingModule({
-      imports: [NoopAnimationsModule, SPMatEntityListComponent, SPMatEntityListTestComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
-    });
-    fixture = TestBed.createComponent(SPMatEntityListComponent<User, 'cell'>);
-    component = fixture.componentInstance;
-    componentRef = fixture.componentRef;
-    componentRef.setInput('columns', [
-      { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
-      { name: 'gender' },
-      { name: 'cell' },
-    ]);
-    componentRef.setInput('endpoint', 'https://abc.efg.com');
-    const http = TestBed.inject(HttpClient);
-    spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    fixture.autoDetectChanges();
-  }
-
   beforeEach(async () => {
     TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, SPMatEntityListComponent, SPMatEntityListTestComponent],

@@ -71,6 +71,7 @@ export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEdit
 
   entity = signal<TEntity|undefined>(undefined);
   title = signal<string>('');
+  params = signal<any>(undefined);
   clientFormView!: EmbeddedViewRef<any> | null;
   vc = viewChild('clientFormContainer', { read: ViewContainerRef });
   config!: SPMatEntityCrudConfig;
@@ -86,9 +87,10 @@ export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEdit
     this.sub$.unsubscribe();
   }
 
-  show(entity: TEntity|undefined) {
+  show(entity: TEntity|undefined, params?: any) {
     this.entity.set(entity);
     this.title.set(entity ? this.config.i18n.editItemLabel(this.itemLabel()) : this.config.i18n.newItemLabel(this.itemLabel()));
+    this.params.set(params);
     this.createClientView();
   }
 
@@ -138,6 +140,7 @@ export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEdit
         $implicit: {
           bridge: this,
           entity: this.entity(),
+          params: this.params()
         },
       });
       this.clientFormView.detectChanges();

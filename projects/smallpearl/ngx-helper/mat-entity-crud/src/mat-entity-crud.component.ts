@@ -39,8 +39,9 @@ import { Observable, Subscription, tap } from 'rxjs';
 import { getEntityCrudConfig } from './default-config';
 import { FormViewHostComponent } from './form-view-host.component';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
-import { ALLOW_ITEM_ACTION_FN, CRUD_OP_FN, SPMatEntityCrudConfig } from './mat-entity-crud-types';
+import { ALLOW_ITEM_ACTION_FN, CRUD_OP_FN, NewItemSubType, SPMatEntityCrudConfig } from './mat-entity-crud-types';
 import { PreviewHostComponent } from './preview-host.component';
+import { MatMenuModule } from '@angular/material/menu';
 
 @Component({
   standalone: true,
@@ -50,6 +51,7 @@ import { PreviewHostComponent } from './preview-host.component';
     MatButtonModule,
     MatTableModule,
     MatSortModule,
+    MatMenuModule,
     MatSnackBarModule,
     AngularSplitModule,
     SPMatEntityListComponent,
@@ -72,16 +74,44 @@ import { PreviewHostComponent } from './preview-host.component';
             </div>
             <span class="spacer"></span>
             <div class="action-bar-actions">
-              @if (!disableCreate()) {
+              @if (!disableCreate()) { @if (newItemSubTypes()) {
+              <!-- New {{item}} displays a dropdown menu from which the subtype can be selected -->
+              <button
+                type="button"
+                mat-raised-button
+                color="primary"
+                [matMenuTriggerFor]="newSubTypesMenu"
+              >
+                {{
+                  newItemLabel() ??
+                    crudConfig.i18n.newItemLabel(this.itemLabel())
+                }}
+              </button>
+              <mat-menu #newSubTypesMenu="matMenu">
+                @for (subtype of newItemSubTypes(); track $index) { @if
+                (subtype.role) {
+                <button mat-menu-item (click)="handleNewItemSubType(subtype)">
+                  {{ subtype.label }}
+                </button>
+                } @else {
+                <div style="padding: .2em 0.5em;">
+                  <strong>{{ subtype.label }}</strong>
+                </div>
+                } }
+              </mat-menu>
+              } @else {
               <button
                 mat-raised-button
                 color="primary"
                 (click)="onCreate($event)"
                 [routerLink]="newItemLink()"
               >
-                {{ crudConfig.i18n.newItemLabel(this.itemLabel()) }}
+                {{
+                  newItemLabel() ??
+                    crudConfig.i18n.newItemLabel(this.itemLabel())
+                }}
               </button>
-              }
+              } }
             </div>
           </div>
           <sp-mat-entity-list
@@ -185,15 +215,43 @@ export class SPMatEntityCrudComponent<
 {
   itemLabel = input.required<string>();
   itemsLabel = input.required<string>();
+  /**
+   *
+   */
   itemActions = input<SPContextMenuItem[]>([]);
+  /**
+   * Specify the list of router paths that will be set as the value for
+   * [routerLink] for the 'New {{ item }}' button. If not specified,
+   * if createEditTemplate is specified, it will be shown. If not, `action`
+   * out event will be raised with `{ role: '_new_' }`.
+   */
   newItemLink = input<string | string[]>();
+  /**
+   * If not specified, will use label from SPMatEntityCrudConfig.i18n.newItemLabel.
+   */
+  newItemLabel = input<string | string[]>();
+  /**
+   * If you want "New {{item}}" button to support multiple entity types,
+   * you can set this to `NewItemSubType[]`, where each element stands for for
+   * a dropdown menu item. Refer to `NewItemSubType` for details on this
+   * interface.
+   */
+  newItemSubTypes = input<NewItemSubType[]>();
+  /**
+   * If you want to take control of the network operations for the CRUD
+   * operations (CREATE/UPDATE/DELETE), provide a value for this property.
+   */
   crudOpFn = input<CRUD_OP_FN<TEntity, IdKey>>();
+  /**
+   * Item preview template.
+   */
   previewTemplate = input<TemplateRef<any>>();
   /**
    * Whether to allow a context menu action or not. Return false to disable
    * the action.
    */
   allowEntityActionFn = input<ALLOW_ITEM_ACTION_FN<TEntity>>();
+
   componentColumns = viewChildren(MatColumnDef);
   @ContentChildren(MatColumnDef) _clientColumnDefs!: QueryList<MatColumnDef>;
 
@@ -250,8 +308,9 @@ export class SPMatEntityCrudComponent<
 
   defaultItemCrudActions = signal<SPContextMenuItem[]>([]);
   columnsWithAction = computed(() => {
-    const cols: Array<SPEntityFieldSpec<TEntity> | string> =
-      JSON.parse(JSON.stringify(this.columns()));
+    const cols: Array<SPEntityFieldSpec<TEntity> | string> = JSON.parse(
+      JSON.stringify(this.columns())
+    );
     // JSON.parse(JSON.strigify()) does not clone function objects. So
     // explicitly copy these over. So this is really a shallow clone as
     // the cloned objects still refers to the function objects in the original
@@ -259,7 +318,7 @@ export class SPMatEntityCrudComponent<
     this.columns().forEach((col, index: number, orgColumns) => {
       const orgCol = orgColumns[index];
       if (typeof orgCol !== 'string') {
-        const newColumn = (cols[index] as SPEntityFieldSpec<TEntity>);
+        const newColumn = cols[index] as SPEntityFieldSpec<TEntity>;
         if (orgCol.valueFn) {
           newColumn.valueFn = orgCol.valueFn;
         }
@@ -278,19 +337,20 @@ export class SPMatEntityCrudComponent<
     return cols;
   });
   _itemActions = computed(() => {
-    const actions = this.itemActions() && this.itemActions().length
-      ? this.itemActions()
-      : this.defaultItemCrudActions()
+    const actions =
+      this.itemActions() && this.itemActions().length
+        ? this.itemActions()
+        : this.defaultItemCrudActions();
     let actionsCopy: SPContextMenuItem[] = JSON.parse(JSON.stringify(actions));
-    actionsCopy.forEach(action => {
+    actionsCopy.forEach((action) => {
       action.disable = (entity: TEntity) => {
         const allowItemActionFn = this.allowEntityActionFn();
         if (allowItemActionFn) {
           return !allowItemActionFn(entity, action.role ?? action.label);
         }
         return false;
-      }
-    })
+      };
+    });
     return actionsCopy;
   });
   // This uses the previewActive signal to compute the visible columns
@@ -460,16 +520,17 @@ export class SPMatEntityCrudComponent<
     if (!this.newItemLink() || this.newItemLink()?.length == 0) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      const tmpl = this.createEditFormTemplate();
-      if (tmpl) {
-        // If preview is active deactivate it
-        if (this.previewActive()) {
-          this.closePreview();
-        }
-        const createEditHost = this.createEditHostComponent();
-        createEditHost!.show(undefined);
-        this.createEditViewActive.set(true);
-      }
+      this.activateCreateEditView();
+      // const tmpl = this.createEditFormTemplate();
+      // if (tmpl) {
+      //   // If preview is active deactivate it
+      //   if (this.previewActive()) {
+      //     this.closePreview();
+      //   }
+      //   const createEditHost = this.createEditHostComponent();
+      //   createEditHost!.show(undefined);
+      //   this.createEditViewActive.set(true);
+      // }
     }
     if (!this.createEditViewActive()) {
       this.action.emit({ role: '_new_' });
@@ -477,6 +538,30 @@ export class SPMatEntityCrudComponent<
   }
 
   onUpdate(entity: TEntity) {
+    this.activateCreateEditView(entity);
+    // const tmpl = this.createEditFormTemplate();
+    // if (tmpl) {
+    //   // If preview is active deactivate it
+    //   if (this.previewActive()) {
+    //     this.closePreview();
+    //   }
+    //   const createEditHost = this.createEditHostComponent();
+    //   if (tmpl && createEditHost) {
+    //     createEditHost.show(entity);
+    //     this.createEditViewActive.set(true);
+    //   }
+    // }
+    if (!this.createEditViewActive()) {
+      this.action.emit({ role: '_update_' });
+    }
+  }
+
+  /**
+   * Show the create/edit component
+   * @param entity
+   * @param params
+   */
+  private activateCreateEditView(entity?: TEntity | undefined, params?: any) {
     const tmpl = this.createEditFormTemplate();
     if (tmpl) {
       // If preview is active deactivate it
@@ -484,13 +569,8 @@ export class SPMatEntityCrudComponent<
         this.closePreview();
       }
       const createEditHost = this.createEditHostComponent();
-      if (tmpl && createEditHost) {
-        createEditHost.show(entity);
-        this.createEditViewActive.set(true);
-      }
-    }
-    if (!this.createEditViewActive()) {
-      this.action.emit({ role: '_update_' });
+      createEditHost!.show(entity, params);
+      this.createEditViewActive.set(true);
     }
   }
 
@@ -528,9 +608,10 @@ export class SPMatEntityCrudComponent<
               tap(() => {
                 this.spEntitiesList()!.removeEntity(entityId);
                 // TODO: customize by providing an interface via SPMatEntityCrudConfig?
-                const deletedMessage = this.crudConfig.i18n.itemDeletedNotification(
-                  this.itemLabel()
-                );
+                const deletedMessage =
+                  this.crudConfig.i18n.itemDeletedNotification(
+                    this.itemLabel()
+                  );
                 this.snackBar.open(deletedMessage);
               })
             )
@@ -559,6 +640,15 @@ export class SPMatEntityCrudComponent<
     } else {
       // If 'previewTemplate' is not set, propagate the event to client.
       this.selectEntity.emit(entity);
+    }
+  }
+
+  handleNewItemSubType(subtype: NewItemSubType) {
+    // console.log(`handleNewItemSubType: ${subtype}`);
+    if (subtype.role === '_new_') {
+      this.activateCreateEditView(undefined, subtype?.params);
+    } else {
+      this.action.emit({ role: subtype.role });
     }
   }
 }
