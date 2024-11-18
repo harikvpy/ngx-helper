@@ -33,6 +33,9 @@ export type SPEntityFieldSpec<TEntity> = {
     class?: string;
     // Alignment options. Field's value will be aligned based on this.
     alignment?: 'start'|'center'|'end';
+    // A fixed string or a function that returns an array of strings
+    // to be used as the routerlink for the column value.
+    routerLink?: ((e: TEntity) => string[])|[string];
   };
   // If the column value cannot be derived by simple TEntity[name] lookup,
   // use this function to return a custom computed or formatted value.
@@ -113,5 +116,20 @@ export class SPEntityField<TEntity> {
    */
   get class() {
     return this._fieldSpec?.valueOptions?.class ?? '';
+  }
+
+  hasRouterLink(entity: TEntity) {
+    return !!this._fieldSpec?.valueOptions?.routerLink;
+  }
+
+  getRouterLink(entity: TEntity) {
+    const rl = this._fieldSpec?.valueOptions?.routerLink;
+    if (rl) {
+      if (typeof rl == 'function') {
+        return rl(entity);
+      }
+      return rl
+    }
+    return [];
   }
 }

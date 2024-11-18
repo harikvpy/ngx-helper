@@ -44,6 +44,7 @@ import {
 } from './mat-entity-list-types';
 
 import { Directive } from '@angular/core';
+import { RouterModule } from '@angular/router';
 
 @Directive({
   selector: '[headerAlignment]',
@@ -76,6 +77,7 @@ export class HeaderAlignmentDirective implements AfterViewInit {
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     MatTableModule,
     MatSortModule,
     MatPaginatorModule,
@@ -153,8 +155,16 @@ export class HeaderAlignmentDirective implements AfterViewInit {
           [style.text-align]="column.spec.valueOptions?.alignment"
           mat-cell
           *matCellDef="let element"
-          [innerHtml]="column.value(element)"
-        ></td>
+          [routerLink]="column.getRouterLink(element)"
+        >
+        @if (column.hasRouterLink(element)) {
+          <a [routerLink]="column.getRouterLink(element)">
+            <span [innerHTML]="column.value(element)"></span>
+          </a>
+        } @else {
+          <span [innerHTML]="column.value(element)"></span>
+        }
+        </td>
       </ng-container>
       }
     </span>

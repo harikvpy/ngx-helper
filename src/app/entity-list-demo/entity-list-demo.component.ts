@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, QueryList, signal, viewChild, ViewChild, ViewChildren } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnInit, QueryList, signal, viewChild, ViewChild, ViewChildren } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatColumnDef, MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -83,167 +83,185 @@ const ELEMENT_DATA: PeriodicElement[] = [
   providers: [
     {
       provide: SP_MAT_ENTITY_LIST_CONFIG,
-      useFactory: provideMatEntityListConfig
+      useFactory: provideMatEntityListConfig,
     },
     {
       provide: SP_ENTITY_FIELD_CONFIG,
-      useFactory: provideEntityFieldConfig
-    }
+      useFactory: provideEntityFieldConfig,
+    },
   ],
   selector: 'app-entity-list-demo',
   template: `
-  <div class="demo-wrapper">
-    <h1>Entity List Demo</h1>
-    <div class="demo-tabs">
-      <mat-tab-group class="mh-100" #matTabGroup>
-        <mat-tab label="Custom Column Def">
-          <ng-container *ngTemplateOutlet="tableWithCustomColumnDef"></ng-container>
-        </mat-tab>
-        <mat-tab label="Hybrid ColumnDefs">
-          <ng-template matTabContent>
-            <div class="entities-list">
-              <sp-mat-entity-list
-                [endpoint]="endpoint"
-                [columns]="hybridColumnDefs"
-                [pageSize]="40"
-                idKey="cell"
-                pagination="discrete"
-                [paginator]="paginator2"
-                [infiniteScrollContainer]="entitiesScroller()"
-                [disableSort]="true"
-              >
-              </sp-mat-entity-list>
-            </div>
-          </ng-template>
-        </mat-tab>
-        <mat-tab label="Without Sorting">
-          <ng-template matTabContent>
-            <div class="entities-list">
-              <sp-mat-entity-list
-                [endpoint]="endpoint"
-                [columns]="homoColumnDefs"
-                [pageSize]="15"
-                idKey="cell"
-                pagination="discrete"
-                [paginator]="paginator2"
-                [infiniteScrollContainer]="entitiesScroller()"
-                [disableSort]="true"
-              >
-              </sp-mat-entity-list>
-            </div>
-          </ng-template>
-        </mat-tab>
-        <mat-tab label="Infinite Scroll">
-        <ng-template matTabContent>
-            <div class="entities-list" #entitiesList>
-              <sp-mat-entity-list
-                [endpoint]="endpoint"
-                [columns]="homoColumnDefs"
-                [pageSize]="10"
-                idKey="cell"
-                pagination="infinite"
-                [paginator]="paginator2"
-                [infiniteScrollContainer]="entitiesScroller()"
-                [disableSort]="true"
-              >
-              </sp-mat-entity-list>
-            </div>
-          </ng-template>
-        </mat-tab>
-      </mat-tab-group>
+    <div class="demo-wrapper">
+      <h1>Entity List Demo</h1>
+      <div class="demo-tabs">
+        <mat-tab-group class="mh-100" #matTabGroup>
+          <mat-tab label="Custom Column Def">
+            <ng-container
+              *ngTemplateOutlet="tableWithCustomColumnDef"
+            ></ng-container>
+          </mat-tab>
+          <mat-tab label="Hybrid ColumnDefs">
+            <ng-template matTabContent>
+              <div class="entities-list">
+                <sp-mat-entity-list
+                  [endpoint]="endpoint"
+                  [columns]="hybridColumnDefs"
+                  [pageSize]="40"
+                  idKey="cell"
+                  pagination="discrete"
+                  [paginator]="paginator2"
+                  [infiniteScrollContainer]="entitiesScroller()"
+                  [disableSort]="true"
+                >
+                </sp-mat-entity-list>
+              </div>
+            </ng-template>
+          </mat-tab>
+          <mat-tab label="Without Sorting">
+            <ng-template matTabContent>
+              <div class="entities-list">
+                <sp-mat-entity-list
+                  [endpoint]="endpoint"
+                  [columns]="homoColumnDefs"
+                  [pageSize]="15"
+                  idKey="cell"
+                  pagination="discrete"
+                  [paginator]="paginator2"
+                  [infiniteScrollContainer]="entitiesScroller()"
+                  [disableSort]="true"
+                >
+                </sp-mat-entity-list>
+              </div>
+            </ng-template>
+          </mat-tab>
+          <mat-tab label="Infinite Scroll">
+            <ng-template matTabContent>
+              <div class="entities-list" #entitiesList>
+                <sp-mat-entity-list
+                  [endpoint]="endpoint"
+                  [columns]="homoColumnDefs"
+                  [pageSize]="10"
+                  idKey="cell"
+                  pagination="infinite"
+                  [paginator]="paginator2"
+                  [infiniteScrollContainer]="entitiesScroller()"
+                  [disableSort]="true"
+                >
+                </sp-mat-entity-list>
+              </div>
+            </ng-template>
+          </mat-tab>
+        </mat-tab-group>
+      </div>
+      <ng-template #tableWithCustomColumnDef>
+        <div class="entities-list" #entitiesList>
+          <sp-mat-entity-list
+            [endpoint]="endpoint"
+            [columns]="homoColumnDefs"
+            [pageSize]="10"
+            idKey="cell"
+            pagination="discrete"
+            [paginator]="paginator"
+            matSort
+            [sorter]="matSort()"
+          >
+            <ng-container matColumnDef="name">
+              <th mat-header-cell mat-sort-header *matHeaderCellDef>
+                FULL NAME
+              </th>
+              <td mat-cell *matCellDef="let element">
+                {{ element.name.title }}. {{ element.name.first }}
+                {{ element.name.last }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="action">
+              <th mat-header-cell *matHeaderCellDef>Action</th>
+              <td mat-cell *matCellDef="let element">
+                <sp-mat-context-menu
+                  [menuItems]="[
+                    { label: 'Edit', role: 'edit' },
+                    { label: 'Delete', role: 'delete' }
+                  ]"
+                  (selected)="onItemAction($event, element)"
+                ></sp-mat-context-menu>
+              </td>
+            </ng-container>
+          </sp-mat-entity-list>
+        </div>
+      </ng-template>
+
+      <ng-template #tableWithoutSorting>
+        <div class="entities-list" #entitiesList>
+          <sp-mat-entity-list
+            [endpoint]="endpoint"
+            [columns]="homoColumnDefs"
+            [pageSize]="10"
+            idKey="cell"
+            pagination="discrete"
+            [paginator]="paginator2"
+            [infiniteScrollContainer]="entitiesScroller()"
+            [disableSort]="true"
+          >
+          </sp-mat-entity-list>
+        </div>
+      </ng-template>
     </div>
-    <ng-template #tableWithCustomColumnDef>
-      <div class="entities-list" #entitiesList>
-        <sp-mat-entity-list
-          [endpoint]="endpoint"
-          [columns]="homoColumnDefs"
-          [pageSize]="10"
-          idKey="cell"
-          pagination="discrete"
-          [paginator]="paginator"
-          matSort
-          [sorter]="matSort()"
-        >
-
-          <ng-container matColumnDef="name">
-            <th mat-header-cell mat-sort-header *matHeaderCellDef>FULL NAME</th>
-            <td mat-cell *matCellDef="let element">
-              {{element.name.title}}. {{element.name.first}} {{element.name.last}}
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="action">
-            <th mat-header-cell *matHeaderCellDef>Action</th>
-            <td mat-cell *matCellDef="let element">
-              <sp-mat-context-menu
-                [menuItems]="[
-                  { label: 'Edit', role: 'edit' },
-                  { label: 'Delete', role: 'delete' }
-                ]"
-                (selected)="onItemAction($event, element)"
-              ></sp-mat-context-menu>
-            </td>
-          </ng-container>
-
-        </sp-mat-entity-list>
-      </div>
-    </ng-template>
-
-    <ng-template #tableWithoutSorting>
-      <div class="entities-list" #entitiesList>
-        <sp-mat-entity-list
-          [endpoint]="endpoint"
-          [columns]="homoColumnDefs"
-          [pageSize]="10"
-          idKey="cell"
-          pagination="discrete"
-          [paginator]="paginator2"
-          [infiniteScrollContainer]="entitiesScroller()"
-          [disableSort]="true"
-        >
-        </sp-mat-entity-list>
-      </div>
-    </ng-template>
-
-  </div>
   `,
-  styles: [`
-  .demo-wrapper {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-  }
-  .demo-tabs {
-    flex-grow: 1;
-    overflow: hidden;
-  }
-  .mh-100 {
-    max-height: 100%;
-  }
-  `]
+  styles: [
+    `
+      .demo-wrapper {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+      }
+      .demo-tabs {
+        flex-grow: 1;
+        overflow: hidden;
+      }
+      .mh-100 {
+        max-height: 100%;
+      }
+    `,
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EntityListDemoComponent implements OnInit, AfterViewInit {
-
   endpoint = 'https://randomuser.me/api/?nat=us,gb';
   homoColumnDefs: SPEntityFieldSpec<User>[] = [
-    { name: 'name', label: 'NAME', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
-    { name: 'gender', label: 'GENDER' },
+    {
+      name: 'name',
+      label: 'NAME',
+      valueFn: (user: User) => user.name.first + ' ' + user.name.last
+    },
+    { name: 'gender', label: 'GENDER',
+      valueOptions: {
+        routerLink: (u: User) => ['/']
+      }
+    },
     { name: 'cell', label: 'CELL' },
     { name: 'action', label: 'ACTION' },
   ];
   hybridColumnDefs = [
-    { name: 'name', label: 'NAME', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
+    {
+      name: 'name',
+      label: 'NAME',
+      valueFn: (user: User) => user.name.first + ' ' + user.name.last,
+    },
     'gender',
     'cell',
     'email',
-    'phone'
+    'phone',
   ];
   paginator = new MyPaginator();
   paginator2 = new MyPaginator();
 
   displayedColumns = signal<string[]>([]);
-  dataSource = signal<MatTableDataSource<PeriodicElement>>(new MatTableDataSource<PeriodicElement>([]));
+  dataSource = signal<MatTableDataSource<PeriodicElement>>(
+    new MatTableDataSource<PeriodicElement>([])
+  );
 
   @ViewChild(MatTable, { static: false }) table!: MatTable<PeriodicElement>;
   matSort = viewChild(MatSort);
@@ -256,7 +274,7 @@ export class EntityListDemoComponent implements OnInit, AfterViewInit {
   spEntitiesList = viewChild(SPMatEntityListComponent<User, 'cell'>);
   entitiesListScroller = viewChild<ElementRef>('matTabGroup');
 
-  entitiesScroller = signal<HTMLElement|undefined>(undefined);
+  entitiesScroller = signal<HTMLElement | undefined>(undefined);
 
   constructor(private cdr: ChangeDetectorRef) {}
 
@@ -265,12 +283,17 @@ export class EntityListDemoComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
     setTimeout(() => this.buildColumns(), 100);
     if (this.entitiesListScroller()) {
-      this.entitiesScroller.set((this.entitiesListScroller() as any)?._elementRef.nativeElement);
+      this.entitiesScroller.set(
+        (this.entitiesListScroller() as any)?._elementRef.nativeElement
+      );
     }
     if (this.spEntitiesList()) {
       const dataSource = this.spEntitiesList()?.dataSource();
       if (dataSource) {
-        dataSource.sortingDataAccessor = (data: User, sortHeaderId: string): string | number => {
+        dataSource.sortingDataAccessor = (
+          data: User,
+          sortHeaderId: string
+        ): string | number => {
           if (sortHeaderId === 'name') {
             return data.name.title + data.name.first + data.name.last;
           }
@@ -315,7 +338,6 @@ export class EntityListDemoComponent implements OnInit, AfterViewInit {
     }
   }
 
-
   onItemAction(role: string, entry: User) {
     if (role === 'delete') {
       this.onDelete(entry);
@@ -323,7 +345,6 @@ export class EntityListDemoComponent implements OnInit, AfterViewInit {
   }
 
   async onDelete(user: User) {
-
     const sure = window.confirm('Are you sure?');
     const entitiesList = this.spEntitiesList();
     if (sure && entitiesList) {
