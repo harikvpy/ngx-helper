@@ -68,52 +68,57 @@ import { MatMenuModule } from '@angular/material/menu';
           [class]="crudConfig.listPaneWrapperClass"
           [ngStyle]="{ display: !createEditViewActive() ? 'inherit' : 'none' }"
         >
+
+          <ng-template #defaultActionButtons>
+            <div class="action-bar-actions">
+              @if (!disableCreate()) { @if (newItemSubTypes()) {
+              <!-- New {{item}} displays a dropdown menu from which the subtype can be selected -->
+              <button
+                type="button"
+                mat-raised-button
+                color="primary"
+                [matMenuTriggerFor]="newSubTypesMenu"
+              >
+                {{
+                  newItemLabel() ??
+                    crudConfig.i18n.newItemLabel(this.itemLabel())
+                }}&nbsp;&#9660;  <!-- down arrow-head -->
+              </button>
+              <mat-menu #newSubTypesMenu="matMenu">
+                @for (subtype of newItemSubTypes(); track $index) { @if
+                (subtype.role) {
+                <button mat-menu-item (click)="handleNewItemSubType(subtype)">
+                  {{ subtype.label }}
+                </button>
+                } @else {
+                <div style="padding: .2em 0.5em;">
+                  <strong>{{ subtype.label }}</strong>
+                </div>
+                } }
+              </mat-menu>
+              } @else {
+              <button
+                mat-raised-button
+                color="primary"
+                (click)="onCreate($event)"
+                [routerLink]="newItemLink()"
+              >
+                {{
+                  newItemLabel() ??
+                    crudConfig.i18n.newItemLabel(this.itemLabel())
+                }}
+              </button>
+              } }
+            </div>
+          </ng-template>
+
           <ng-template #defaultHeaderTemplate>
             <div class="action-bar">
               <div class="action-bar-title">
-                {{ itemsLabel() }}
+                {{ _title() }}
               </div>
               <span class="spacer"></span>
-              <div class="action-bar-actions">
-                @if (!disableCreate()) { @if (newItemSubTypes()) {
-                <!-- New {{item}} displays a dropdown menu from which the subtype can be selected -->
-                <button
-                  type="button"
-                  mat-raised-button
-                  color="primary"
-                  [matMenuTriggerFor]="newSubTypesMenu"
-                >
-                  {{
-                    newItemLabel() ??
-                      crudConfig.i18n.newItemLabel(this.itemLabel())
-                  }}
-                </button>
-                <mat-menu #newSubTypesMenu="matMenu">
-                  @for (subtype of newItemSubTypes(); track $index) { @if
-                  (subtype.role) {
-                  <button mat-menu-item (click)="handleNewItemSubType(subtype)">
-                    {{ subtype.label }}
-                  </button>
-                  } @else {
-                  <div style="padding: .2em 0.5em;">
-                    <strong>{{ subtype.label }}</strong>
-                  </div>
-                  } }
-                </mat-menu>
-                } @else {
-                <button
-                  mat-raised-button
-                  color="primary"
-                  (click)="onCreate($event)"
-                  [routerLink]="newItemLink()"
-                >
-                  {{
-                    newItemLabel() ??
-                      crudConfig.i18n.newItemLabel(this.itemLabel())
-                  }}
-                </button>
-                } }
-              </div>
+              <ng-container [ngTemplateOutlet]="actionsTemplate() || defaultActionButtons"></ng-container>
             </div>
           </ng-template>
           <ng-container [ngTemplateOutlet]="headerTemplate() || defaultHeaderTemplate"></ng-container>
@@ -219,6 +224,11 @@ export class SPMatEntityCrudComponent<
   itemLabel = input.required<string>();
   itemsLabel = input.required<string>();
   /**
+   * Title string displayed above the component. If not specified, will use
+   * itemsLabel() as the title.
+   */
+  title = input<string>();
+  /**
    *
    */
   itemActions = input<SPContextMenuItem[]>([]);
@@ -267,6 +277,10 @@ export class SPMatEntityCrudComponent<
    */
   headerTemplate = input<TemplateRef<any>>();
 
+  actionsTemplate = input<TemplateRef<any>>();
+
+  // Computed title
+  _title = computed(() => this.title() ? this.title() : this.itemsLabel());
   componentColumns = viewChildren(MatColumnDef);
   @ContentChildren(MatColumnDef) _clientColumnDefs!: QueryList<MatColumnDef>;
 
