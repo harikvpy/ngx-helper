@@ -277,6 +277,18 @@ export class SPMatEntityCrudComponent<
    */
   headerTemplate = input<TemplateRef<any>>();
 
+  /**
+   * Set this to the custom template identifier that will replace the
+   * "New {{Item}}" button portion. This template will expand towards the
+   * title which will be placed to its left (right in rtl).
+   *
+   *    ```
+   *    <sp-map-entity-crud
+   *      [actionsTemplate]="myCrudActions"
+   *    ></sp-map-entity-crud>
+   *    <ng-template #myCrudActions>...</ng-template>
+   *    ```
+   */
   actionsTemplate = input<TemplateRef<any>>();
 
   // Computed title
