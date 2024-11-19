@@ -28,7 +28,6 @@ type MyFormGroup = FormGroup<{
   ],
   selector: 'app-create-edit-entity-demo',
   template: `
-    <h2>{{ params().type }}</h2>
     <form
       [formGroup]="form!"
       (ngSubmit)="onSubmit()"
@@ -60,6 +59,12 @@ type MyFormGroup = FormGroup<{
         </button>
       </div>
     </form>
+
+    @if (params()) {
+      <br/>
+      <h3>Params: {{ params().type }}</h3>
+    }
+
   `,
   styles: `
 

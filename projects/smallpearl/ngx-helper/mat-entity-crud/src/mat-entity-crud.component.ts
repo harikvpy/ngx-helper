@@ -68,52 +68,55 @@ import { MatMenuModule } from '@angular/material/menu';
           [class]="crudConfig.listPaneWrapperClass"
           [ngStyle]="{ display: !createEditViewActive() ? 'inherit' : 'none' }"
         >
-          <div class="action-bar">
-            <div class="action-bar-title">
-              {{ itemsLabel() }}
-            </div>
-            <span class="spacer"></span>
-            <div class="action-bar-actions">
-              @if (!disableCreate()) { @if (newItemSubTypes()) {
-              <!-- New {{item}} displays a dropdown menu from which the subtype can be selected -->
-              <button
-                type="button"
-                mat-raised-button
-                color="primary"
-                [matMenuTriggerFor]="newSubTypesMenu"
-              >
-                {{
-                  newItemLabel() ??
-                    crudConfig.i18n.newItemLabel(this.itemLabel())
-                }}
-              </button>
-              <mat-menu #newSubTypesMenu="matMenu">
-                @for (subtype of newItemSubTypes(); track $index) { @if
-                (subtype.role) {
-                <button mat-menu-item (click)="handleNewItemSubType(subtype)">
-                  {{ subtype.label }}
+          <ng-template #defaultHeaderTemplate>
+            <div class="action-bar">
+              <div class="action-bar-title">
+                {{ itemsLabel() }}
+              </div>
+              <span class="spacer"></span>
+              <div class="action-bar-actions">
+                @if (!disableCreate()) { @if (newItemSubTypes()) {
+                <!-- New {{item}} displays a dropdown menu from which the subtype can be selected -->
+                <button
+                  type="button"
+                  mat-raised-button
+                  color="primary"
+                  [matMenuTriggerFor]="newSubTypesMenu"
+                >
+                  {{
+                    newItemLabel() ??
+                      crudConfig.i18n.newItemLabel(this.itemLabel())
+                  }}
                 </button>
+                <mat-menu #newSubTypesMenu="matMenu">
+                  @for (subtype of newItemSubTypes(); track $index) { @if
+                  (subtype.role) {
+                  <button mat-menu-item (click)="handleNewItemSubType(subtype)">
+                    {{ subtype.label }}
+                  </button>
+                  } @else {
+                  <div style="padding: .2em 0.5em;">
+                    <strong>{{ subtype.label }}</strong>
+                  </div>
+                  } }
+                </mat-menu>
                 } @else {
-                <div style="padding: .2em 0.5em;">
-                  <strong>{{ subtype.label }}</strong>
-                </div>
+                <button
+                  mat-raised-button
+                  color="primary"
+                  (click)="onCreate($event)"
+                  [routerLink]="newItemLink()"
+                >
+                  {{
+                    newItemLabel() ??
+                      crudConfig.i18n.newItemLabel(this.itemLabel())
+                  }}
+                </button>
                 } }
-              </mat-menu>
-              } @else {
-              <button
-                mat-raised-button
-                color="primary"
-                (click)="onCreate($event)"
-                [routerLink]="newItemLink()"
-              >
-                {{
-                  newItemLabel() ??
-                    crudConfig.i18n.newItemLabel(this.itemLabel())
-                }}
-              </button>
-              } }
+              </div>
             </div>
-          </div>
+          </ng-template>
+          <ng-container [ngTemplateOutlet]="headerTemplate() || defaultHeaderTemplate"></ng-container>
           <sp-mat-entity-list
             [_deferViewInit]="true"
             [endpoint]="endpoint()"
@@ -251,6 +254,18 @@ export class SPMatEntityCrudComponent<
    * the action.
    */
   allowEntityActionFn = input<ALLOW_ITEM_ACTION_FN<TEntity>>();
+
+  /**
+   * A template that allows the header to be replaced. Usage:-
+   *
+   *    ```
+   *    <sp-map-entity-crud
+   *      [headerTemplate]="myCrudViewHeader"
+   *    ></sp-map-entity-crud>
+   *    <ng-template #myCrudViewHeader>...</ng-template>
+   *    ```
+   */
+  headerTemplate = input<TemplateRef<any>>();
 
   componentColumns = viewChildren(MatColumnDef);
   @ContentChildren(MatColumnDef) _clientColumnDefs!: QueryList<MatColumnDef>;

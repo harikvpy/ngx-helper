@@ -29,6 +29,8 @@ import { User } from '../entity-list-demo/user';
 import { CreateEditEntityDemoComponent } from './create-edit-entity-demo.component';
 import { Invoice, INVOICES } from './data';
 import { PreviewInvoiceComponent } from './preview-demo.component';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatMenuModule } from '@angular/material/menu';
 
 const EntityCrudConfig: SPMatEntityCrudConfig = {
   i18n: {
@@ -58,6 +60,8 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
     MatProgressSpinnerModule,
     MatIconModule,
     MatButtonModule,
+    MatTabsModule,
+    MatMenuModule,
     SPMatEntityCrudComponent,
     CreateEditEntityDemoComponent,
     SPMatEntityCrudPreviewPaneComponent,
@@ -69,25 +73,150 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
   selector: 'app-entity-crud-demo',
   template: `
     <div style="width: 100%; height: 100%;">
-      <sp-mat-entity-crud
-        [entityLoaderFn]="invoicesLoaderFn"
-        [columns]="invoiceColumns"
-        [pageSize]="10"
-        [newItemSubTypes]="newSubTypes"
-        idKey="id"
-        pagination="discrete"
-        [paginator]="paginator"
-        itemLabel="Invoice"
-        itemsLabel="Invoices"
-        (action)="onItemAction($event)"
-        [crudOpFn]="crudOpFn"
-        (selectEntity)="handleSelectEntity($event)"
-        [createEditFormTemplate]="createEdit"
-        [previewTemplate]="userPreview"
-        matSort
-      >
-      </sp-mat-entity-crud>
+      <mat-tab-group style="width: 100%; height: 100%;">
+        <mat-tab label="Simple">
+          <sp-mat-entity-crud
+            #spEntityCrud1
+            [entityLoaderFn]="invoicesLoaderFn"
+            [columns]="invoiceColumns"
+            [pageSize]="10"
+            idKey="id"
+            pagination="discrete"
+            [paginator]="paginator"
+            itemLabel="Invoice"
+            itemsLabel="Invoices"
+            (action)="onItemAction($event)"
+            [crudOpFn]="crudOpFn"
+            (selectEntity)="handleSelectEntity($event)"
+            [createEditFormTemplate]="createEdit"
+            [previewTemplate]="userPreview1"
+          >
+          </sp-mat-entity-crud>
+
+          <ng-template #userPreview1 let-data>
+            <sp-mat-entity-crud-preview-pane
+              [entity]="data.entity"
+              [entityCrudComponent]="spEntityCrudComponent1()!"
+              [hideUpdate]="true"
+              [disableDelete]="true"
+            >
+              <span previewToolbarContent>
+                <button mat-icon-button title="Print">
+                  <mat-icon>print</mat-icon>
+                </button>
+              </span>
+
+              <app-invoice-preview
+                previewContent
+                [invoice]="data.entity"
+              ></app-invoice-preview>
+            </sp-mat-entity-crud-preview-pane>
+          </ng-template>
+
+        </mat-tab>
+        <mat-tab label="NewItemSubTypes">
+          <sp-mat-entity-crud
+            #spEntityCrud2
+            [entityLoaderFn]="invoicesLoaderFn"
+            [columns]="invoiceColumns"
+            [pageSize]="10"
+            [newItemSubTypes]="newSubTypes"
+            idKey="id"
+            pagination="discrete"
+            [paginator]="paginator"
+            itemLabel="Invoice"
+            itemsLabel="Invoices"
+            (action)="onItemAction($event)"
+            [crudOpFn]="crudOpFn"
+            (selectEntity)="handleSelectEntity($event)"
+            [createEditFormTemplate]="createEdit"
+            [previewTemplate]="userPreview2"
+            matSort
+          >
+          </sp-mat-entity-crud>
+          <ng-template #userPreview2 let-data>
+            <sp-mat-entity-crud-preview-pane
+              [entity]="data.entity"
+              [entityCrudComponent]="spEntityCrudComponent2()!"
+              [hideUpdate]="true"
+              [disableDelete]="true"
+            >
+              <span previewToolbarContent>
+                <button mat-icon-button title="Print">
+                  <mat-icon>print</mat-icon>
+                </button>
+              </span>
+
+              <app-invoice-preview
+                previewContent
+                [invoice]="data.entity"
+              ></app-invoice-preview>
+            </sp-mat-entity-crud-preview-pane>
+          </ng-template>
+        </mat-tab>
+        <!-- Customer header via template -->
+        <mat-tab label="Custom Header">
+          <sp-mat-entity-crud
+            #spEntityCrud3
+            [entityLoaderFn]="invoicesLoaderFn"
+            [columns]="invoiceColumns"
+            [pageSize]="10"
+            idKey="id"
+            pagination="discrete"
+            [paginator]="paginator"
+            itemLabel="Invoice"
+            itemsLabel="Invoices"
+            (action)="onItemAction($event)"
+            [crudOpFn]="crudOpFn"
+            (selectEntity)="handleSelectEntity($event)"
+            [createEditFormTemplate]="createEdit"
+            [previewTemplate]="userPreview3"
+            [headerTemplate]="customHeader"
+            matSort
+          >
+          </sp-mat-entity-crud>
+          <ng-template #customHeader>
+            <div class='header'>
+              <h2>CUSTOM HEADER</h2>
+              <div class="spacer"></div>
+              <div class="action-buttons">
+                <button mat-raised-button color="primary">New Invoice</button>
+                <button mat-raised-button color="primary">Import</button>
+                <button mat-raised-button color="primary" [matMenuTriggerFor]="moreItems">More</button>
+              </div>
+            </div>
+            <mat-menu #moreItems="matMenu">
+              <button mat-menu-item>Item 1</button>
+              <button mat-menu-item>Item 2</button>
+              <button mat-menu-item>Item 3</button>
+              <button mat-menu-item>Item 4</button>
+            </mat-menu>
+          </ng-template>
+
+          <ng-template #userPreview3 let-data>
+            <sp-mat-entity-crud-preview-pane
+              [entity]="data.entity"
+              [entityCrudComponent]="spEntityCrudComponent3()!"
+              [hideUpdate]="true"
+              [disableDelete]="true"
+            >
+              <span previewToolbarContent>
+                <button mat-icon-button title="Print">
+                  <mat-icon>print</mat-icon>
+                </button>
+              </span>
+
+              <app-invoice-preview
+                previewContent
+                [invoice]="data.entity"
+              ></app-invoice-preview>
+            </sp-mat-entity-crud-preview-pane>
+          </ng-template>
+        </mat-tab>
+
+      </mat-tab-group>
     </div>
+
     <ng-template #createEdit let-data>
       <app-create-edit-entity-demo
         [bridge]="data.bridge"
@@ -95,28 +224,20 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
         [params]="data.params"
       ></app-create-edit-entity-demo>
     </ng-template>
-
-    <ng-template #userPreview let-data>
-      <sp-mat-entity-crud-preview-pane
-        [entity]="data.entity"
-        [entityCrudComponent]="spEntityCrudComponent()!"
-        [hideUpdate]="true"
-        [disableDelete]="true"
-      >
-        <span previewToolbarContent>
-          <button mat-icon-button title="Print">
-            <mat-icon>print</mat-icon>
-          </button>
-        </span>
-
-        <app-invoice-preview
-          previewContent
-          [invoice]="data.entity"
-        ></app-invoice-preview>
-      </sp-mat-entity-crud-preview-pane>
-    </ng-template>
   `,
   styles: `
+  .header {
+    display: flex;
+    flex-direction: row;
+  }
+  .spacer {
+    flex-grow: 1;
+  }
+  .action-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 0.2em;
+  }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -149,7 +270,10 @@ export class EntityCrudDemoComponent implements OnInit {
       disable: (user: User) => user.cell.startsWith('('),
     },
   ];
-  spEntityCrudComponent = viewChild(SPMatEntityCrudComponent);
+  spEntityCrudComponent1 = viewChild('spEntityCrud1', {read: SPMatEntityCrudComponent});
+  spEntityCrudComponent2 = viewChild('spEntityCrud2', {read: SPMatEntityCrudComponent});
+  spEntityCrudComponent3 = viewChild('spEntityCrud3', {read: SPMatEntityCrudComponent});
+
   paginator = new MyPaginator();
   newSubTypes: NewItemSubType[] = [
     {
