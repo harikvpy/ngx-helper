@@ -35,13 +35,14 @@ import {
 import { DomSanitizer } from '@angular/platform-browser';
 import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { AngularSplitModule } from 'angular-split';
-import { Observable, Subscription, tap } from 'rxjs';
+import { Observable, of, Subscription, switchMap, tap } from 'rxjs';
 import { getEntityCrudConfig } from './default-config';
 import { FormViewHostComponent } from './form-view-host.component';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
 import { ALLOW_ITEM_ACTION_FN, CRUD_OP_FN, NewItemSubType, SPMatEntityCrudConfig } from './mat-entity-crud-types';
 import { PreviewHostComponent } from './preview-host.component';
 import { MatMenuModule } from '@angular/material/menu';
+import { upsertEntities, upsertEntitiesById } from '@ngneat/elf-entities';
 
 @Component({
   standalone: true,
@@ -252,7 +253,7 @@ export class SPMatEntityCrudComponent<
   newItemSubTypes = input<NewItemSubType[]>();
   /**
    * If you want to take control of the network operations for the CRUD
-   * operations (CREATE/UPDATE/DELETE), provide a value for this property.
+   * operations (GET/CREATE/UPDATE/DELETE), provide a value for this property.
    */
   crudOpFn = input<CRUD_OP_FN<TEntity, IdKey>>();
   /**
@@ -332,6 +333,20 @@ export class SPMatEntityCrudComponent<
    * Disables the Create function.
    */
   disableCreate = input<boolean>(false);
+  /**
+   * View refresh policy after a CREATE/UPDATE operation. Values
+   *  'none'   - Objects are not refreshed after an edit operation. The return
+   *             value of the edit operation is used as the object to
+   *             add/update the component's internal store. This is the default.
+   *  'object' - Refresh just the object that was returned from the
+   *             CREATE/UPDATE operation. Use this if the JSON object returned
+   *             after a successful CREATE/UPDATE op differs from the JSON
+   *             object returned for the GET request.
+   *  'all'    - Refresh the entire list after a CREATE/UPDATE operation. This
+   *             mimics the behaviour of legacy HTML apps with pure server
+   *             defined UI.
+   */
+  refreshAfterEdit = input<'none'|'object'|'all'>('none');
 
   // This is the internal component that will host the createEditFormTemplate
   createEditHostComponent = viewChild(FormViewHostComponent);
@@ -498,6 +513,7 @@ export class SPMatEntityCrudComponent<
 
     return obs.pipe(
       showBusyWheelUntilComplete('formBusyWheel'),
+      switchMap(entity => entity ? this.doRefreshAfterEdit(entity) : of(null)),
       tap((entity) => {
         // If pagination is infinite or if the pagination if none or if the
         // count of items in the current page is less than pageSize()
@@ -527,6 +543,7 @@ export class SPMatEntityCrudComponent<
 
     return obs.pipe(
       showBusyWheelUntilComplete('formBusyWheel'),
+      switchMap(entity => entity ? this.doRefreshAfterEdit(entity) : of(null)),
       tap((entity) => {
         if (entity) {
           this.spEntitiesList()?.updateEntity(id, entity);
@@ -536,6 +553,31 @@ export class SPMatEntityCrudComponent<
         }
       })
     );
+  }
+
+  doRefreshAfterEdit(entity: TEntity) {
+    const refreshAfterEdit = this.refreshAfterEdit();
+    if (refreshAfterEdit === 'object') {
+      let obs!: Observable<TEntity>;
+      const crudOpFn = this.crudOpFn();
+      if (crudOpFn) {
+        obs = crudOpFn('get', (entity as any)[this.idKey()], this) as Observable<TEntity>;
+      } else {
+        obs = this.http.get<TEntity>(
+          this.getEntityUrl(this.endpoint(), (entity as any)[this.idKey()])
+        );
+      }
+      return obs.pipe(
+        tap((entity) => {
+          this.store.update(upsertEntities(entity));
+        })
+      );
+    } else if (refreshAfterEdit === 'all') {
+      this.spEntitiesList()?.refresh();
+      return of(null);
+    }
+    // 'none'
+    return of(entity)
   }
 
   closePreview() {

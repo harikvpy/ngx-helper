@@ -75,7 +75,7 @@ export type CRUD_OP_FN<
   TEntity extends { [P in IdKey]: PropertyKey },
   IdKey extends string = 'id'
 > = (
-  op: 'create' | 'update' | 'delete',
+  op: 'get' | 'create' | 'update' | 'delete',
   entityValue: any,
   entityCrudComponent: any
 ) => Observable<TEntity | null>;

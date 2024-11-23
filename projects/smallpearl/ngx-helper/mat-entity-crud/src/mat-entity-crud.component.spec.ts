@@ -17,7 +17,7 @@ import {
   SPMatEntityListComponent,
   SPMatEntityListPaginator,
 } from '@smallpearl/ngx-helper/mat-entity-list';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { NewItemSubType, SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
 import { SPMatEntityCrudComponent } from './mat-entity-crud.component';
 import { SPMatEntityCrudPreviewPaneComponent } from './preview-pane.component';
@@ -323,25 +323,9 @@ class DRFPaginator implements SPMatEntityListPaginator {
 }
 
 describe('SPMatEntityCrudComponent', () => {
-  let testComponent!: SPMatEntityCrudTestComponent;
-  let testComponentFixture!: ComponentFixture<SPMatEntityCrudTestComponent>;
-  let testComponentRef!: ComponentRef<SPMatEntityCrudTestComponent>;
   let fixture!: ComponentFixture<UserEntityCrudComponent>;
   let component!: UserEntityCrudComponent;
   let componentRef!: ComponentRef<UserEntityCrudComponent>;
-
-  const createTestComponent = async () => {
-    TestBed.configureTestingModule({
-      imports: [NoopAnimationsModule, SPMatEntityCrudTestComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
-    });
-    testComponentFixture = TestBed.createComponent(
-      SPMatEntityCrudTestComponent
-    );
-    testComponentRef = testComponentFixture.componentRef;
-    testComponent = testComponentFixture.componentInstance;
-    component = (testComponent.spEntityCrudComponent as any) as UserEntityCrudComponent;
-  }
 
   async function createCrudComponent() {
     TestBed.configureTestingModule({
@@ -437,6 +421,69 @@ describe('SPMatEntityCrudComponent', () => {
     expect(matButton).toBeFalsy();
   });
 
+  it("should refresh entity after CREATE when refreshAfterEdit='object'", async () => {
+    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    let crudOpFnCalled = false;
+    const crudOpFn = (op: string, entityValue: any, entityCrudComponent: SPMatEntityCrudCreateEditBridge) => {
+      crudOpFnCalled = true;
+      return of({
+        ...USER_DATA[0],
+        cell: '83939830309303'
+      });  // Fake data
+    }
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableCreate', true);
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    componentRef.setInput('crudOpFn', crudOpFn);
+    componentRef.setInput('refreshAfterEdit', 'object');
+    fixture.autoDetectChanges();
+    // Mocking object CREATE by calling the bridge method directly
+    await firstValueFrom(component.create({}));
+    expect(crudOpFnCalled).toBeTrue();
+  });
+
+  it("should refresh entity after UPDATE when refreshAfterEdit='object'", async () => {
+    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    let crudOpFnCalled = false;
+    const crudOpFn = (op: string, entityValue: any, entityCrudComponent: SPMatEntityCrudCreateEditBridge) => {
+      crudOpFnCalled = true;
+      return of(USER_DATA[0]);  // Fake data
+    }
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableCreate', true);
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    componentRef.setInput('crudOpFn', crudOpFn);
+    componentRef.setInput('refreshAfterEdit', 'object');
+    fixture.autoDetectChanges();
+    // Mocking object UPDATE by calling the bridge method directly
+    await firstValueFrom(component.update(USER_DATA[0]['cell'], {gender: 'M'}));
+    expect(crudOpFnCalled).toBeTrue();
+  });
+
+  it("should refresh all entities after CREATE when refreshAfterEdit='all'", async () => {
+    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    let crudOpFnCalled = false;
+    const crudOpFn = (op: string, entityValue: any, entityCrudComponent: SPMatEntityCrudCreateEditBridge) => {
+      crudOpFnCalled = true;
+      return of(USER_DATA[0]);  // Fake data
+    }
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableCreate', true);
+    const http = TestBed.inject(HttpClient);
+    const getSpy = spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    const patchSpy = spyOn(http, 'patch').and.returnValue(of(USER_DATA[0]));
+    // componentRef.setInput('crudOpFn', crudOpFn);
+    componentRef.setInput('refreshAfterEdit', 'all');
+    fixture.autoDetectChanges();
+    expect(getSpy).toHaveBeenCalledTimes(1);
+    // Mocking object UPDATE by calling the bridge method directly
+    // This should result in another call to load all entities as we have
+    // set refreshAfterEdit='all'
+    await firstValueFrom(component.update(USER_DATA[0]['cell'], {gender: 'M'}));
+    expect(getSpy).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe('SPMatEntityCrudComponent client configurable behavior', () => {

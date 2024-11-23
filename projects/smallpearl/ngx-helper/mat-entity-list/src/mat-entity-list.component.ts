@@ -456,6 +456,15 @@ export class SPMatEntityListComponent<
     }
   }
 
+  /**
+   * Clear all entities in store and reload them from endpoint as if
+   * the entities are being loaded for the first time.
+   */
+  refresh() {
+    this.pageIndex.set(0);
+    this.loadMoreEntities();
+  }
+
   addEntity(entity: TEntity) {
     const pagination = this.pagination();
     const count = this.store.query(getEntitiesCount());
