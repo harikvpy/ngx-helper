@@ -50,7 +50,7 @@ export interface SPContextMenuItem {
       [matMenuTriggerFor]="contextMenu"
       hoverDropDown
       [menu]="contextMenu"
-      [hoverTrigger]="disableHover() ? null : menuTrigger"
+      [hoverTrigger]="enableHover() ? menuTrigger : null"
     >
       @if (menuIconName()) {
       <mat-icon>{{ menuIconName() }}</mat-icon>
@@ -94,7 +94,7 @@ export class SPMatContextMenuComponent implements OnInit {
    * By default the context menu is activated whenever the mouse cursor hovers
    * over the button. Set this to 'true' to disable this feature.
    */
-  disableHover = input<boolean>(false);
+  enableHover = input<boolean>(false);
   /**
    * Context data for menu item disabled callback
    */
