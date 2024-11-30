@@ -538,7 +538,7 @@ export class SPMatEntityCrudComponent<
       obs = crudOpFn('update', entityValue, this);
     } else {
       obs = this.http.patch<TEntity>(
-        this.getEntityUrl(this._endpointSansParams(), id),
+        this.getEntityUrl(id),
         entityValue
       );
     }
@@ -566,7 +566,7 @@ export class SPMatEntityCrudComponent<
         obs = crudOpFn('get', (entity as any)[this.idKey()], this) as Observable<TEntity>;
       } else {
         obs = this.http.get<TEntity>(
-          this.getEntityUrl(this.endpoint(), (entity as any)[this.idKey()])
+          this.getEntityUrl((entity as any)[this.idKey()])
         );
       }
       return obs.pipe(
@@ -681,7 +681,7 @@ export class SPMatEntityCrudComponent<
           obs = crudOpFn('delete', entity, this);
         } else {
           obs = this.http.delete<void>(
-            this.getEntityUrl(this._endpointSansParams(), entityId)
+            this.getEntityUrl(entityId)
           );
         }
 
@@ -712,11 +712,16 @@ export class SPMatEntityCrudComponent<
       : endpoint;
   }
 
-  getEntityUrl(endpoint: string, entityId: TEntity[IdKey]) {
-    const entitEndpoint =
-      (endpoint.endsWith('/') ? endpoint : endpoint + '/') +
+  getEntityUrl(entityId: TEntity[IdKey]) {
+    const endpoint = this.endpoint();
+    const endpointParts = endpoint.split('?');
+    const entityEndpoint =
+      (endpointParts[0].endsWith('/') ? endpointParts[0] : endpointParts[0] + '/') +
       `${String(entityId)}/`;
-    return this.getUrl(entitEndpoint);
+    if (endpointParts.length > 1) {
+      return this.getUrl(entityEndpoint + `?${endpointParts[1]}`)
+    }
+    return this.getUrl(entityEndpoint);
   }
 
   handleSelectEntity(entity: TEntity) {

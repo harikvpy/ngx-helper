@@ -375,6 +375,9 @@ describe('SPMatEntityCrudComponent', () => {
     expect(columns.length).toEqual(USER_COLUMNS.length + 1);
     // check _endpointSansParams() returns URL without the QP
     expect(component._endpointSansParams()).toEqual('https://randomuser.me/api/');
+    expect(component.getEntityUrl(USER_DATA[0].cell)).toEqual(
+      `https://randomuser.me/api/${USER_DATA[0].cell}/?results=100&nat=us,dk,fr,gb`
+    )
   });
 
   it('should accept hybrid column definitions', async () => {
