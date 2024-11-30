@@ -294,6 +294,8 @@ export class SPMatEntityCrudComponent<
 
   // Computed title
   _title = computed(() => this.title() ? this.title() : this.itemsLabel());
+  // endpoint with the QP string removed (if one was provided)
+  _endpointSansParams = computed(() => this.endpoint().split('?')[0]);
   componentColumns = viewChildren(MatColumnDef);
   @ContentChildren(MatColumnDef) _clientColumnDefs!: QueryList<MatColumnDef>;
 
@@ -508,7 +510,7 @@ export class SPMatEntityCrudComponent<
     if (crudOpFn) {
       obs = crudOpFn('create', entityValue, this);
     } else {
-      obs = this.http.post<TEntity>(this.getUrl(this.endpoint()), entityValue);
+      obs = this.http.post<TEntity>(this.getUrl(this._endpointSansParams()), entityValue);
     }
 
     return obs.pipe(
@@ -536,7 +538,7 @@ export class SPMatEntityCrudComponent<
       obs = crudOpFn('update', entityValue, this);
     } else {
       obs = this.http.patch<TEntity>(
-        this.getEntityUrl(this.endpoint(), id),
+        this.getEntityUrl(this._endpointSansParams(), id),
         entityValue
       );
     }
@@ -679,7 +681,7 @@ export class SPMatEntityCrudComponent<
           obs = crudOpFn('delete', entity, this);
         } else {
           obs = this.http.delete<void>(
-            this.getEntityUrl(this.endpoint(), entityId)
+            this.getEntityUrl(this._endpointSansParams(), entityId)
           );
         }
 

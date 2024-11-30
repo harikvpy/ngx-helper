@@ -373,6 +373,8 @@ describe('SPMatEntityCrudComponent', () => {
     const columns = rows[0].querySelectorAll('td');
     // +1 for action column
     expect(columns.length).toEqual(USER_COLUMNS.length + 1);
+    // check _endpointSansParams() returns URL without the QP
+    expect(component._endpointSansParams()).toEqual('https://randomuser.me/api/');
   });
 
   it('should accept hybrid column definitions', async () => {

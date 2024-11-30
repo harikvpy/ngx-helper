@@ -89,6 +89,7 @@ class SPMatEntityListTestComponent implements OnInit {
       results: TEntity[]
  */
 class DRFPaginator implements SPMatEntityListPaginator {
+  lastRequestParams: any;
   getRequestPageParams(endpoint: string, pageIndex: number, pageSize: number) {
     return {
       page: pageIndex+1,  // account for 0-based index
@@ -96,7 +97,8 @@ class DRFPaginator implements SPMatEntityListPaginator {
     }
   }
   parseRequestResponse(endpoint: string, params: any, resp: any) {
-    console.log(`parseRequestResponse - params: ${JSON.stringify(params)}`);
+    // console.log(`parseRequestResponse - params: ${JSON.stringify(params)}`);
+    this.lastRequestParams = params;
     return {
       total: resp['total'],
       entities: resp['results']
@@ -178,6 +180,7 @@ describe('SPMatEntityListComponent', () => {
     expect(component).toBeTruthy();
     const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeTruthy();
+    // console.log('(paginator.lastRequestParams: ', paginator.lastRequestParams);
   });
 
   it('should *NOT* show pagination control for pagination="infinite"', async () => {

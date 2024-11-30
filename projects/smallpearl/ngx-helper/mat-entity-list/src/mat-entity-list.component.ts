@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -636,6 +636,11 @@ export class SPMatEntityListComponent<
         this.pageSize()
       );
     }
+    const parts = this.endpoint().split('?');
+    let params = new HttpParams(parts.length > 1 ? { fromString: parts[1] } : undefined);
+    for (const key in pageParams) {
+      params = params.append(key, (pageParams as any)[key]);
+    }
 
     // Inline check for input signal value before calling its value doesn't
     // seem to work as of now. So we assign the value to a const and check
@@ -643,9 +648,9 @@ export class SPMatEntityListComponent<
     const loaderFn = this.entityLoaderFn();
     const obs =
       loaderFn !== undefined
-        ? loaderFn({ params: pageParams })
+        ? loaderFn({ params })
         : this.http.get<any>(this.getUrl(this.endpoint()), {
-            params: pageParams,
+            params,
           });
 
     this.loading.set(true);
@@ -657,10 +662,16 @@ export class SPMatEntityListComponent<
             // many types of pagination. DRF itself has different schemes. And
             // express may have yet another pagination protocol.
             this.firstLoadDone = true;
+
             if (this._paginator) {
+              // Convert HttpParams to JS object
+              const paramsObj: any = {};
+              params.keys().forEach(key => {
+                paramsObj[key] = params.get(key);
+              });
               const { entities, total } = this._paginator.parseRequestResponse(
                 this.endpoint(),
-                pageParams,
+                paramsObj,
                 resp
               );
               this.entityCount.set(total);
