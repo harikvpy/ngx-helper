@@ -7,13 +7,17 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { MatButton, MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatMenu, MatMenuItem } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
+import { getEntitiesCount } from '@ngneat/elf-entities';
+import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { SPContextMenuItem } from '@smallpearl/ngx-helper/mat-context-menu';
 import {
+  RequestMethod,
   SPMatEntityListComponent,
   SPMatEntityListPaginator,
 } from '@smallpearl/ngx-helper/mat-entity-list';
@@ -21,9 +25,6 @@ import { firstValueFrom, of } from 'rxjs';
 import { NewItemSubType, SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
 import { SPMatEntityCrudComponent } from './mat-entity-crud.component';
 import { SPMatEntityCrudPreviewPaneComponent } from './preview-pane.component';
-import { getEntitiesCount } from '@ngneat/elf-entities';
-import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
-import { MatMenu, MatMenuItem } from '@angular/material/menu';
 
 interface User {
   name: { title: string; first: string; last: string };
@@ -313,12 +314,18 @@ class DRFPaginator implements SPMatEntityListPaginator {
       results: pageSize,
     };
   }
-  parseRequestResponse(endpoint: string, params: any, resp: any) {
-    console.log(`parseRequestResponse - params: ${JSON.stringify(params)}`);
+  parseRequestResponse(method: RequestMethod, endpoint: string, params: any, resp: any) {
+    if (method === 'list') {
+      console.log(`parseRequestResponse - params: ${JSON.stringify(params)}`);
+      return {
+        total: resp['total'],
+        entities: resp['results'],
+      };
+    }
     return {
-      total: resp['total'],
-      entities: resp['results'],
-    };
+      total: 0,
+      entities: []
+    }
   }
 }
 

@@ -9,7 +9,7 @@ import { provideRouter } from '@angular/router';
 import { SP_NGX_HELPER_CONFIG, SPNgxHelperConfig } from '@smallpearl/ngx-helper/core';
 import { FIELD_VALUE_FN, SP_ENTITY_FIELD_CONFIG, SPEntityFieldConfig, SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { of } from 'rxjs';
-import { SPMatEntityListConfig, SPMatEntityListPaginator } from './mat-entity-list-types';
+import { RequestMethod, SPMatEntityListConfig, SPMatEntityListPaginator } from './mat-entity-list-types';
 import { SPMatEntityListComponent } from './mat-entity-list.component';
 import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
 
@@ -96,7 +96,7 @@ class DRFPaginator implements SPMatEntityListPaginator {
       results: pageSize
     }
   }
-  parseRequestResponse(endpoint: string, params: any, resp: any) {
+  parseRequestResponse(method: RequestMethod, endpoint: string, params: any, resp: any) {
     // console.log(`parseRequestResponse - params: ${JSON.stringify(params)}`);
     this.lastRequestParams = params;
     return {
@@ -288,7 +288,7 @@ describe('SPMatEntityListComponent', () => {
     };
 
     let globalPaginatorGetEntitiesFromResponseCalled = false;
-    spyOn(myPaginator, 'parseRequestResponse').and.callFake((endpoint: string, params: any, resp: any) => {
+    spyOn(myPaginator, 'parseRequestResponse').and.callFake((method: RequestMethod, endpoint: string, params: any, resp: any) => {
       globalPaginatorGetEntitiesFromResponseCalled = true;
       return {
         total: 100,
@@ -322,7 +322,13 @@ describe('SPMatEntityListComponent', () => {
     component = fixture.componentInstance;
     componentRef = fixture.componentRef;
     componentRef.setInput('columns', [
-      { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
+      {
+        name: 'name',
+        valueFn: (user: User) => {
+          console.log(`User: ${user}`);
+          return user.name.first + ' ' + user.name.last;
+        },
+      },
       { name: 'gender' },
       { name: 'cell' },
     ]);

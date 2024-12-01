@@ -29,6 +29,7 @@ import {
   SPMatContextMenuComponent,
 } from '@smallpearl/ngx-helper/mat-context-menu';
 import {
+  RequestMethod,
   SPMatEntityListComponent
 } from '@smallpearl/ngx-helper/mat-entity-list';
 
@@ -515,7 +516,7 @@ export class SPMatEntityCrudComponent<
 
     return obs.pipe(
       showBusyWheelUntilComplete('formBusyWheel'),
-      switchMap(entity => entity ? this.doRefreshAfterEdit(entity) : of(null)),
+      switchMap(entity => entity ? this.doRefreshAfterEdit(entity, 'create') : of(null)),
       tap((entity) => {
         // If pagination is infinite or if the pagination if none or if the
         // count of items in the current page is less than pageSize()
@@ -545,7 +546,7 @@ export class SPMatEntityCrudComponent<
 
     return obs.pipe(
       showBusyWheelUntilComplete('formBusyWheel'),
-      switchMap(entity => entity ? this.doRefreshAfterEdit(entity) : of(null)),
+      switchMap(entity => entity ? this.doRefreshAfterEdit(entity, 'update') : of(null)),
       tap((entity) => {
         if (entity) {
           this.spEntitiesList()?.updateEntity(id, entity);
@@ -557,7 +558,7 @@ export class SPMatEntityCrudComponent<
     );
   }
 
-  doRefreshAfterEdit(entity: TEntity) {
+  doRefreshAfterEdit(entity: TEntity, method: RequestMethod) {
     const refreshAfterEdit = this.refreshAfterEdit();
     if (refreshAfterEdit === 'object') {
       let obs!: Observable<TEntity>;
@@ -571,7 +572,16 @@ export class SPMatEntityCrudComponent<
       }
       return obs.pipe(
         tap((entity) => {
-          this.store.update(upsertEntities(entity));
+          if (this._paginator) {
+            const { total, entities } = this._paginator.parseRequestResponse(
+              method, this._endpointSansParams(), {}, entity
+            );
+            this.store.update(upsertEntities(entities as any));
+          } else {
+            if (entity.hasOwnProperty(this.idKey())) {
+              this.store.update(upsertEntities(entity));
+            }
+          }
         })
       );
     } else if (refreshAfterEdit === 'all') {

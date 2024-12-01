@@ -670,6 +670,7 @@ export class SPMatEntityListComponent<
                 paramsObj[key] = params.get(key);
               });
               const { entities, total } = this._paginator.parseRequestResponse(
+                'list',
                 this.endpoint(),
                 paramsObj,
                 resp
