@@ -243,7 +243,7 @@ export class CreateEditUserComponent implements OnInit {
       <sp-mat-entity-crud
         entityName='user'
         itemLabel="User"
-        itemsLabel="Users"
+        itemLabelPlural="Users"
         [endpoint]="endpoint"
         [columns]="columns"
         [newItemSubTypes]="newSubTypes()"
@@ -351,7 +351,7 @@ describe('SPMatEntityCrudComponent', () => {
     componentRef = fixture.componentRef;
     componentRef.setInput('entityName', 'user');
     componentRef.setInput('itemLabel', 'User');
-    componentRef.setInput('itemsLabel', 'Users');
+    componentRef.setInput('itemLabelPlural', 'Users');
     componentRef.setInput('columns', USER_COLUMNS);
   };
 
