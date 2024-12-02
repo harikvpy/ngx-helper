@@ -1,11 +1,10 @@
-import { NgFor, NgIf } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
-  OnInit,
-  input,
-  Output,
   EventEmitter,
+  input,
+  OnInit,
+  Output,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -34,8 +33,6 @@ export interface SPContextMenuItem {
 @Component({
   standalone: true,
   imports: [
-    NgFor,
-    NgIf,
     RouterModule,
     MatButtonModule,
     MatIconModule,
