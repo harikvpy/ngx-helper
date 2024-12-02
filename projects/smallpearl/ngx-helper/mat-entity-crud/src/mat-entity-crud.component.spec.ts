@@ -386,6 +386,18 @@ describe('SPMatEntityCrudComponent', () => {
     )
   });
 
+  it('should derive itemLabel[Plural] from entityName', async () => {
+    componentRef.setInput('entityName', 'userProfile');
+    componentRef.setInput('itemLabel', undefined);
+    componentRef.setInput('itemLabelPlural', undefined);
+    fixture.detectChanges();
+    expect(component._entityNamePlural()).toEqual('userProfiles');
+    // userProfile converted to Title Case using lodash.startCase.
+    expect(component._itemLabel()).toEqual('User Profile');
+    // Default pluralization using 'pluralize' library
+    expect(component._itemLabelPlural()).toEqual('User Profiles');
+  });
+
   it('should accept hybrid column definitions', async () => {
     // await createCrudComponent();
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
@@ -434,13 +446,23 @@ describe('SPMatEntityCrudComponent', () => {
 
   it("should refresh entity after CREATE when refreshAfterEdit='object'", async () => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
-    let crudOpFnCalled = false;
+    let crudOpCreateCalled = false;
+    let crudOpGetCalled = false;
     const crudOpFn = (op: string, entityValue: any, entityCrudComponent: SPMatEntityCrudCreateEditBridge) => {
-      crudOpFnCalled = true;
-      return of({
-        ...USER_DATA[0],
-        cell: '83939830309303'
-      });  // Fake data
+      console.log(`crudOpFn: op: ${op}`);
+      if (op === 'create') {
+        crudOpCreateCalled = true;
+        return of({
+          ...USER_DATA[0],
+          cell: '83939830309303'
+        });  // Fake data
+      } else {
+        crudOpGetCalled = true;
+        return of({
+          ...USER_DATA[0],
+          cell: '888'
+        });  // Fake data
+      }
     }
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('disableCreate', true);
@@ -450,8 +472,10 @@ describe('SPMatEntityCrudComponent', () => {
     componentRef.setInput('refreshAfterEdit', 'object');
     fixture.autoDetectChanges();
     // Mocking object CREATE by calling the bridge method directly
-    await firstValueFrom(component.create({}));
-    expect(crudOpFnCalled).toBeTrue();
+    const res = await firstValueFrom(component.create({}));
+    expect(crudOpCreateCalled).toBeTrue();
+    expect(crudOpGetCalled).toBeTrue();
+    expect(res.cell).toEqual('888');
   });
 
   it("should refresh entity after UPDATE when refreshAfterEdit='object'", async () => {
@@ -495,6 +519,49 @@ describe('SPMatEntityCrudComponent', () => {
     await firstValueFrom(component.update(USER_DATA[0]['cell'], {gender: 'M'}));
     expect(getSpy).toHaveBeenCalledTimes(2);
   });
+
+  it("should call crudResponseParser after CREATE/UPDATE when refreshAfterEdit='object'", async () => {
+    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    let crudOpCalled = 0;
+    const crudOpFn = (op: string, entityValue: any, entityCrudComponent: SPMatEntityCrudCreateEditBridge) => {
+      console.log(`crudOpFn: op: ${op}`);
+      crudOpCalled++;
+      return of({
+        ...USER_DATA[0],
+        cell: '83939830309303'
+      });  // Fake data
+    }
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableCreate', true);
+    let crudResponseParserCalled = 0;
+    const crudResponseParserFn = (
+      entityName: string,
+      idKey: string,
+      method: 'create' | 'retrieve' | 'update' | 'delete',
+      resp: any
+    ) => {
+      crudResponseParserCalled++;
+      return {
+        ...USER_DATA[0],
+        cell: '888' // deliberately return a different value for testing
+      }
+    }
+    componentRef.setInput('crudResponseParser', crudResponseParserFn);
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    componentRef.setInput('crudOpFn', crudOpFn);
+    componentRef.setInput('refreshAfterEdit', 'object');
+    fixture.autoDetectChanges();
+    // Mocking object CREATE by calling the bridge method directly
+    const res = await firstValueFrom(component.create({}));
+    // Once for 'create' and another for 'get' (because refreshAfterEdit='object')
+    expect(crudOpCalled).toEqual(2);
+    expect(res.cell).toEqual('888');  // --> diff from crudOpFn() reply
+    // Once for parsing the 'CREATE' response and the next for parsing
+    // refreshAfterEdit='object' response.
+    expect(crudResponseParserCalled).toEqual(2);
+  });
+
 });
 
 describe('SPMatEntityCrudComponent client configurable behavior', () => {
