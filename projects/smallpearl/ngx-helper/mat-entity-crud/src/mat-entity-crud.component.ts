@@ -491,7 +491,6 @@ export class SPMatEntityCrudComponent<
   }
 
   override ngOnInit() {
-    console.log(`entityNamePlural: ${this._entityNamePlural()}`);
   }
 
   override ngOnDestroy(): void {
