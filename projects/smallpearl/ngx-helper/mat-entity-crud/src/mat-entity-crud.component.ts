@@ -38,7 +38,13 @@ import { Observable, of, Subscription, switchMap, tap } from 'rxjs';
 import { getEntityCrudConfig } from './default-config';
 import { FormViewHostComponent } from './form-view-host.component';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
-import { ALLOW_ITEM_ACTION_FN, CRUD_OP_FN, NewItemSubType, SPMatEntityCrudConfig, SPMatEntityCrudResponseParser } from './mat-entity-crud-types';
+import {
+  ALLOW_ITEM_ACTION_FN,
+  CRUD_OP_FN,
+  NewItemSubType,
+  SPMatEntityCrudConfig,
+  SPMatEntityCrudResponseParser,
+} from './mat-entity-crud-types';
 import { PreviewHostComponent } from './preview-host.component';
 import { plural } from 'pluralize';
 
@@ -67,7 +73,6 @@ import { plural } from 'pluralize';
           [class]="crudConfig.listPaneWrapperClass"
           [ngStyle]="{ display: !createEditViewActive() ? 'inherit' : 'none' }"
         >
-
           <ng-template #defaultActionButtons>
             <div class="action-bar-actions">
               @if (!disableCreate()) { @if (newItemSubTypes()) {
@@ -81,7 +86,8 @@ import { plural } from 'pluralize';
                 {{
                   newItemLabel() ??
                     crudConfig.i18n.newItemLabel(this._itemLabel())
-                }}&nbsp;&#9660;  <!-- down arrow-head -->
+                }}&nbsp;&#9660;
+                <!-- down arrow-head -->
               </button>
               <mat-menu #newSubTypesMenu="matMenu">
                 @for (subtype of newItemSubTypes(); track $index) { @if
@@ -117,10 +123,14 @@ import { plural } from 'pluralize';
                 {{ _title() }}
               </div>
               <span class="spacer"></span>
-              <ng-container [ngTemplateOutlet]="actionsTemplate() || defaultActionButtons"></ng-container>
+              <ng-container
+                [ngTemplateOutlet]="actionsTemplate() || defaultActionButtons"
+              ></ng-container>
             </div>
           </ng-template>
-          <ng-container [ngTemplateOutlet]="headerTemplate() || defaultHeaderTemplate"></ng-container>
+          <ng-container
+            [ngTemplateOutlet]="headerTemplate() || defaultHeaderTemplate"
+          ></ng-container>
           <sp-mat-entity-list
             [_deferViewInit]="true"
             [endpoint]="endpoint()"
@@ -164,7 +174,7 @@ import { plural } from 'pluralize';
         >
           <sp-create-edit-entity-host
             [itemLabel]="_itemLabel()"
-            [itemsLabel]="_itemsLabel()"
+            [itemLabelPlural]="_itemLabelPlural()"
             [entityCrudComponentBase]="this"
             [clientViewTemplate]="createEditFormTemplate()"
           ></sp-create-edit-entity-host>
@@ -221,11 +231,13 @@ export class SPMatEntityCrudComponent<
   implements SPMatEntityCrudComponentBase<TEntity>, AfterViewInit
 {
   entityName = input.required<string>();
+  entityNamePlural = input<string>();
+
   itemLabel = input<string>();
-  itemsLabel = input<string>();
+  itemLabelPlural = input<string>();
   /**
    * Title string displayed above the component. If not specified, will use
-   * itemsLabel() as the title.
+   * itemLabelPlural() as the title.
    */
   title = input<string>();
   /**
@@ -336,16 +348,29 @@ export class SPMatEntityCrudComponent<
    *             mimics the behaviour of legacy HTML apps with pure server
    *             defined UI.
    */
-  refreshAfterEdit = input<'none'|'object'|'all'>('none');
+  refreshAfterEdit = input<'none' | 'object' | 'all'>('none');
 
   // INTERNAL PROPERTIES //
-  _itemLabel = computed<string>(() => this.itemLabel() ? this.itemLabel() as string : this.entityName());
-  _itemsLabel = computed<string>(() => this.itemsLabel() ? this.itemsLabel() as string : plural(this.entityName()));
+  _entityNamePlural = computed(() =>
+    this.entityNamePlural()
+      ? this.entityNamePlural()
+      : plural(this.entityName())
+  );
+  _itemLabel = computed<string>(() =>
+    this.itemLabel()
+      ? (this.itemLabel() as string)
+      : this.ngxHelperConfig.i18nTranslate(this.entityName())
+  );
+  _itemLabelPlural = computed<string>(() =>
+    this.itemLabelPlural()
+      ? (this.itemLabelPlural() as string)
+      : this.ngxHelperConfig.i18nTranslate(plural(this.entityName()))
+  );
   // Computed title
-  _title = computed(() => this.title() ? this.title() : this._itemsLabel());
+  _title = computed(() => (this.title() ? this.title() : this._itemLabelPlural()));
   // endpoint with the QP string removed (if one was provided)
   _endpointSansParams = computed(() => this.endpoint().split('?')[0]);
-  _endpointParams = computed(() => {})
+  _endpointParams = computed(() => {});
   componentColumns = viewChildren(MatColumnDef);
   @ContentChildren(MatColumnDef) _clientColumnDefs!: QueryList<MatColumnDef>;
 
@@ -452,7 +477,9 @@ export class SPMatEntityCrudComponent<
     }
   }
 
-  override ngOnInit() {}
+  override ngOnInit() {
+    console.log(`entityNamePlural: ${this._entityNamePlural()}`);
+  }
 
   override ngOnDestroy(): void {
     this.sub$.unsubscribe();
@@ -525,7 +552,9 @@ export class SPMatEntityCrudComponent<
 
     return obs.pipe(
       showBusyWheelUntilComplete('formBusyWheel'),
-      switchMap(resp => resp ? this.doRefreshAfterEdit(resp, 'create') : of(null)),
+      switchMap((resp) =>
+        resp ? this.doRefreshAfterEdit(resp, 'create') : of(null)
+      ),
       tap((entity) => {
         // If pagination is infinite or if the pagination if none or if the
         // count of items in the current page is less than pageSize()
@@ -547,15 +576,14 @@ export class SPMatEntityCrudComponent<
     if (crudOpFn) {
       obs = crudOpFn('update', entityValue, this);
     } else {
-      obs = this.http.patch<TEntity>(
-        this.getEntityUrl(id),
-        entityValue
-      );
+      obs = this.http.patch<TEntity>(this.getEntityUrl(id), entityValue);
     }
 
     return obs.pipe(
       showBusyWheelUntilComplete('formBusyWheel'),
-      switchMap(resp => resp ? this.doRefreshAfterEdit(resp, 'update') : of(null)),
+      switchMap((resp) =>
+        resp ? this.doRefreshAfterEdit(resp, 'update') : of(null)
+      ),
       tap((entity) => {
         if (entity) {
           this.spEntitiesList()?.updateEntity(id, entity);
@@ -567,7 +595,7 @@ export class SPMatEntityCrudComponent<
     );
   }
 
-  doRefreshAfterEdit(resp: any, method: 'create'|'update') {
+  doRefreshAfterEdit(resp: any, method: 'create' | 'update') {
     const refreshAfterEdit = this.refreshAfterEdit();
     const entity = this.getCrudOpResponseParser()(
       this.entityName(),
@@ -614,7 +642,14 @@ export class SPMatEntityCrudComponent<
       return of(null);
     }
 
-    return of(this.getCrudOpResponseParser()(this.entityName(), this.idKey(), method, entity) as TEntity);
+    return of(
+      this.getCrudOpResponseParser()(
+        this.entityName(),
+        this.idKey(),
+        method,
+        entity
+      ) as TEntity
+    );
     // return of(entity)
   }
 
@@ -624,7 +659,8 @@ export class SPMatEntityCrudComponent<
       return this.crudResponseParser() as SPMatEntityCrudResponseParser;
     }
     // crudConfig will have a parser as our default config provides one.
-    return this.crudConfig.crudOpResponseParser as SPMatEntityCrudResponseParser;
+    return this.crudConfig
+      .crudOpResponseParser as SPMatEntityCrudResponseParser;
   }
 
   closePreview() {
@@ -725,9 +761,7 @@ export class SPMatEntityCrudComponent<
         if (crudOpFn) {
           obs = crudOpFn('delete', entity, this);
         } else {
-          obs = this.http.delete<void>(
-            this.getEntityUrl(entityId)
-          );
+          obs = this.http.delete<void>(this.getEntityUrl(entityId));
         }
 
         this.sub$.add(
@@ -761,10 +795,11 @@ export class SPMatEntityCrudComponent<
     const endpoint = this.endpoint();
     const endpointParts = endpoint.split('?');
     const entityEndpoint =
-      (endpointParts[0].endsWith('/') ? endpointParts[0] : endpointParts[0] + '/') +
-      `${String(entityId)}/`;
+      (endpointParts[0].endsWith('/')
+        ? endpointParts[0]
+        : endpointParts[0] + '/') + `${String(entityId)}/`;
     if (endpointParts.length > 1) {
-      return this.getUrl(entityEndpoint + `?${endpointParts[1]}`)
+      return this.getUrl(entityEndpoint + `?${endpointParts[1]}`);
     }
     return this.getUrl(entityEndpoint);
   }

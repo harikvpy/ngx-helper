@@ -67,7 +67,7 @@ export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEdit
   entityCrudComponentBase = input.required<SPMatEntityCrudComponentBase<TEntity>>();
   clientViewTemplate = input<TemplateRef<any> | null>(null);
   itemLabel = input.required<string>();
-  itemsLabel = input.required<string>();
+  itemLabelPlural = input.required<string>();
 
   entity = signal<TEntity|undefined>(undefined);
   title = signal<string>('');
