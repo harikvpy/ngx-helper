@@ -34,7 +34,9 @@ import { MatMenuModule } from '@angular/material/menu';
 import { DomSanitizer } from '@angular/platform-browser';
 import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { AngularSplitModule } from 'angular-split';
-import { Observable, of, Subscription, switchMap, tap } from 'rxjs';
+import { startCase } from 'lodash';
+import { plural } from 'pluralize';
+import { map, Observable, of, Subscription, switchMap, tap } from 'rxjs';
 import { getEntityCrudConfig } from './default-config';
 import { FormViewHostComponent } from './form-view-host.component';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
@@ -46,8 +48,6 @@ import {
   SPMatEntityCrudResponseParser,
 } from './mat-entity-crud-types';
 import { PreviewHostComponent } from './preview-host.component';
-import { plural } from 'pluralize';
-import { startCase } from 'lodash';
 
 @Component({
   standalone: true,
@@ -631,23 +631,13 @@ export class SPMatEntityCrudComponent<
         );
       }
       return obs.pipe(
-        tap((entity) => {
+        map((entity) => {
           return this.getCrudOpResponseParser()(
             this.entityName(),
             this.idKey(),
             'retrieve',
             entity
           );
-          // if (this._paginator) {
-          //   const { total, entities } = this._paginator.parseRequestResponse(
-          //     method, this._endpointSansParams(), {}, entity
-          //   );
-          //   this.store.update(upsertEntities(entities as any));
-          // } else {
-          //   if (entity.hasOwnProperty(this.idKey())) {
-          //     this.store.update(upsertEntities(entity));
-          //   }
-          // }
         })
       );
     } else if (refreshAfterEdit === 'all') {
@@ -655,15 +645,7 @@ export class SPMatEntityCrudComponent<
       return of(null);
     }
 
-    return of(
-      this.getCrudOpResponseParser()(
-        this.entityName(),
-        this.idKey(),
-        method,
-        entity
-      ) as TEntity
-    );
-    // return of(entity)
+    return of(entity)
   }
 
   getCrudOpResponseParser(): SPMatEntityCrudResponseParser {
