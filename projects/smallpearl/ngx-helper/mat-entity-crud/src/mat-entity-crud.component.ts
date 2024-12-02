@@ -28,11 +28,9 @@ import {
   SPContextMenuItem,
   SPMatContextMenuComponent,
 } from '@smallpearl/ngx-helper/mat-context-menu';
-import {
-  RequestMethod,
-  SPMatEntityListComponent
-} from '@smallpearl/ngx-helper/mat-entity-list';
+import { SPMatEntityListComponent } from '@smallpearl/ngx-helper/mat-entity-list';
 
+import { MatMenuModule } from '@angular/material/menu';
 import { DomSanitizer } from '@angular/platform-browser';
 import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { AngularSplitModule } from 'angular-split';
@@ -40,10 +38,9 @@ import { Observable, of, Subscription, switchMap, tap } from 'rxjs';
 import { getEntityCrudConfig } from './default-config';
 import { FormViewHostComponent } from './form-view-host.component';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
-import { ALLOW_ITEM_ACTION_FN, CRUD_OP_FN, NewItemSubType, SPMatEntityCrudConfig } from './mat-entity-crud-types';
+import { ALLOW_ITEM_ACTION_FN, CRUD_OP_FN, NewItemSubType, SPMatEntityCrudConfig, SPMatEntityCrudResponseParser } from './mat-entity-crud-types';
 import { PreviewHostComponent } from './preview-host.component';
-import { MatMenuModule } from '@angular/material/menu';
-import { upsertEntities, upsertEntitiesById } from '@ngneat/elf-entities';
+import { plural } from 'pluralize';
 
 @Component({
   standalone: true,
@@ -83,7 +80,7 @@ import { upsertEntities, upsertEntitiesById } from '@ngneat/elf-entities';
               >
                 {{
                   newItemLabel() ??
-                    crudConfig.i18n.newItemLabel(this.itemLabel())
+                    crudConfig.i18n.newItemLabel(this._itemLabel())
                 }}&nbsp;&#9660;  <!-- down arrow-head -->
               </button>
               <mat-menu #newSubTypesMenu="matMenu">
@@ -107,7 +104,7 @@ import { upsertEntities, upsertEntitiesById } from '@ngneat/elf-entities';
               >
                 {{
                   newItemLabel() ??
-                    crudConfig.i18n.newItemLabel(this.itemLabel())
+                    crudConfig.i18n.newItemLabel(this._itemLabel())
                 }}
               </button>
               } }
@@ -166,8 +163,8 @@ import { upsertEntities, upsertEntitiesById } from '@ngneat/elf-entities';
           spHostBusyWheel="formBusyWheel"
         >
           <sp-create-edit-entity-host
-            [itemLabel]="itemLabel()"
-            [itemsLabel]="itemsLabel()"
+            [itemLabel]="_itemLabel()"
+            [itemsLabel]="_itemsLabel()"
             [entityCrudComponentBase]="this"
             [clientViewTemplate]="createEditFormTemplate()"
           ></sp-create-edit-entity-host>
@@ -223,8 +220,9 @@ export class SPMatEntityCrudComponent<
   extends SPMatEntityListComponent<TEntity, IdKey>
   implements SPMatEntityCrudComponentBase<TEntity>, AfterViewInit
 {
-  itemLabel = input.required<string>();
-  itemsLabel = input.required<string>();
+  entityName = input.required<string>();
+  itemLabel = input<string>();
+  itemsLabel = input<string>();
   /**
    * Title string displayed above the component. If not specified, will use
    * itemsLabel() as the title.
@@ -293,23 +291,12 @@ export class SPMatEntityCrudComponent<
    */
   actionsTemplate = input<TemplateRef<any>>();
 
-  // Computed title
-  _title = computed(() => this.title() ? this.title() : this.itemsLabel());
-  // endpoint with the QP string removed (if one was provided)
-  _endpointSansParams = computed(() => this.endpoint().split('?')[0]);
-  componentColumns = viewChildren(MatColumnDef);
-  @ContentChildren(MatColumnDef) _clientColumnDefs!: QueryList<MatColumnDef>;
-
   /**
-   * Event raised for user selecting an item action. It's also raised
-   * for 'New <Item>' action, if 'newItemLink' property is not set.
+   * CRUD action response parser. This will be called with the response
+   * from CREATE & UPDATE operations to parse the response JSON and return
+   * the created/updated TEntity.
    */
-  @Output() action = new EventEmitter<{ role: string; entity?: TEntity }>();
-
-  busyWheelId = `entityCrudBusyWheel-${Date.now()}`;
-  sub$ = new Subscription();
-  spEntitiesList = viewChild(SPMatEntityListComponent<TEntity, IdKey>);
-  crudConfig!: SPMatEntityCrudConfig;
+  crudResponseParser = input<SPMatEntityCrudResponseParser>();
 
   /**
    * An ng-template name that contains the component which provides the
@@ -350,6 +337,28 @@ export class SPMatEntityCrudComponent<
    *             defined UI.
    */
   refreshAfterEdit = input<'none'|'object'|'all'>('none');
+
+  // INTERNAL PROPERTIES //
+  _itemLabel = computed<string>(() => this.itemLabel() ? this.itemLabel() as string : this.entityName());
+  _itemsLabel = computed<string>(() => this.itemsLabel() ? this.itemsLabel() as string : plural(this.entityName()));
+  // Computed title
+  _title = computed(() => this.title() ? this.title() : this._itemsLabel());
+  // endpoint with the QP string removed (if one was provided)
+  _endpointSansParams = computed(() => this.endpoint().split('?')[0]);
+  _endpointParams = computed(() => {})
+  componentColumns = viewChildren(MatColumnDef);
+  @ContentChildren(MatColumnDef) _clientColumnDefs!: QueryList<MatColumnDef>;
+
+  /**
+   * Event raised for user selecting an item action. It's also raised
+   * for 'New <Item>' action, if 'newItemLink' property is not set.
+   */
+  @Output() action = new EventEmitter<{ role: string; entity?: TEntity }>();
+
+  busyWheelId = `entityCrudBusyWheel-${Date.now()}`;
+  sub$ = new Subscription();
+  spEntitiesList = viewChild(SPMatEntityListComponent<TEntity, IdKey>);
+  crudConfig!: SPMatEntityCrudConfig;
 
   // This is the internal component that will host the createEditFormTemplate
   createEditHostComponent = viewChild(FormViewHostComponent);
@@ -511,12 +520,12 @@ export class SPMatEntityCrudComponent<
     if (crudOpFn) {
       obs = crudOpFn('create', entityValue, this);
     } else {
-      obs = this.http.post<TEntity>(this.getUrl(this._endpointSansParams()), entityValue);
+      obs = this.http.post<TEntity>(this.getUrl(this.endpoint()), entityValue);
     }
 
     return obs.pipe(
       showBusyWheelUntilComplete('formBusyWheel'),
-      switchMap(entity => entity ? this.doRefreshAfterEdit(entity, 'create') : of(null)),
+      switchMap(resp => resp ? this.doRefreshAfterEdit(resp, 'create') : of(null)),
       tap((entity) => {
         // If pagination is infinite or if the pagination if none or if the
         // count of items in the current page is less than pageSize()
@@ -525,7 +534,7 @@ export class SPMatEntityCrudComponent<
         if (entity) {
           this.spEntitiesList()?.addEntity(entity);
           this.snackBar.open(
-            this.crudConfig.i18n.createdItemNotification(this.itemLabel())
+            this.crudConfig.i18n.createdItemNotification(this._itemLabel())
           );
         }
       })
@@ -546,25 +555,35 @@ export class SPMatEntityCrudComponent<
 
     return obs.pipe(
       showBusyWheelUntilComplete('formBusyWheel'),
-      switchMap(entity => entity ? this.doRefreshAfterEdit(entity, 'update') : of(null)),
+      switchMap(resp => resp ? this.doRefreshAfterEdit(resp, 'update') : of(null)),
       tap((entity) => {
         if (entity) {
           this.spEntitiesList()?.updateEntity(id, entity);
           this.snackBar.open(
-            this.crudConfig.i18n.updatedItemNotification(this.itemLabel())
+            this.crudConfig.i18n.updatedItemNotification(this._itemLabel())
           );
         }
       })
     );
   }
 
-  doRefreshAfterEdit(entity: TEntity, method: RequestMethod) {
+  doRefreshAfterEdit(resp: any, method: 'create'|'update') {
     const refreshAfterEdit = this.refreshAfterEdit();
+    const entity = this.getCrudOpResponseParser()(
+      this.entityName(),
+      this.idKey(),
+      method,
+      resp
+    );
     if (refreshAfterEdit === 'object') {
       let obs!: Observable<TEntity>;
       const crudOpFn = this.crudOpFn();
       if (crudOpFn) {
-        obs = crudOpFn('get', (entity as any)[this.idKey()], this) as Observable<TEntity>;
+        obs = crudOpFn(
+          'get',
+          (entity as any)[this.idKey()],
+          this
+        ) as Observable<TEntity>;
       } else {
         obs = this.http.get<TEntity>(
           this.getEntityUrl((entity as any)[this.idKey()])
@@ -572,24 +591,40 @@ export class SPMatEntityCrudComponent<
       }
       return obs.pipe(
         tap((entity) => {
-          if (this._paginator) {
-            const { total, entities } = this._paginator.parseRequestResponse(
-              method, this._endpointSansParams(), {}, entity
-            );
-            this.store.update(upsertEntities(entities as any));
-          } else {
-            if (entity.hasOwnProperty(this.idKey())) {
-              this.store.update(upsertEntities(entity));
-            }
-          }
+          return this.getCrudOpResponseParser()(
+            this.entityName(),
+            this.idKey(),
+            'retrieve',
+            entity
+          );
+          // if (this._paginator) {
+          //   const { total, entities } = this._paginator.parseRequestResponse(
+          //     method, this._endpointSansParams(), {}, entity
+          //   );
+          //   this.store.update(upsertEntities(entities as any));
+          // } else {
+          //   if (entity.hasOwnProperty(this.idKey())) {
+          //     this.store.update(upsertEntities(entity));
+          //   }
+          // }
         })
       );
     } else if (refreshAfterEdit === 'all') {
       this.spEntitiesList()?.refresh();
       return of(null);
     }
-    // 'none'
-    return of(entity)
+
+    return of(this.getCrudOpResponseParser()(this.entityName(), this.idKey(), method, entity) as TEntity);
+    // return of(entity)
+  }
+
+  getCrudOpResponseParser(): SPMatEntityCrudResponseParser {
+    if (this.crudResponseParser()) {
+      // Without the `as SPMatEntityCrudResponseParser`, TSC will complain.
+      return this.crudResponseParser() as SPMatEntityCrudResponseParser;
+    }
+    // crudConfig will have a parser as our default config provides one.
+    return this.crudConfig.crudOpResponseParser as SPMatEntityCrudResponseParser;
   }
 
   closePreview() {
@@ -674,7 +709,7 @@ export class SPMatEntityCrudComponent<
     // dismissed before the prompt is displayed.
     setTimeout(() => {
       const deletedItemPrompt = this.crudConfig.i18n.deleteItemMessage(
-        this.itemLabel()
+        this._itemLabel()
       );
       const yes = confirm(deletedItemPrompt);
       if (yes) {
@@ -705,7 +740,7 @@ export class SPMatEntityCrudComponent<
                 // TODO: customize by providing an interface via SPMatEntityCrudConfig?
                 const deletedMessage =
                   this.crudConfig.i18n.itemDeletedNotification(
-                    this.itemLabel()
+                    this._itemLabel()
                   );
                 this.snackBar.open(deletedMessage);
               })

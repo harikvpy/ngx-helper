@@ -17,7 +17,6 @@ import { getEntitiesCount } from '@ngneat/elf-entities';
 import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { SPContextMenuItem } from '@smallpearl/ngx-helper/mat-context-menu';
 import {
-  RequestMethod,
   SPMatEntityListComponent,
   SPMatEntityListPaginator,
 } from '@smallpearl/ngx-helper/mat-entity-list';
@@ -242,6 +241,7 @@ export class CreateEditUserComponent implements OnInit {
   template: `
     <div>
       <sp-mat-entity-crud
+        entityName='user'
         itemLabel="User"
         itemsLabel="Users"
         [endpoint]="endpoint"
@@ -314,14 +314,12 @@ class DRFPaginator implements SPMatEntityListPaginator {
       results: pageSize,
     };
   }
-  parseRequestResponse(method: RequestMethod, endpoint: string, params: any, resp: any) {
-    if (method === 'list') {
-      console.log(`parseRequestResponse - params: ${JSON.stringify(params)}`);
-      return {
-        total: resp['total'],
-        entities: resp['results'],
-      };
-    }
+  parseRequestResponse(endpoint: string, params: any, resp: any) {
+    console.log(`parseRequestResponse - params: ${JSON.stringify(params)}`);
+    return {
+      total: resp['total'],
+      entities: resp['results'],
+    };
     return {
       total: 0,
       entities: []
@@ -351,6 +349,7 @@ describe('SPMatEntityCrudComponent', () => {
     fixture = TestBed.createComponent(SPMatEntityCrudComponent<User, 'cell'>);
     component = fixture.componentInstance;
     componentRef = fixture.componentRef;
+    componentRef.setInput('entityName', 'user');
     componentRef.setInput('itemLabel', 'User');
     componentRef.setInput('itemsLabel', 'Users');
     componentRef.setInput('columns', USER_COLUMNS);

@@ -2,6 +2,17 @@ import { SPContextMenuItem } from "@smallpearl/ngx-helper/mat-context-menu";
 import { Observable } from "rxjs";
 
 /**
+ * Prototype of the function to parse the CRUD action response.
+ */
+export type SPMatEntityCrudResponseParser = (
+  entityName: string,
+  idKey: string,
+  method: 'create' | 'retrieve' | 'update' | 'delete',
+  resp: any
+) => any|undefined;
+
+
+/**
  * Global config for SPMatEntityList component.
  */
 export interface SPMatEntityCrudConfig {
@@ -21,6 +32,10 @@ export interface SPMatEntityCrudConfig {
   listPaneWrapperClass?: string;
   previewPaneWrapperClass?: string;
   previewPaneContentClass?: string;
+  /**
+   * Global crud response parser.
+   */
+  crudOpResponseParser?: SPMatEntityCrudResponseParser;
 }
 
 /**

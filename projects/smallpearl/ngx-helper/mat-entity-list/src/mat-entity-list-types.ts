@@ -8,8 +8,6 @@ import { Observable } from "rxjs";
  */
 export type SPPageParams = { [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean>; }
 
-export type RequestMethod = 'list'|'create'|'retrieve'|'update'|'delete';
-
 /**
  * An interface that the clients should provide, either via a global config
  * (see above), that handles parsing the GET response and returns the entities
@@ -23,7 +21,6 @@ export interface SPMatEntityListPaginator {
     TEntity extends { [P in IdKey]: PropertyKey },
     IdKey extends string = 'id'
   >(
-    method: RequestMethod,
     endpoint: string,
     params: SPPageParams,
     resp: any

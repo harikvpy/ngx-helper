@@ -1,4 +1,4 @@
-import { Component, input, OnDestroy, OnInit } from '@angular/core';
+import { Component, computed, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { showServerValidationErrors } from './form-validation-error-handler';
@@ -65,11 +65,13 @@ export abstract class SPMatEntityCrudFormBase<
   IdKey extends string = 'id'
 > implements OnInit, OnDestroy
 {
-  _form!: TFormGroup;
+  _form = signal<TFormGroup|undefined>(undefined);
   entity = input.required<TEntity>();
   bridge = input.required<SPMatEntityCrudCreateEditBridge>();
   params = input<any>();
   sub$ = new Subscription();
+
+  form = computed(() => this._form());
 
   crudConfig = getEntityCrudConfig();
 
@@ -78,14 +80,15 @@ export abstract class SPMatEntityCrudFormBase<
   };
 
   _canCancelEdit() {
-    if (this._form.touched) {
+    const form = this._form();
+    if (form && form.touched) {
       return window.confirm(this.crudConfig.i18n.loseChangesPrompt);
     }
     return true;
   }
 
   ngOnInit() {
-    this._form = this.createForm(this.entity());
+    this._form.set(this.createForm(this.entity()));
     this.bridge()?.registerCanCancelEditCallback(this.canCancelEdit);
   }
 
@@ -93,9 +96,13 @@ export abstract class SPMatEntityCrudFormBase<
     this.sub$.unsubscribe();
   }
 
-  get form(): TFormGroup|undefined {
-    return this._form;
-  }
+  // get form(): TFormGroup|undefined {
+  //   return this._form();
+  // }
+
+  // set form(f: TFormGroup) {
+  //   this._form.set(f);
+  // }
 
   /**
    * Create the TFormGroup FormGroup class that will be used for the reactive
@@ -119,7 +126,8 @@ export abstract class SPMatEntityCrudFormBase<
    * @returns
    */
   getFormValue() {
-    return this._form.value;
+    const form = this.form()
+    return form ? form.value : undefined;
   }
 
   onSubmit() {
