@@ -47,6 +47,7 @@ import {
 } from './mat-entity-crud-types';
 import { PreviewHostComponent } from './preview-host.component';
 import { plural } from 'pluralize';
+import { startCase } from 'lodash';
 
 @Component({
   standalone: true,
@@ -356,15 +357,27 @@ export class SPMatEntityCrudComponent<
       ? this.entityNamePlural()
       : plural(this.entityName())
   );
+
+  // Derive a label from a camelCase source string. If the camelCase string
+  // can be translated, it returns the translated string. If not, the function
+  // converts the camelCase to 'Title Case' and returns it.
+  private getLabel = (source: string) => {
+    const label = this.ngxHelperConfig.i18nTranslate(source);
+    if (label.localeCompare(source) !== 0) { // Successful translation, return it
+      return label;
+    }
+    return startCase(source);
+  }
+
   _itemLabel = computed<string>(() =>
     this.itemLabel()
       ? (this.itemLabel() as string)
-      : this.ngxHelperConfig.i18nTranslate(this.entityName())
+      : this.getLabel(this.entityName())
   );
   _itemLabelPlural = computed<string>(() =>
     this.itemLabelPlural()
       ? (this.itemLabelPlural() as string)
-      : this.ngxHelperConfig.i18nTranslate(plural(this.entityName()))
+      : this.getLabel(plural(this.entityName()))
   );
   // Computed title
   _title = computed(() => (this.title() ? this.title() : this._itemLabelPlural()));
