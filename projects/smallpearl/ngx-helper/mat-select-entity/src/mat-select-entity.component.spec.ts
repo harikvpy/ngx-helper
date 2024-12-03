@@ -786,4 +786,26 @@ describe('MatEntitySelectComponent (sideloaded response)', () => {
     await openMatSelect(fixture);
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
   });
+
+  it("should load options from response parsed using 'responseParserFn'", async () => {
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(
+      of({
+        users: USER_DATA,
+      })
+    );
+    let parserFnCalled = false;
+    const parserFn = (response: any) => {
+      parserFnCalled = true;
+      return response['users'];
+    }
+    fixture.componentRef.setInput('responseParserFn', parserFn);
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(
+      By.directive(MatSelect)
+    ).componentInstance;
+    await openMatSelect(fixture);
+    expect(parserFnCalled).toBeTrue();
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
+  });
 });

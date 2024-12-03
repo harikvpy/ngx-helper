@@ -59,6 +59,13 @@ type EntityGroup<T> = {
   __items__?: T[];  // for internal use
 };
 
+export type SPMatSelectEntityResponseParser = <
+  TEntity extends { [P in IdKey]: PropertyKey },
+  IdKey extends string = 'id'
+>(
+  response: any
+) => Array<TEntity>;
+
 /**
  * This is a generic component to display a <mat-select> for a FK field
  * where the select's options are dynamically loaded from the server using
@@ -249,7 +256,7 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   /**
    * Parser function to return the list of entities from the GET response.
    */
-  resposeParserFn = input<any>();
+  responseParserFn = input<SPMatSelectEntityResponseParser>();
 
   @Output() selectionChange = new EventEmitter<TEntity|TEntity[]>();
   @Output() createNewItemSelected = new EventEmitter<void>();
@@ -660,20 +667,25 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
       tap((entities) => {
         this.searching = false; // remote loading done, will hide the loading wheel
         // Handle DRF paginated response
-        if (
-          !Array.isArray(entities) &&
-          entities['results'] &&
-          Array.isArray(entities['results'])
-        ) {
-          entities = entities['results'];
-        } else if ( // sideloaded response, where entities are usually provided in 'entityName'
-          this._sideloadDataKey() &&
-          !Array.isArray(entities) &&
-          typeof entities === 'object' &&
-          entities[this._sideloadDataKey()] &&
-          Array.isArray(entities[this._sideloadDataKey()])
-        ) {
-          entities = entities[this._sideloadDataKey()];
+        const responseParserFn = this.responseParserFn();
+        if (responseParserFn) {
+          entities = (responseParserFn(entities) as unknown) as TEntity[];
+        } else {
+          if (
+            !Array.isArray(entities) &&
+            entities['results'] &&
+            Array.isArray(entities['results'])
+          ) {
+            entities = entities['results'];
+          } else if ( // sideloaded response, where entities are usually provided in 'entityName'
+            this._sideloadDataKey() &&
+            !Array.isArray(entities) &&
+            typeof entities === 'object' &&
+            entities[this._sideloadDataKey()] &&
+            Array.isArray(entities[this._sideloadDataKey()])
+          ) {
+            entities = entities[this._sideloadDataKey()];
+          }
         }
         if (Array.isArray(entities)) {
           this.entities = entities;
