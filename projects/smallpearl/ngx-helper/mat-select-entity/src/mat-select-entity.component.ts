@@ -6,11 +6,13 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  computed,
   ElementRef,
   EventEmitter,
   HostBinding,
   Inject,
   Injector,
+  input,
   Input,
   OnDestroy,
   OnInit,
@@ -35,6 +37,9 @@ import {
   tap
 } from 'rxjs';
 import { SP_MAT_SELECT_ENTITY_CONFIG, SPMatSelectEntityConfig } from './providers';
+import { getNgxHelperConfig } from '@smallpearl/ngx-helper/core';
+import { plural } from 'pluralize';
+import { camelCase } from 'lodash';
 
 const DEFAULT_SP_MAT_SELECT_ENTITY_CONFIG: SPMatSelectEntityConfig =
   {
@@ -191,7 +196,17 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   @Input({ required: false }) inlineNew: boolean = false;
   /**
    * Entity name, that is used to form the "New { item }" menu item if
-   * inlineNew=true.
+   * inlineNew=true. This is also used as the key of the object in GET response
+   * if the reponse JSON is not an array and rather an object, where the values
+   * are stored indexed by the server model name. For eg:-
+   *
+   * {
+   *    'customers': [
+   *      {...},
+   *      {...},
+   *      {...},
+   *    ]
+   * }
    */
   @Input({ required: false }) entityName!: string;
   // Set to true to allow multiple option selection. The returned value
@@ -227,6 +242,14 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
    * first.
    */
   @Input({ required: false }) groupLabelFn!: (group: any) => string;
+  /**
+   * Sideload data key name.
+   */
+  sideloadDataKey = input<string>();
+  /**
+   * Parser function to return the list of entities from the GET response.
+   */
+  resposeParserFn = input<any>();
 
   @Output() selectionChange = new EventEmitter<TEntity|TEntity[]>();
   @Output() createNewItemSelected = new EventEmitter<void>();
@@ -235,6 +258,13 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   @Input() searchText!: string;
   @Input() notFoundText!: string;
   @Input() addItemText!: string;
+
+  _sideloadDataKey = computed<string>(() => {
+    if (this.sideloadDataKey()) {
+      return this.sideloadDataKey() as string;
+    }
+    return this.entityName ? plural(camelCase(this.entityName)) : 'results';
+  });
 
   private _entities = new Map<PropertyKey, TEntity>();
   private _groupedEntities = new Array<EntityGroup<TEntity>>();
@@ -270,6 +300,7 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   static nextId = 0;
   @HostBinding() id = `sp-select-entity-${SPMatSelectEntityComponent.nextId++}`;
   private _placeholder!: string;
+  ngxHelperConfig = getNgxHelperConfig();
 
   constructor(
     protected http: HttpClient,
@@ -622,15 +653,27 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
       if (this.existsInCache()) {
         obs = of(this.getFromCache())
       } else {
-        obs = this.http.get<TEntity[]>(this.url, { params });
+        obs = this.http.get<any>(this.url, { params });
       }
     }
     return obs.pipe(
       tap((entities) => {
         this.searching = false; // remote loading done, will hide the loading wheel
         // Handle DRF paginated response
-        if (!Array.isArray(entities) && entities['results'] && Array.isArray(entities['results'])) {
+        if (
+          !Array.isArray(entities) &&
+          entities['results'] &&
+          Array.isArray(entities['results'])
+        ) {
           entities = entities['results'];
+        } else if ( // sideloaded response, where entities are usually provided in 'entityName'
+          this._sideloadDataKey() &&
+          !Array.isArray(entities) &&
+          typeof entities === 'object' &&
+          entities[this._sideloadDataKey()] &&
+          Array.isArray(entities[this._sideloadDataKey()])
+        ) {
+          entities = entities[this._sideloadDataKey()];
         }
         if (Array.isArray(entities)) {
           this.entities = entities;
@@ -668,11 +711,8 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   }
 
   groupEntitiesKey() {
-    const pluralize = (noun: string) =>
-      `${noun}${noun.endsWith('s') || noun.endsWith('z') || noun.endsWith('x') ? 'es' : 's'}`;
-
     return this.groupOptionsKey ? this.groupOptionsKey
-      : (this.entityName ? pluralize(this.entityName.toLocaleLowerCase()) : 'items');
+      : (this.entityName ? plural(this.entityName.toLocaleLowerCase()) : 'items');
   }
 
   private existsInCache() {

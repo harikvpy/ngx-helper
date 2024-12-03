@@ -632,7 +632,7 @@ describe('MatSelectEntityComponent (config object)', () => {
   });
 });
 
-describe('MatEntitySelectComponent (grouped entities', () => {
+describe('MatEntitySelectComponent (grouped entities)', () => {
   let component!: SelectEntityComponent;
   let fixture!: ComponentFixture<SelectEntityComponent>;
   let matSel!: MatSelect;
@@ -728,4 +728,62 @@ describe('MatEntitySelectComponent (grouped entities', () => {
     sub$.unsubscribe();
   });
 
+});
+
+describe('MatEntitySelectComponent (sideloaded response)', () => {
+  let component!: SelectEntityComponent;
+  let fixture!: ComponentFixture<SelectEntityComponent>;
+  let matSel!: MatSelect;
+
+  beforeEach(async () => {
+    TestBed.configureTestingModule({
+      imports: [
+        NoopAnimationsModule,
+        SPMatSelectEntityComponent,
+      ],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+    fixture = TestBed.createComponent(SPMatSelectEntityComponent<User>);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('url', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    component.entityLabelFn = (user: User) => user.name;
+    fixture.componentRef.setInput('entityName', 'user');
+  });
+
+  afterEach(() => {
+    document.body.removeChild(fixture.nativeElement);
+  });
+
+  it("should load options from sideloaded response using 'sideloadDataKey'", async () => {
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(
+      of({
+        users: USER_DATA,
+      })
+    );
+    fixture.componentRef.setInput('sideloadDataKey', 'users');
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(
+      By.directive(MatSelect)
+    ).componentInstance;
+    expect(component._sideloadDataKey()).toEqual('users');
+    await openMatSelect(fixture);
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
+  });
+
+  it("should load options from sideloaded response using pluralized 'entityName' if 'sideloadDataKey' is not set", async () => {
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(
+      of({
+        users: USER_DATA,
+      })
+    );
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(
+      By.directive(MatSelect)
+    ).componentInstance;
+    expect(component._sideloadDataKey()).toEqual('users');
+    await openMatSelect(fixture);
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
+  });
 });
