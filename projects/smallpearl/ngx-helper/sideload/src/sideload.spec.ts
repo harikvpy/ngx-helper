@@ -342,6 +342,79 @@ const MULTI_OBJECT_RESPONSE_WITH_CUSTOM_KEY = {
   }
 }
 
+const ALT_MULTI_OBJECT_RESPONSE = {
+  "contacts": [
+      {
+          "id": 37,
+          "type": "CU",
+          "salutation": "dr",
+          "contact": "Hsu Chia-Ling",
+          "company": "",
+          "displayName": "Chia-Ling",
+          "address": "",
+          "telephoneWork": "",
+          "telephoneMobile": "",
+          "email": "",
+          "website": "",
+          "notes": "",
+          "terms": 0,
+          "locked": false,
+          "customerDue": 3350.0,
+          "balance": 3350.0
+      }
+  ],
+  "invoices": [
+      {
+          "id": 75,
+          "date": "2024-11-28",
+          "number": "1001",
+          "customer": 37,
+          "terms": 0,
+          "isPaid": false,
+          "notes": "",
+          "total": 2550.0,
+          "balance": 2550.0,
+          "items": [
+              {
+                  "id": 91,
+                  "product": 15,
+                  "name": "Management Fee",
+                  "description": "",
+                  "quantity": 30.0,
+                  "unitPrice": 85.0
+              }
+          ]
+      },
+      {
+          "id": 74,
+          "date": "2024-11-26",
+          "number": "1000",
+          "customer": 37,
+          "terms": 0,
+          "isPaid": false,
+          "notes": "",
+          "total": 1800.0,
+          "balance": 800.0,
+          "items": [
+              {
+                  "id": 90,
+                  "product": 16,
+                  "name": "Carpark Fee",
+                  "description": "",
+                  "quantity": 2.0,
+                  "unitPrice": 900.0
+              }
+          ]
+      }
+  ],
+  "meta": {
+      "page": 1,
+      "perPage": 50,
+      "totalResults": 2,
+      "totalPages": 1
+  }
+}
+
 describe('sideloadToComposite', () => {
   it('should merge sideload data into an array of composite objects (append)', () => {
     const customerPayments = sideloadToComposite(
@@ -351,6 +424,14 @@ describe('sideloadToComposite', () => {
     expect(customerPayments[0]['contactDetail']).toBeTruthy();
     expect(customerPayments[0]['accountDetail']).toBeTruthy();
     expect(customerPayments[0].items[0]['invoiceDetail']).toBeTruthy();
+  });
+
+  it("should return unmerged data when sideload keys don't match (append)", () => {
+    const invoices = sideloadToComposite(
+      JSON.parse(JSON.stringify(ALT_MULTI_OBJECT_RESPONSE)),
+      'invoices', 'id');
+    expect(invoices).toBeTruthy();
+    expect(invoices[0]['contactDetail']).toBeFalsy();
   });
 
   it('should merge sideload data with custom key into an array of composite objects (append)', () => {
