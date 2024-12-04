@@ -136,11 +136,11 @@ describe('SPMatEntityListComponent', () => {
     ]);
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
-    componentRef.setInput('httpReqContext', {cache: true});
+    componentRef.setInput('httpReqContext', ['cache', true]);
     const http = TestBed.inject(HttpClient);
     let httpReqContextReceived = false;
     spyOn(http, 'get').and.callFake(((url: string, options: any) => {
-      httpReqContextReceived = options['context']['cache'] !== undefined;
+      httpReqContextReceived = options.context.get('cache') === true;
       return of(USER_DATA);
     }) as any); // 'as any' to suppress TSC function prototype mismatch
     fixture.autoDetectChanges();
@@ -331,7 +331,6 @@ describe('SPMatEntityListComponent', () => {
       {
         name: 'name',
         valueFn: (user: User) => {
-          console.log(`User: ${user}`);
           return user.name.first + ' ' + user.name.last;
         },
       },

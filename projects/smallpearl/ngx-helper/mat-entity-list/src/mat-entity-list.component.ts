@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpContextToken, HttpParams } from '@angular/common/http';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -280,10 +280,24 @@ export class SPMatEntityListComponent<
   /**
    * Custom context to be set for HttpClient requests.
    */
-  httpReqContext = input<any>();
+  httpReqContext = input<[[token: HttpContextToken<string>, any]]|[token: HttpContextToken<string>, any]>();
   /* END CLIENT PROVIDED PARAMETERS */
 
   // *** INTERNAL *** //
+  _httpReqContext = computed(() => {
+    let reqContext = this.httpReqContext();
+    if (reqContext && Array.isArray(reqContext)) {
+      const context = new HttpContext();
+      if (reqContext.length == 2 && !Array.isArray(reqContext[0])) {
+        // one dimensional array of a key, value pair.
+        context.set(reqContext[0], reqContext[1]);
+      } else {
+        reqContext.forEach(([k, v]) => context.set(k, v));
+      }
+      return context;
+    }
+    return undefined;
+  })
   _deferViewInit = input<boolean>(false);
   firstLoadDone = false;
   allColumnNames = signal<string[]>([]);
@@ -654,7 +668,7 @@ export class SPMatEntityListComponent<
       loaderFn !== undefined
         ? loaderFn({ params })
         : this.http.get<any>(this.getUrl(this.endpoint()), {
-            context: this.httpReqContext() ?? undefined,
+            context: this._httpReqContext(),
             params,
           });
 

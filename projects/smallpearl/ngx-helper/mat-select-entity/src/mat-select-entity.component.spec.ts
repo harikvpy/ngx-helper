@@ -450,7 +450,6 @@ describe('MatSelectEntityComponent Entities Cache', () => {
     // instances to be destroyed as well. Verify that the endpoint is removed
     // from the cache.
     demoFixture.destroy();
-    console.log(SPMatSelectEntityComponent._entitiesCache.size);
     expect(SPMatSelectEntityComponent._entitiesCache.size).toEqual(0);
   });
 });

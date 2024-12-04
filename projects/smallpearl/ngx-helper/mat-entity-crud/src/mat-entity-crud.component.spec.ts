@@ -368,10 +368,10 @@ describe('SPMatEntityCrudComponent', () => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
     const http = TestBed.inject(HttpClient);
-    componentRef.setInput('httpReqContext', {cache: true});
+    componentRef.setInput('httpReqContext', ['cache', true]);
     let httpReqContextReceived = false;
     spyOn(http, 'get').and.callFake(((url: string, options: any) => {
-      httpReqContextReceived = options['context']['cache'] !== undefined;
+      httpReqContextReceived = options.context.get('cache') === true;
       return of(USER_DATA);
     }) as any); // 'as any' to suppress TSC function prototype mismatch
     fixture.autoDetectChanges();
@@ -454,11 +454,11 @@ describe('SPMatEntityCrudComponent', () => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('disableCreate', true);
-    componentRef.setInput('httpReqContext', {cache: true});
+    componentRef.setInput('httpReqContext', ['cache', true]);
     const http = TestBed.inject(HttpClient);
     let httpPOSTReqContextReceived = false;
     spyOn(http, 'post').and.callFake(((url: string, data:any, options: any) => {
-      httpPOSTReqContextReceived = options?.context?.cache !== undefined;
+      httpPOSTReqContextReceived = options.context.get('cache') === true;
       return of({
         ...USER_DATA[0],
         cell: '83939830309303'
@@ -469,7 +469,7 @@ describe('SPMatEntityCrudComponent', () => {
     spyOn(http, 'get').and.callFake(((url: string, options: any) => {
       if (url.includes('/83939830309303/')) {
         // refresh item
-        httpGETReqContextReceived = options?.context?.cache !== undefined;
+        httpGETReqContextReceived = options.context.get('cache') === true;
         return of({
           ...USER_DATA[0],
           cell: '888'
@@ -495,13 +495,13 @@ describe('SPMatEntityCrudComponent', () => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('disableCreate', true);
-    componentRef.setInput('httpReqContext', {cache: true});
+    componentRef.setInput('httpReqContext', ['cache', true]);
     const http = TestBed.inject(HttpClient);
     let httpGETReqContextReceived = false;
     spyOn(http, 'get').and.callFake(((url: string, options: any) => {
       if (url.includes('/83939830309303/')) {
         // refresh item
-        httpGETReqContextReceived = options?.context?.cache !== undefined;
+        httpGETReqContextReceived = options.context.get('cache') === true;
         return of({
           ...USER_DATA[0],
           cell: '888'
@@ -513,7 +513,7 @@ describe('SPMatEntityCrudComponent', () => {
     }) as any); // 'as any' to suppress TSC function prototype mismatch
     let httpPATCHReqContextReceived = false;
     spyOn(http, 'patch').and.callFake(((url: string, data: any, options: any) => {
-      httpPATCHReqContextReceived = options?.context?.cache !== undefined;
+      httpPATCHReqContextReceived = options.context.get('cache') === true;
       return of({
         ...USER_DATA[0],
         cell: '83939830309303'
@@ -529,11 +529,6 @@ describe('SPMatEntityCrudComponent', () => {
 
   it("should refresh all entities after CREATE when refreshAfterEdit='all'", async () => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
-    let crudOpFnCalled = false;
-    const crudOpFn = (op: string, entityValue: any, entityCrudComponent: SPMatEntityCrudCreateEditBridge) => {
-      crudOpFnCalled = true;
-      return of(USER_DATA[0]);  // Fake data
-    }
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('disableCreate', true);
     const http = TestBed.inject(HttpClient);
@@ -554,7 +549,6 @@ describe('SPMatEntityCrudComponent', () => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     let crudOpCalled = 0;
     const crudOpFn = (op: string, entityValue: any, entityCrudComponent: SPMatEntityCrudCreateEditBridge) => {
-      console.log(`crudOpFn: op: ${op}`);
       crudOpCalled++;
       return of({
         ...USER_DATA[0],

@@ -561,7 +561,7 @@ export class SPMatEntityCrudComponent<
       obs = crudOpFn('create', entityValue, this);
     } else {
       obs = this.http.post<TEntity>(this.getUrl(this.endpoint()), entityValue, {
-        context: this.httpReqContext() ?? undefined,
+        context: this._httpReqContext(),
       });
     }
 
@@ -592,7 +592,7 @@ export class SPMatEntityCrudComponent<
       obs = crudOpFn('update', entityValue, this);
     } else {
       obs = this.http.patch<TEntity>(this.getEntityUrl(id), entityValue, {
-        context: this.httpReqContext() ?? undefined,
+        context: this._httpReqContext(),
       });
     }
 
@@ -632,7 +632,7 @@ export class SPMatEntityCrudComponent<
       } else {
         obs = this.http.get<TEntity>(
           this.getEntityUrl((entity as any)[this.idKey()]), {
-            context: this.httpReqContext() ?? undefined,
+            context: this._httpReqContext()
           }
         );
       }
