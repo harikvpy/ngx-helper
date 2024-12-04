@@ -280,7 +280,7 @@ export class SPMatEntityListComponent<
   /**
    * Custom context to be set for HttpClient requests.
    */
-  httpReqContext = input<[[token: HttpContextToken<string>, any]]|[token: HttpContextToken<string>, any]>();
+  httpReqContext = input<[[HttpContextToken<string>, any]]|[HttpContextToken<string>, any]>();
   /* END CLIENT PROVIDED PARAMETERS */
 
   // *** INTERNAL *** //
