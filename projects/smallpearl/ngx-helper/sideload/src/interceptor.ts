@@ -85,7 +85,7 @@ export function sideloadToCompositeInterceptor(
     filter((event) => event.type === HttpEventType.Response),
     map((event) => {
       const sideloadParams = req.context.get(SIDELOAD_TO_COMPOSITE_PARAMS);
-      return sideloadParams ? transformReqBody(event, sideloadParams) : event;
+      return sideloadParams ? transformReqBody(event as HttpResponse<unknown>, sideloadParams) : event;
       // const body = event.body;
       // // Merge the sideload content into the targetObject(s). Note that
       // // we still return the original request making the sideloaded data
@@ -124,7 +124,7 @@ export class SideloadToCompositeInterceptor implements HttpInterceptor {
       filter((event) => event.type === HttpEventType.Response),
       map((event) => {
         const sideloadParams = req.context.get(SIDELOAD_TO_COMPOSITE_PARAMS);
-        return sideloadParams ? transformReqBody(event, sideloadParams) : event;
+        return sideloadParams ? transformReqBody(event as HttpResponse<unknown>, sideloadParams) : event;
         // if (sideloadParams) {
         //   // TODO: perform sideloadToComposite apply caching logic
         //   const sideloadToCompositeParams = (
