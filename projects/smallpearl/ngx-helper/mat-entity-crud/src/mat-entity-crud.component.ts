@@ -145,6 +145,7 @@ import { PreviewHostComponent } from './preview-host.component';
             [sorter]="sorter()"
             [disableSort]="disableSort()"
             (selectEntity)="handleSelectEntity($event)"
+            [httpReqContext]="httpReqContext()"
           >
           </sp-mat-entity-list>
         </div>
@@ -559,7 +560,9 @@ export class SPMatEntityCrudComponent<
     if (crudOpFn) {
       obs = crudOpFn('create', entityValue, this);
     } else {
-      obs = this.http.post<TEntity>(this.getUrl(this.endpoint()), entityValue);
+      obs = this.http.post<TEntity>(this.getUrl(this.endpoint()), entityValue, {
+        context: this.httpReqContext() ?? undefined,
+      });
     }
 
     return obs.pipe(
@@ -588,7 +591,9 @@ export class SPMatEntityCrudComponent<
     if (crudOpFn) {
       obs = crudOpFn('update', entityValue, this);
     } else {
-      obs = this.http.patch<TEntity>(this.getEntityUrl(id), entityValue);
+      obs = this.http.patch<TEntity>(this.getEntityUrl(id), entityValue, {
+        context: this.httpReqContext() ?? undefined,
+      });
     }
 
     return obs.pipe(
@@ -626,7 +631,9 @@ export class SPMatEntityCrudComponent<
         ) as Observable<TEntity>;
       } else {
         obs = this.http.get<TEntity>(
-          this.getEntityUrl((entity as any)[this.idKey()])
+          this.getEntityUrl((entity as any)[this.idKey()]), {
+            context: this.httpReqContext() ?? undefined,
+          }
         );
       }
       return obs.pipe(

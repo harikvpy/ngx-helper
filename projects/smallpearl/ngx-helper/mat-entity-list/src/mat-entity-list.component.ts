@@ -277,6 +277,10 @@ export class SPMatEntityListComponent<
   infiniteScrollDistance = input<number>(1);
   infiniteScrollThrottle = input<number>(400);
   infiniteScrollWindow = input<boolean>(false);
+  /**
+   * Custom context to be set for HttpClient requests.
+   */
+  httpReqContext = input<any>();
   /* END CLIENT PROVIDED PARAMETERS */
 
   // *** INTERNAL *** //
@@ -650,6 +654,7 @@ export class SPMatEntityListComponent<
       loaderFn !== undefined
         ? loaderFn({ params })
         : this.http.get<any>(this.getUrl(this.endpoint()), {
+            context: this.httpReqContext() ?? undefined,
             params,
           });
 

@@ -368,7 +368,12 @@ describe('SPMatEntityCrudComponent', () => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
     const http = TestBed.inject(HttpClient);
-    spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    componentRef.setInput('httpReqContext', {cache: true});
+    let httpReqContextReceived = false;
+    spyOn(http, 'get').and.callFake(((url: string, options: any) => {
+      httpReqContextReceived = options['context']['cache'] !== undefined;
+      return of(USER_DATA);
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
     fixture.autoDetectChanges();
     expect(component).toBeTruthy();
     const rows = fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
@@ -376,6 +381,7 @@ describe('SPMatEntityCrudComponent', () => {
     expect(rows.length).toEqual(USER_DATA.length);
     const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
+    expect(httpReqContextReceived).toBeTrue();
     const columns = rows[0].querySelectorAll('td');
     // +1 for action column
     expect(columns.length).toEqual(USER_COLUMNS.length + 1);
@@ -446,55 +452,79 @@ describe('SPMatEntityCrudComponent', () => {
 
   it("should refresh entity after CREATE when refreshAfterEdit='object'", async () => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
-    let crudOpCreateCalled = false;
-    let crudOpGetCalled = false;
-    const crudOpFn = (op: string, entityValue: any, entityCrudComponent: SPMatEntityCrudCreateEditBridge) => {
-      console.log(`crudOpFn: op: ${op}`);
-      if (op === 'create') {
-        crudOpCreateCalled = true;
-        return of({
-          ...USER_DATA[0],
-          cell: '83939830309303'
-        });  // Fake data
-      } else {
-        crudOpGetCalled = true;
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableCreate', true);
+    componentRef.setInput('httpReqContext', {cache: true});
+    const http = TestBed.inject(HttpClient);
+    let httpPOSTReqContextReceived = false;
+    spyOn(http, 'post').and.callFake(((url: string, data:any, options: any) => {
+      httpPOSTReqContextReceived = options?.context?.cache !== undefined;
+      return of({
+        ...USER_DATA[0],
+        cell: '83939830309303'
+      });
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+
+    let httpGETReqContextReceived = false;
+    spyOn(http, 'get').and.callFake(((url: string, options: any) => {
+      if (url.includes('/83939830309303/')) {
+        // refresh item
+        httpGETReqContextReceived = options?.context?.cache !== undefined;
         return of({
           ...USER_DATA[0],
           cell: '888'
-        });  // Fake data
+        });
+      } else {
+        // initial get users request
+        return of(USER_DATA);
       }
-    }
-    componentRef.setInput('idKey', 'cell');
-    componentRef.setInput('disableCreate', true);
-    const http = TestBed.inject(HttpClient);
-    spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    componentRef.setInput('crudOpFn', crudOpFn);
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+
+    // spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    // componentRef.setInput('crudOpFn', crudOpFn);
     componentRef.setInput('refreshAfterEdit', 'object');
     fixture.autoDetectChanges();
     // Mocking object CREATE by calling the bridge method directly
     const res = await firstValueFrom(component.create({}));
-    expect(crudOpCreateCalled).toBeTrue();
-    expect(crudOpGetCalled).toBeTrue();
+    expect(httpPOSTReqContextReceived).toBeTrue();
+    expect(httpGETReqContextReceived).toBeTrue();
     expect(res.cell).toEqual('888');
   });
 
   it("should refresh entity after UPDATE when refreshAfterEdit='object'", async () => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
-    let crudOpFnCalled = false;
-    const crudOpFn = (op: string, entityValue: any, entityCrudComponent: SPMatEntityCrudCreateEditBridge) => {
-      crudOpFnCalled = true;
-      return of(USER_DATA[0]);  // Fake data
-    }
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('disableCreate', true);
+    componentRef.setInput('httpReqContext', {cache: true});
     const http = TestBed.inject(HttpClient);
-    spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    componentRef.setInput('crudOpFn', crudOpFn);
+    let httpGETReqContextReceived = false;
+    spyOn(http, 'get').and.callFake(((url: string, options: any) => {
+      if (url.includes('/83939830309303/')) {
+        // refresh item
+        httpGETReqContextReceived = options?.context?.cache !== undefined;
+        return of({
+          ...USER_DATA[0],
+          cell: '888'
+        });
+      } else {
+        // initial get users request
+        return of(USER_DATA);
+      }
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+    let httpPATCHReqContextReceived = false;
+    spyOn(http, 'patch').and.callFake(((url: string, data: any, options: any) => {
+      httpPATCHReqContextReceived = options?.context?.cache !== undefined;
+      return of({
+        ...USER_DATA[0],
+        cell: '83939830309303'
+      });
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
     componentRef.setInput('refreshAfterEdit', 'object');
     fixture.autoDetectChanges();
     // Mocking object UPDATE by calling the bridge method directly
     await firstValueFrom(component.update(USER_DATA[0]['cell'], {gender: 'M'}));
-    expect(crudOpFnCalled).toBeTrue();
+    expect(httpPATCHReqContextReceived).toBeTrue();
+    expect(httpGETReqContextReceived).toBeTrue();
   });
 
   it("should refresh all entities after CREATE when refreshAfterEdit='all'", async () => {

@@ -136,8 +136,13 @@ describe('SPMatEntityListComponent', () => {
     ]);
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('httpReqContext', {cache: true});
     const http = TestBed.inject(HttpClient);
-    spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    let httpReqContextReceived = false;
+    spyOn(http, 'get').and.callFake(((url: string, options: any) => {
+      httpReqContextReceived = options['context']['cache'] !== undefined;
+      return of(USER_DATA);
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
     fixture.autoDetectChanges();
     expect(component).toBeTruthy();
     const rows = fixture.debugElement.nativeElement.querySelectorAll('tr');
@@ -145,6 +150,7 @@ describe('SPMatEntityListComponent', () => {
     expect(rows.length).toEqual(USER_DATA.length+1);
     const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
+    expect(httpReqContextReceived).toBeTrue();
   });
 
   it('should accept hybrid column definitions', async () => {
