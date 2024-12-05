@@ -29,7 +29,7 @@ type MyFormGroup = FormGroup<{
   selector: 'app-create-edit-entity-demo',
   template: `
     <form
-      [formGroup]="form!"
+      [formGroup]="form()!"
       (ngSubmit)="onSubmit()"
       class="d-flex flex-column align-items-start"
       errorTailor
@@ -48,12 +48,12 @@ type MyFormGroup = FormGroup<{
       </mat-form-field>
 
       <div class="mt-2 d-flex gap-2">
-        <button type="button" color="secondary" mat-raised-button (click)="form!.reset()">Reset</button>
+        <button type="button" color="secondary" mat-raised-button (click)="form()!.reset()">Reset</button>
         <button
           type="submit"
           color="primary"
           mat-raised-button
-          [disabled]="form!.invalid"
+          [disabled]="form()!.invalid"
         >
           Save
         </button>
@@ -96,7 +96,7 @@ export class CreateEditEntityDemoComponent extends SPMatEntityCrudFormBase<MyFor
 
   // Override so that we don't actually create the object.
   override onSubmit() {
-    const value = this.form!.value;
+    const value = this.form()!.value;
     const bridge = this.bridge();
     // const obs = this.creating() ? bridge?.create(value) : bridge?.update(this.entity()?.cell, value);
     // obs?.pipe(

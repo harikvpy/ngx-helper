@@ -79,6 +79,7 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
         <mat-tab label="Simple">
           <sp-mat-entity-crud
             #spEntityCrud1
+            entityName="invoice"
             [entityLoaderFn]="invoicesLoaderFn"
             [columns]="invoiceColumns"
             [pageSize]="10"
@@ -121,6 +122,7 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
         <mat-tab label="Item SubTypes">
           <sp-mat-entity-crud
             #spEntityCrud2
+            entityName="invoice"
             [entityLoaderFn]="invoicesLoaderFn"
             [columns]="invoiceColumns"
             [pageSize]="10"
@@ -163,6 +165,7 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
         <mat-tab label="Override Header">
           <sp-mat-entity-crud
             #spEntityCrud3
+            entityName="invoice"
             [entityLoaderFn]="invoicesLoaderFn"
             [columns]="invoiceColumns"
             [pageSize]="10"
@@ -224,6 +227,7 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
         <mat-tab label="Override Action Buttons">
           <sp-mat-entity-crud
             #spEntityCrud4
+            entityName="invoice"
             [entityLoaderFn]="invoicesLoaderFn"
             [columns]="invoiceColumns"
             [pageSize]="10"
