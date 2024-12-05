@@ -278,9 +278,30 @@ export class SPMatEntityListComponent<
   infiniteScrollThrottle = input<number>(400);
   infiniteScrollWindow = input<boolean>(false);
   /**
-   * Custom context to be set for HttpClient requests.
+   * Custom context to be set for HttpClient requests. In the client code
+   * specify this property by initializing a member variable as:
+
+      ```
+      Component({
+        ...
+        template: `
+          <sp-mat-entity-list
+            [httpReqContext]="httpReqContext"
+          ></sp-mat-entity-list>
+        `
+      })
+      export class YourComponent {
+        httpReqContext: [HttpContextToken<any>, any] = [
+          SIDELOAD_TO_COMPOSITE_PARAMS, 'customers'
+        ];
+      }
+      ```
+   *
+   * Of course if you want to pass multiple context properties, declare the type
+   * as an array of array. That is, `[[HttpContextToken<any>, any]]` and
+   * initialize it appropriately.
    */
-  httpReqContext = input<[[HttpContextToken<string>, any]]|[HttpContextToken<string>, any]>();
+  httpReqContext = input<[[HttpContextToken<any>, any]]|[HttpContextToken<any>, any]>();
   /* END CLIENT PROVIDED PARAMETERS */
 
   // *** INTERNAL *** //
