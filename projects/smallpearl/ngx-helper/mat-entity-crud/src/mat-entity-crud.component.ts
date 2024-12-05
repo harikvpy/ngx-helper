@@ -158,7 +158,7 @@ import { PreviewHostComponent } from './preview-host.component';
         -->
         <ng-container matColumnDef="action">
           <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let element">
+          <td mat-cell *matCellDef="let element" (click)="$event.stopImmediatePropagation();">
             @if (_itemActions().length) {
             <sp-mat-context-menu
               [menuItems]="_itemActions()"
