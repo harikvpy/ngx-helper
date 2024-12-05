@@ -113,7 +113,7 @@ export class HeaderAlignmentDirective implements AfterViewInit {
           mat-row
           [class.active-row]="activeEntityId() === row[this.idKey()]"
           *matRowDef="let row; columns: _displayedColumns()"
-          (click)="handleRowClick(row)"
+          (click)="toggleActiveEntity(row)"
         ></tr>
       </table>
       @if (pagination() == 'discrete' && _paginator) {
@@ -775,13 +775,15 @@ export class SPMatEntityListComponent<
       : endpoint;
   }
 
-  handleRowClick(entity: TEntity) {
+  toggleActiveEntity(entity: TEntity|undefined) {
     if (entity) {
       if (entity === this.activeEntity()) {
         this.activeEntity.set(undefined);
       } else {
         this.activeEntity.set(entity);
       }
+    } else {
+      this.activeEntity.set(undefined);
     }
   }
 }

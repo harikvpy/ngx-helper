@@ -666,6 +666,7 @@ export class SPMatEntityCrudComponent<
 
   closePreview() {
     if (this.previewedEntity()) {
+      this.spEntitiesList()?.toggleActiveEntity(this.previewedEntity());
       this.previewedEntity.set(undefined);
     }
   }
