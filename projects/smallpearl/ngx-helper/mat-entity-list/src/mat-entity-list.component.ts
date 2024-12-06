@@ -6,6 +6,7 @@ import {
   Component,
   computed,
   ContentChildren,
+  Directive,
   effect,
   ElementRef,
   EventEmitter,
@@ -31,11 +32,27 @@ import {
   MatTableModule,
 } from '@angular/material/table';
 import { DomSanitizer } from '@angular/platform-browser';
+import { RouterModule } from '@angular/router';
 import { createStore } from '@ngneat/elf';
-import { addEntities, deleteEntities, getEntitiesCount, hasEntity, selectAllEntities, updateEntities, upsertEntities, withEntities } from '@ngneat/elf-entities';
+import {
+  addEntities,
+  deleteEntities,
+  getEntitiesCount,
+  hasEntity,
+  selectAllEntities,
+  updateEntities,
+  upsertEntities,
+  withEntities,
+} from '@ngneat/elf-entities';
 import { getNgxHelperConfig } from '@smallpearl/ngx-helper/core';
-import { SP_ENTITY_FIELD_CONFIG, SPEntityField, SPEntityFieldConfig, SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
+import {
+  SP_ENTITY_FIELD_CONFIG,
+  SPEntityField,
+  SPEntityFieldConfig,
+  SPEntityFieldSpec,
+} from '@smallpearl/ngx-helper/entity-field';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
+import { plural } from 'pluralize';
 import { finalize, Observable, Subscription, tap } from 'rxjs';
 import { getEntityListConfig } from './config';
 import {
@@ -43,10 +60,6 @@ import {
   SPMatEntityListEntityLoaderFn,
   SPMatEntityListPaginator
 } from './mat-entity-list-types';
-
-import { Directive } from '@angular/core';
-import { RouterModule } from '@angular/router';
-import { plural } from 'pluralize';
 
 @Directive({
   selector: '[headerAlignment]',
