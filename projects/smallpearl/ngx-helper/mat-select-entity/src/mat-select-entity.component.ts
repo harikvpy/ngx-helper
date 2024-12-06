@@ -97,6 +97,7 @@ export type SPMatSelectEntityResponseParser = <
       (selectionChange)="onSelectionChange($event)"
       [multiple]="multiple"
       [(ngModel)]="selectValue"
+      [disabled]="disabled"
     >
       <mat-select-trigger>
         {{ selectTriggerValue }}
@@ -494,8 +495,7 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   set disabled(value: BooleanInput) {
     const disabled = coerceBooleanProperty(value);;
     if (disabled !== this._disabled) {
-      this._disabled = coerceBooleanProperty(value);
-      this.setDisabledState(this._disabled);
+      this.setDisabledState(disabled);
       this.stateChanges.next();
     }
   }
@@ -542,6 +542,7 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   }
 
   setDisabledState(isDisabled: boolean): void {
+    this._disabled = isDisabled;
     if (this.matSelect) {
       this.matSelect.setDisabledState(isDisabled);
       this.cdr.detectChanges();

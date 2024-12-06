@@ -199,7 +199,7 @@ const BLOCKS: Block[] = [
                   <sp-mat-select-entity
                     [url]="remoteUsersUrl"
                     [entityLabelFn]="remoteUserLabelFn"
-                    entityName="Remtve User"
+                    entityName="Remote User 1"
                     formControlName="remoteUser1"
                     (selectionChange)="onRemoteUserSelected1($event)"
                   ></sp-mat-select-entity>
@@ -212,7 +212,7 @@ const BLOCKS: Block[] = [
                   <sp-mat-select-entity
                     [url]="remoteUsersUrl"
                     [entityLabelFn]="remoteUserLabelFn"
-                    entityName="Remtve User"
+                    entityName="Remote User 2"
                     formControlName="remoteUser2"
                     (selectionChange)="onRemoteUserSelected2($event)"
                   ></sp-mat-select-entity>

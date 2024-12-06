@@ -138,6 +138,12 @@ describe('MatSelectEntityComponent (single selection)', () => {
     // There should be USER_DATA.length+1 <mat-option /> elements
     // The +1 is the <mat-option /> for ngx-mat-select-search.
     expect(matSel.options.length).toEqual(1 + DATA.length);
+    component.disabled = true;
+    fixture.detectChanges();
+    expect(matSel.disabled).toBeTrue();
+    component.disabled = false;
+    fixture.detectChanges();
+    expect(matSel.disabled).toBeFalse();
   });
 
   it('should display current value as the selection', async () => {
