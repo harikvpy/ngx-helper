@@ -48,6 +48,7 @@ type UserEntityListComponent = SPMatEntityListComponent<User, 'cell'>;
   template: `
     <div>
     <sp-mat-entity-list
+      entityName="user"
       [endpoint]="endpoint"
       [columns]="spEntityListColumns"
       idKey="cell">
@@ -96,7 +97,13 @@ class DRFPaginator implements SPMatEntityListPaginator {
       results: pageSize
     }
   }
-  parseRequestResponse(endpoint: string, params: any, resp: any) {
+  parseRequestResponse(
+    entityName: string,
+    entityNamePlural: string,
+    endpoint: string,
+    params: any,
+    resp: any
+  ) {
     // console.log(`parseRequestResponse - params: ${JSON.stringify(params)}`);
     this.lastRequestParams = params;
     return {
@@ -122,6 +129,7 @@ describe('SPMatEntityListComponent', () => {
     fixture = TestBed.createComponent(SPMatEntityListComponent<User, 'cell'>);
     component = fixture.componentInstance;
     componentRef = fixture.componentRef;
+    componentRef.setInput('entityName', 'user');
     componentRef.setInput('columns', [
       { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
       { name: 'gender' },
@@ -294,13 +302,21 @@ describe('SPMatEntityListComponent', () => {
     };
 
     let globalPaginatorGetEntitiesFromResponseCalled = false;
-    spyOn(myPaginator, 'parseRequestResponse').and.callFake((endpoint: string, params: any, resp: any) => {
-      globalPaginatorGetEntitiesFromResponseCalled = true;
-      return {
-        total: 100,
-        entities: resp['results']
-      };
-    });
+    spyOn(myPaginator, 'parseRequestResponse').and.callFake(
+      (
+        entityName: string,
+        entityNamePlural: string,
+        endpoint: string,
+        params: any,
+        resp: any
+      ) => {
+        globalPaginatorGetEntitiesFromResponseCalled = true;
+        return {
+          total: 100,
+          entities: resp['results'],
+        };
+      }
+    );
     const entityListConfig = new EntityListConfig();
     let globalUrlResolverCalled = false;
     spyOn(entityListConfig, 'urlResolver').and.callFake((endpoint: string) => {
@@ -327,6 +343,7 @@ describe('SPMatEntityListComponent', () => {
     fixture = TestBed.createComponent(SPMatEntityListComponent<User, 'cell'>);
     component = fixture.componentInstance;
     componentRef = fixture.componentRef;
+    componentRef.setInput('entityName', 'user');
     componentRef.setInput('columns', [
       {
         name: 'name',

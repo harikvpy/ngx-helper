@@ -1,4 +1,18 @@
+import { HttpContextToken } from "@angular/common/http";
 import { Observable } from "rxjs";
+
+export interface SPMatEntityListHttpContext {
+  entityName: string;
+  entityNamePlural: string;
+  endpoint: string;
+}
+
+export const SP_MAT_ENTITY_LIST_HTTP_CONTEXT =
+  new HttpContextToken<SPMatEntityListHttpContext>(() => ({
+    entityName: '',
+    entityNamePlural: '',
+    endpoint: '',
+  }));
 
 /**
  * Pagination HTTP request params. Actually copied from Angular's HttpParams
@@ -21,6 +35,8 @@ export interface SPMatEntityListPaginator {
     TEntity extends { [P in IdKey]: PropertyKey },
     IdKey extends string = 'id'
   >(
+    entityName: string,
+    entityNamePlural: string,
     endpoint: string,
     params: SPPageParams,
     resp: any

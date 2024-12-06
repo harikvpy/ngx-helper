@@ -1,3 +1,4 @@
+import { HttpContextToken } from "@angular/common/http";
 import { SPContextMenuItem } from "@smallpearl/ngx-helper/mat-context-menu";
 import { Observable } from "rxjs";
 
@@ -135,3 +136,20 @@ export interface NewItemSubType {
    */
   params?: any;
 }
+
+export type CrudOp = 'create'|'retrieve'|'update'|'delete'|undefined;
+
+export interface SPMatEntityCrudHttpContext {
+  entityName: string;
+  entityNamePlural: string;
+  endpoint: string;
+  op: CrudOp;
+}
+
+export const SP_MAT_ENTITY_CRUD_HTTP_CONTEXT =
+  new HttpContextToken<SPMatEntityCrudHttpContext>(() => ({
+    entityName: '',
+    entityNamePlural: '',
+    endpoint: '',
+    op: undefined,
+  }));

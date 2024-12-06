@@ -21,7 +21,7 @@ import {
   SPMatEntityListPaginator,
 } from '@smallpearl/ngx-helper/mat-entity-list';
 import { firstValueFrom, of } from 'rxjs';
-import { NewItemSubType, SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
+import { NewItemSubType, SP_MAT_ENTITY_CRUD_HTTP_CONTEXT, SPMatEntityCrudCreateEditBridge, SPMatEntityCrudHttpContext } from './mat-entity-crud-types';
 import { SPMatEntityCrudComponent } from './mat-entity-crud.component';
 import { SPMatEntityCrudPreviewPaneComponent } from './preview-pane.component';
 
@@ -454,11 +454,14 @@ describe('SPMatEntityCrudComponent', () => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('disableCreate', true);
-    componentRef.setInput('httpReqContext', ['cache', true]);
+    componentRef.setInput('crudHttpReqContext', ['cache', true]);
     const http = TestBed.inject(HttpClient);
     let httpPOSTReqContextReceived = false;
     spyOn(http, 'post').and.callFake(((url: string, data:any, options: any) => {
-      httpPOSTReqContextReceived = options.context.get('cache') === true;
+      const cache = options.context.get('cache') === true;
+      const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
+      httpPOSTReqContextReceived = !!cache && !!crudContextParams && crudContextParams.op == 'create';
+      // console.log(JSON.stringify(crudContextParams, null, 2));
       return of({
         ...USER_DATA[0],
         cell: '83939830309303'
@@ -469,7 +472,55 @@ describe('SPMatEntityCrudComponent', () => {
     spyOn(http, 'get').and.callFake(((url: string, options: any) => {
       if (url.includes('/83939830309303/')) {
         // refresh item
-        httpGETReqContextReceived = options.context.get('cache') === true;
+        const cache = options.context.get('cache') === true;
+        const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
+        httpGETReqContextReceived = !!cache && !!crudContextParams && crudContextParams.op == 'retrieve';
+        return of({
+          ...USER_DATA[0],
+          cell: '888'
+        });
+      } else {
+        // initial get users request
+        return of(USER_DATA);
+      }
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+
+    // spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    // componentRef.setInput('crudOpFn', crudOpFn);
+    componentRef.setInput('refreshAfterEdit', 'object');
+    fixture.autoDetectChanges();
+    // Mocking object CREATE by calling the bridge method directly
+    const res = await firstValueFrom(component.create({}));
+    expect(httpPOSTReqContextReceived).toBeTrue();
+    expect(httpGETReqContextReceived).toBeTrue();
+    expect(res.cell).toEqual('888');
+  });
+
+  it("should set custom HTTP request specifc context during CREATE", async () => {
+    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableCreate', true);
+    componentRef.setInput('crudHttpReqContext', {'create': ['cache', true], 'retrieve': ['cache', true]});
+    const http = TestBed.inject(HttpClient);
+    let httpPOSTReqContextReceived = false;
+    spyOn(http, 'post').and.callFake(((url: string, data:any, options: any) => {
+      const cache = options.context.get('cache') === true;
+      const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
+      httpPOSTReqContextReceived = !!cache && !!crudContextParams && crudContextParams.op == 'create';
+      // console.log(JSON.stringify(crudContextParams, null, 2));
+      return of({
+        ...USER_DATA[0],
+        cell: '83939830309303'
+      });
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+
+    let httpGETReqContextReceived = false;
+    spyOn(http, 'get').and.callFake(((url: string, options: any) => {
+      if (url.includes('/83939830309303/')) {
+        // refresh item
+        const cache = options.context.get('cache') === true;
+        const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
+        httpGETReqContextReceived = !!cache && !!crudContextParams && crudContextParams.op == 'retrieve';
         return of({
           ...USER_DATA[0],
           cell: '888'
@@ -495,13 +546,15 @@ describe('SPMatEntityCrudComponent', () => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('disableCreate', true);
-    componentRef.setInput('httpReqContext', ['cache', true]);
+    componentRef.setInput('crudHttpReqContext', ['cache', true]);
     const http = TestBed.inject(HttpClient);
     let httpGETReqContextReceived = false;
     spyOn(http, 'get').and.callFake(((url: string, options: any) => {
       if (url.includes('/83939830309303/')) {
         // refresh item
-        httpGETReqContextReceived = options.context.get('cache') === true;
+        const cache = options.context.get('cache') === true;
+        const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
+        httpGETReqContextReceived = !!cache && !!crudContextParams && crudContextParams.op == 'retrieve';
         return of({
           ...USER_DATA[0],
           cell: '888'
@@ -513,7 +566,9 @@ describe('SPMatEntityCrudComponent', () => {
     }) as any); // 'as any' to suppress TSC function prototype mismatch
     let httpPATCHReqContextReceived = false;
     spyOn(http, 'patch').and.callFake(((url: string, data: any, options: any) => {
-      httpPATCHReqContextReceived = options.context.get('cache') === true;
+      const cache = options.context.get('cache') === true;
+      const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
+      httpPATCHReqContextReceived = !!cache && !!crudContextParams && crudContextParams.op === 'update';
       return of({
         ...USER_DATA[0],
         cell: '83939830309303'

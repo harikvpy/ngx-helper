@@ -39,12 +39,14 @@ import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { finalize, Observable, Subscription, tap } from 'rxjs';
 import { getEntityListConfig } from './config';
 import {
+  SP_MAT_ENTITY_LIST_HTTP_CONTEXT,
   SPMatEntityListEntityLoaderFn,
   SPMatEntityListPaginator
 } from './mat-entity-list-types';
 
 import { Directive } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { plural } from 'pluralize';
 
 @Directive({
   selector: '[headerAlignment]',
@@ -217,6 +219,9 @@ export class SPMatEntityListComponent<
 > implements OnInit, OnDestroy, AfterViewInit
 {
   /* CLIENT PROVIDED PARAMETERS */
+  entityName = input.required<string>();
+  entityNamePlural = input<string>();
+
   /**
    * The endpoint from where the entities are to be retrieved
    */
@@ -305,19 +310,29 @@ export class SPMatEntityListComponent<
   /* END CLIENT PROVIDED PARAMETERS */
 
   // *** INTERNAL *** //
+  _entityNamePlural = computed(() =>
+    this.entityNamePlural()
+      ? this.entityNamePlural()
+      : plural(this.entityName())
+  );
+
   _httpReqContext = computed(() => {
     let reqContext = this.httpReqContext();
+    const context = new HttpContext();
     if (reqContext && Array.isArray(reqContext)) {
-      const context = new HttpContext();
       if (reqContext.length == 2 && !Array.isArray(reqContext[0])) {
         // one dimensional array of a key, value pair.
         context.set(reqContext[0], reqContext[1]);
       } else {
         reqContext.forEach(([k, v]) => context.set(k, v));
       }
-      return context;
     }
-    return undefined;
+    context.set(SP_MAT_ENTITY_LIST_HTTP_CONTEXT, {
+      entityName: this.entityName(),
+      entityNamePlural: this._entityNamePlural(),
+      endpoint: this.endpoint()
+    })
+    return context;
   })
   _deferViewInit = input<boolean>(false);
   firstLoadDone = false;
@@ -710,6 +725,8 @@ export class SPMatEntityListComponent<
                 paramsObj[key] = params.get(key);
               });
               const { entities, total } = this._paginator.parseRequestResponse(
+                this.entityName(),
+                this._entityNamePlural()!,
                 this.endpoint(),
                 paramsObj,
                 resp

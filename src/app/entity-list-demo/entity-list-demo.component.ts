@@ -105,6 +105,7 @@ const ELEMENT_DATA: PeriodicElement[] = [
             <ng-template matTabContent>
               <div class="entities-list">
                 <sp-mat-entity-list
+                  entityName="user"
                   [endpoint]="endpoint"
                   [columns]="hybridColumnDefs"
                   [pageSize]="40"
@@ -122,6 +123,7 @@ const ELEMENT_DATA: PeriodicElement[] = [
             <ng-template matTabContent>
               <div class="entities-list">
                 <sp-mat-entity-list
+                  entityName="user"
                   [endpoint]="endpoint"
                   [columns]="homoColumnDefs"
                   [pageSize]="15"
@@ -139,6 +141,7 @@ const ELEMENT_DATA: PeriodicElement[] = [
             <ng-template matTabContent>
               <div class="entities-list" #entitiesList>
                 <sp-mat-entity-list
+                  entityName="user"
                   [endpoint]="endpoint"
                   [columns]="homoColumnDefs"
                   [pageSize]="10"
@@ -157,6 +160,7 @@ const ELEMENT_DATA: PeriodicElement[] = [
       <ng-template #tableWithCustomColumnDef>
         <div class="entities-list" #entitiesList>
           <sp-mat-entity-list
+            entityName="user"
             [endpoint]="endpoint"
             [columns]="homoColumnDefs"
             [pageSize]="10"
@@ -195,6 +199,7 @@ const ELEMENT_DATA: PeriodicElement[] = [
       <ng-template #tableWithoutSorting>
         <div class="entities-list" #entitiesList>
           <sp-mat-entity-list
+            entityName="user"
             [endpoint]="endpoint"
             [columns]="homoColumnDefs"
             [pageSize]="10"

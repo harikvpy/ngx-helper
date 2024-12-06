@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpContextToken } from '@angular/common/http';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -43,7 +43,9 @@ import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
 import {
   ALLOW_ITEM_ACTION_FN,
   CRUD_OP_FN,
+  CrudOp,
   NewItemSubType,
+  SP_MAT_ENTITY_CRUD_HTTP_CONTEXT,
   SPMatEntityCrudConfig,
   SPMatEntityCrudResponseParser,
 } from './mat-entity-crud-types';
@@ -133,6 +135,8 @@ import { PreviewHostComponent } from './preview-host.component';
             [ngTemplateOutlet]="headerTemplate() || defaultHeaderTemplate"
           ></ng-container>
           <sp-mat-entity-list
+            [entityName]="entityName()"
+            [entityNamePlural]="entityNamePlural()"
             [_deferViewInit]="true"
             [endpoint]="endpoint()"
             [entityLoaderFn]="entityLoaderFn()"
@@ -158,7 +162,11 @@ import { PreviewHostComponent } from './preview-host.component';
         -->
         <ng-container matColumnDef="action">
           <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let element" (click)="$event.stopImmediatePropagation();">
+          <td
+            mat-cell
+            *matCellDef="let element"
+            (click)="$event.stopImmediatePropagation()"
+          >
             @if (_itemActions().length) {
             <sp-mat-context-menu
               [menuItems]="_itemActions()"
@@ -232,8 +240,8 @@ export class SPMatEntityCrudComponent<
   extends SPMatEntityListComponent<TEntity, IdKey>
   implements SPMatEntityCrudComponentBase<TEntity>, AfterViewInit
 {
-  entityName = input.required<string>();
-  entityNamePlural = input<string>();
+  // entityName = input.required<string>();
+  // entityNamePlural = input<string>();
 
   itemLabel = input<string>();
   itemLabelPlural = input<string>();
@@ -278,7 +286,6 @@ export class SPMatEntityCrudComponent<
    * the action.
    */
   allowEntityActionFn = input<ALLOW_ITEM_ACTION_FN<TEntity>>();
-
   /**
    * A template that allows the header to be replaced. Usage:-
    *
@@ -290,7 +297,6 @@ export class SPMatEntityCrudComponent<
    *    ```
    */
   headerTemplate = input<TemplateRef<any>>();
-
   /**
    * Set this to the custom template identifier that will replace the
    * "New {{Item}}" button portion. This template will expand towards the
@@ -311,7 +317,6 @@ export class SPMatEntityCrudComponent<
    * the created/updated TEntity.
    */
   crudResponseParser = input<SPMatEntityCrudResponseParser>();
-
   /**
    * An ng-template name that contains the component which provides the
    * create/edit CRUD action.
@@ -351,24 +356,45 @@ export class SPMatEntityCrudComponent<
    *             defined UI.
    */
   refreshAfterEdit = input<'none' | 'object' | 'all'>('none');
+  /**
+   * HttpContext for crud requests - list, create, retrieve, update & delete.
+   * The value can be an object where the property names reflect the CRUD
+   * methods with each of these keys taking
+   * `[[HttpContextToken<any>, any]] | [HttpContextToken<any>, any]` as its
+   * value. This object has a special key 'crud', which if given a value for,
+   * would be used for all CRUD requests (CREATE|READ|UPDATE|DELETE).
+   *
+   * Alternatively the property can be set a
+   * `[[HttpContextToken<any>, any]] | [HttpContextToken<any>, any]` as its
+   * value, in which case the same context would be used for all HTTP requests.
+   */
+  crudHttpReqContext = input<
+    | [[HttpContextToken<any>, any]]
+    | [HttpContextToken<any>, any]
+    | {
+        // list?: [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any];
+        // crud?: [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any]; // common context for all crud operations
+        create?: [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any]; // CREATE
+        retrieve?:
+          | [[HttpContextToken<any>, any]]
+          | [HttpContextToken<any>, any]; // RETRIEVE
+        update?: [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any]; // UPDATE
+        delete?: [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any]; // DELETE
+      }
+  >();
 
   // INTERNAL PROPERTIES //
-  _entityNamePlural = computed(() =>
-    this.entityNamePlural()
-      ? this.entityNamePlural()
-      : plural(this.entityName())
-  );
-
   // Derive a label from a camelCase source string. If the camelCase string
   // can be translated, it returns the translated string. If not, the function
   // converts the camelCase to 'Title Case' and returns it.
   private getLabel = (source: string) => {
     const label = this.ngxHelperConfig.i18nTranslate(source);
-    if (label.localeCompare(source) !== 0) { // Successful translation, return it
+    if (label.localeCompare(source) !== 0) {
+      // Successful translation, return it
       return label;
     }
     return startCase(source);
-  }
+  };
 
   _itemLabel = computed<string>(() =>
     this.itemLabel()
@@ -381,7 +407,9 @@ export class SPMatEntityCrudComponent<
       : this.getLabel(plural(this.entityName()))
   );
   // Computed title
-  _title = computed(() => (this.title() ? this.title() : this._itemLabelPlural()));
+  _title = computed(() =>
+    this.title() ? this.title() : this._itemLabelPlural()
+  );
   // endpoint with the QP string removed (if one was provided)
   _endpointSansParams = computed(() => this.endpoint().split('?')[0]);
   _endpointParams = computed(() => {});
@@ -491,8 +519,7 @@ export class SPMatEntityCrudComponent<
     }
   }
 
-  override ngOnInit() {
-  }
+  override ngOnInit() {}
 
   override ngOnDestroy(): void {
     this.sub$.unsubscribe();
@@ -561,7 +588,7 @@ export class SPMatEntityCrudComponent<
       obs = crudOpFn('create', entityValue, this);
     } else {
       obs = this.http.post<TEntity>(this.getUrl(this.endpoint()), entityValue, {
-        context: this._httpReqContext(),
+        context: this.getCrudReqHttpContext('create')
       });
     }
 
@@ -592,7 +619,7 @@ export class SPMatEntityCrudComponent<
       obs = crudOpFn('update', entityValue, this);
     } else {
       obs = this.http.patch<TEntity>(this.getEntityUrl(id), entityValue, {
-        context: this._httpReqContext(),
+        context: this.getCrudReqHttpContext('update'),
       });
     }
 
@@ -631,9 +658,8 @@ export class SPMatEntityCrudComponent<
         ) as Observable<TEntity>;
       } else {
         obs = this.http.get<TEntity>(
-          this.getEntityUrl((entity as any)[this.idKey()]), {
-            context: this._httpReqContext()
-          }
+          this.getEntityUrl((entity as any)[this.idKey()]),
+          { context: this.getCrudReqHttpContext('retrieve') }
         );
       }
       return obs.pipe(
@@ -651,7 +677,7 @@ export class SPMatEntityCrudComponent<
       return of(null);
     }
 
-    return of(entity)
+    return of(entity);
   }
 
   getCrudOpResponseParser(): SPMatEntityCrudResponseParser {
@@ -763,7 +789,9 @@ export class SPMatEntityCrudComponent<
         if (crudOpFn) {
           obs = crudOpFn('delete', entity, this);
         } else {
-          obs = this.http.delete<void>(this.getEntityUrl(entityId));
+          obs = this.http.delete<void>(this.getEntityUrl(entityId), {
+            context: this.getCrudReqHttpContext('delete'),
+          });
         }
 
         this.sub$.add(
@@ -822,5 +850,55 @@ export class SPMatEntityCrudComponent<
     } else {
       this.action.emit({ role: subtype.role });
     }
+  }
+
+  private getCrudReqHttpContext(
+    op: CrudOp
+  ) {
+    const contextParamToHttpContext = (
+      context: HttpContext,
+      reqContext: [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any]
+    ) => {
+      if (reqContext.length == 2 && !Array.isArray(reqContext[0])) {
+        // one dimensional array of a key, value pair.
+        context.set(reqContext[0], reqContext[1]);
+      } else {
+        reqContext.forEach(([k, v]) => context.set(k, v));
+      }
+    };
+
+    let context = new HttpContext()
+    const crudHttpReqContext = this.crudHttpReqContext();
+    if (crudHttpReqContext) {
+      if (Array.isArray(crudHttpReqContext)) {
+        // Same HttpContext for all crud requests
+        contextParamToHttpContext(context, crudHttpReqContext);
+      } else if (
+        typeof crudHttpReqContext === 'object' &&
+        op &&
+        crudHttpReqContext[op]
+      ) {
+        contextParamToHttpContext(context, crudHttpReqContext[op]!);
+        // if (crudHttpReqContext[op]) {
+        //   context = contextParamToHttpContext(crudHttpReqContext[op] as any);
+        // } else if (crudHttpReqContext['crud']) {
+        //   context = contextParamToHttpContext(crudHttpReqContext['crud'] as any);
+        // }
+      }
+    // } else if (this.httpReqContext()) {
+    //   context = contextParamToHttpContext(this.httpReqContext()!);
+    }
+
+    context.set(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT, {
+      entityName: this.entityName(),
+      entityNamePlural: this._entityNamePlural(),
+      endpoint: this.endpoint(),
+      op,
+    });
+    return context;
+    // const httpReqContext = this.httpReqContext();
+    // return httpReqContext
+    //   ? contextParamToHttpContext(httpReqContext)
+    //   : undefined;
   }
 }
