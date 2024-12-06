@@ -1,6 +1,6 @@
 import { BooleanInput, coerceBooleanProperty } from '@angular/cdk/coercion';
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpContextToken, HttpParams } from '@angular/common/http';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -40,6 +40,19 @@ import { SP_MAT_SELECT_ENTITY_CONFIG, SPMatSelectEntityConfig } from './provider
 import { getNgxHelperConfig } from '@smallpearl/ngx-helper/core';
 import { plural } from 'pluralize';
 import { camelCase } from 'lodash';
+
+export interface SPMatSelectEntityHttpContext {
+  entityName: string;
+  entityNamePlural: string;
+  endpoint: string;
+}
+
+export const SP_MAT_SELECT_ENTITY_HTTP_CONTEXT =
+  new HttpContextToken<SPMatSelectEntityHttpContext>(() => ({
+    entityName: '',
+    entityNamePlural: '',
+    endpoint: '',
+  }));
 
 const DEFAULT_SP_MAT_SELECT_ENTITY_CONFIG: SPMatSelectEntityConfig =
   {
@@ -660,7 +673,10 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
       if (this.existsInCache()) {
         obs = of(this.getFromCache())
       } else {
-        obs = this.http.get<any>(this.url, { params });
+        obs = this.http.get<any>(this.url, {
+          context: this.getHttpReqContext(),
+          params,
+        });
       }
     }
     return obs.pipe(
@@ -778,5 +794,16 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
         }
       }
     }
+  }
+
+  private getHttpReqContext() {
+    const context = new HttpContext();
+    const entityName = this.entityName;
+    context.set(SP_MAT_SELECT_ENTITY_HTTP_CONTEXT, {
+      entityName: this.entityName ?? '',
+      entityNamePlural: this.entityName ? plural(this.entityName) : '',
+      endpoint: this.url
+    });
+    return context;
   }
 }

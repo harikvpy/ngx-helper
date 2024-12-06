@@ -8,7 +8,7 @@ import { MatSelect } from '@angular/material/select';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Observable, of, tap } from 'rxjs';
-import { SPMatSelectEntityComponent } from './mat-select-entity.component';
+import { SP_MAT_SELECT_ENTITY_HTTP_CONTEXT, SPMatSelectEntityComponent, SPMatSelectEntityHttpContext } from './mat-select-entity.component';
 import { SP_MAT_SELECT_ENTITY_CONFIG, SPMatSelectEntityConfig } from './providers';
 
 /**
@@ -158,12 +158,22 @@ describe('MatSelectEntityComponent (single selection)', () => {
   it('should load data from remote', async () => {
     // Trap HttpClient.get() and return our custom data
     const http = TestBed.inject(HttpClient);
-    spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    // spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    let context!: any;
+    spyOn(http, 'get').and.callFake(((url: string, options: any) => {
+      context = options.context;
+      return of(USER_DATA);
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
     await openMatSelect(fixture);
     // There should be USER_DATA.length+1 <mat-option /> elements
     // The +1 is the <mat-option /> for ngx-mat-select-search.
     expect(matSel.options.length).toEqual(1 + USER_DATA.length);
     expect((component as any).loaded).toBeTrue();
+    // verify that HttpRequest context has SP_MAT_SELECT_ENTITY_HTTP_CONTEXT
+    expect(context).toBeTruthy();
+    const selectEntityContext: SPMatSelectEntityHttpContext = context.get(SP_MAT_SELECT_ENTITY_HTTP_CONTEXT);
+    expect(selectEntityContext).toBeTruthy();
+    expect(selectEntityContext.endpoint).toEqual('https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
   });
 
   it('should use the specified HttpParams to load remote data', async () => {
