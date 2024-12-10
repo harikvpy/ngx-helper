@@ -714,7 +714,7 @@ export class SPMatEntityCrudComponent<
     if (!this.newItemLink() || this.newItemLink()?.length == 0) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      this.activateCreateEditView();
+      this.showCreateEditView();
       // const tmpl = this.createEditFormTemplate();
       // if (tmpl) {
       //   // If preview is active deactivate it
@@ -732,7 +732,7 @@ export class SPMatEntityCrudComponent<
   }
 
   onUpdate(entity: TEntity) {
-    this.activateCreateEditView(entity);
+    this.showCreateEditView(entity);
     // const tmpl = this.createEditFormTemplate();
     // if (tmpl) {
     //   // If preview is active deactivate it
@@ -751,11 +751,14 @@ export class SPMatEntityCrudComponent<
   }
 
   /**
-   * Show the create/edit component
+   * Show the create/edit component. This is deliberately made public so as to
+   * be callable from the client. This allows the client to dynamically
+   * set the form edit template and then show the edit pane by calling this
+   * method.
    * @param entity
    * @param params
    */
-  private activateCreateEditView(entity?: TEntity | undefined, params?: any) {
+  showCreateEditView(entity?: TEntity | undefined, params?: any) {
     const tmpl = this.createEditFormTemplate();
     if (tmpl) {
       // If preview is active deactivate it
@@ -846,7 +849,7 @@ export class SPMatEntityCrudComponent<
   handleNewItemSubType(subtype: NewItemSubType) {
     // console.log(`handleNewItemSubType: ${subtype}`);
     if (subtype.role === '_new_') {
-      this.activateCreateEditView(undefined, subtype?.params);
+      this.showCreateEditView(undefined, subtype?.params);
     } else {
       this.action.emit({ role: subtype.role });
     }
