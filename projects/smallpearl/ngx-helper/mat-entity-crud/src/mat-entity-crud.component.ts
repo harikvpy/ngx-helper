@@ -76,6 +76,8 @@ import { PreviewHostComponent } from './preview-host.component';
           [class]="crudConfig.listPaneWrapperClass"
           [ngStyle]="{ display: !createEditViewActive() ? 'inherit' : 'none' }"
         >
+          <ng-content select="[breadCrumbs]"></ng-content>
+
           <ng-template #defaultActionButtons>
             <div class="action-bar-actions">
               @if (!disableCreate()) { @if (newItemSubTypes()) {
@@ -182,6 +184,7 @@ import { PreviewHostComponent } from './preview-host.component';
           [ngStyle]="{ display: createEditViewActive() ? 'inherit' : 'none' }"
           spHostBusyWheel="formBusyWheel"
         >
+          <ng-content select="[breadCrumbs]"></ng-content>
           <sp-create-edit-entity-host
             [itemLabel]="_itemLabel()"
             [itemLabelPlural]="_itemLabelPlural()"

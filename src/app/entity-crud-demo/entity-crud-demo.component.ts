@@ -183,6 +183,7 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
             [headerTemplate]="customHeader"
             matSort
           >
+            <div breadCrumbs>this is breadcrumb!</div>
           </sp-mat-entity-crud>
           <ng-template #customHeader>
             <div class='header'>
@@ -315,8 +316,17 @@ export class EntityCrudDemoComponent implements OnInit {
     { name: 'cell', label: 'CELL' },
   ];
 
-  invoicesLoaderFn = (params: any) =>
-    of({ count: 2, next: null, previous: null, results: INVOICES });
+  invoicesLoaderFn = (params: any) => {
+    const localInvoices = [];
+    for (let index = 0; index < 50; index++) {
+      const copy = JSON.parse(JSON.stringify(INVOICES));
+      copy[0].id = 1000+index*2;
+      copy[1].id = 1000+index*2+1;
+      localInvoices.push(copy[0]);
+      localInvoices.push(copy[1]);
+    }
+    return of({ count: 100, next: null, previous: null, results: localInvoices });
+  }
   invoiceColumns: SPEntityFieldSpec<Invoice>[] = [
     { name: 'id' },
     { name: 'date' },
