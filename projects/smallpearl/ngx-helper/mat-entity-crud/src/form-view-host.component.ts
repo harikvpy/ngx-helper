@@ -89,7 +89,11 @@ export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEdit
 
   show(entity: TEntity|undefined, params?: any) {
     this.entity.set(entity);
-    this.title.set(entity ? this.config.i18n.editItemLabel(this.itemLabel()) : this.config.i18n.newItemLabel(this.itemLabel()));
+    if (params && params?.title) {
+      this.title.set(params.title);
+    } else {
+      this.title.set(entity ? this.config.i18n.editItemLabel(this.itemLabel()) : this.config.i18n.newItemLabel(this.itemLabel()));
+    }
     this.params.set(params);
     this.createClientView();
   }

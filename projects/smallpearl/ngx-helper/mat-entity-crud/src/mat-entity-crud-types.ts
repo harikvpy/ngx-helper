@@ -133,6 +133,9 @@ export interface NewItemSubType {
         ></app-create-edit-entity-demo>
       </ng-template>
       ```
+
+    If params is an object and it includes the key 'title', its value will be
+    used as the title for the edit form.
    */
   params?: any;
 }
