@@ -3,15 +3,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   EmbeddedViewRef,
-  Inject,
   input,
   OnDestroy,
   OnInit,
-  Optional,
   signal,
   TemplateRef,
   viewChild,
-  ViewContainerRef,
+  ViewContainerRef
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,7 +18,6 @@ import { Subscription, tap } from 'rxjs';
 import { getEntityCrudConfig } from './default-config';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
 import { SPMatEntityCrudConfig, SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
-import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
 
 @Component({
   standalone: true,
