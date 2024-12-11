@@ -47,7 +47,7 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
     loseChangesPrompt: 'Are you okay with loosing changes?',
   },
   listPaneWrapperClass: 'sp-mat-crud-list-pane-wrapper-class',
-  previewPaneContentClass: 'sp-mat-crud-preview-pane-content-class',
+  previewPaneWrapperClass: 'sp-mat-crud-preview-pane-wrapper-class',
 };
 
 @Component({
@@ -93,6 +93,7 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
             (selectEntity)="handleSelectEntity($event)"
             [createEditFormTemplate]="createEdit"
             [previewTemplate]="userPreview1"
+            [editPaneWidth]="60"
           >
           </sp-mat-entity-crud>
 

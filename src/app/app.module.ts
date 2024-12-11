@@ -15,6 +15,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { MatErrorTailorControlErrorComponent } from './components/mat-error-tailor-control-error/mat-error-tailor-control-error.component';
 import { SP_NGX_HELPER_CONFIG } from '@smallpearl/ngx-helper/core';
+import { SP_MAT_ENTITY_CRUD_CONFIG } from '@smallpearl/ngx-helper/mat-entity-crud';
 
 const WebTelInputConfig: QQMatTelephoneInputConfig = {
   // To cache last value from our API request so that we don't have to
@@ -102,6 +103,13 @@ const WebTelInputConfig: QQMatTelephoneInputConfig = {
       provide: SP_NGX_HELPER_CONFIG,
       useValue: {
         i18nTranslate: (label: string, context?: any) => label.toUpperCase()
+      }
+    },
+    {
+      provide: SP_MAT_ENTITY_CRUD_CONFIG,
+      useValue: {
+        listPaneWrapperClass: 'sp-mat-crud-list-pane-wrapper-class',
+        previewPaneWrapperClass: 'sp-mat-crud-preview-pane-wrapper-class',
       }
     }
   ],

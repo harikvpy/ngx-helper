@@ -71,10 +71,9 @@ import { PreviewHostComponent } from './preview-host.component';
   selector: 'sp-mat-entity-crud',
   template: `
     <as-split direction="horizontal" [gutterSize]="6">
-      <as-split-area [size]="entitiesPaneWidth()">
+      <as-split-area [size]="entitiesPaneWidth()" [visible]="!entitiesPaneHidden()">
         <div
           [class]="crudConfig.listPaneWrapperClass"
-          [ngStyle]="{ display: !createEditViewActive() ? 'inherit' : 'none' }"
         >
           <ng-content select="[breadCrumbs]"></ng-content>
 
@@ -179,6 +178,7 @@ import { PreviewHostComponent } from './preview-host.component';
           </td>
         </ng-container>
 
+        <!--
         <div
           [class]="crudConfig.listPaneWrapperClass"
           [ngStyle]="{ display: createEditViewActive() ? 'inherit' : 'none' }"
@@ -192,18 +192,27 @@ import { PreviewHostComponent } from './preview-host.component';
             [clientViewTemplate]="createEditFormTemplate()"
           ></sp-create-edit-entity-host>
         </div>
+        -->
       </as-split-area>
-      <as-split-area [size]="previewPaneWidth()" [visible]="previewActive()">
-        @if (previewActive()) {
-        <div [class]="crudConfig.previewPaneWrapperClass">
-          <sp-entity-crud-preview-host
-            (closePreview)="closePreview()"
-            [entityCrudComponent]="this"
-            [previewTemplate]="previewTemplate()!"
-            [previewedEntity]="previewedEntity()"
-          ></sp-entity-crud-preview-host>
+      <as-split-area [size]="entityPaneWidth()" [visible]="entityPaneActive()">
+        <div [class]="crudConfig.previewPaneWrapperClass" spHostBusyWheel="formBusyWheel">
+          @if (previewActive()) {
+            <sp-entity-crud-preview-host
+              (closePreview)="closePreview()"
+              [entityCrudComponent]="this"
+              [previewTemplate]="previewTemplate()!"
+              [previewedEntity]="previewedEntity()"
+            ></sp-entity-crud-preview-host>
+          } @else {
+            <!-- Create/Edit Entity -->
+            <sp-create-edit-entity-host
+              [itemLabel]="_itemLabel()"
+              [itemLabelPlural]="_itemLabelPlural()"
+              [entityCrudComponentBase]="this"
+              [clientViewTemplate]="createEditFormTemplate()"
+            ></sp-create-edit-entity-host>
+          }
         </div>
-        }
       </as-split-area>
     </as-split>
   `,
@@ -385,6 +394,14 @@ export class SPMatEntityCrudComponent<
         delete?: [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any]; // DELETE
       }
   >();
+  /**
+   * Width of the edit pane as a percentange of the overall <as-split> width.
+   */
+  editPaneWidth = input<number>(100);
+  /**
+   * Width of the preview pane as a percentange of the overall <as-split> width.
+   */
+  previewPaneWidth = input<number>(50);
 
   // INTERNAL PROPERTIES //
   // Derive a label from a camelCase source string. If the camelCase string
@@ -455,8 +472,13 @@ export class SPMatEntityCrudComponent<
 
   previewedEntity = signal<TEntity | undefined>(undefined);
   previewActive = computed(() => this.previewedEntity() !== undefined);
-  previewPaneWidth = signal<number>(50);
-  entitiesPaneWidth = computed(() => 100 - this.previewPaneWidth());
+
+  entityPaneActive = computed(() => !!this.previewedEntity() || this.createEditViewActive());
+  entityPaneWidth = computed(() => !!this.previewedEntity() ? this.previewPaneWidth() : this.editPaneWidth());
+
+  // previewPaneWidth = signal<number>(50);
+  entitiesPaneWidth = computed(() => 100 - this.entityPaneWidth());
+  entitiesPaneHidden = computed(() => this.entityPaneActive() && this.entityPaneWidth() === 100);
 
   defaultItemCrudActions = signal<SPContextMenuItem[]>([]);
   columnsWithAction = computed(() => {
