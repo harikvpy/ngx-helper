@@ -14,7 +14,7 @@ export interface SPMatEntityCrudComponentBase<TEntity> {
    * entity list view.
    * @returns
    */
-  closeCreateEdit: () => void;
+  closeCreateEdit: (cancelled: boolean) => void;
   /**
    * Used internally by FormViewHostComponent to determine if the client form
    * view wants to intercept user's cancel the create/edit operation. Perhaps
@@ -64,4 +64,8 @@ export interface SPMatEntityCrudComponentBase<TEntity> {
    * @returns
    */
   closePreview: () => void;
+  /**
+   * Refresh all the entities in the CRUD view.
+   */
+  refreshEntities: () => void;
 }

@@ -95,10 +95,14 @@ export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEdit
     this.createClientView();
   }
 
-  close() {
-    this.entityCrudComponentBase().closeCreateEdit();
+  close(cancel: boolean) {
+    this.entityCrudComponentBase().closeCreateEdit(cancel);
     // destroy the client's form component
     this.destroyClientView();
+  }
+
+  refreshEntities() {
+    this.entityCrudComponentBase().refreshEntities();
   }
 
   registerCanCancelEditCallback(callback: () => boolean) {
@@ -113,7 +117,7 @@ export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEdit
     // );
     const crudComponent = this.entityCrudComponentBase();
     return crudComponent?.create(entityValue).pipe(
-      tap(() => this.close()),
+      tap(() => this.close(false)),
     );
   }
 
@@ -125,7 +129,7 @@ export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEdit
     // );
     const crudComponent = this.entityCrudComponentBase();
     return crudComponent?.update(id, entityValue).pipe(
-      tap(() => this.close()),
+      tap(() => this.close(false)),
     );
   }
 
@@ -159,7 +163,8 @@ export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEdit
     // Can we give the client form component a chance to intercept this
     // and cancel the closure?
     if (this.entityCrudComponentBase().canCancelEdit()) {
-      this.close();
+      this.entityCrudComponentBase().closeCreateEdit(true);
+      this.destroyClientView();
     }
   }
 }

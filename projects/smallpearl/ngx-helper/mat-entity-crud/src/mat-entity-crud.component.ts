@@ -425,6 +425,20 @@ export class SPMatEntityCrudComponent<
    */
   @Output() action = new EventEmitter<{ role: string; entity?: TEntity }>();
 
+  /**
+   * Event raised when create Create/Edit pane is activated & deactivated.
+   * Event contains two flags:-
+   *  activated - whether the createEdit form view was activated or
+   *              deactivated.
+   *  cancelled - whether the form view was cancelled by user. False for this
+   *              indicates that the form view was closed after a successful
+   *              edit operation.
+   */
+  @Output() createEditActivated = new EventEmitter<{
+    activated: boolean;
+    cancelled: boolean|undefined;
+  }>();
+
   busyWheelId = `entityCrudBusyWheel-${Date.now()}`;
   sub$ = new Subscription();
   spEntitiesList = viewChild(SPMatEntityListComponent<TEntity, IdKey>);
@@ -561,8 +575,13 @@ export class SPMatEntityCrudComponent<
     }
   }
 
-  closeCreateEdit() {
+  override refresh() {
+    this.spEntitiesList()?.refresh();
+  }
+
+  closeCreateEdit(cancelled: boolean) {
     this.createEditViewActive.set(false);
+    this.createEditActivated.emit({ activated: false, cancelled: !!cancelled });
   }
 
   canCancelEdit() {
@@ -591,7 +610,7 @@ export class SPMatEntityCrudComponent<
       obs = crudOpFn('create', entityValue, this);
     } else {
       obs = this.http.post<TEntity>(this.getUrl(this.endpoint()), entityValue, {
-        context: this.getCrudReqHttpContext('create')
+        context: this.getCrudReqHttpContext('create'),
       });
     }
 
@@ -642,6 +661,12 @@ export class SPMatEntityCrudComponent<
     );
   }
 
+  /**
+   * Refresh the entity list, after a CRUD CREATE or UPDATE operation.
+   * @param resp This is the response from the CRUD operation (CREATE/UPDATE).
+   * @param method The CRUD operation post which REFRESH is requested.
+   * @returns Observable<TEntity|null>
+   */
   doRefreshAfterEdit(resp: any, method: 'create' | 'update') {
     const refreshAfterEdit = this.refreshAfterEdit();
     const entity = this.getCrudOpResponseParser()(
@@ -699,6 +724,8 @@ export class SPMatEntityCrudComponent<
       this.previewedEntity.set(undefined);
     }
   }
+
+  refreshEntities() {}
 
   onItemAction(role: string, entity: TEntity) {
     if (role === '_update_') {
@@ -771,6 +798,7 @@ export class SPMatEntityCrudComponent<
       const createEditHost = this.createEditHostComponent();
       createEditHost!.show(entity, params);
       this.createEditViewActive.set(true);
+      this.createEditActivated.emit({ activated: true, cancelled: undefined });
     }
   }
 
@@ -858,9 +886,7 @@ export class SPMatEntityCrudComponent<
     }
   }
 
-  private getCrudReqHttpContext(
-    op: CrudOp
-  ) {
+  private getCrudReqHttpContext(op: CrudOp) {
     const contextParamToHttpContext = (
       context: HttpContext,
       reqContext: [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any]
@@ -873,7 +899,7 @@ export class SPMatEntityCrudComponent<
       }
     };
 
-    let context = new HttpContext()
+    let context = new HttpContext();
     const crudHttpReqContext = this.crudHttpReqContext();
     if (crudHttpReqContext) {
       if (Array.isArray(crudHttpReqContext)) {
@@ -891,8 +917,8 @@ export class SPMatEntityCrudComponent<
         //   context = contextParamToHttpContext(crudHttpReqContext['crud'] as any);
         // }
       }
-    // } else if (this.httpReqContext()) {
-    //   context = contextParamToHttpContext(this.httpReqContext()!);
+      // } else if (this.httpReqContext()) {
+      //   context = contextParamToHttpContext(this.httpReqContext()!);
     }
 
     context.set(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT, {

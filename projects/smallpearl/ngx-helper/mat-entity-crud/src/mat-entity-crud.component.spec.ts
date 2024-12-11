@@ -20,7 +20,7 @@ import {
   SPMatEntityListComponent,
   SPMatEntityListPaginator,
 } from '@smallpearl/ngx-helper/mat-entity-list';
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, of, tap } from 'rxjs';
 import { NewItemSubType, SP_MAT_ENTITY_CRUD_HTTP_CONTEXT, SPMatEntityCrudCreateEditBridge, SPMatEntityCrudHttpContext } from './mat-entity-crud-types';
 import { SPMatEntityCrudComponent } from './mat-entity-crud.component';
 import { SPMatEntityCrudPreviewPaneComponent } from './preview-pane.component';
@@ -743,6 +743,64 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
       const newCount = spEntityCrudComp.spEntitiesList()?.store.query(getEntitiesCount());
       expect(newCount).toEqual(USER_DATA.length+1);
     }
+  });
+
+  it('should close the form when Bridge.close() is called', async () => {
+    const http = TestBed.inject(HttpClient);
+    const JOHN_SMITH: User = {
+      name: {title: 'mr', first: 'John', last: 'Smith'},
+      gender: 'female',
+      cell: '93039309'
+    };
+    spyOn(http, 'post').and.returnValue(of(JOHN_SMITH));
+    const spEntityCrudComp = testComponent.spEntityCrudComponent();
+    let spEntityCrudCompSpy = undefined;
+    if (spEntityCrudComp) {
+      spEntityCrudCompSpy = spyOn(spEntityCrudComp, 'create').and.callThrough();
+    }
+    let createEditActivatedEvents: Array<{activated: boolean, cancelled: boolean|undefined }> = [];
+    spEntityCrudComp?.createEditActivated.asObservable().pipe(
+      tap(event => {
+        createEditActivatedEvents.push(event);
+      })
+    ).subscribe();
+    const matButton = testComponentFixture.debugElement.query(By.directive(MatButton))
+    matButton.nativeElement.click();
+    testComponentFixture.detectChanges();
+    const createEditHost = testComponentFixture.debugElement.query(By.directive(CreateEditUserComponent));
+    expect(createEditHost).toBeTruthy();
+    const inputs = testComponentFixture.debugElement.nativeElement.querySelectorAll('input');
+    inputs[0].value = JOHN_SMITH.name.first;
+    inputs[1].value = JOHN_SMITH.name.last;
+    inputs[2].value = JOHN_SMITH.cell;
+    inputs.forEach((input: HTMLInputElement) => {
+      input.dispatchEvent(new Event('input'));
+    });
+    // I can't simulate MatSelect selection this way. So setting the gender
+    // form control's value directly.
+    // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
+    // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
+    (createEditHost.componentInstance as CreateEditUserComponent).form.controls['gender'].setValue('female');
+    testComponentFixture.detectChanges();
+    (createEditHost.componentInstance as CreateEditUserComponent).bridge()?.close(false);
+    // const submitButton = testComponentFixture.debugElement.nativeElement.querySelector("button[type='submit']");
+    // submitButton.click();
+    // testComponentFixture.detectChanges();
+    // verify that create method has been called.
+    expect(spEntityCrudCompSpy).toHaveBeenCalledTimes(0);
+    if (spEntityCrudComp) {
+      const newCount = spEntityCrudComp.spEntitiesList()?.store.query(getEntitiesCount());
+      expect(newCount).toEqual(USER_DATA.length);
+    }
+    // CreateEditHost component should 've been destroyed
+    const createEditHostAfter = testComponentFixture.debugElement.query(By.directive(CreateEditUserComponent));
+    expect(createEditHostAfter).toBeFalsy();
+    // Test that createEditActivatedEvent was received with the correct args
+    expect(createEditActivatedEvents.length).toEqual(2);
+    expect(createEditActivatedEvents[0].activated).toBeTrue();
+    expect(createEditActivatedEvents[0].cancelled).toEqual(undefined);
+    expect(createEditActivatedEvents[1].activated).toBeFalse();
+    expect(createEditActivatedEvents[1].cancelled).toBeFalse();
   });
 
   it('should show the new subtypes when New button is selected', async () => {
