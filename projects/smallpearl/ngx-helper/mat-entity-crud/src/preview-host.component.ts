@@ -1,16 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  effect,
   EmbeddedViewRef,
-  EventEmitter,
   input,
   OnDestroy,
   OnInit,
-  Output,
+  signal,
   TemplateRef,
   viewChild,
-  ViewContainerRef,
+  ViewContainerRef
 } from '@angular/core';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
 
@@ -23,47 +21,73 @@ import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
 })
 export class PreviewHostComponent<TEntity> implements OnInit, OnDestroy {
   vc = viewChild('previewComponent', { read: ViewContainerRef });
-  @Output() closePreview = new EventEmitter<void>();
 
-  entityCrudComponent = input.required<SPMatEntityCrudComponentBase<TEntity>>();
-  previewTemplate = input.required<TemplateRef<any>>();
-  previewedEntity = input.required<any>();
-  embeddedView!: EmbeddedViewRef<any>;
+  entityCrudComponentBase = input.required<SPMatEntityCrudComponentBase<TEntity>>();
+  clientViewTemplate = input<TemplateRef<any> | null>(null);
+  entity = signal<TEntity|undefined>(undefined);
+  clientView!: EmbeddedViewRef<any> | null;
 
   constructor() {
-    effect(() => {
-      const tmpl = this.previewTemplate();
-      this.createClientPreviewTemplate(tmpl);
-    });
+    // effect(() => {
+    //   const tmpl = this.clientViewTemplate();
+    //   this.createClientView(tmpl);
+    // });
   }
 
   ngOnInit(): void {}
 
   ngOnDestroy(): void {}
 
-  private createClientPreviewTemplate(tmpl: TemplateRef<any>) {
-    if (this.embeddedView) {
-      // We have only one view in the ng-container. So we might as well
-      // call clear() to remove all views contained in it.
-      this.vc()!.clear();
-      this.embeddedView.destroy();
-    }
-    /** Render preview component if one was provided */
-    if (tmpl) {
-      this.embeddedView = this.vc()!.createEmbeddedView(
-        tmpl,
-        {
-          $implicit: {
-            entity: this.previewedEntity(),
-            entityCrudComponent: this.entityCrudComponent(),
-          },
-        }
-      );
-      this.embeddedView.detectChanges();
-    }
+  show(entity: TEntity|undefined, params?: any) {
+    this.entity.set(entity);
+    // if (params && params?.title) {
+    //   this.title.set(params.title);
+    // } else {
+    //   this.title.set(entity ? this.config.i18n.editItemLabel(this.itemLabel()) : this.config.i18n.newItemLabel(this.itemLabel()));
+    // }
+    // this.params.set(params);
+    this.createClientView();
   }
 
   close() {
-    this.closePreview.emit();
+    // this.entityCrudComponentBase().closeCreateEdit(cancel);
+    // destroy the client's form component
+    this.destroyClientView();
   }
+
+  private createClientView() {
+    if (this.clientView) {
+      // We have only one view in the ng-container. So we might as well
+      // call clear() to remove all views contained in it.
+      this.vc()!.clear();
+      this.clientView.destroy();
+    }
+    /** Render preview component if one was provided */
+    const ft = this.clientViewTemplate();
+    const vc = this.vc();
+    if (ft && vc) {
+      this.clientView = this.vc()!.createEmbeddedView(
+        ft,
+        {
+          $implicit: {
+            entity: this.entity(),
+            entityCrudComponent: this.entityCrudComponentBase(),
+          },
+        }
+      );
+      this.clientView.detectChanges();
+    }
+  }
+
+
+  destroyClientView() {
+    if (this.clientView) {
+      this.clientView.destroy();
+      this.clientView = null;
+    }
+  }
+
+  // close() {
+  //   this.closePreview.emit();
+  // }
 }

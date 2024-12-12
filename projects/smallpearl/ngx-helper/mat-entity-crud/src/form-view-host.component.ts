@@ -101,10 +101,6 @@ export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEdit
     this.destroyClientView();
   }
 
-  refreshEntities() {
-    this.entityCrudComponentBase().refreshEntities();
-  }
-
   registerCanCancelEditCallback(callback: () => boolean) {
     this.entityCrudComponentBase().registerCanCancelEditCallback(callback);
   }

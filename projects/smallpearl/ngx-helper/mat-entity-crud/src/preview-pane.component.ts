@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Inject, input, OnInit, Optional } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Inject, input, OnDestroy, OnInit, Optional } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -61,7 +61,7 @@ import { getEntityCrudConfig } from './default-config';
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SPMatEntityCrudPreviewPaneComponent<TEntity> implements OnInit {
+export class SPMatEntityCrudPreviewPaneComponent<TEntity> implements OnInit, OnDestroy {
 
   entity = input.required<TEntity>();
   entityCrudComponent = input.required<SPMatEntityCrudComponentBase<TEntity>>();
@@ -76,7 +76,11 @@ export class SPMatEntityCrudPreviewPaneComponent<TEntity> implements OnInit {
     this.config = getEntityCrudConfig();
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+  }
+
+  ngOnDestroy(): void {
+  }
 
   onEdit() {
     this.entityCrudComponent().triggerEntityUpdate(this.entity());

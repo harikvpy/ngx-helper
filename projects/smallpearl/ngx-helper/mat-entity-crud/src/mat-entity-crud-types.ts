@@ -58,11 +58,6 @@ export interface SPMatEntityCrudCreateEditBridge {
    */
   close: (cancel: boolean) => void;
   /**
-   * Refresh all the entities in the CRUD view. This
-   * @returns None
-   */
-  refreshEntities: () => void;
-  /**
    * Client form view can register a callback that will be invoked by the
    * framework when user cancels the create/edit operation by clicking on the
    * close button on the top right.

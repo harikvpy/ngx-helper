@@ -419,7 +419,7 @@ describe('SPMatEntityCrudComponent', () => {
     expect(paginator).toBeFalsy();
   });
 
-  it('should not display action column if disableItemActions = true', async () => {
+  it('should not display action column if  = true', async () => {
     // await createCrudComponent();
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
@@ -690,6 +690,12 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
 
   it('should show preview pane when a row is clicked', async () => {
     expect(component).toBeTruthy();
+    let createEditActivatedEvents: Array<{activated: boolean, cancelled: boolean|undefined, mode: 'edit'|'preview' }> = [];
+    const sub = component.entityViewPaneActivated.asObservable().pipe(
+      tap(event => {
+        createEditActivatedEvents.push(event);
+      })
+    ).subscribe();
     const rows: HTMLElement[] = testComponentFixture.debugElement.nativeElement.querySelectorAll('tbody tr');
     expect(rows.length).toEqual(USER_DATA.length);
     rows[0].click();  // click the first row
@@ -701,6 +707,22 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     const h1 = previewPane.querySelector('h1');
     expect(h1).toBeTruthy();
     expect(h1.textContent).toEqual(USER_DATA[0].name.first + ' ' + USER_DATA[0].name.last);
+
+    const button = previewPane.querySelector('button[aria-label="Close"]');
+    if (button) {
+      button.click();
+    }
+    testComponentFixture.autoDetectChanges();
+    // Test that createEditActivatedEvent was received with the correct args
+    expect(createEditActivatedEvents.length).toEqual(2);
+    expect(createEditActivatedEvents[0].activated).toBeTrue();
+    expect(createEditActivatedEvents[0].mode).toEqual('preview');
+    expect(createEditActivatedEvents[0].cancelled).toEqual(undefined);
+    expect(createEditActivatedEvents[1].activated).toBeFalse();
+    expect(createEditActivatedEvents[1].mode).toEqual('preview');
+    expect(createEditActivatedEvents[1].cancelled).toEqual(undefined);
+
+    sub.unsubscribe();
   });
 
   it('should show the create form when New button is selected', async () => {
@@ -758,8 +780,8 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     if (spEntityCrudComp) {
       spEntityCrudCompSpy = spyOn(spEntityCrudComp, 'create').and.callThrough();
     }
-    let createEditActivatedEvents: Array<{activated: boolean, cancelled: boolean|undefined }> = [];
-    spEntityCrudComp?.createEditActivated.asObservable().pipe(
+    let createEditActivatedEvents: Array<{activated: boolean, cancelled: boolean|undefined, mode: 'edit'|'preview' }> = [];
+    const sub = spEntityCrudComp?.entityViewPaneActivated.asObservable().pipe(
       tap(event => {
         createEditActivatedEvents.push(event);
       })
@@ -798,9 +820,12 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     // Test that createEditActivatedEvent was received with the correct args
     expect(createEditActivatedEvents.length).toEqual(2);
     expect(createEditActivatedEvents[0].activated).toBeTrue();
+    expect(createEditActivatedEvents[0].mode).toEqual('edit');
     expect(createEditActivatedEvents[0].cancelled).toEqual(undefined);
     expect(createEditActivatedEvents[1].activated).toBeFalse();
+    expect(createEditActivatedEvents[1].mode).toEqual('edit');
     expect(createEditActivatedEvents[1].cancelled).toBeFalse();
+    sub?.unsubscribe();
   });
 
   it('should show the new subtypes when New button is selected', async () => {

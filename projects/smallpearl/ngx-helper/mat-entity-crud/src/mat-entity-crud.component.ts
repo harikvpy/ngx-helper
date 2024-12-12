@@ -127,9 +127,12 @@ import { PreviewHostComponent } from './preview-host.component';
                 {{ _title() }}
               </div>
               <span class="spacer"></span>
-              <ng-container
-                [ngTemplateOutlet]="actionsTemplate() || defaultActionButtons"
-              ></ng-container>
+            <!-- Hide the action buttons when Preview/Edit pane is active -->
+              @if (!entityPaneActive()) {
+                <ng-container
+                  [ngTemplateOutlet]="actionsTemplate() || defaultActionButtons"
+                ></ng-container>
+              }
             </div>
           </ng-template>
           <ng-container
@@ -196,22 +199,19 @@ import { PreviewHostComponent } from './preview-host.component';
       </as-split-area>
       <as-split-area [size]="entityPaneWidth()" [visible]="entityPaneActive()">
         <div [class]="crudConfig.previewPaneWrapperClass" spHostBusyWheel="formBusyWheel">
-          @if (previewActive()) {
-            <sp-entity-crud-preview-host
-              (closePreview)="closePreview()"
-              [entityCrudComponent]="this"
-              [previewTemplate]="previewTemplate()!"
-              [previewedEntity]="previewedEntity()"
-            ></sp-entity-crud-preview-host>
-          } @else {
-            <!-- Create/Edit Entity -->
-            <sp-create-edit-entity-host
-              [itemLabel]="_itemLabel()"
-              [itemLabelPlural]="_itemLabelPlural()"
-              [entityCrudComponentBase]="this"
-              [clientViewTemplate]="createEditFormTemplate()"
-            ></sp-create-edit-entity-host>
-          }
+          <sp-entity-crud-preview-host
+            [ngClass]="createEditViewActive() ? 'd-none' : 'd-inherit'"
+            [entityCrudComponentBase]="this"
+            [clientViewTemplate]="previewTemplate()!"
+          ></sp-entity-crud-preview-host>
+          <!-- Create/Edit Entity -->
+          <sp-create-edit-entity-host
+            [ngClass]="createEditViewActive() ? 'd-inherit' : 'd-none'"
+            [itemLabel]="_itemLabel()"
+            [itemLabelPlural]="_itemLabelPlural()"
+            [entityCrudComponentBase]="this"
+            [clientViewTemplate]="createEditFormTemplate()"
+          ></sp-create-edit-entity-host>
         </div>
       </as-split-area>
     </as-split>
@@ -451,9 +451,10 @@ export class SPMatEntityCrudComponent<
    *              indicates that the form view was closed after a successful
    *              edit operation.
    */
-  @Output() createEditActivated = new EventEmitter<{
+  @Output() entityViewPaneActivated = new EventEmitter<{
     activated: boolean;
     cancelled: boolean|undefined;
+    mode: 'edit'|'preview';
   }>();
 
   busyWheelId = `entityCrudBusyWheel-${Date.now()}`;
@@ -470,13 +471,19 @@ export class SPMatEntityCrudComponent<
   // Whether it's okay to cancel the edit
   canCancelEditCallback!: () => boolean;
 
-  previewedEntity = signal<TEntity | undefined>(undefined);
+  // Preview host component
+  previewHostComponent = viewChild(PreviewHostComponent);
   previewActive = computed(() => this.previewedEntity() !== undefined);
+  previewedEntity = signal<TEntity | undefined>(undefined);
 
+  // Whether the pane that hosts the preview/edit-entity template is active.
+  // We call it entityPane as it's used to either render a selected entity
+  // or to edit one.
   entityPaneActive = computed(() => !!this.previewedEntity() || this.createEditViewActive());
+  // Effective width of the entity pane.
   entityPaneWidth = computed(() => !!this.previewedEntity() ? this.previewPaneWidth() : this.editPaneWidth());
 
-  // previewPaneWidth = signal<number>(50);
+  // Width of the pane showing the list of entities. Calculated as
   entitiesPaneWidth = computed(() => 100 - this.entityPaneWidth());
   entitiesPaneHidden = computed(() => this.entityPaneActive() && this.entityPaneWidth() === 100);
 
@@ -510,6 +517,9 @@ export class SPMatEntityCrudComponent<
     }
     return cols;
   });
+  // Use a custom computed() signal to derive the action items for each
+  // entity so that we can run per item's allow item action function to
+  // selectively disable one or more actions based on the item's state.
   _itemActions = computed(() => {
     const actions =
       this.itemActions() && this.itemActions().length
@@ -534,7 +544,7 @@ export class SPMatEntityCrudComponent<
   // reducing column clutter when the table width becomes narrower owing to
   // preview pane taking up screen space.
   visibleColumns = computed(() =>
-    this.previewActive()
+    this.entityPaneActive()
       ? this.columnsWithAction()
           .map((col) => (typeof col === 'string' ? col : col.name))
           .filter((name) => name !== 'action')
@@ -603,7 +613,7 @@ export class SPMatEntityCrudComponent<
 
   closeCreateEdit(cancelled: boolean) {
     this.createEditViewActive.set(false);
-    this.createEditActivated.emit({ activated: false, cancelled: !!cancelled });
+    this.entityViewPaneActivated.emit({ activated: false, cancelled: !!cancelled, mode: 'edit' });
   }
 
   canCancelEdit() {
@@ -740,14 +750,21 @@ export class SPMatEntityCrudComponent<
       .crudOpResponseParser as SPMatEntityCrudResponseParser;
   }
 
+  // SPMatEntityCrudComponentBase interface method. Thunk to the implementation
+  // method closePreviewImpl().
   closePreview() {
-    if (this.previewedEntity()) {
-      this.spEntitiesList()?.toggleActiveEntity(this.previewedEntity());
-      this.previewedEntity.set(undefined);
-    }
+    this.closePreviewImpl(true);
   }
 
-  refreshEntities() {}
+  private closePreviewImpl(toggleEntityListActiveEntity: boolean) {
+    if (this.previewedEntity()) {
+      if (toggleEntityListActiveEntity) {
+        this.spEntitiesList()?.toggleActiveEntity(this.previewedEntity());
+      }
+      this.previewedEntity.set(undefined);
+      this.entityViewPaneActivated.emit({ activated: false, cancelled: undefined, mode: 'preview' });
+    }
+  }
 
   onItemAction(role: string, entity: TEntity) {
     if (role === '_update_') {
@@ -812,15 +829,36 @@ export class SPMatEntityCrudComponent<
    */
   showCreateEditView(entity?: TEntity | undefined, params?: any) {
     const tmpl = this.createEditFormTemplate();
-    if (tmpl) {
+    if (!this.createEditViewActive() && !this.previewActive() && tmpl) {
       // If preview is active deactivate it
       if (this.previewActive()) {
-        this.closePreview();
+        this.closePreviewImpl(true);
       }
       const createEditHost = this.createEditHostComponent();
       createEditHost!.show(entity, params);
       this.createEditViewActive.set(true);
-      this.createEditActivated.emit({ activated: true, cancelled: undefined });
+      this.entityViewPaneActivated.emit({ activated: true, cancelled: undefined, mode: 'edit' });
+    }
+  }
+
+  showPreviewView(entity?: TEntity, params?: any) {
+    const tmpl = this.previewTemplate();
+    if (tmpl) {
+      if (!this.createEditViewActive()) {
+        const previewHost = this.previewHostComponent();
+        this.previewedEntity.set(entity);
+        previewHost?.show(entity, params);
+        this.entityViewPaneActivated.emit({ activated: true, cancelled: undefined, mode: 'preview' });
+        // this.previewActivated.emit({ entity, activated: true });
+      }
+    }
+  }
+
+  hidePreviewView() {
+    if (this.previewActive()) {
+      const previewHost = this.previewHostComponent();
+      previewHost?.close();
+      this.closePreviewImpl(false);
     }
   }
 
@@ -837,7 +875,7 @@ export class SPMatEntityCrudComponent<
 
         // If preview is active deactivate it
         if (this.previewActive()) {
-          this.closePreview();
+          this.closePreviewImpl(false);
         }
 
         let obs!: Observable<any>;
@@ -891,11 +929,14 @@ export class SPMatEntityCrudComponent<
   }
 
   handleSelectEntity(entity: TEntity) {
-    if (this.previewTemplate()) {
-      this.previewedEntity.set(entity);
-    } else {
-      // If 'previewTemplate' is not set, propagate the event to client.
-      this.selectEntity.emit(entity);
+    if (!this.createEditViewActive()) {
+      if (this.previewTemplate()) {
+        entity ? this.showPreviewView(entity) : this.hidePreviewView();
+        // this.previewedEntity.set(entity);
+      } else {
+        // If 'previewTemplate' is not set, propagate the event to client.
+        this.selectEntity.emit(entity);
+      }
     }
   }
 

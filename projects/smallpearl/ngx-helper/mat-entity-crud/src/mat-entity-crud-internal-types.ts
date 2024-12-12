@@ -64,8 +64,4 @@ export interface SPMatEntityCrudComponentBase<TEntity> {
    * @returns
    */
   closePreview: () => void;
-  /**
-   * Refresh all the entities in the CRUD view.
-   */
-  refreshEntities: () => void;
 }
