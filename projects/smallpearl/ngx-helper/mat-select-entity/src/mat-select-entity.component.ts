@@ -21,7 +21,7 @@ import {
   Self,
   ViewChild
 } from '@angular/core';
-import { ControlValueAccessor, FormsModule, NgControl, ReactiveFormsModule } from '@angular/forms';
+import { ControlValueAccessor, FormsModule, NgControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_FORM_FIELD, MatFormField, MatFormFieldControl } from '@angular/material/form-field';
 import { MatSelect, MatSelectChange, MatSelectModule } from '@angular/material/select';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
@@ -97,7 +97,6 @@ export type SPMatSelectEntityResponseParser = <
       (selectionChange)="onSelectionChange($event)"
       [multiple]="multiple"
       [(ngModel)]="selectValue"
-      [disabled]="disabled"
     >
       <mat-select-trigger>
         {{ selectTriggerValue }}
@@ -369,6 +368,14 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   }
 
   ngAfterViewInit(): void {
+    // I'm not sure this is how this logic is right, but this seems to work.
+    // if (this.ngControl && this.ngControl.control?.validator) {
+    //   const validator = this.ngControl.control.validator;
+    //   const res = validator(this.ngControl.control);
+    //   if (res && res['required']) {
+    //     this.required = true;
+    //   }
+    // }
   }
 
   private _initStrings() {
@@ -480,17 +487,19 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
 
   @Input()
   get required() {
-    return this._required;
+    return this._required ?? this.ngControl?.control?.hasValidator(Validators.required);
   }
   set required(req: boolean) {
     this._required = coerceBooleanProperty(req);
     this.stateChanges.next();
   }
-  private _required = false;
+  // Deliberately 'undefined' so that `get required()` will return the state
+  // from ngControl's validators.
+  private _required!: boolean;
 
   @Input()
   get disabled(): boolean {
-    return this._disabled;
+    return this._disabled ?? this.ngControl?.control?.disabled;
   }
   set disabled(value: BooleanInput) {
     const disabled = coerceBooleanProperty(value);;
@@ -499,7 +508,8 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
       this.stateChanges.next();
     }
   }
-  private _disabled = false;
+  // Same as `_required`, deliberately `undefined` by default.
+  private _disabled!: boolean;
 
   get empty() {
     // TODO

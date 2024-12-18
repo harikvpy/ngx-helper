@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
 import { SPMatSelectEntityComponent } from '@smallpearl/ngx-helper/mat-select-entity';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { of, tap } from 'rxjs';
@@ -143,6 +144,7 @@ const BLOCKS: Block[] = [
     CommonModule,
     ReactiveFormsModule,
     MatFormFieldModule,
+    MatSelectModule,
     InfiniteScrollDirective,
     SPMatSelectEntityComponent,
   ],
@@ -205,7 +207,6 @@ const BLOCKS: Block[] = [
                   ></sp-mat-select-entity>
                 </mat-form-field>
               </div>
-
               <div class="p-2">
                 <mat-form-field>
                   <mat-label>Select User2 (Remote)</mat-label>
@@ -216,6 +217,16 @@ const BLOCKS: Block[] = [
                     formControlName="remoteUser2"
                     (selectionChange)="onRemoteUserSelected2($event)"
                   ></sp-mat-select-entity>
+                </mat-form-field>
+              </div>
+
+              <div class="p-2">
+                <mat-form-field>
+                  <mat-label>Select User1 (Remote)</mat-label>
+                  <mat-select placeholder="Placeholder" formControlName="user">
+                    <mat-option value="M">Male</mat-option>
+                    <mat-option value="F">Female</mat-option>
+                  </mat-select>
                 </mat-form-field>
               </div>
             </form>
@@ -280,7 +291,7 @@ export class PostsComponent {
 
   constructor(private fb: FormBuilder, private host: ElementRef) {
     this.form = this.fb.group({
-      user: [undefined],
+      user: [undefined, Validators.required],
       remoteUser1: [undefined],
       remoteUser2: [undefined],
       unit: [undefined],
