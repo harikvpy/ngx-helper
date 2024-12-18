@@ -115,7 +115,7 @@ export class SPMatMenuPaneComponent implements OnInit, OnDestroy, AfterViewInit,
             this.matSideNav.close();
           }
           const ne = e as NavigationEnd;
-          this.highlightCurrentUrlMenuItem(ne.urlAfterRedirects);
+          this.highlightUrlMenuItem(ne.urlAfterRedirects);
         })
       )
       .subscribe();
@@ -138,10 +138,35 @@ export class SPMatMenuPaneComponent implements OnInit, OnDestroy, AfterViewInit,
   }
 
   ngAfterViewInit(): void {
-    this.highlightCurrentUrlMenuItem(this.router.routerState.snapshot.url);
+    this.highlightUrlMenuItem(this.router.routerState.snapshot.url);
   }
 
-  highlightCurrentUrlMenuItem(url: string) {
+  /**
+   * Highlights the menu item for the specified URL.
+   *
+   * @param url the full url of the current navigation
+   *
+   * The way this function works is like this.
+   *
+   * It first finds the NavItem matching the given URL in url arg. It does
+   * this by removing the baseUrl from the url and then comparing the
+   * NavItem.route attached to each SPMatMenuListItemComponent. This is done
+   * recursively covering all NavItem.children. When a matching NavItem is
+   * found, the function goes on to find the SPMatMenuListItemComponent which
+   * has this NavItem attached to it. This too is done recursively to find
+   * the innermost NavItem with matching URL.
+   *
+   * When a matching SPMatMenuListItemComponent is found, it first deselects
+   * the previous SPMatMenuListItemComponent selection and then goes on to
+   * select the newly matched SPMatMenuListItemComponent. If the
+   * SPMatMenuListItemComponent is a child of a parent NavItem, the parent
+   * NavItem is expanded. Similarly when deselecting the current selection,
+   * if it belongs to a parent NavItem and the parent is not shared by the
+   * currently matched SPMatMenuListItemComponent, it collapses the parent
+   * of the previously selected SPMatMenuListItemComponent. (Quite a mouthful
+   * of a sentence, but it's exactly how it works.)
+   */
+  highlightUrlMenuItem(url: string) {
     // Remove baseUrl from our url-to-SPMatMenuListItem matching logic
     const baseUrl = this.baseUrl.startsWith('/') ? this.baseUrl.substring(1) : this.baseUrl;
     const baseUrlIndex = url.search(baseUrl);
@@ -152,15 +177,79 @@ export class SPMatMenuPaneComponent implements OnInit, OnDestroy, AfterViewInit,
     // Filter out empty strings so that we avoid a pointless iteration of the
     // menuItemComps() array.
     const urlParts = url.split('/').filter(u => !!u);
+    url = urlParts.join('/');
     // console.log(`highlightCurrentUrlMenuItem - baseUrl: ${this.baseUrl} url: ${url}, urlParts: ${urlParts}`);
     let highlightedItemFound = false;
+
+    // Function to find the NavItem for for the given url. Returns a NavItem
+    // if a matching NavItem is found, undefined otherwise.
+    const findNavItemForUrl = (baseUrl: string, navItem: NavItem): NavItem|undefined => {
+      let matchingItem: NavItem|undefined = undefined;
+      if (navItem.children) {
+        for (let index = 0; !matchingItem && index < navItem.children.length; index++) {
+          matchingItem = findNavItemForUrl(baseUrl + (navItem?.route ?? ''), navItem.children[index]);
+        }
+      } else if (navItem.route) {
+        if (url === navItem.route) {
+          matchingItem = navItem;
+        }
+      }
+      return matchingItem;
+    }
+
+    let matchingNavItem: NavItem|undefined = undefined;
+    for (let index = 0; !matchingNavItem && index < this.menuItemComps().length; index++) {
+      const element = this.menuItemComps()[index];
+      if (element?.item) {
+        matchingNavItem = findNavItemForUrl(url, element?.item);
+      }
+    }
+
+    // Function to find the SPMatMenuListItemComponent for the given NavItem.
+    // Returns SPMatMenuListItemComponent if a match is found, undefined
+    // otherwise.
+    const findMenuItemCompForNavItem = (
+      menuItemComp: SPMatMenuListItemComponent,
+      target: NavItem
+    ): SPMatMenuListItemComponent | undefined => {
+      let matchingMenuItemComp: SPMatMenuListItemComponent | undefined = undefined;
+      if (menuItemComp.item === target) {
+        matchingMenuItemComp = menuItemComp;
+      } else if (menuItemComp.item?.children) {
+        for (let index = 0; !matchingMenuItemComp && index < menuItemComp.children.length; index++) {
+          matchingMenuItemComp = findMenuItemCompForNavItem(menuItemComp.children.get(index)!, target);
+        }
+      }
+      return matchingMenuItemComp;
+    };
+
+    let matchingMenuItemComp: SPMatMenuListItemComponent | undefined = undefined;
+    if (matchingNavItem) {
+      for (let index = 0; !matchingMenuItemComp && index < this.menuItemComps().length; index++) {
+        const element = this.menuItemComps()[index];
+        matchingMenuItemComp = findMenuItemCompForNavItem(this.menuItemComps()[index], matchingNavItem);
+      }
+    }
+
+    if (matchingMenuItemComp) {
+      this.highlightMenuItemComp(matchingMenuItemComp);
+    }
+
+  // old logic, which is a little confusing and depends on state stored
+  // in SPMatMenuListItemComponent.
+  /*
     for (let index = 0; !highlightedItemFound && index < urlParts.length; index++) {
       const lastUrlSegment = urlParts[index];
       this.menuItemComps().find(menuItemComp => {
         const route = menuItemComp.item?.route;
         if (route === lastUrlSegment) {
-          menuItemComp.toggleHighlight(true);
-          highlightedItemFound = true;
+          if (!menuItemComp.item?.children) {
+            menuItemComp.toggleHighlight(true);
+            highlightedItemFound = true;
+          } else if (menuItemComp.checkChildrenForHighlight(lastUrlSegment)) {
+            menuItemComp.expand();
+            highlightedItemFound = true;
+          }
         } else {
           menuItemComp.toggleHighlight(false);
           if (menuItemComp.item?.children) {
@@ -172,5 +261,26 @@ export class SPMatMenuPaneComponent implements OnInit, OnDestroy, AfterViewInit,
         }
       });
     }
+  */
+  }
+
+  // To keep track of current highlighted SPMatMenuListItemComponent.
+  private _curHighlitedMenuItemComp!: SPMatMenuListItemComponent|undefined;
+  highlightMenuItemComp(menuItemComp: SPMatMenuListItemComponent) {
+    // Deslect currently highliged SPMatMenuListItemComponent if it's different
+    // from the menuItemComp arg.
+    const lastHighlitedMenuItemComp = this._curHighlitedMenuItemComp;
+    if (this._curHighlitedMenuItemComp && this._curHighlitedMenuItemComp !== menuItemComp) {
+      this._curHighlitedMenuItemComp.toggleHighlight(false);
+      this._curHighlitedMenuItemComp = undefined;
+    }
+    menuItemComp.toggleHighlight(true);
+    if (lastHighlitedMenuItemComp && lastHighlitedMenuItemComp?.parent) {
+      lastHighlitedMenuItemComp.parent.collapse();
+    }
+    if (menuItemComp.parent) {
+      menuItemComp.parent.expand();
+    }
+    this._curHighlitedMenuItemComp = menuItemComp;
   }
 }

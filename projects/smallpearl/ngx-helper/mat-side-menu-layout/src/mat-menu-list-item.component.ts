@@ -178,6 +178,11 @@ export class SPMatMenuListItemComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {}
 
+  // Return highlighted status
+  get isHighlighted() {
+    return this.highlighted;
+  }
+
   toggleHighlight(highlight: boolean) {
     if (highlight != this.highlighted) {
       this.highlighted = highlight;
