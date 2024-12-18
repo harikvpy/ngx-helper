@@ -64,7 +64,7 @@ type TelephoneNumberParts = CountryInfo & { nationalNumber: string };
 
 @Component({
   standalone: true,
-  selector: 'qq-mat-telephone-input',
+  selector: 'sp-mat-telephone-input',
   template: `
     <!--
     <div
@@ -267,26 +267,27 @@ export class SPMatTelephoneInputComponent
 
   @Input()
   get required(): boolean {
-    return this._required;
+    return this._required ?? this.ngControl?.control?.hasValidator(Validators.required);
   }
   set required(value: BooleanInput) {
     this._required = coerceBooleanProperty(value);
     this.stateChanges.next();
   }
-  private _required = false;
+  private _required!: boolean;
 
   @Input() searchText = '';
   @Input() noEntriesFoundLabel = 'Not found';
+
   @Input()
   get disabled(): boolean {
-    return this._disabled;
+    return this._disabled ?? this.ngControl?.control?.disabled;
   }
   set disabled(value: BooleanInput) {
     this._disabled = coerceBooleanProperty(value);
     this._disabled ? this.parts.disable() : this.parts.enable();
     this.stateChanges.next();
   }
-  private _disabled = false;
+  private _disabled!: boolean;
   destroy = new Subject<void>();
 
   @Input()
