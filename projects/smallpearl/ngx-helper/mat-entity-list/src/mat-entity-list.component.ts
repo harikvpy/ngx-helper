@@ -716,7 +716,7 @@ export class SPMatEntityListComponent<
     const obs =
       loaderFn !== undefined
         ? loaderFn({ params })
-        : this.http.get<any>(this.getUrl(this.endpoint()), {
+        : this.http.get<any>(this.getUrl(parts[0]), {
             context: this._httpReqContext(),
             params,
           });
