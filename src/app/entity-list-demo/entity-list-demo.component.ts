@@ -33,9 +33,16 @@ function provideEntityFieldConfig(): SPEntityFieldConfig {
           entity.gender === 'female' ? `<div class="text-danger fs-6">പെണ്ണ്</div>` : 'ആണ്'
       ],
     ]),
+    fieldValueOptions: new Map<string, SPEntityFieldSpec<any>['valueOptions']>([
+      ['genderr', { alignment: 'end' }],
+      ['cell', { alignment: 'end' }]
+    ])
   }
 }
 
+/**
+
+ */
 const USER_DATA: User[] = [
   { id: 1, name: { title: 'Ms', first: 'Mariam', last: 'Trevarthen' }, cell: '2323234', gender: 'F' },
   { id: 2, name: { title: 'Ms', first: 'Lanny', last: 'Nathanson' }, cell: '2323234', gender: 'F' },

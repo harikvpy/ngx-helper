@@ -68,6 +68,21 @@ export class SPEntityField<TEntity> {
   }
 
   /**
+   * Returns the effective fieldValueOptions by merging the global field
+   * options (if one has been spefified) with the local field value options.
+   * @returns SPEntityFieldSpec<any>['valueOptions']
+   */
+  get options() {
+    let globalFieldValueOptions: SPEntityFieldSpec<any>['valueOptions'] = {};
+    if (this.fieldConfig?.fieldValueOptions && this.fieldConfig.fieldValueOptions.has(this._fieldSpec.name)) {
+      globalFieldValueOptions = this.fieldConfig.fieldValueOptions.get(this._fieldSpec.name);
+    }
+    return {
+      ...globalFieldValueOptions,
+      ...(this._fieldSpec?.valueOptions ?? {})
+    };
+  }
+  /**
    * @returns the label for the field.
    */
   label() {
@@ -97,11 +112,12 @@ export class SPEntityField<TEntity> {
     } else {
       val = this._fieldSpec.valueFn(entity);
     }
+    const valueOptions = this.options;
     if (val instanceof Date) {
       val = spFormatDate(val);
     } else if (
       typeof val === 'number' &&
-      this._fieldSpec?.valueOptions?.isCurrency
+      valueOptions?.isCurrency
     ) {
       val = spFormatCurrency(val, this._fieldSpec?.valueOptions?.currency);
     } else if (typeof val === 'boolean') {

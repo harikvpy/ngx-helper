@@ -16,6 +16,7 @@ import { AppComponent } from './app.component';
 import { MatErrorTailorControlErrorComponent } from './components/mat-error-tailor-control-error/mat-error-tailor-control-error.component';
 import { SP_NGX_HELPER_CONFIG } from '@smallpearl/ngx-helper/core';
 import { SP_MAT_ENTITY_CRUD_CONFIG } from '@smallpearl/ngx-helper/mat-entity-crud';
+import { SP_ENTITY_FIELD_CONFIG, SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 
 const WebTelInputConfig: QQMatTelephoneInputConfig = {
   // To cache last value from our API request so that we don't have to
@@ -110,6 +111,14 @@ const WebTelInputConfig: QQMatTelephoneInputConfig = {
       useValue: {
         listPaneWrapperClass: 'sp-mat-crud-list-pane-wrapper-class',
         previewPaneWrapperClass: 'sp-mat-crud-preview-pane-wrapper-class',
+      }
+    },
+    {
+      provide: SP_ENTITY_FIELD_CONFIG,
+      useValue: {
+        fieldValueOptions: new Map<string, SPEntityFieldSpec<any>['valueOptions']>([
+          ['gender', { alignment: 'end' }]
+        ])
       }
     }
   ],

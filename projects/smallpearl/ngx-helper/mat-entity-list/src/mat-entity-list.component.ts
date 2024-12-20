@@ -157,17 +157,17 @@ export class HeaderAlignmentDirective implements AfterViewInit {
       @for (column of __columns(); track $index) {
       <ng-container [matColumnDef]="column.spec.name">
         @if (disableSort()) {
-        <th [class]="column.class" [headerAlignment]="column.spec.valueOptions?.alignment" mat-header-cell *matHeaderCellDef>
+        <th [class]="column.class" [headerAlignment]="column.options.alignment" mat-header-cell *matHeaderCellDef>
           {{ column.label() }}
         </th>
         } @else {
-        <th [class]="column.class" [headerAlignment]="column.spec.valueOptions?.alignment" mat-header-cell mat-sort-header *matHeaderCellDef>
+        <th [class]="column.class" [headerAlignment]="column.options.alignment" mat-header-cell mat-sort-header *matHeaderCellDef>
           {{ column.label() }}
         </th>
         }
         <td
           [class]="column.class"
-          [style.text-align]="column.spec.valueOptions?.alignment"
+          [style.text-align]="column.options.alignment"
           mat-cell
           *matCellDef="let element"
           [routerLink]="column.getRouterLink(element)"

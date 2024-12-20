@@ -1,4 +1,5 @@
 import { InjectionToken } from '@angular/core';
+import { SPEntityFieldSpec } from './entity-field-spec';
 
 
 export type FIELD_VALUE_FN = (entity: any, fieldName: string) => string|number|Date|boolean;
@@ -19,6 +20,12 @@ export interface SPEntityFieldConfig {
    * or 'balance'. Or 'date', 'timestamp', etc.
    */
   fieldValueFns?: Map<string, FIELD_VALUE_FN>;
+  /**
+   * Similar to above, but allows setting the options for certain fields
+   * globally. As in the case of `fieldValueFns`, the per field specification,
+   * if one exists, takes precedence over the global setting.
+   */
+  fieldValueOptions?: Map<string, SPEntityFieldSpec<any>['valueOptions']>;
 }
 
 export const SP_ENTITY_FIELD_CONFIG = new InjectionToken<SPEntityFieldConfig>(
