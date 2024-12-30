@@ -54,7 +54,7 @@ export interface SPContextMenuItem {
       }
       {{ label() }}
     </button>
-    <mat-menu #contextMenu="matMenu" hasBackdrop="false">
+    <mat-menu #contextMenu="matMenu" [hasBackdrop]="hasBackdrop()">
       @for (menuItem of menuItems(); track $index) {
       <button
         mat-menu-item
@@ -96,6 +96,10 @@ export class SPMatContextMenuComponent implements OnInit {
    * Context data for menu item disabled callback
    */
   contextData = input<any>();
+  /**
+   * enable menu backdrop
+   */
+  hasBackdrop = input<boolean>(false);
   /**
    * Event generated when use selects an item in the context menu. This event
    * is generated only if the context menu item does not specify a route to
