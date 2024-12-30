@@ -176,6 +176,7 @@ import { PreviewHostComponent } from './preview-host.component';
               [menuItems]="_itemActions()"
               (selected)="onItemAction($event, element)"
               [contextData]="element"
+              [hasBackdrop]="true"
             ></sp-mat-context-menu>
             }
           </td>
