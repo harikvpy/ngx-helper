@@ -527,8 +527,12 @@ export class SPMatEntityCrudComponent<
         ? this.itemActions()
         : this.defaultItemCrudActions();
     let actionsCopy: SPContextMenuItem[] = JSON.parse(JSON.stringify(actions));
-    actionsCopy.forEach((action) => {
+    actionsCopy.forEach((action, index: number) => {
+      const orgDisable = actions[index]?.disable;
       action.disable = (entity: TEntity) => {
+        if (orgDisable) {
+          return orgDisable(entity);
+        }
         const allowItemActionFn = this.allowEntityActionFn();
         if (allowItemActionFn) {
           return !allowItemActionFn(entity, action.role ?? action.label);

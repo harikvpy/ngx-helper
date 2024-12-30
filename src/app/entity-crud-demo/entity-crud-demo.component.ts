@@ -245,6 +245,7 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
             [createEditFormTemplate]="createEdit"
             [previewTemplate]="userPreview4"
             [actionsTemplate]="actionButtons"
+            [itemActions]="itemActions"
             matSort
           >
           </sp-mat-entity-crud>
@@ -340,12 +341,18 @@ export class EntityCrudDemoComponent implements OnInit {
     },
   ];
   itemActions: SPContextMenuItem[] = [
-    { label: 'Edit', role: '_update_' },
-    {
-      label: 'Delete',
-      role: '_delete_',
-      disable: (user: User) => user.cell.startsWith('('),
-    },
+    { label: 'INCOME', role: ''},
+      { label: 'Edit', role: '_update_' },
+      { label: 'Remove', role: '_delete_' },
+    { label: 'EXPENSE', role: ''},
+      { label: 'Bill Payment', role: 'billPayment' },
+      {
+        label: 'Advance to Owner',
+        role: 'advanceToOwner',
+        disable: (user: User) => {
+          return true;
+        }
+      },
   ];
   spEntityCrudComponent1 = viewChild('spEntityCrud1', {read: SPMatEntityCrudComponent});
   spEntityCrudComponent2 = viewChild('spEntityCrud2', {read: SPMatEntityCrudComponent});
