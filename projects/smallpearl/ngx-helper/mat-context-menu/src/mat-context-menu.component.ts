@@ -57,21 +57,25 @@ export interface SPContextMenuItem {
     <mat-menu #contextMenu="matMenu" [hasBackdrop]="hasBackdrop()">
       @for (menuItem of menuItems(); track $index) {
         @if (menuItem.role) {
-          <button
-            mat-menu-item
-            [routerLink]="menuItem.route ? menuItem.route : undefined"
-            (click)="$event.preventDefault(); onSelectMenuItem(menuItem)"
-            [disabled]="itemDisabled(menuItem)"
-          >
-            @if (menuItem.icon) {
-            <mat-icon>{{ menuItem.icon }}</mat-icon>
-            }
-            {{ menuItem.label }}
-          </button>
+          @if (!itemDisabled(menuItem)) {
+            <button
+              mat-menu-item
+              [routerLink]="menuItem.route ? menuItem.route : undefined"
+              (click)="$event.preventDefault(); onSelectMenuItem(menuItem)"
+              [disabled]="itemDisabled(menuItem)"
+            >
+              @if (menuItem.icon) {
+              <mat-icon>{{ menuItem.icon }}</mat-icon>
+              }
+              {{ menuItem.label }}
+            </button>
+          }
         } @else {
-          <div style="padding: .2em 0.6em;">
-            <strong>{{ menuItem.label }}</strong>
-          </div>
+          @if (!itemDisabled(menuItem)) {
+            <div style="padding: .2em 0.6em;">
+              <strong>{{ menuItem.label }}</strong>
+            </div>
+          }
         }
       <!-- <button
         mat-menu-item

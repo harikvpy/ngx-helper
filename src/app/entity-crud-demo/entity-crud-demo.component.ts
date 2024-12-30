@@ -349,8 +349,8 @@ export class EntityCrudDemoComponent implements OnInit {
       {
         label: 'Advance to Owner',
         role: 'advanceToOwner',
-        disable: (user: User) => {
-          return true;
+        disable: (item: Invoice) => {
+          return item.customerDetail.name.startsWith('Peter')
         }
       },
   ];
