@@ -88,6 +88,11 @@ export class SideMenuLayoutExampleComponent implements OnInit {
       route: 'busywheeldemo',
       text: 'BUSY WHEEL DEMO',
       icon: 'hourglass_empty'
+    },
+    {
+      route: 'formerrorsdemo',
+      text: 'FORM ERRORS DEMO',
+      icon: 'hourglass_full'
     }
   ];
 

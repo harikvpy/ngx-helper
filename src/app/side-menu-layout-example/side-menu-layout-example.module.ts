@@ -85,6 +85,12 @@ const routes: Routes = [
         (m) => m.SatelliteAppHomeModule
       ),
   },
+  {
+    path: 'formerrorsdemo',
+    loadComponent: () => import('../form-errors-demo/form-errors-demo.component').then(
+      c => c.FormErrorDemoComponent
+    ),
+  }
 ];
 
 @NgModule({
