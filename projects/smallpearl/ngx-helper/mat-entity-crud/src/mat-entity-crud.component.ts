@@ -279,6 +279,10 @@ export class SPMatEntityCrudComponent<
    */
   newItemLabel = input<string | string[]>();
   /**
+   * Text for the Edit <item> pane title
+   */
+  editItemTitle = input<string>();
+  /**
    * If you want "New {{item}}" button to support multiple entity types,
    * you can set this to `NewItemSubType[]`, where each element stands for for
    * a dropdown menu item. Refer to `NewItemSubType` for details on this
@@ -788,7 +792,10 @@ export class SPMatEntityCrudComponent<
     if (!this.newItemLink() || this.newItemLink()?.length == 0) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      this.showCreateEditView();
+      const params = {
+        title: this.newItemLabel() ?? this.crudConfig.i18n.newItemLabel(this._itemLabel()),
+      }
+      this.showCreateEditView(undefined, params);
       // const tmpl = this.createEditFormTemplate();
       // if (tmpl) {
       //   // If preview is active deactivate it
@@ -806,7 +813,11 @@ export class SPMatEntityCrudComponent<
   }
 
   onUpdate(entity: TEntity) {
-    this.showCreateEditView(entity);
+    const params = {
+      title: this.editItemTitle() ?? this.crudConfig.i18n.editItemLabel(this._itemLabel()),
+    }
+    this.showCreateEditView(undefined, params);
+
     // const tmpl = this.createEditFormTemplate();
     // if (tmpl) {
     //   // If preview is active deactivate it
