@@ -1,9 +1,10 @@
-import { Component, computed, input, OnDestroy, OnInit, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, computed, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
+import { setServerErrorsAsFormErrors } from '@smallpearl/ngx-helper/forms';
 import { Subscription } from 'rxjs';
-import { showServerValidationErrors } from './form-validation-error-handler';
-import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
+import { tap } from 'rxjs/operators';
 import { getEntityCrudConfig } from './default-config';
+import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
 
 /**
  * This is a convenience base class that clients can derive from to implement
@@ -70,10 +71,11 @@ export abstract class SPMatEntityCrudFormBase<
   bridge = input.required<SPMatEntityCrudCreateEditBridge>();
   params = input<any>();
   sub$ = new Subscription();
-
   form = computed(() => this._form());
 
   crudConfig = getEntityCrudConfig();
+
+  cdr = inject(ChangeDetectorRef);
 
   canCancelEdit = () => {
     return this._canCancelEdit();
@@ -138,7 +140,12 @@ export abstract class SPMatEntityCrudFormBase<
     this.sub$.add(
       obs
         ?.pipe(
-          showServerValidationErrors(this._form as unknown as UntypedFormGroup)
+          setServerErrorsAsFormErrors(this._form as unknown as UntypedFormGroup, this.cdr),
+          tap((res) => {
+            if (res) {
+              // this.bridge()?.close();
+            }
+          })
         )
         .subscribe()
     );

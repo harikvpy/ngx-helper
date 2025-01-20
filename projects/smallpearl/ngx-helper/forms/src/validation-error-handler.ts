@@ -1,15 +1,16 @@
-import { HttpErrorResponse } from "@angular/common/http";
-import { UntypedFormGroup } from "@angular/forms";
-import { catchError, NEVER, Observable, of, throwError } from "rxjs";
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectorRef } from '@angular/core';
+import { UntypedFormGroup } from '@angular/forms';
+import { catchError, Observable, of, throwError } from 'rxjs';
 
 /**
  * Handle's form validation errors sent from the server by setting the returned
  * error code in the respective control. Errors not associated with any control
  * in the form are attached to the form itself.
  *
- * These errors can then be rendered using error-tailor. All that needs to be done
- * is to import errorTailorImports in the respective page's module and set the
- * 'errorTailor' directive on the <form..> element.
+ * These errors can then be rendered using error-tailor. All that needs to be
+ * done is to import errorTailorImports in the respective page's module and set
+ * the 'errorTailor' directive on the <form..> element.
  *
  * @param form FormGroup instance
  * @param error error object
@@ -17,10 +18,19 @@ import { catchError, NEVER, Observable, of, throwError } from "rxjs";
 export function handleValidationErrors(
   form: UntypedFormGroup,
   error: HttpErrorResponse,
-  returnNull = false
+  cdr?: ChangeDetectorRef
 ): Observable<any> {
   if (error.status == 400) {
-    const serverErrorsToErrorTailorObject = (
+    /**
+     * A helper function that converts the server error codes to an error
+     * object that can be set on the form control. If the error code is a
+     * string with embedded spaces, it is treated as an actual error message
+     * and is set as the 'serverMessage' error code. Otherwise, the error code
+     * is returned as the object { errorCode: true }.
+     * @param errorCode
+     * @returns
+     */
+    const serverErrorsToErrorObject = (
       errorCode: string | string[]
     ): unknown => {
       if (!Array.isArray(errorCode)) {
@@ -43,31 +53,22 @@ export function handleValidationErrors(
     };
 
     // server form validation errors
+    let pendingDetechChanges = false;
     for (const controlName in error.error) {
-      const errorsObj = serverErrorsToErrorTailorObject(
-        error.error[controlName]
-      );
+      const errorsObj = serverErrorsToErrorObject(error.error[controlName]);
       if (form.contains(controlName)) {
-        // error attached to FormGroup control
-        // errorsObj = errorObjectFromCode(error.error[controlName] as string)
-        // const errorCode = error.error[controlName] as string;
-        // if (errorCode.includes(' ')) {
-        //   // errorCode is an actual error message that we forgot to represent
-        //   // as a camelcase string. So represent the error as the error code
-        //   // 'serverMessage', which will be treated differently by our ErrorTailor
-        //   // error's config provider. (see ionic-error-tailor.module.ts)
-        //   errorsObj['serverMessage'] = { message: errorCode };
-        // } else {
-        //   errorsObj[error.error[controlName] as string] = true;
-        // }
-        form.controls[controlName].setErrors(errorsObj as any);
+        const control = form.controls[controlName];
+        control.setErrors(errorsObj as any);
+        pendingDetechChanges = true;
       } else {
-        // error attached to the entire form
-        // errorsObj[error.error[controlName] as string] = true;
         form.setErrors(errorsObj as any);
+        pendingDetechChanges = true;
       }
     }
-    return returnNull ? of(null) : NEVER;
+    if (pendingDetechChanges && cdr) {
+      cdr.detectChanges();
+    }
+    return of(null);
   }
   return throwError(() => error);
 }
@@ -81,39 +82,38 @@ export function handleValidationErrors(
  * Use it like below:
  *
  *  this.http.get<User>('https://google.com/..').pipe(
- *    tap(user => this.user = user)
- *    showServerValidationErrors(form),
+ *    setServerErrorsAsFormErrors(form),
+ *    tap(user => {
+ *      if (user) { // if user = null, it means there was a server validation
+ *                  // error.
+ *        this.user = user;
+ *      }
+ *    })
  *  ).subscribe();
  *
- * Note that showServerValidationErrors() is the last operator in
+ * Note that setServerErrorsAsFormErrors() is the last operator in
  * the operators list. This is important because if a server validation
- * error is encountered, showServerValidationErrors(), would place
+ * error is encountered, setServerErrorsAsFormErrors(), would place
  * the error on the respective form control and in the end would
  * return Observable<null>. Any subsequent opeators that are added
  * to the list after this should check for this null value in its
  * handler.
  *
- * This is the default behavior though it can be changedt o return
- * NEVER, by setting retNever argument to true. However, if NEVER
- * is returned, the subscribe() will never complete and therefore
- * the http.<req>.subscribe() would never be properly wound down
- * as is its normal behavior.
- *
  * @param form The FormGroup instance where the controls corresponding
  * to the errors are looked up and its control.error is set to the
  * returned error code.
- * @param retNever By default
+ * @param cdr ChangeDetectorRef instance. If provided, it would be
+ * used to detect changes after the error codes are set on the form
+ * controls.
  * @returns An rxjs op that can be added to the pipe() arg list.
  */
-export function showServerValidationErrors(
+export function setServerErrorsAsFormErrors(
   form: UntypedFormGroup,
-  retNever = false
+  cdr?: ChangeDetectorRef
 ) {
   return function <T>(source: Observable<T>): Observable<T> {
     return source.pipe(
-      catchError((error) =>
-        handleValidationErrors(form, error, !retNever)
-      )
+      catchError((error) => handleValidationErrors(form, error, cdr))
     );
   };
 }
