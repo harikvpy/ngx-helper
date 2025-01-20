@@ -816,7 +816,7 @@ export class SPMatEntityCrudComponent<
     const params = {
       title: this.editItemTitle() ?? this.crudConfig.i18n.editItemLabel(this._itemLabel()),
     }
-    this.showCreateEditView(undefined, params);
+    this.showCreateEditView(entity, params);
 
     // const tmpl = this.createEditFormTemplate();
     // if (tmpl) {
