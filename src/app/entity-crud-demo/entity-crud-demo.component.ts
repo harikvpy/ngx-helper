@@ -31,6 +31,7 @@ import { Invoice, INVOICES } from './data';
 import { PreviewInvoiceComponent } from './preview-demo.component';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatMenuModule } from '@angular/material/menu';
+import { SPMatEntityCrudCanDeactivate } from './can-deactivate';
 
 const EntityCrudConfig: SPMatEntityCrudConfig = {
   i18n: {
@@ -312,7 +313,7 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EntityCrudDemoComponent implements OnInit {
+export class EntityCrudDemoComponent implements OnInit, SPMatEntityCrudCanDeactivate {
   userEndpoint = 'https://randomuser.me/api/?nat=us,gb';
   userColumns: SPEntityFieldSpec<User>[] = [
     { name: 'name', label: 'NAME', valueFn: (user: User) => user.name.first },
@@ -431,6 +432,10 @@ export class EntityCrudDemoComponent implements OnInit {
   }
 
   constructor(private router: Router, private route: ActivatedRoute) {}
+
+  canDeactivate(): boolean {
+    return !!this.spEntityCrudComponent1()?.canDeactivate();
+  }
 
   ngOnInit() {}
 

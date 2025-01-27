@@ -616,6 +616,26 @@ export class SPMatEntityCrudComponent<
     }
   }
 
+  /**
+   * If the create/edit entity form is active, it calls its registered
+   * canCancelEdit callback to determine if it's okay to cancel the edit.
+   * You can use this method from the host component's router guard to
+   * ensure that any changes made to the form are not accidentally lost by
+   * navigating away from the CRUD page.
+   *
+   * If your CRUD page has multiple sp-mat-entity-crud components, you have to
+   * implement the logic to call this method on the appropriate component.
+   *
+   * If the the create/edit form is not active, this method returns true.
+   * @returns
+   */
+  canDeactivate() {
+    if (this.createEditViewActive()) {
+      return this.canCancelEdit();
+    }
+    return true;
+  }
+
   override refresh() {
     this.spEntitiesList()?.refresh();
   }
