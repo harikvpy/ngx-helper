@@ -22,7 +22,7 @@ import { MatColumnDef, MatTableModule } from '@angular/material/table';
 import { RouterModule } from '@angular/router';
 import {
   showBusyWheelUntilComplete,
-  SPBusyWheelModule,
+  SPMatHostBusyWheelDirective
 } from '@smallpearl/ngx-helper/mat-busy-wheel';
 import {
   SPContextMenuItem,
@@ -65,7 +65,7 @@ import { PreviewHostComponent } from './preview-host.component';
     SPMatEntityListComponent,
     SPMatContextMenuComponent,
     FormViewHostComponent,
-    SPBusyWheelModule,
+    SPMatHostBusyWheelDirective,
     PreviewHostComponent,
   ],
   selector: 'sp-mat-entity-crud',

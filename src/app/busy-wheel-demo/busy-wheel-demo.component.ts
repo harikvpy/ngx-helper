@@ -1,14 +1,18 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { SPBusyWheelModule, hideBusyWheel, showBusyWheel } from '@smallpearl/ngx-helper/mat-busy-wheel';
+import {
+  SPMatHostBusyWheelDirective,
+  hideBusyWheel,
+  showBusyWheel,
+} from '@smallpearl/ngx-helper/mat-busy-wheel';
 
 @Component({
   standalone: true,
   imports: [
     CommonModule,
     MatButtonModule,
-    SPBusyWheelModule,
+    SPMatHostBusyWheelDirective,
   ],
   selector: 'app-busy-wheel-demo',
   template: `

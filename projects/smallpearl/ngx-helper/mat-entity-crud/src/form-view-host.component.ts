@@ -13,7 +13,7 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { SPBusyWheelModule } from '@smallpearl/ngx-helper/mat-busy-wheel';
+import { SPMatHostBusyWheelDirective } from '@smallpearl/ngx-helper/mat-busy-wheel';
 import { Subscription, tap } from 'rxjs';
 import { getEntityCrudConfig } from './default-config';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
@@ -21,7 +21,7 @@ import { SPMatEntityCrudConfig, SPMatEntityCrudCreateEditBridge } from './mat-en
 
 @Component({
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, SPBusyWheelModule],
+  imports: [CommonModule, MatButtonModule, MatIconModule, SPMatHostBusyWheelDirective],
   selector: 'sp-create-edit-entity-host',
   template: `
     <div spHostBusyWheel="formBusyWheel">
