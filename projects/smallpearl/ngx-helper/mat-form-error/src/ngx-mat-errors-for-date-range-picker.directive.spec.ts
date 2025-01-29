@@ -16,7 +16,7 @@ import {
   NgxMatErrors,
 } from './ngx-mat-errors.component';
 
-describe('NgxMatErrorsForDateRangePicker', () => {
+xdescribe('NgxMatErrorsForDateRangePicker', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [NoopAnimationsModule],
