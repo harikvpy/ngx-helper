@@ -26,6 +26,7 @@ import { deregisterBusyWheelHost, registerBusyWheelHost } from './busy-wheel.ser
  */
 @Directive({
   selector: '[spHostBusyWheel]',
+  standalone: true,
 })
 export class SPMatHostBusyWheelDirective implements OnInit, OnDestroy {
 

@@ -5,9 +5,14 @@ import { SPMatBusyWheelComponent } from './busy-wheel.component';
 import { SPMatHostBusyWheelDirective } from './host-busy-wheel.directive';
 
 @NgModule({
-  declarations: [SPMatHostBusyWheelDirective, SPMatBusyWheelComponent],
-  imports: [CommonModule, MatProgressSpinnerModule],
+  declarations: [],
+  imports: [
+    CommonModule,
+    SPMatBusyWheelComponent,
+    SPMatHostBusyWheelDirective,
+    MatProgressSpinnerModule,
+  ],
   exports: [SPMatHostBusyWheelDirective, SPMatBusyWheelComponent],
   providers: [],
 })
-export class SPBusyWheelModule {}
+export class SPMatBusyWheelModule {}

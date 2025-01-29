@@ -1,7 +1,10 @@
 import { Component, ElementRef, input, OnDestroy, OnInit } from '@angular/core';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'sp-mat-busy-wheel',
+  standalone: true,
+  imports: [MatProgressSpinnerModule],
   template: `
     <div class="busy-wheel-wrapper">
       <span>
