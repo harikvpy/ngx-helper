@@ -18,6 +18,7 @@ describe('SPMatContextMenuComponent', () => {
     component = fixture.componentInstance;
     componentRef = fixture.componentRef;
     componentRef.setInput('label', 'More');
+    componentRef.setInput('enableHover', false);
   });
 
   it('should create', async () => {
@@ -32,13 +33,13 @@ describe('SPMatContextMenuComponent', () => {
       {
         label: 'Delete',
       },
-    ]
+    ];
     componentRef.setInput('menuItems', menuItems);
     fixture.detectChanges()
     const items = fixture.debugElement.nativeElement.querySelectorAll('button');
     items[0].click();
-    await new Promise(res => setTimeout(res, 100));
-    const menuButtons = document.querySelectorAll('button.mat-mdc-menu-item');
+    // await new Promise(res => setTimeout(res, 100));
+    const menuButtons = document.querySelector('div.mat-mdc-menu-content')!.children;
     expect(menuButtons.length).toEqual(menuItems.length);
   });
 });
