@@ -603,7 +603,7 @@ describe('SPMatEntityCrudComponent', () => {
   it("should call crudResponseParser after CREATE/UPDATE when refreshAfterEdit='object'", async () => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     let crudOpCalled = 0;
-    const crudOpFn = (op: string, entityValue: any, entityCrudComponent: SPMatEntityCrudCreateEditBridge) => {
+    const crudOpFn = (op: string, id: any, entityValue: any, entityCrudComponent: SPMatEntityCrudCreateEditBridge) => {
       crudOpCalled++;
       return of({
         ...USER_DATA[0],

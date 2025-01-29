@@ -668,7 +668,7 @@ export class SPMatEntityCrudComponent<
     let obs!: Observable<TEntity | null>;
     const crudOpFn = this.crudOpFn();
     if (crudOpFn) {
-      obs = crudOpFn('create', entityValue, this);
+      obs = crudOpFn('create', undefined, entityValue, this);
     } else {
       obs = this.http.post<TEntity>(this.getUrl(this.endpoint()), entityValue, {
         context: this.getCrudReqHttpContext('create'),
@@ -699,7 +699,7 @@ export class SPMatEntityCrudComponent<
     let obs!: Observable<TEntity | null>;
     const crudOpFn = this.crudOpFn();
     if (crudOpFn) {
-      obs = crudOpFn('update', entityValue, this);
+      obs = crudOpFn('update', id, entityValue, this);
     } else {
       obs = this.http.patch<TEntity>(this.getEntityUrl(id), entityValue, {
         context: this.getCrudReqHttpContext('update'),
@@ -743,6 +743,7 @@ export class SPMatEntityCrudComponent<
         obs = crudOpFn(
           'get',
           (entity as any)[this.idKey()],
+          undefined,
           this
         ) as Observable<TEntity>;
       } else {
@@ -917,7 +918,7 @@ export class SPMatEntityCrudComponent<
         let obs!: Observable<any>;
         const crudOpFn = this.crudOpFn();
         if (crudOpFn) {
-          obs = crudOpFn('delete', entity, this);
+          obs = crudOpFn('delete', entityId, undefined, this);
         } else {
           obs = this.http.delete<void>(this.getEntityUrl(entityId), {
             context: this.getCrudReqHttpContext('delete'),

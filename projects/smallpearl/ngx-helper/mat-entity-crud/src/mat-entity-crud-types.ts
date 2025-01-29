@@ -103,8 +103,9 @@ export type CRUD_OP_FN<
   IdKey extends string = 'id'
 > = (
   op: 'get' | 'create' | 'update' | 'delete',
-  entityValue: any,
-  entityCrudComponent: any
+  id: TEntity[IdKey] | undefined, // valid only for 'get', 'update' & 'delete'
+  entityValue: any, // valid only for 'create' & 'update'
+  entityCrudComponent: any,
 ) => Observable<TEntity | null>;
 
 
