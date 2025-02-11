@@ -474,6 +474,12 @@ export class SPMatEntityListComponent<
   fieldConfig!: SPEntityFieldConfig;
   entityListConfig = getEntityListConfig();
 
+  endpointChanged = effect(() => {
+    if (this.endpoint()) {
+      setTimeout(() => { this.refresh(); });
+    }
+  });
+
   constructor(
     protected http: HttpClient,
     private sanitizer: DomSanitizer
@@ -519,7 +525,6 @@ export class SPMatEntityListComponent<
       this.buildContentColumnDefs();
       this.buildColumns();
       this.setupSort();
-      this.loadMoreEntities();
     }
   }
 
