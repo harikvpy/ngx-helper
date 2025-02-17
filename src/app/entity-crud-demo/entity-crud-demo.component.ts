@@ -397,18 +397,23 @@ export class EntityCrudDemoComponent implements OnInit, SPMatEntityCrudCanDeacti
   crudOpFn(
     op: string,
     entityValue: any,
-    crudComponent: SPMatEntityCrudComponent<User, 'cell'>
+    crudComponent: SPMatEntityCrudComponent<Invoice, 'id'>
   ) {
     if (op === 'create') {
       return of({
         name: {
-          title: 'Mr',
-          first: entityValue['firstName'],
-          last: entityValue['lastName'],
+          id: new Date().getTime(),
+          number: new Date().getTime(),
+          date: new Date(),
+          customer: 1,
+          customerDetail: {
+            id: 1,
+            name: 'John'
+          },
+          items: [],
+          balance: 0,
         },
-        gender: entityValue['gender'],
-        cell: entityValue['cell'],
-      } as unknown as User);
+      } as unknown as Invoice);
     } else if (op === 'update') {
       const ids = crudComponent
         ?.spEntitiesList()
@@ -419,14 +424,18 @@ export class EntityCrudDemoComponent implements OnInit, SPMatEntityCrudCanDeacti
         console.log(`Updating name & gender of cell # ${String(id)}`);
         return of({
           name: {
-            title: 'Mr',
-            first: entityValue['firstName'],
-            last: entityValue['lastName'],
+            id: new Date().getTime(),
+            number: new Date().getTime(),
+            date: new Date(),
+            customer: 1,
+            customerDetail: {
+              id: 1,
+              name: 'John'
+            },
+            items: [],
+            balance: 0,
           },
-          gender: entityValue['gender'],
-          cell: id,
-        });
-      }
+        } as unknown as Invoice);      }
     }
     return of(null);
   }
@@ -439,23 +448,23 @@ export class EntityCrudDemoComponent implements OnInit, SPMatEntityCrudCanDeacti
 
   ngOnInit() {}
 
-  onItemAction(ev: { role: string; entity?: User }) {
-    console.log(`onItemAction - role: ${ev.role}`);
-    if (ev.role === 'edit') {
-      if (ev.entity) {
-        this.router.navigate([`${ev.entity['cell']}`], {
+  onItemAction(ev: { role: string; entity?: Invoice } | undefined) {
+    console.log(`onItemAction - role: ${ev?.role}`);
+    if (ev?.role === 'edit') {
+      if (ev?.entity) {
+        this.router.navigate([`${ev?.entity['number']}`], {
           relativeTo: this.route,
           state: {
-            entity: ev.entity,
+            entity: ev?.entity,
           },
         });
       }
     }
   }
 
-  handleSelectEntity(user: User) {
+  handleSelectEntity(invoice: Invoice | undefined) {
     console.log(
-      `handleSelectEntity - user: ${user ? user.name.first : undefined}`
+      `handleSelectEntity - user: ${invoice ? invoice : undefined}`
     );
   }
 }

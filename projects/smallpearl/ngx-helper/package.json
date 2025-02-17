@@ -1,6 +1,6 @@
 {
   "name": "@smallpearl/ngx-helper",
-  "version": "0.26.6",
+  "version": "0.26.8",
   "peerDependencies": {
     "@angular/cdk": ">=15.0.0",
     "@angular/common": ">=15.0.0",
@@ -8,13 +8,13 @@
     "@angular/material": ">=15.0.0",
     "@angular/forms": ">=15.0.0",
     "rxjs": "^7.0.0",
-    "@ngneat/elf": "^2.5.1",
-    "@ngneat/elf-entities": "^5.0.2",
-    "ngx-mat-select-search": "^7.0.5",
-    "ngx-infinite-scroll": "^17.0.1",
-    "angular-split": "^17.2.0",
-    "pluralize": "^8.0.0",
-    "lodash": "^4.17.21"
+    "@ngneat/elf": ">=2.5.1",
+    "@ngneat/elf-entities": ">=5.0.2",
+    "ngx-mat-select-search": ">=7.0.5",
+    "ngx-infinite-scroll": ">=18.0.1",
+    "angular-split": ">=18.2.0",
+    "pluralize": ">=8.0.0",
+    "lodash": ">=4.17.21"
   },
   "peerDependenciesMeta": {
     "ngx-infinite-scroll": {

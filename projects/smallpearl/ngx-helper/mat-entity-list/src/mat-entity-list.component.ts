@@ -252,7 +252,7 @@ export class SPMatEntityListComponent<
    * array consisting of SPEntityFieldSpec<> objects and strings.
    */
   columns =
-    input.required<Array<SPEntityFieldSpec<TEntity> | string>>();
+    input.required<Array<SPEntityFieldSpec<TEntity, IdKey> | string>>();
 
   /**
    * Names of columns that are displayed. This will default to all the columns
@@ -390,23 +390,23 @@ export class SPMatEntityListComponent<
   );
   // Effective columns, derived from columns(), which can either be an array
   // of objects of array of strings.
-  _columns = computed<SPEntityFieldSpec<TEntity>[]>(() => {
+  _columns = computed<SPEntityFieldSpec<TEntity, IdKey>[]>(() => {
     const columns = this.columns();
-    let fields: SPEntityField<TEntity>[] = [];
-    let cols: SPEntityFieldSpec<TEntity>[] = [];
+    let fields: SPEntityField<TEntity, IdKey>[] = [];
+    let cols: SPEntityFieldSpec<TEntity, IdKey>[] = [];
     columns.forEach((colDef) => {
       // fields.push(new SPEntityField(colDef))
       if (typeof colDef === 'string') {
         cols.push({ name: String(colDef) });
       } else if (typeof colDef === 'object') {
-        cols.push(colDef as SPEntityFieldSpec<TEntity>);
+        cols.push(colDef as SPEntityFieldSpec<TEntity, IdKey>);
       }
     });
     return cols;
   });
 
-  __columns = computed<SPEntityField<TEntity>[]>(() =>
-    this.columns().map((colDef) => new SPEntityField<TEntity>(colDef, this.ngxHelperConfig, this.fieldConfig))
+  __columns = computed<SPEntityField<TEntity, IdKey>[]>(() =>
+    this.columns().map((colDef) => new SPEntityField<TEntity, IdKey>(colDef, this.ngxHelperConfig, this.fieldConfig))
   );
 
   // We isolate retrieving items from the remote and providing the items

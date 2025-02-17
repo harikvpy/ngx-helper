@@ -494,7 +494,7 @@ export class SPMatEntityCrudComponent<
 
   defaultItemCrudActions = signal<SPContextMenuItem[]>([]);
   columnsWithAction = computed(() => {
-    const cols: Array<SPEntityFieldSpec<TEntity> | string> = JSON.parse(
+    const cols: Array<SPEntityFieldSpec<TEntity, IdKey> | string> = JSON.parse(
       JSON.stringify(this.columns())
     );
     // JSON.parse(JSON.strigify()) does not clone function objects. So
@@ -504,7 +504,7 @@ export class SPMatEntityCrudComponent<
     this.columns().forEach((col, index: number, orgColumns) => {
       const orgCol = orgColumns[index];
       if (typeof orgCol !== 'string') {
-        const newColumn = cols[index] as SPEntityFieldSpec<TEntity>;
+        const newColumn = cols[index] as SPEntityFieldSpec<TEntity, IdKey>;
         if (orgCol.valueFn) {
           newColumn.valueFn = orgCol.valueFn;
         }
@@ -965,7 +965,7 @@ export class SPMatEntityCrudComponent<
     return this.getUrl(entityEndpoint);
   }
 
-  handleSelectEntity(entity: TEntity) {
+  handleSelectEntity(entity: TEntity|undefined) {
     if (!this.createEditViewActive()) {
       if (this.previewTemplate()) {
         entity ? this.showPreviewView(entity) : this.hidePreviewView();

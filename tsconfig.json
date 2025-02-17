@@ -17,7 +17,7 @@
     "moduleResolution": "node",
     "importHelpers": true,
     "target": "ES2022",
-    "module": "ES2020",
+    "module": "ES2022",
     "useDefineForClassFields": false,
     "paths": {
       "@smallpearl/ngx-helper/*": [
@@ -28,7 +28,7 @@
       ],
     },
     "lib": [
-      "ES2018",
+      "ES2022",
       "dom"
     ]
   },

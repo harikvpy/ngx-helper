@@ -12,7 +12,7 @@ import { SPEntityFieldConfig } from './provider';
  * properties. Fields can also be computed fields, in which case the valueFn
  * should be initialized with a valid function to provide the field's value.
  */
-export type SPEntityFieldSpec<TEntity> = {
+export type SPEntityFieldSpec<TEntity extends { [P in IdKey]: PropertyKey },  IdKey extends string = 'id'> = {
   // Column name. If valueFn is not specified, this will be used as the
   // key name to retrieve the value for the column from TEntity.
   name: string;
@@ -46,11 +46,11 @@ export type SPEntityFieldSpec<TEntity> = {
  * A class that represents a SPEntityFieldSpec<>. This is typically used
  * by the library to evaluate a SPEntityFieldSpec<> object.
  */
-export class SPEntityField<TEntity> {
-  public _fieldSpec!: SPEntityFieldSpec<TEntity>;
+export class SPEntityField<TEntity extends { [P in IdKey]: PropertyKey }, IdKey extends string = 'id'> {
+  public _fieldSpec!: SPEntityFieldSpec<TEntity, IdKey>;
 
   constructor(
-    spec: SPEntityFieldSpec<TEntity> | string,
+    spec: SPEntityFieldSpec<TEntity, IdKey> | string,
     public helperConfig: SPNgxHelperConfig,
     public fieldConfig?: SPEntityFieldConfig
   ) {

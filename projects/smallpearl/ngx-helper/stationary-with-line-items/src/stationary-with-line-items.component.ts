@@ -79,9 +79,9 @@ import { SP_ENTITY_FIELD_CONFIG, SPEntityField, SPEntityFieldSpec } from '@small
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FieldsRendererComponent<TEntity> implements OnInit {
+export class FieldsRendererComponent<TEntity extends { [P in IdKey]: PropertyKey }, IdKey extends string = 'id'> implements OnInit {
   entity = input.required<TEntity>();
-  fields = input.required<SPEntityField<TEntity>[]>();
+  fields = input.required<SPEntityField<TEntity, IdKey>[]>();
 
   isString = computed(() => typeof this.fields() === 'string');
   // If the field is a single string, looks up entity's properties
@@ -289,31 +289,31 @@ export class FieldsRendererComponent<TEntity> implements OnInit {
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class StationaryWithLineItemsComponent<TEntity, TEntityLineItem = any> implements OnInit {
+export class StationaryWithLineItemsComponent<TEntity extends { [P in IdKey]: PropertyKey }, TEntityLineItem extends { [P in IdKey]: PropertyKey }, IdKey extends string = 'id'> implements OnInit {
   entity = input.required<TEntity>();
   title = input.required<string>();
   number = input<string|number>();
 
-  leftHeader = input<Array<SPEntityFieldSpec<TEntity> | string>|string>();
+  leftHeader = input<Array<SPEntityFieldSpec<TEntity, IdKey> | string>|string>();
   _leftHeaderFields = computed(() => this.getSPEntityFields(this.leftHeader()));
   leftHeaderTemplate = input<TemplateRef<any>>();
 
-  rightHeader = input<Array<SPEntityFieldSpec<TEntity> | string>|string>();
+  rightHeader = input<Array<SPEntityFieldSpec<TEntity, IdKey> | string>|string>();
   _rightHeaderFields = computed(() => this.getSPEntityFields(this.rightHeader()));
   rightHeaderTemplate = input<TemplateRef<any>>();
 
   items = input<{[key: string]: string}[]>();
 
-  leftFooter = input<Array<SPEntityFieldSpec<TEntity> | string>|string>();
+  leftFooter = input<Array<SPEntityFieldSpec<TEntity, IdKey> | string>|string>();
   _leftFooterFields = computed(() => this.getSPEntityFields(this.leftFooter()));
   leftFooterTemplate = input<TemplateRef<any>>();
 
-  rightFooter = input<Array<SPEntityFieldSpec<TEntity> | string>|string>();
+  rightFooter = input<Array<SPEntityFieldSpec<TEntity, IdKey> | string>|string>();
   _rightFooterFields = computed(() => this.getSPEntityFields(this.rightFooter()));
   rightFooterTemplate = input<TemplateRef<any>>();
 
   itemFieldName = input<string>('items');
-  itemColumnFields = input<Array<SPEntityFieldSpec<TEntityLineItem> | string>>();
+  itemColumnFields = input<Array<SPEntityFieldSpec<TEntity, IdKey> | string>>();
   _itemColumnFields = computed(() => this.getSPEntityFields(this.itemColumnFields()));
 
   _items = computed(() => (this.entity() as any)[this.itemFieldName()]);
@@ -335,9 +335,9 @@ export class StationaryWithLineItemsComponent<TEntity, TEntityLineItem = any> im
    * @param fieldSpecs
    * @returns
    */
-  getSPEntityFields<T>(fieldSpecs: Array<SPEntityFieldSpec<T> | string>|string|undefined): Array<SPEntityField<T>> {
+  getSPEntityFields<T>(fieldSpecs: Array<SPEntityFieldSpec<TEntity, IdKey> | string>|string|undefined): Array<SPEntityField<TEntity, IdKey>> {
     if (fieldSpecs && typeof fieldSpecs !== 'string') {
-      return fieldSpecs.map(spec => new SPEntityField<T>(spec, this.ngxHelperConfig, this.ngxEntityFieldConfig));
+      return fieldSpecs.map(spec => new SPEntityField<TEntity, IdKey>(spec, this.ngxHelperConfig, this.ngxEntityFieldConfig));
     }
     return [];
   }
