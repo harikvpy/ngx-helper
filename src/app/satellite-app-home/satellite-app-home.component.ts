@@ -2,8 +2,8 @@ import { Component, ViewChild } from '@angular/core';
 import { NavItem, SPMatMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-menu-layout';
 
 @Component({
-  selector: 'app-satellite-app-home',
-  template: `
+    selector: 'app-satellite-app-home',
+    template: `
     <sp-mat-menu-layout
       contentContainerClass="ex-content-container"
       baseUrl="/home/satellite-app"
@@ -35,7 +35,8 @@ import { NavItem, SPMatMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-si
       <app-sidemenu-info-pane></app-sidemenu-info-pane>
     </ng-template>
   `,
-  styles: [],
+    styles: [],
+    standalone: false
 })
 export class SatelliteAppHomeComponent {
   menuItems: NavItem[] = [

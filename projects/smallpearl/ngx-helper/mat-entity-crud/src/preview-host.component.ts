@@ -8,13 +8,13 @@ import {
   signal,
   TemplateRef,
   viewChild,
-  ViewContainerRef
+  ViewContainerRef,
 } from '@angular/core';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
 
 @Component({
-  imports: [],
   standalone: true,
+  imports: [],
   selector: 'sp-entity-crud-preview-host',
   template: ` <ng-container #previewComponent></ng-container> `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,9 +22,10 @@ import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
 export class PreviewHostComponent<TEntity> implements OnInit, OnDestroy {
   vc = viewChild('previewComponent', { read: ViewContainerRef });
 
-  entityCrudComponentBase = input.required<SPMatEntityCrudComponentBase<TEntity>>();
+  entityCrudComponentBase =
+    input.required<SPMatEntityCrudComponentBase<TEntity>>();
   clientViewTemplate = input<TemplateRef<any> | null>(null);
-  entity = signal<TEntity|undefined>(undefined);
+  entity = signal<TEntity | undefined>(undefined);
   clientView!: EmbeddedViewRef<any> | null;
 
   constructor() {
@@ -38,7 +39,7 @@ export class PreviewHostComponent<TEntity> implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {}
 
-  show(entity: TEntity|undefined, params?: any) {
+  show(entity: TEntity | undefined, params?: any) {
     this.entity.set(entity);
     // if (params && params?.title) {
     //   this.title.set(params.title);
@@ -66,19 +67,15 @@ export class PreviewHostComponent<TEntity> implements OnInit, OnDestroy {
     const ft = this.clientViewTemplate();
     const vc = this.vc();
     if (ft && vc) {
-      this.clientView = this.vc()!.createEmbeddedView(
-        ft,
-        {
-          $implicit: {
-            entity: this.entity(),
-            entityCrudComponent: this.entityCrudComponentBase(),
-          },
-        }
-      );
+      this.clientView = this.vc()!.createEmbeddedView(ft, {
+        $implicit: {
+          entity: this.entity(),
+          entityCrudComponent: this.entityCrudComponentBase(),
+        },
+      });
       this.clientView.detectChanges();
     }
   }
-
 
   destroyClientView() {
     if (this.clientView) {

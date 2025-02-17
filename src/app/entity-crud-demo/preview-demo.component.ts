@@ -31,14 +31,14 @@ export class PreviewInvoiceComponent implements OnInit {
       valueFn: (entity: Invoice, cdr?: ChangeDetectorRef) => {
         return entity.balance;
       },
-      valueOptions: { isCurrency: true, class: "text-larger " },
+      valueOptions: { isCurrency: true, class: 'text-larger ' },
     },
   ];
   invoicePreviewItemColumns: SPEntityFieldSpec<Invoice>[] = [
     {
       name: 'product',
       valueFn: (lineItem: any) => {
-        return lineItem.productDetail.name
+        return lineItem.productDetail.name;
       },
     },
     { name: 'quantity' },
@@ -62,8 +62,8 @@ export class PreviewInvoiceComponent implements OnInit {
       },
       valueOptions: {
         isCurrency: true,
-        class: 'text-end text-larger text-bold'
-      }
+        class: 'text-end text-larger text-bold',
+      },
     },
   ];
 

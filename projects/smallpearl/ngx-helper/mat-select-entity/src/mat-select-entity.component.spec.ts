@@ -367,15 +367,14 @@ import { Component, OnInit } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 
 @Component({
-  standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    SPMatSelectEntityComponent
-  ],
-  selector: 'test-mat-select-entity-demo',
-  template: `
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        SPMatSelectEntityComponent
+    ],
+    selector: 'test-mat-select-entity-demo',
+    template: `
   <form [formGroup]="form">
     <mat-form-field>
       <mat-label>Select User1 (Remote)</mat-label>

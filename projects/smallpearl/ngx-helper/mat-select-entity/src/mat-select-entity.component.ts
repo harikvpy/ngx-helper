@@ -89,8 +89,8 @@ export type SPMatSelectEntityResponseParser = <
  * but this can be customized by specifying the `idKey' property value.
  */
 @Component({
-  selector: 'sp-mat-select-entity',
-  template: `
+    selector: 'sp-mat-select-entity',
+    template: `
     <mat-select
       [placeholder]="placeholder"
       (opened)="onSelectOpened($event)"
@@ -142,8 +142,8 @@ export type SPMatSelectEntityResponseParser = <
       >
     </mat-select>
   `,
-  styles: [
-    `
+    styles: [
+        `
       .add-item-option {
         padding-top: 2px;
         border-top: 1px solid gray;
@@ -153,11 +153,10 @@ export type SPMatSelectEntityResponseParser = <
         font-size: 0.8em;
       }
     `
-  ],
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, MatSelectModule, NgxMatSelectSearchModule],
-  providers: [{ provide: MatFormFieldControl, useExisting: SPMatSelectEntityComponent }]
+    ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, MatSelectModule, NgxMatSelectSearchModule],
+    providers: [{ provide: MatFormFieldControl, useExisting: SPMatSelectEntityComponent }]
 })
 export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: PropertyKey }, IdKey extends string = 'id'>
   implements

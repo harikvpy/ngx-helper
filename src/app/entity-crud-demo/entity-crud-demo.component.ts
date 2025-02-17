@@ -52,27 +52,27 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
 };
 
 @Component({
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    MatTableModule,
-    MatSortModule,
-    MatProgressSpinnerModule,
-    MatIconModule,
-    MatButtonModule,
-    MatTabsModule,
-    MatMenuModule,
-    SPMatEntityCrudComponent,
-    CreateEditEntityDemoComponent,
-    SPMatEntityCrudPreviewPaneComponent,
-    PreviewInvoiceComponent,
-  ],
-  providers: [
-    { provide: SP_MAT_ENTITY_CRUD_CONFIG, useValue: EntityCrudConfig },
-  ],
-  selector: 'app-entity-crud-demo',
-  template: `
+    imports: [
+        CommonModule,
+        FormsModule,
+        MatTableModule,
+        MatSortModule,
+        MatProgressSpinnerModule,
+        MatIconModule,
+        MatButtonModule,
+        MatTabsModule,
+        MatMenuModule,
+        SPMatEntityCrudComponent,
+        CreateEditEntityDemoComponent,
+        SPMatEntityCrudPreviewPaneComponent,
+        PreviewInvoiceComponent,
+    ],
+    providers: [
+        { provide: SP_MAT_ENTITY_CRUD_CONFIG, useValue: EntityCrudConfig },
+    ],
+    selector: 'app-entity-crud-demo',
+    standalone: true,
+    template: `
     <div style="width: 100%; height: 100%;">
       <mat-tab-group style="width: 100%; height: 100%;">
 
@@ -297,7 +297,7 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
       ></app-create-edit-entity-demo>
     </ng-template>
   `,
-  styles: `
+    styles: `
   .header {
     display: flex;
     flex-direction: row;
@@ -311,7 +311,7 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
     gap: 0.2em;
   }
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EntityCrudDemoComponent implements OnInit, SPMatEntityCrudCanDeactivate {
   userEndpoint = 'https://randomuser.me/api/?nat=us,gb';

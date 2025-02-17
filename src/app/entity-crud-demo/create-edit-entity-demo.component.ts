@@ -16,18 +16,18 @@ type MyFormGroup = FormGroup<{
 }>;
 
 @Component({
-  standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatSelectModule,
-    errorTailorImports,
-  ],
-  selector: 'app-create-edit-entity-demo',
-  template: `
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule,
+        MatSelectModule,
+        errorTailorImports,
+    ],
+    selector: 'app-create-edit-entity-demo',
+    standalone: true,
+    template: `
     <form
       [formGroup]="form()!"
       (ngSubmit)="onSubmit()"
@@ -48,7 +48,7 @@ type MyFormGroup = FormGroup<{
       </mat-form-field>
 
       <div class="mt-2 d-flex gap-2">
-        <button type="button" color="secondary" mat-raised-button (click)="form()!.reset()">Reset</button>
+        <button type="button" color="tertiary" mat-raised-button (click)="form()!.reset()">Reset</button>
         <button
           type="submit"
           color="primary"
@@ -66,10 +66,10 @@ type MyFormGroup = FormGroup<{
     }
 
   `,
-  styles: `
+    styles: `
 
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CreateEditEntityDemoComponent extends SPMatEntityCrudFormBase<MyFormGroup, any> {
 

@@ -19,8 +19,8 @@ import { SPMatMenuListItemComponent } from './mat-menu-list-item.component';
 import { NavItem } from './nav-item';
 
 @Component({
-  selector: 'ngx-mat-menu-pane',
-  template: `
+    selector: 'ngx-mat-menu-pane',
+    template: `
     <div class="menu-pane-wrapper">
       <div class="sidenav-branding mat-toolbar-single-row">
         <div class="branding branding-logo">
@@ -49,8 +49,9 @@ import { NavItem } from './nav-item';
       </div>
     </div>
   `,
-  styleUrls: ['./mat-menu-pane.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    styleUrls: ['./mat-menu-pane.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class SPMatMenuPaneComponent implements OnInit, OnDestroy, AfterViewInit, OnChanges {
   @Input() menuTitle: string = '';

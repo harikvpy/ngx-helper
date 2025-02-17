@@ -10,21 +10,19 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { QQMatFileInputComponent } from '@smallpearl/ngx-helper/mat-file-input';
-import { SPMatTelephoneInputComponent } from '@smallpearl/ngx-helper/mat-tel-input';
 
 @Component({
-  selector: 'app-home-page',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    QQMatFileInputComponent,
-    SPMatTelephoneInputComponent
-  ],
-  template: `
+    selector: 'app-home-page',
+    standalone: true,
+    imports: [
+        CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatSelectModule,
+        QQMatFileInputComponent,
+    ],
+    template: `
     <div style="margin: 0.5em;">
       <p>home-page works!</p>
       <form [formGroup]="form">
@@ -70,8 +68,8 @@ import { SPMatTelephoneInputComponent } from '@smallpearl/ngx-helper/mat-tel-inp
       </form>
     </div>
   `,
-  styles: [
-    `
+    styles: [
+        `
       .w-100 {
         width: 100%;
       }
@@ -79,7 +77,7 @@ import { SPMatTelephoneInputComponent } from '@smallpearl/ngx-helper/mat-tel-inp
         width: 50%;
       }
     `,
-  ],
+    ]
 })
 export class HomePageComponent {
   form: FormGroup;

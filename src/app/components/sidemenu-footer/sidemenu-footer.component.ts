@@ -2,10 +2,9 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-sidemenu-footer',
-  standalone: true,
-  imports: [CommonModule],
-  template: `
+    selector: 'app-sidemenu-footer',
+    imports: [CommonModule],
+    template: `
     <div style="text-align: center; font-size: 0.8em;">
       <select name="language" id="language">
         <option value="en">English</option>
@@ -15,6 +14,6 @@ import { CommonModule } from '@angular/common';
       <small>2.3.102</small>
     </div>
   `,
-  styles: [],
+    styles: []
 })
 export class SidemenuFooterComponent {}

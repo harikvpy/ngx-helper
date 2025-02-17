@@ -59,7 +59,10 @@ import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
  *    </form>
  *    ```
  */
-@Component({ selector: '_#_sp-mat-entity-crud-form-base_#_', template: `` })
+@Component({
+    selector: '_#_sp-mat-entity-crud-form-base_#_', template: ``,
+    standalone: false
+})
 export abstract class SPMatEntityCrudFormBase<
   TFormGroup extends AbstractControl,
   TEntity extends { [P in IdKey]: PropertyKey },

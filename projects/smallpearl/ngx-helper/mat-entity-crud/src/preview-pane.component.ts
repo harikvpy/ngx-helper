@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, Inject, input, OnDestroy, OnInit, Optional } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Inject,
+  input,
+  OnDestroy,
+  OnInit,
+  Optional,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -17,52 +25,65 @@ import { getEntityCrudConfig } from './default-config';
   imports: [MatToolbarModule, MatButtonModule, MatIconModule],
   selector: 'sp-mat-entity-crud-preview-pane',
   template: `
-  <div class="preview-wrapper">
-    <mat-toolbar>
-      <mat-toolbar-row>
-        @if (title()) {
-          <h2>{{ title() }}</h2>&nbsp;
-        }
-        @if (!hideUpdate()) {
-          <button mat-icon-button aria-label="Edit" (click)="onEdit()" [disabled]="disableUpdate()">
+    <div class="preview-wrapper">
+      <mat-toolbar>
+        <mat-toolbar-row>
+          @if (title()) {
+          <h2>{{ title() }}</h2>
+          &nbsp; } @if (!hideUpdate()) {
+          <button
+            mat-icon-button
+            aria-label="Edit"
+            (click)="onEdit()"
+            [disabled]="disableUpdate()"
+          >
             <mat-icon>edit</mat-icon>
           </button>
-        }
-        @if (!hideDelete()) {
-          <button mat-icon-button aria-label="Delete" (click)="onDelete()" [disabled]="disableDelete()">
+          } @if (!hideDelete()) {
+          <button
+            mat-icon-button
+            aria-label="Delete"
+            (click)="onDelete()"
+            [disabled]="disableDelete()"
+          >
             <mat-icon>delete</mat-icon>
           </button>
-        }
-        <ng-content select="[previewToolbarContent]"></ng-content>
-        <span class="spacer"></span>
-        <button mat-icon-button aria-label="Close" (click)="onClose()">
-          <mat-icon>close</mat-icon>
-        </button>
-      </mat-toolbar-row>
-    </mat-toolbar>
-    <div [class]="'preview-content ' + (config.previewPaneContentClass ?? '')">
-      <ng-content select="[previewContent]"></ng-content>
+          }
+          <ng-content select="[previewToolbarContent]"></ng-content>
+          <span class="spacer"></span>
+          <button mat-icon-button aria-label="Close" (click)="onClose()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </mat-toolbar-row>
+      </mat-toolbar>
+      <div
+        [class]="'preview-content ' + (config.previewPaneContentClass ?? '')"
+      >
+        <ng-content select="[previewContent]"></ng-content>
+      </div>
     </div>
-  </div>
   `,
-  styles: [`
-    .preview-wrapper {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
-    .spacer {
-      flex: 1 1 auto;
-    }
-    .preview-content {
-      flex-grow: 1;
-      overflow: scroll;
-    }
-  `],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styles: [
+    `
+      .preview-wrapper {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+      .spacer {
+        flex: 1 1 auto;
+      }
+      .preview-content {
+        flex-grow: 1;
+        overflow: scroll;
+      }
+    `,
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SPMatEntityCrudPreviewPaneComponent<TEntity> implements OnInit, OnDestroy {
-
+export class SPMatEntityCrudPreviewPaneComponent<TEntity>
+  implements OnInit, OnDestroy
+{
   entity = input.required<TEntity>();
   entityCrudComponent = input.required<SPMatEntityCrudComponentBase<TEntity>>();
   title = input<string>();
@@ -76,11 +97,9 @@ export class SPMatEntityCrudPreviewPaneComponent<TEntity> implements OnInit, OnD
     this.config = getEntityCrudConfig();
   }
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
-  ngOnDestroy(): void {
-  }
+  ngOnDestroy(): void {}
 
   onEdit() {
     this.entityCrudComponent().triggerEntityUpdate(this.entity());

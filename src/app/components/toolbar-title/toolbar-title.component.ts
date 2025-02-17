@@ -5,10 +5,9 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-  selector: 'app-toolbar-title',
-  standalone: true,
-  imports: [CommonModule, MatButtonModule, MatMenuModule, MatIconModule],
-  template: `
+    selector: 'app-toolbar-title',
+    imports: [CommonModule, MatButtonModule, MatMenuModule, MatIconModule],
+    template: `
     <button mat-button [matMenuTriggerFor]="otherCommunitiesMenu">
       <h4 class="community-name">Signature Park</h4>
       <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
@@ -18,12 +17,12 @@ import { MatIconModule } from '@angular/material/icon';
       <button mat-menu-item>Cashew Heights</button>
     </mat-menu>
   `,
-  styles: [
-    `
+    styles: [
+        `
       .community-name {
         font-size: 1.3em;
       }
     `,
-  ],
+    ]
 })
 export class ToolbarTitleComponent {}

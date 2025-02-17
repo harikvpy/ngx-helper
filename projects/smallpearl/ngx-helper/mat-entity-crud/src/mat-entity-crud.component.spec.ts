@@ -104,18 +104,17 @@ type UserEntityCrudComponent = SPMatEntityCrudComponent<User, 'cell'>;
 
 
 @Component({
-  standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    FormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatSelectModule,
-  ],
-  selector: 'create-edit-user-demo',
-  template: `
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        FormsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule,
+        MatSelectModule,
+    ],
+    selector: 'create-edit-user-demo',
+    template: `
     <form
       [formGroup]="form"
       (ngSubmit)="onNgSubmit()"
@@ -163,7 +162,7 @@ type UserEntityCrudComponent = SPMatEntityCrudComponent<User, 'cell'>;
         </button>
       </div>
     </form>
-  `,
+  `
 })
 export class CreateEditUserComponent implements OnInit {
   form!: FormGroup<{
@@ -230,15 +229,14 @@ export class CreateEditUserComponent implements OnInit {
  * this to test SPMatEntityCrudComponent
  */
 @Component({
-  standalone: true,
-  imports: [
-    CommonModule,
-    MatTableModule,
-    SPMatEntityCrudComponent,
-    CreateEditUserComponent,
-    SPMatEntityCrudPreviewPaneComponent,
-  ],
-  template: `
+    imports: [
+        CommonModule,
+        MatTableModule,
+        SPMatEntityCrudComponent,
+        CreateEditUserComponent,
+        SPMatEntityCrudPreviewPaneComponent,
+    ],
+    template: `
     <div>
       <sp-mat-entity-crud
         entityName='user'
@@ -278,7 +276,7 @@ export class CreateEditUserComponent implements OnInit {
         </div>
       </sp-mat-entity-crud-preview-pane>
     </ng-template>
-  `,
+  `
 })
 class SPMatEntityCrudTestComponent implements OnInit {
   displayedColumns = signal<string[]>([]);

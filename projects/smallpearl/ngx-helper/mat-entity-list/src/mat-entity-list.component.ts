@@ -1,5 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpContext, HttpContextToken, HttpParams } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpContext,
+  HttpContextToken,
+  HttpParams,
+} from '@angular/common/http';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -18,7 +23,7 @@ import {
   QueryList,
   signal,
   viewChild,
-  viewChildren
+  viewChildren,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
@@ -58,15 +63,14 @@ import { getEntityListConfig } from './config';
 import {
   SP_MAT_ENTITY_LIST_HTTP_CONTEXT,
   SPMatEntityListEntityLoaderFn,
-  SPMatEntityListPaginator
+  SPMatEntityListPaginator,
 } from './mat-entity-list-types';
 
 @Directive({
   selector: '[headerAlignment]',
-  standalone: true
+  standalone: true,
 })
 export class HeaderAlignmentDirective implements AfterViewInit {
-
   headerAlignment = input<string>();
 
   constructor(private el: ElementRef) {
@@ -75,7 +79,9 @@ export class HeaderAlignmentDirective implements AfterViewInit {
 
   ngAfterViewInit(): void {
     if (this.headerAlignment()) {
-      const sortHeader = this.el.nativeElement.querySelector('.mat-sort-header-container');
+      const sortHeader = this.el.nativeElement.querySelector(
+        '.mat-sort-header-container'
+      );
       if (sortHeader) {
         sortHeader.style.justifyContent = this.headerAlignment();
       } else {
@@ -157,11 +163,22 @@ export class HeaderAlignmentDirective implements AfterViewInit {
       @for (column of __columns(); track $index) {
       <ng-container [matColumnDef]="column.spec.name">
         @if (disableSort()) {
-        <th [class]="column.class" [headerAlignment]="column.options.alignment" mat-header-cell *matHeaderCellDef>
+        <th
+          [class]="column.class"
+          [headerAlignment]="column.options.alignment"
+          mat-header-cell
+          *matHeaderCellDef
+        >
           {{ column.label() }}
         </th>
         } @else {
-        <th [class]="column.class" [headerAlignment]="column.options.alignment" mat-header-cell mat-sort-header *matHeaderCellDef>
+        <th
+          [class]="column.class"
+          [headerAlignment]="column.options.alignment"
+          mat-header-cell
+          mat-sort-header
+          *matHeaderCellDef
+        >
           {{ column.label() }}
         </th>
         }
@@ -172,13 +189,13 @@ export class HeaderAlignmentDirective implements AfterViewInit {
           *matCellDef="let element"
           [routerLink]="column.getRouterLink(element)"
         >
-        @if (column.hasRouterLink(element)) {
+          @if (column.hasRouterLink(element)) {
           <a [routerLink]="column.getRouterLink(element)">
             <span [innerHTML]="column.value(element)"></span>
           </a>
-        } @else {
+          } @else {
           <span [innerHTML]="column.value(element)"></span>
-        }
+          }
         </td>
       </ng-container>
       }
@@ -189,39 +206,40 @@ export class HeaderAlignmentDirective implements AfterViewInit {
       </div>
     </ng-template>
   `,
-  styles: [`
-    .entities-list-wrapper {
-      position: relative;
-    }
-    .busy-overlay {
-      display: none;
-      height: 100%;
-      width: 100%;
-      position: absolute;
-      top: 0px;
-      left: 0px;
-      z-index: 1000;
-      opacity: 0.6;
-      background-color: transparent;
-    }
-    .show {
-      display: block;
-    }
-    .busy-spinner {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .infinite-scroll-loading {
-      display: none;
-      width: 100%;
-      padding: 8px;
-    }
-    .active-row {
-      font-weight: bold;
-    }
+  styles: [
+    `
+      .entities-list-wrapper {
+        position: relative;
+      }
+      .busy-overlay {
+        display: none;
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        z-index: 1000;
+        opacity: 0.6;
+        background-color: transparent;
+      }
+      .show {
+        display: block;
+      }
+      .busy-spinner {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .infinite-scroll-loading {
+        display: none;
+        width: 100%;
+        padding: 8px;
+      }
+      .active-row {
+        font-weight: bold;
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -251,8 +269,7 @@ export class SPMatEntityListComponent<
    * specified instead. That is, the value of this property is a heterogeneous
    * array consisting of SPEntityFieldSpec<> objects and strings.
    */
-  columns =
-    input.required<Array<SPEntityFieldSpec<TEntity, IdKey> | string>>();
+  columns = input.required<Array<SPEntityFieldSpec<TEntity, IdKey> | string>>();
 
   /**
    * Names of columns that are displayed. This will default to all the columns
@@ -319,7 +336,9 @@ export class SPMatEntityListComponent<
    * as an array of array. That is, `[[HttpContextToken<any>, any]]` and
    * initialize it appropriately.
    */
-  httpReqContext = input<[[HttpContextToken<any>, any]]|[HttpContextToken<any>, any]>();
+  httpReqContext = input<
+    [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any]
+  >();
   /* END CLIENT PROVIDED PARAMETERS */
 
   // *** INTERNAL *** //
@@ -343,10 +362,10 @@ export class SPMatEntityListComponent<
     context.set(SP_MAT_ENTITY_LIST_HTTP_CONTEXT, {
       entityName: this.entityName(),
       entityNamePlural: this._entityNamePlural(),
-      endpoint: this.endpoint()
-    })
+      endpoint: this.endpoint(),
+    });
     return context;
-  })
+  });
   _deferViewInit = input<boolean>(false);
   firstLoadDone = false;
   allColumnNames = signal<string[]>([]);
@@ -406,7 +425,14 @@ export class SPMatEntityListComponent<
   });
 
   __columns = computed<SPEntityField<TEntity, IdKey>[]>(() =>
-    this.columns().map((colDef) => new SPEntityField<TEntity, IdKey>(colDef, this.ngxHelperConfig, this.fieldConfig))
+    this.columns().map(
+      (colDef) =>
+        new SPEntityField<TEntity, IdKey>(
+          colDef,
+          this.ngxHelperConfig,
+          this.fieldConfig
+        )
+    )
   );
 
   // We isolate retrieving items from the remote and providing the items
@@ -476,14 +502,13 @@ export class SPMatEntityListComponent<
 
   endpointChanged = effect(() => {
     if (this.endpoint()) {
-      setTimeout(() => { this.refresh(); });
+      setTimeout(() => {
+        this.refresh();
+      });
     }
   });
 
-  constructor(
-    protected http: HttpClient,
-    private sanitizer: DomSanitizer
-  ) {
+  constructor(protected http: HttpClient, private sanitizer: DomSanitizer) {
     // if (!this.config) {
     //   this.config = new DefaultSPMatEntityListConfig();
     // }
@@ -709,7 +734,9 @@ export class SPMatEntityListComponent<
       );
     }
     const parts = this.endpoint().split('?');
-    let params = new HttpParams(parts.length > 1 ? { fromString: parts[1] } : undefined);
+    let params = new HttpParams(
+      parts.length > 1 ? { fromString: parts[1] } : undefined
+    );
     for (const key in pageParams) {
       params = params.append(key, (pageParams as any)[key]);
     }
@@ -739,7 +766,7 @@ export class SPMatEntityListComponent<
             if (this._paginator) {
               // Convert HttpParams to JS object
               const paramsObj: any = {};
-              params.keys().forEach(key => {
+              params.keys().forEach((key) => {
                 paramsObj[key] = params.get(key);
               });
               const { entities, total } = this._paginator.parseRequestResponse(
@@ -810,7 +837,7 @@ export class SPMatEntityListComponent<
       : endpoint;
   }
 
-  toggleActiveEntity(entity: TEntity|undefined) {
+  toggleActiveEntity(entity: TEntity | undefined) {
     if (entity) {
       if (entity === this.activeEntity()) {
         this.activeEntity.set(undefined);

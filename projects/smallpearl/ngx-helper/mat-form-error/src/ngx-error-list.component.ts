@@ -5,8 +5,8 @@ import { provideDefaultNgxMatErrorControl } from './ngx-mat-error-control';
 import { NgxMatErrorControls } from './types';
 
 @Component({
-  selector: 'ngx-error-list, [ngx-error-list]',
-  template: `<ng-template #defaultTemplate let-error>
+    selector: 'ngx-error-list, [ngx-error-list]',
+    template: `<ng-template #defaultTemplate let-error>
     <ul>
       @if (isArray(error)) {
         @for (item of error; track $index) {
@@ -23,14 +23,13 @@ import { NgxMatErrorControls } from './types';
       [ngTemplateOutletContext]="error"
     ></ng-template>
     }`,
-  encapsulation: ViewEncapsulation.None,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AsyncPipe, NgTemplateOutlet],
-  standalone: true,
-  host: {
-    class: 'ngx-error-list',
-  },
-  providers: [provideDefaultNgxMatErrorControl()],
+    encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [AsyncPipe, NgTemplateOutlet],
+    host: {
+        class: 'ngx-error-list',
+    },
+    providers: [provideDefaultNgxMatErrorControl()]
 })
 export class NgxErrorList extends NgxMatErrors {
 

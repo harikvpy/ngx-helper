@@ -21,8 +21,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NavItem } from './nav-item';
 
 @Component({
-  selector: 'ngx-mat-menu-list-item',
-  template: `
+    selector: 'ngx-mat-menu-list-item',
+    template: `
     <a
       *ngIf="item.children || item.route; else divider"
       mat-list-item
@@ -75,8 +75,8 @@ import { NavItem } from './nav-item';
       <div class="menu-divider"></div>
     </ng-template>
   `,
-  styles: [
-    `
+    styles: [
+        `
       .menu-list-item {
         margin-right: 8px !important;
       }
@@ -125,18 +125,16 @@ import { NavItem } from './nav-item';
         height: 1em;
       }
     `,
-  ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [
-    trigger('indicatorRotate', [
-      state('collapsed', style({ transform: 'rotate(0deg)' })),
-      state('expanded', style({ transform: 'rotate(180deg)' })),
-      transition(
-        'expanded <=> collapsed',
-        animate('225ms cubic-bezier(0.4,0.0,0.2,1)')
-      ),
-    ]),
-  ],
+    ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    animations: [
+        trigger('indicatorRotate', [
+            state('collapsed', style({ transform: 'rotate(0deg)' })),
+            state('expanded', style({ transform: 'rotate(180deg)' })),
+            transition('expanded <=> collapsed', animate('225ms cubic-bezier(0.4,0.0,0.2,1)')),
+        ]),
+    ],
+    standalone: false
 })
 export class SPMatMenuListItemComponent implements OnInit, OnDestroy {
   expanded = false;

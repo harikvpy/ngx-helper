@@ -56,15 +56,15 @@ function isImageFileExt(filename: string): boolean {
 }
 
 @Component({
-  standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatIconModule,
-  ],
-  selector: 'qq-mat-file-input',
-  template: `
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatIconModule,
+    ],
+    standalone: true,
+    selector: 'qq-mat-file-input',
+    template: `
     <div class="wrapper">
       <div class="filename-wrapper">
         <input
@@ -89,8 +89,8 @@ function isImageFileExt(filename: string): boolean {
       </div>
     </div>
   `,
-  styles: [
-    `
+    styles: [
+        `
       .wrapper {
         display: flex;
         flex-direction: row;
@@ -128,10 +128,10 @@ function isImageFileExt(filename: string): boolean {
         height: 96px;
       }
     `,
-  ],
-  providers: [
-    { provide: MatFormFieldControl, useExisting: QQMatFileInputComponent },
-  ],
+    ],
+    providers: [
+        { provide: MatFormFieldControl, useExisting: QQMatFileInputComponent },
+    ]
 })
 export class QQMatFileInputComponent
   implements

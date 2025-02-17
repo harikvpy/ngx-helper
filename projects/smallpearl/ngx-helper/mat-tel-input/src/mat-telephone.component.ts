@@ -64,6 +64,16 @@ type TelephoneNumberParts = CountryInfo & { nationalNumber: string };
 
 @Component({
   standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MatSelectModule,
+    NgxMatSelectSearchModule,
+  ],
+  providers: [
+    { provide: MatFormFieldControl, useExisting: SPMatTelephoneInputComponent },
+  ],
   selector: 'sp-mat-telephone-input',
   template: `
     <!--
@@ -163,16 +173,6 @@ type TelephoneNumberParts = CountryInfo & { nationalNumber: string };
       outline: none;
     }
   `,
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    MatSelectModule,
-    NgxMatSelectSearchModule,
-  ],
-  providers: [
-    { provide: MatFormFieldControl, useExisting: SPMatTelephoneInputComponent },
-  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SPMatTelephoneInputComponent
@@ -267,7 +267,10 @@ export class SPMatTelephoneInputComponent
 
   @Input()
   get required(): boolean {
-    return this._required ?? this.ngControl?.control?.hasValidator(Validators.required);
+    return (
+      this._required ??
+      this.ngControl?.control?.hasValidator(Validators.required)
+    );
   }
   set required(value: BooleanInput) {
     this._required = coerceBooleanProperty(value);

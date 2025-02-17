@@ -1,5 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpContext, HttpContextToken } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpContext,
+  HttpContextToken,
+} from '@angular/common/http';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -13,7 +17,7 @@ import {
   signal,
   TemplateRef,
   viewChild,
-  viewChildren
+  viewChildren,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -22,7 +26,7 @@ import { MatColumnDef, MatTableModule } from '@angular/material/table';
 import { RouterModule } from '@angular/router';
 import {
   showBusyWheelUntilComplete,
-  SPMatHostBusyWheelDirective
+  SPMatHostBusyWheelDirective,
 } from '@smallpearl/ngx-helper/mat-busy-wheel';
 import {
   SPContextMenuItem,
@@ -71,10 +75,11 @@ import { PreviewHostComponent } from './preview-host.component';
   selector: 'sp-mat-entity-crud',
   template: `
     <as-split direction="horizontal" [gutterSize]="6">
-      <as-split-area [size]="entitiesPaneWidth()" [visible]="!entitiesPaneHidden()">
-        <div
-          [class]="crudConfig.listPaneWrapperClass"
-        >
+      <as-split-area
+        [size]="entitiesPaneWidth()"
+        [visible]="!entitiesPaneHidden()"
+      >
+        <div [class]="crudConfig.listPaneWrapperClass">
           <ng-content select="[breadCrumbs]"></ng-content>
 
           <ng-template #defaultActionButtons>
@@ -127,11 +132,11 @@ import { PreviewHostComponent } from './preview-host.component';
                 {{ _title() }}
               </div>
               <span class="spacer"></span>
-            <!-- Hide the action buttons when Preview/Edit pane is active -->
+              <!-- Hide the action buttons when Preview/Edit pane is active -->
               @if (!entityPaneActive()) {
-                <ng-container
-                  [ngTemplateOutlet]="actionsTemplate() || defaultActionButtons"
-                ></ng-container>
+              <ng-container
+                [ngTemplateOutlet]="actionsTemplate() || defaultActionButtons"
+              ></ng-container>
               }
             </div>
           </ng-template>
@@ -199,7 +204,10 @@ import { PreviewHostComponent } from './preview-host.component';
         -->
       </as-split-area>
       <as-split-area [size]="entityPaneWidth()" [visible]="entityPaneActive()">
-        <div [class]="crudConfig.previewPaneWrapperClass" spHostBusyWheel="formBusyWheel">
+        <div
+          [class]="crudConfig.previewPaneWrapperClass"
+          spHostBusyWheel="formBusyWheel"
+        >
           <sp-entity-crud-preview-host
             [ngClass]="createEditViewActive() ? 'd-none' : 'd-inherit'"
             [entityCrudComponentBase]="this"
@@ -458,8 +466,8 @@ export class SPMatEntityCrudComponent<
    */
   @Output() entityViewPaneActivated = new EventEmitter<{
     activated: boolean;
-    cancelled: boolean|undefined;
-    mode: 'edit'|'preview';
+    cancelled: boolean | undefined;
+    mode: 'edit' | 'preview';
   }>();
 
   busyWheelId = `entityCrudBusyWheel-${Date.now()}`;
@@ -484,13 +492,19 @@ export class SPMatEntityCrudComponent<
   // Whether the pane that hosts the preview/edit-entity template is active.
   // We call it entityPane as it's used to either render a selected entity
   // or to edit one.
-  entityPaneActive = computed(() => !!this.previewedEntity() || this.createEditViewActive());
+  entityPaneActive = computed(
+    () => !!this.previewedEntity() || this.createEditViewActive()
+  );
   // Effective width of the entity pane.
-  entityPaneWidth = computed(() => !!this.previewedEntity() ? this.previewPaneWidth() : this.editPaneWidth());
+  entityPaneWidth = computed(() =>
+    !!this.previewedEntity() ? this.previewPaneWidth() : this.editPaneWidth()
+  );
 
   // Width of the pane showing the list of entities. Calculated as
   entitiesPaneWidth = computed(() => 100 - this.entityPaneWidth());
-  entitiesPaneHidden = computed(() => this.entityPaneActive() && this.entityPaneWidth() === 100);
+  entitiesPaneHidden = computed(
+    () => this.entityPaneActive() && this.entityPaneWidth() === 100
+  );
 
   defaultItemCrudActions = signal<SPContextMenuItem[]>([]);
   columnsWithAction = computed(() => {
@@ -642,7 +656,11 @@ export class SPMatEntityCrudComponent<
 
   closeCreateEdit(cancelled: boolean) {
     this.createEditViewActive.set(false);
-    this.entityViewPaneActivated.emit({ activated: false, cancelled: !!cancelled, mode: 'edit' });
+    this.entityViewPaneActivated.emit({
+      activated: false,
+      cancelled: !!cancelled,
+      mode: 'edit',
+    });
   }
 
   canCancelEdit() {
@@ -792,7 +810,11 @@ export class SPMatEntityCrudComponent<
         this.spEntitiesList()?.toggleActiveEntity(this.previewedEntity());
       }
       this.previewedEntity.set(undefined);
-      this.entityViewPaneActivated.emit({ activated: false, cancelled: undefined, mode: 'preview' });
+      this.entityViewPaneActivated.emit({
+        activated: false,
+        cancelled: undefined,
+        mode: 'preview',
+      });
     }
   }
 
@@ -814,8 +836,10 @@ export class SPMatEntityCrudComponent<
       event.preventDefault();
       event.stopImmediatePropagation();
       const params = {
-        title: this.newItemLabel() ?? this.crudConfig.i18n.newItemLabel(this._itemLabel()),
-      }
+        title:
+          this.newItemLabel() ??
+          this.crudConfig.i18n.newItemLabel(this._itemLabel()),
+      };
       this.showCreateEditView(undefined, params);
       // const tmpl = this.createEditFormTemplate();
       // if (tmpl) {
@@ -835,8 +859,10 @@ export class SPMatEntityCrudComponent<
 
   onUpdate(entity: TEntity) {
     const params = {
-      title: this.editItemTitle() ?? this.crudConfig.i18n.editItemLabel(this._itemLabel()),
-    }
+      title:
+        this.editItemTitle() ??
+        this.crudConfig.i18n.editItemLabel(this._itemLabel()),
+    };
     this.showCreateEditView(entity, params);
 
     // const tmpl = this.createEditFormTemplate();
@@ -874,7 +900,11 @@ export class SPMatEntityCrudComponent<
       const createEditHost = this.createEditHostComponent();
       createEditHost!.show(entity, params);
       this.createEditViewActive.set(true);
-      this.entityViewPaneActivated.emit({ activated: true, cancelled: undefined, mode: 'edit' });
+      this.entityViewPaneActivated.emit({
+        activated: true,
+        cancelled: undefined,
+        mode: 'edit',
+      });
     }
   }
 
@@ -885,7 +915,11 @@ export class SPMatEntityCrudComponent<
         const previewHost = this.previewHostComponent();
         this.previewedEntity.set(entity);
         previewHost?.show(entity, params);
-        this.entityViewPaneActivated.emit({ activated: true, cancelled: undefined, mode: 'preview' });
+        this.entityViewPaneActivated.emit({
+          activated: true,
+          cancelled: undefined,
+          mode: 'preview',
+        });
         // this.previewActivated.emit({ entity, activated: true });
       }
     }
@@ -965,7 +999,7 @@ export class SPMatEntityCrudComponent<
     return this.getUrl(entityEndpoint);
   }
 
-  handleSelectEntity(entity: TEntity|undefined) {
+  handleSelectEntity(entity: TEntity | undefined) {
     if (!this.createEditViewActive()) {
       if (this.previewTemplate()) {
         entity ? this.showPreviewView(entity) : this.hidePreviewView();

@@ -9,7 +9,7 @@ import {
   signal,
   TemplateRef,
   viewChild,
-  ViewContainerRef
+  ViewContainerRef,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -17,11 +17,19 @@ import { SPMatHostBusyWheelDirective } from '@smallpearl/ngx-helper/mat-busy-whe
 import { Subscription, tap } from 'rxjs';
 import { getEntityCrudConfig } from './default-config';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
-import { SPMatEntityCrudConfig, SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
+import {
+  SPMatEntityCrudConfig,
+  SPMatEntityCrudCreateEditBridge,
+} from './mat-entity-crud-types';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, SPMatHostBusyWheelDirective],
+  imports: [
+    CommonModule,
+    MatButtonModule,
+    MatIconModule,
+    SPMatHostBusyWheelDirective,
+  ],
   selector: 'sp-create-edit-entity-host',
   template: `
     <div spHostBusyWheel="formBusyWheel">
@@ -59,14 +67,16 @@ import { SPMatEntityCrudConfig, SPMatEntityCrudCreateEditBridge } from './mat-en
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEditBridge, OnInit, OnDestroy
+export class FormViewHostComponent<TEntity>
+  implements SPMatEntityCrudCreateEditBridge, OnInit, OnDestroy
 {
-  entityCrudComponentBase = input.required<SPMatEntityCrudComponentBase<TEntity>>();
+  entityCrudComponentBase =
+    input.required<SPMatEntityCrudComponentBase<TEntity>>();
   clientViewTemplate = input<TemplateRef<any> | null>(null);
   itemLabel = input.required<string>();
   itemLabelPlural = input.required<string>();
 
-  entity = signal<TEntity|undefined>(undefined);
+  entity = signal<TEntity | undefined>(undefined);
   title = signal<string>('');
   params = signal<any>(undefined);
   clientFormView!: EmbeddedViewRef<any> | null;
@@ -84,12 +94,16 @@ export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEdit
     this.sub$.unsubscribe();
   }
 
-  show(entity: TEntity|undefined, params?: any) {
+  show(entity: TEntity | undefined, params?: any) {
     this.entity.set(entity);
     if (params && params?.title) {
       this.title.set(params.title);
     } else {
-      this.title.set(entity ? this.config.i18n.editItemLabel(this.itemLabel()) : this.config.i18n.newItemLabel(this.itemLabel()));
+      this.title.set(
+        entity
+          ? this.config.i18n.editItemLabel(this.itemLabel())
+          : this.config.i18n.newItemLabel(this.itemLabel())
+      );
     }
     this.params.set(params);
     this.createClientView();
@@ -112,9 +126,9 @@ export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEdit
     //   )}`
     // );
     const crudComponent = this.entityCrudComponentBase();
-    return crudComponent?.create(entityValue).pipe(
-      tap(() => this.close(false)),
-    );
+    return crudComponent
+      ?.create(entityValue)
+      .pipe(tap(() => this.close(false)));
   }
 
   update(id: any, entityValue: any) {
@@ -124,9 +138,9 @@ export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEdit
     //   )}, entity: ${entityValue}`
     // );
     const crudComponent = this.entityCrudComponentBase();
-    return crudComponent?.update(id, entityValue).pipe(
-      tap(() => this.close(false)),
-    );
+    return crudComponent
+      ?.update(id, entityValue)
+      .pipe(tap(() => this.close(false)));
   }
 
   /**
@@ -141,7 +155,7 @@ export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEdit
         $implicit: {
           bridge: this,
           entity: this.entity(),
-          params: this.params()
+          params: this.params(),
         },
       });
       this.clientFormView.detectChanges();

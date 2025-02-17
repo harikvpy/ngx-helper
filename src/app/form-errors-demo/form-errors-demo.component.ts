@@ -15,17 +15,16 @@ export const NGX_MAT_ERROR_DEFAULT_CONFIG: FactoryProvider = {
 };
 
 @Component({
-  selector: 'app-form-errors-demo',
-  imports: [
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    NgxMatErrors,
-    NgxErrorList,
-  ],
-  standalone: true,
-  template: `
+    selector: 'app-form-errors-demo',
+    imports: [
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule,
+        NgxMatErrors,
+        NgxErrorList,
+    ],
+    template: `
       <div class="wrapper">
       <div class="">
         @if (form.errors) {
@@ -53,7 +52,7 @@ export const NGX_MAT_ERROR_DEFAULT_CONFIG: FactoryProvider = {
       </div>
     </div>
   `,
-  styles: `
+    styles: `
     .mat-mdc-form-field {
       width: 100%;
     }
@@ -68,11 +67,11 @@ export const NGX_MAT_ERROR_DEFAULT_CONFIG: FactoryProvider = {
       padding: 0.2em;
     }
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [
-    NGX_MAT_ERROR_CONFIG_EN,
-    NGX_MAT_ERROR_DEFAULT_CONFIG
-  ]
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [
+        NGX_MAT_ERROR_CONFIG_EN,
+        NGX_MAT_ERROR_DEFAULT_CONFIG
+    ]
 })
 
 export class FormErrorDemoComponent implements OnInit {
