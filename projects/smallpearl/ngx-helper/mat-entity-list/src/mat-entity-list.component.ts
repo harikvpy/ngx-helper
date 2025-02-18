@@ -48,8 +48,7 @@ import { getNgxHelperConfig } from '@smallpearl/ngx-helper/core';
 import {
   SP_ENTITY_FIELD_CONFIG,
   SPEntityField,
-  SPEntityFieldConfig,
-  SPEntityFieldSpec,
+  SPEntityFieldSpec
 } from '@smallpearl/ngx-helper/entity-field';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { plural } from 'pluralize';
@@ -470,7 +469,7 @@ export class SPMatEntityListComponent<
   @Output() selectEntity = new EventEmitter<TEntity | undefined>();
 
   ngxHelperConfig = getNgxHelperConfig();
-  fieldConfig!: SPEntityFieldConfig;
+  fieldConfig = inject(SP_ENTITY_FIELD_CONFIG, { optional: true })!;
   entityListConfig = getEntityListConfig();
 
   endpointChanged = effect(() => {
@@ -486,7 +485,7 @@ export class SPMatEntityListComponent<
     // if (!this.config) {
     //   this.config = new DefaultSPMatEntityListConfig();
     // }
-    this.fieldConfig = inject(SP_ENTITY_FIELD_CONFIG, { optional: true })!;
+    // this.fieldConfig = inject(SP_ENTITY_FIELD_CONFIG, { optional: true })!;
   }
 
   ngOnInit() {

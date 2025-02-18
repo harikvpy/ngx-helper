@@ -74,7 +74,7 @@ export class SPEntityField<TEntity extends { [P in IdKey]: PropertyKey }, IdKey 
    */
   get options() {
     let globalFieldValueOptions: SPEntityFieldSpec<any>['valueOptions'] = {};
-    if (this.fieldConfig?.fieldValueOptions && this.fieldConfig.fieldValueOptions.has(this._fieldSpec.name)) {
+    if (this.fieldConfig && this.fieldConfig?.fieldValueOptions && this.fieldConfig.fieldValueOptions.has(this._fieldSpec.name)) {
       globalFieldValueOptions = this.fieldConfig.fieldValueOptions.get(this._fieldSpec.name);
     }
     return {
@@ -102,6 +102,7 @@ export class SPEntityField<TEntity extends { [P in IdKey]: PropertyKey }, IdKey 
     let val = undefined;
     if (!this._fieldSpec.valueFn) {
       if (
+        this.fieldConfig &&
         this.fieldConfig?.fieldValueFns &&
         this.fieldConfig.fieldValueFns.has(this._fieldSpec.name)
       ) {
