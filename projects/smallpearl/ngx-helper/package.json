@@ -1,34 +1,21 @@
 {
   "name": "@smallpearl/ngx-helper",
-  "version": "0.27.2",
+  "version": "0.29.7",
   "peerDependencies": {
-    "@angular/cdk": ">=15.0.0",
-    "@angular/common": ">=15.0.0",
-    "@angular/core": ">=15.0.0",
-    "@angular/material": ">=15.0.0",
-    "@angular/forms": ">=15.0.0",
-    "rxjs": "^7.0.0",
-    "@ngneat/elf": ">=2.5.1",
-    "@ngneat/elf-entities": ">=5.0.2",
-    "ngx-mat-select-search": ">=7.0.5",
-    "ngx-infinite-scroll": ">=18.0.1",
-    "angular-split": ">=18.2.0",
-    "pluralize": ">=8.0.0",
-    "lodash": ">=4.17.21"
-  },
-  "peerDependenciesMeta": {
-    "ngx-infinite-scroll": {
-      "optional": true
-    },
-    "angular-split": {
-      "optional": true
-    },
-    "@ngneat/elf": {
-      "optional": true
-    },
-    "@ngneat/elf-entities": {
-      "optional": true
-    }
+    "@angular/common": "^19.1.0",
+    "@angular/core": "^19.1.0",
+    "@angular/cdk": "^19.1.0",
+    "@angular/material": "^19.1.0",
+    "@angular/forms": "^19.1.0",
+    "@ngneat/elf": "^2.5.1",
+    "@ngneat/elf-entities": "^5.0.2",
+    "angular-split": "^19.0.0",
+    "google-libphonenumber": "^3.2.34",
+    "lodash": "^4.17.21",
+    "pluralize": "^8.0.0",
+    "ngx-infinite-scroll": "^19.0.0",
+    "ngx-mat-select-search": "^8.0.0",
+    "rxjs": "^7.0.0"
   },
   "dependencies": {
     "tslib": "^2.3.0"
