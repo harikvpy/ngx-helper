@@ -10,7 +10,6 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { QQMatFileInputComponent } from '@smallpearl/ngx-helper/mat-file-input';
-import { SPMatTelephoneInputComponent } from '@smallpearl/ngx-helper/mat-tel-input';
 
 @Component({
     selector: 'app-home-page',
@@ -20,8 +19,7 @@ import { SPMatTelephoneInputComponent } from '@smallpearl/ngx-helper/mat-tel-inp
         ReactiveFormsModule,
         MatFormFieldModule,
         MatSelectModule,
-        QQMatFileInputComponent,
-        SPMatTelephoneInputComponent
+        QQMatFileInputComponent
     ],
     template: `
     <div style="margin: 0.5em;">
