@@ -1,15 +1,15 @@
-import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SatelliteAppHomeComponent } from './satellite-app-home.component';
-import { RouterModule, Routes } from '@angular/router';
+import { NgModule } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { RouterModule, Routes } from '@angular/router';
+import { SPMatMenuLayoutModule } from '@smallpearl/ngx-helper/mat-side-menu-layout';
 import { SidemenuFooterComponent } from '../components/sidemenu-footer/sidemenu-footer.component';
 import { SidemenuInfoPaneComponent } from '../components/sidemenu-info-pane/sidemenu-info-pane.component';
 import { ToolbarEndButtonsComponent } from '../components/toolbar-end-buttons/toolbar-end-buttons.component';
 import { ToolbarTitleComponent } from '../components/toolbar-title/toolbar-title.component';
-import { SPMatMenuLayoutComponent, SPMatMenuLayoutModule } from '@smallpearl/ngx-helper/mat-side-menu-layout';
+import { SatelliteAppHomeComponent } from './satellite-app-home.component';
 
 const routes: Routes = [
   {
