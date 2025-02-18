@@ -4,6 +4,7 @@
   "scripts": {
     "ng": "ng",
     "app:start": "ng serve",
+    "lib:bump-build": "cd projects/smallpearl/ngx-helper && standard-version --infile ../../../CHANGELOG.md && cd ../../.. && npm run lib:build",
     "lib:build": "ng build @smallpearl/ngx-helper",
     "lib:watch": "ng build @smallpearl/ngx-helper --configuration development --watch",
     "lib:test": "ng test @smallpearl/ngx-helper",
