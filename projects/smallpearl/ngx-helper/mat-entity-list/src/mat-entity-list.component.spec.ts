@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, ComponentRef, OnInit, signal, viewChild } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatTableModule } from '@angular/material/table';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
@@ -68,7 +68,7 @@ class SPMatEntityListTestComponent implements OnInit {
 
   displayedColumns = signal<string[]>([]);
   endpoint = 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb';
-  columns: SPEntityFieldSpec<User>[] = [
+  columns: SPEntityFieldSpec<User, 'cell'>[] = [
     { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
     { name: 'gender' },
     { name: 'cell' },
@@ -136,7 +136,7 @@ describe('SPMatEntityListComponent', () => {
     ]);
   });
 
-  it('should create and load data without paginator', async () => {
+  it('should create and load data without paginator', fakeAsync(() => {
     componentRef.setInput('columns', [
       { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
       'gender', 'cell'
@@ -150,7 +150,8 @@ describe('SPMatEntityListComponent', () => {
       httpReqContextReceived = options.context.get('cache') === true;
       return of(USER_DATA);
     }) as any); // 'as any' to suppress TSC function prototype mismatch
-    fixture.autoDetectChanges();
+    fixture.detectChanges();
+    tick();
     expect(component).toBeTruthy();
     const rows = fixture.debugElement.nativeElement.querySelectorAll('tr');
     // +1 for the <tr> in <thead>
@@ -158,23 +159,24 @@ describe('SPMatEntityListComponent', () => {
     const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
     expect(httpReqContextReceived).toBeTrue();
-  });
+  }));
 
-  it('should accept hybrid column definitions', async () => {
+  it('should accept hybrid column definitions', fakeAsync(() => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
     fixture.autoDetectChanges();
+    tick();
     expect(component).toBeTruthy();
     const rows = fixture.debugElement.nativeElement.querySelectorAll('tr');
     // +1 for the <tr> in <thead>
     expect(rows.length).toEqual(USER_DATA.length+1);
     const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
-  });
+  }));
 
-  it('should show pagination control for pagination="discrete"', async () => {
+  it('should show pagination control for pagination="discrete"', fakeAsync(() => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
     const myPaginator = new DRFPaginator()
@@ -190,13 +192,14 @@ describe('SPMatEntityListComponent', () => {
       }
     ));
     fixture.autoDetectChanges();
+    tick();
     expect(component).toBeTruthy();
     const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeTruthy();
     // console.log('(paginator.lastRequestParams: ', paginator.lastRequestParams);
-  });
+  }));
 
-  it('should *NOT* show pagination control for pagination="infinite"', async () => {
+  it('should *NOT* show pagination control for pagination="infinite"', fakeAsync(() => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
     const myPaginator = new DRFPaginator()
@@ -212,12 +215,13 @@ describe('SPMatEntityListComponent', () => {
       }
     ));
     fixture.autoDetectChanges();
+    tick();
     expect(component).toBeTruthy();
     const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
-  });
+  }));
 
-  it('should call paginator methods for pagination args', async () => {
+  it('should call paginator methods for pagination args', fakeAsync(() => {
     const endpoint = 'https://randomuser.me/api/?nat=us';
     componentRef.setInput('endpoint', endpoint);
     componentRef.setInput('idKey', 'cell');
@@ -247,8 +251,12 @@ describe('SPMatEntityListComponent', () => {
         results: pageSize,
       }
     })
-    const parseRequestResponseSpy = spyOn(myPaginator, 'parseRequestResponse');
+    const parseRequestResponseSpy = spyOn(myPaginator, 'parseRequestResponse').and.returnValue({
+      total: USER_DATA.length,
+      entities: USER_DATA
+    })
     fixture.autoDetectChanges();
+    tick();
     expect(component).toBeTruthy();
     const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeTruthy();
@@ -256,7 +264,7 @@ describe('SPMatEntityListComponent', () => {
     expect(getRequestPageParams.endpoint).toEqual(endpoint);
     expect(getRequestPageParams.pageSize).toEqual(pageSize);
     expect(parseRequestResponseSpy).toHaveBeenCalled();
-  });
+  }));
 
   /**
    * Test that the global config object is used. These include the following
@@ -267,7 +275,7 @@ describe('SPMatEntityListComponent', () => {
    *    i18nTranslate
    *    columnValueFns
    */
-  it('should use global config object', async () => {
+  it('should use global config object', fakeAsync(() => {
     TestBed.resetTestingModule();
     const myPaginator = new DRFPaginator()
 
@@ -366,6 +374,7 @@ describe('SPMatEntityListComponent', () => {
       }
     ));
     fixture.autoDetectChanges();
+    tick();
     expect(component).toBeTruthy();
     const rows = fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
     // +1 for the <tr> in <thead>
@@ -384,5 +393,5 @@ describe('SPMatEntityListComponent', () => {
     }
     // global fieldValue function for 'gender' should've been called.
     expect(globalFieldValueFnsCalled).toBeTrue();
-  });
+  }));
 });

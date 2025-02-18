@@ -90,7 +90,7 @@ const USER_DATA: User[] = [
   },
 ];
 
-const USER_COLUMNS: SPEntityFieldSpec<User>[] = [
+const USER_COLUMNS: SPEntityFieldSpec<User, 'cell'>[] = [
   {
     name: 'name',
     valueFn: (user: User) => user.name.first + ' ' + user.name.last,
