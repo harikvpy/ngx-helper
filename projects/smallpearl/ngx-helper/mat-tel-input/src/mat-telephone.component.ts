@@ -63,9 +63,8 @@ export class ISOTelNumber {
 type TelephoneNumberParts = CountryInfo & { nationalNumber: string };
 
 @Component({
-  standalone: true,
-  selector: 'sp-mat-telephone-input',
-  template: `
+    selector: 'sp-mat-telephone-input',
+    template: `
     <!--
     <div
       rol="group"
@@ -127,7 +126,7 @@ type TelephoneNumberParts = CountryInfo & { nationalNumber: string };
       />
     </div>
   `,
-  styles: `
+    styles: `
     .tel-input-wrapper {
       display: flex;
       padding: 1px 1px 1px 1px;
@@ -163,17 +162,17 @@ type TelephoneNumberParts = CountryInfo & { nationalNumber: string };
       outline: none;
     }
   `,
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    MatSelectModule,
-    NgxMatSelectSearchModule,
-  ],
-  providers: [
-    { provide: MatFormFieldControl, useExisting: SPMatTelephoneInputComponent },
-  ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatSelectModule,
+        NgxMatSelectSearchModule,
+    ],
+    providers: [
+        { provide: MatFormFieldControl, useExisting: SPMatTelephoneInputComponent },
+    ],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SPMatTelephoneInputComponent
   implements

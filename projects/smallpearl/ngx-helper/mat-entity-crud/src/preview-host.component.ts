@@ -13,11 +13,10 @@ import {
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
 
 @Component({
-  imports: [],
-  standalone: true,
-  selector: 'sp-entity-crud-preview-host',
-  template: ` <ng-container #previewComponent></ng-container> `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [],
+    selector: 'sp-entity-crud-preview-host',
+    template: ` <ng-container #previewComponent></ng-container> `,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PreviewHostComponent<TEntity> implements OnInit, OnDestroy {
   vc = viewChild('previewComponent', { read: ViewContainerRef });

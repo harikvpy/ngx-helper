@@ -44,22 +44,21 @@ export const NGX_MAT_ERROR_DEFAULT_OPTIONS = new InjectionToken<
 >('NGX_MAT_ERROR_DEFAULT_OPTIONS');
 
 @Component({
-  selector: 'ngx-mat-errors, [ngx-mat-errors]',
-  template: `<ng-template #defaultTemplate let-error>{{ error[0] }}</ng-template
+    selector: 'ngx-mat-errors, [ngx-mat-errors]',
+    template: `<ng-template #defaultTemplate let-error>{{ error[0] }}</ng-template
     >@if( error$ | async; as error) {
     <ng-template
       [ngTemplateOutlet]="error.template ?? defaultTemplate"
       [ngTemplateOutletContext]="error"
     ></ng-template>
     }`,
-  encapsulation: ViewEncapsulation.None,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AsyncPipe, NgTemplateOutlet],
-  standalone: true,
-  host: {
-    class: 'ngx-mat-errors',
-  },
-  providers: [provideDefaultNgxMatErrorControl()],
+    encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [AsyncPipe, NgTemplateOutlet],
+    host: {
+        class: 'ngx-mat-errors',
+    },
+    providers: [provideDefaultNgxMatErrorControl()]
 })
 export class NgxMatErrors implements OnDestroy {
   private readonly messages$ = coerceToObservable(

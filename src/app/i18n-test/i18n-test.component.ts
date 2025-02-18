@@ -5,10 +5,9 @@ import { setSPLocaleConfig, SPDatePipe, SPCurrencyPipe } from '@smallpearl/ngx-h
 import { BehaviorSubject } from 'rxjs';
 
 @Component({
-  selector: 'app-i18n-test',
-  standalone: true,
-  imports: [CommonModule, RouterModule, SPCurrencyPipe, SPDatePipe],
-  template: `
+    selector: 'app-i18n-test',
+    imports: [CommonModule, RouterModule, SPCurrencyPipe, SPDatePipe],
+    template: `
     <h2>i18n Pipes Test</h2>
     <div class="p-1">
     <label for="locale">Locale: </label>
@@ -55,7 +54,7 @@ import { BehaviorSubject } from 'rxjs';
       }
     </div>
   `,
-  styles: [`
+    styles: [`
   .p-1 {
     padding: .4em;
   }
@@ -70,7 +69,7 @@ import { BehaviorSubject } from 'rxjs';
     padding: 0 0;
     margin: 6px 0;
   }
-  `],
+  `]
 })
 export class I18nTestComponent {
 

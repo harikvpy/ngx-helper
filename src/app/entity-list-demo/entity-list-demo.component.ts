@@ -77,28 +77,27 @@ const ELEMENT_DATA: PeriodicElement[] = [
 ];
 
 @Component({
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    SPMatEntityListComponent,
-    MatTableModule,
-    MatSortModule,
-    MatTabsModule,
-    SPMatContextMenuComponent,
-  ],
-  providers: [
-    {
-      provide: SP_MAT_ENTITY_LIST_CONFIG,
-      useFactory: provideMatEntityListConfig,
-    },
-    {
-      provide: SP_ENTITY_FIELD_CONFIG,
-      useFactory: provideEntityFieldConfig,
-    },
-  ],
-  selector: 'app-entity-list-demo',
-  template: `
+    imports: [
+        CommonModule,
+        FormsModule,
+        SPMatEntityListComponent,
+        MatTableModule,
+        MatSortModule,
+        MatTabsModule,
+        SPMatContextMenuComponent,
+    ],
+    providers: [
+        {
+            provide: SP_MAT_ENTITY_LIST_CONFIG,
+            useFactory: provideMatEntityListConfig,
+        },
+        {
+            provide: SP_ENTITY_FIELD_CONFIG,
+            useFactory: provideEntityFieldConfig,
+        },
+    ],
+    selector: 'app-entity-list-demo',
+    template: `
     <div class="demo-wrapper">
       <h1>Entity List Demo</h1>
       <div class="demo-tabs">
@@ -221,8 +220,8 @@ const ELEMENT_DATA: PeriodicElement[] = [
       </ng-template>
     </div>
   `,
-  styles: [
-    `
+    styles: [
+        `
       .demo-wrapper {
         display: flex;
         flex-direction: column;
@@ -237,8 +236,8 @@ const ELEMENT_DATA: PeriodicElement[] = [
         max-height: 100%;
       }
     `,
-  ],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    ],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EntityListDemoComponent implements OnInit, AfterViewInit {
   endpoint = 'https://randomuser.me/api/?nat=us,gb';

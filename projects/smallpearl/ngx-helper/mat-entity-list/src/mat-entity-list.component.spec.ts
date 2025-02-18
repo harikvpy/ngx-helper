@@ -39,13 +39,12 @@ type UserEntityListComponent = SPMatEntityListComponent<User, 'cell'>;
  * this to test SPMatEntityListComponent
  */
 @Component({
-  standalone: true,
-  imports: [
-    CommonModule,
-    MatTableModule,
-    SPMatEntityListComponent
-  ],
-  template: `
+    imports: [
+        CommonModule,
+        MatTableModule,
+        SPMatEntityListComponent
+    ],
+    template: `
     <div>
     <sp-mat-entity-list
       entityName="user"

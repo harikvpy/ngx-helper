@@ -2,10 +2,9 @@ import { Component, ElementRef, input, OnDestroy, OnInit } from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
-  selector: 'sp-mat-busy-wheel',
-  standalone: true,
-  imports: [MatProgressSpinnerModule],
-  template: `
+    selector: 'sp-mat-busy-wheel',
+    imports: [MatProgressSpinnerModule],
+    template: `
     <div class="busy-wheel-wrapper">
       <span>
         <div class="busy-wheel-container" id="{{ wheelId() }}">
@@ -20,8 +19,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
       </span>
     </div>
   `,
-  styles: [
-    `
+    styles: [
+        `
       .busy-wheel-wrapper {
         position: absolute;
         top: 0;
@@ -42,7 +41,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
         width: 100%;
       }
     `
-  ]
+    ]
 })
 export class SPMatBusyWheelComponent implements OnInit, OnDestroy {
   wheelId = input('id_busy-wheel');

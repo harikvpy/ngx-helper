@@ -14,8 +14,8 @@ import { LayoutService, SideMenuLayoutProps } from './layout.service';
 import { NavItem } from './nav-item';
 
 @Component({
-  selector: 'sp-mat-menu-layout',
-  template: `
+    selector: 'sp-mat-menu-layout',
+    template: `
     <mat-sidenav-container class="layout-container">
       <mat-sidenav
         class="layout-menu-pane"
@@ -78,8 +78,8 @@ import { NavItem } from './nav-item';
       </mat-sidenav-content>
     </mat-sidenav-container>
   `,
-  styles: [
-    `
+    styles: [
+        `
       .layout-menu-pane {
         background-color: var(--sp-mat-menu-bg-color) !important;
         color: var(--sp-mat-menu-fg-color) !important;
@@ -124,15 +124,16 @@ import { NavItem } from './nav-item';
         flex: 1 1 auto;
       }
     `,
-  ],
-  // Add this style to make the content-container scroll from within.
-  // That is override the window scrolling with the content div private
-  // scroller.
-  // .content-container {
-  //   overflow-x: scroll;
-  //   overflow-y: scroll;
-  // }
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    ],
+    // Add this style to make the content-container scroll from within.
+    // That is override the window scrolling with the content div private
+    // scroller.
+    // .content-container {
+    //   overflow-x: scroll;
+    //   overflow-y: scroll;
+    // }
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class SPMatMenuLayoutComponent implements OnInit, OnDestroy {
   @ViewChild('menuNav') menuNav!: MatSidenav;

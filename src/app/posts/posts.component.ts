@@ -138,17 +138,16 @@ const BLOCKS: Block[] = [
 ];
 
 @Component({
-  selector: 'app-posts',
-  standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    InfiniteScrollDirective,
-    SPMatSelectEntityComponent,
-  ],
-  template: `
+    selector: 'app-posts',
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatSelectModule,
+        InfiniteScrollDirective,
+        SPMatSelectEntityComponent,
+    ],
+    template: `
   <!--
     infiniteScrollContainer=".sp-sidenav-content-container"
     [fromRoot]="true"
@@ -240,7 +239,7 @@ const BLOCKS: Block[] = [
     </div>
   </div>
   `,
-  styles: [`
+    styles: [`
   .fs-2 {
     font-size: 2em;
   }
@@ -273,7 +272,7 @@ const BLOCKS: Block[] = [
     font-weight: 800;
   }
   `,
-  ],
+    ]
 })
 export class PostsComponent {
   loadUsers = () => of(USER_DATA);

@@ -47,10 +47,9 @@ import { SP_ENTITY_FIELD_CONFIG, SPEntityField, SPEntityFieldSpec } from '@small
 // }
 
 @Component({
-  standalone: true,
-  imports: [],
-  selector: 'sp-fields-renderer',
-  template: `
+    imports: [],
+    selector: 'sp-fields-renderer',
+    template: `
     @if (isString()) {
       {{ stringValue() }}
     } @else {
@@ -68,7 +67,7 @@ import { SP_ENTITY_FIELD_CONFIG, SPEntityField, SPEntityFieldSpec } from '@small
       </div>
     }
   `,
-  styles: `
+    styles: `
   .field-values {
     padding: 0.2em 0;
     text-align: end;
@@ -77,7 +76,7 @@ import { SP_ENTITY_FIELD_CONFIG, SPEntityField, SPEntityFieldSpec } from '@small
     padding-right: 1em;
   }
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FieldsRendererComponent<TEntity extends { [P in IdKey]: PropertyKey }, IdKey extends string = 'id'> implements OnInit {
   entity = input.required<TEntity>();
@@ -118,14 +117,13 @@ export class FieldsRendererComponent<TEntity extends { [P in IdKey]: PropertyKey
  * This is the first towards that long path ahead.
  */
 @Component({
-  standalone: true,
-  imports: [
-    CommonModule,
-    UpperCasePipe,
-    FieldsRendererComponent
-],
-  selector: 'sp-stationary-with-line-items',
-  template: `
+    imports: [
+        CommonModule,
+        UpperCasePipe,
+        FieldsRendererComponent
+    ],
+    selector: 'sp-stationary-with-line-items',
+    template: `
   <div class="stationary-wrapper mat-body">
     <div class="title">{{ title() }}</div>
     @if (number()) {
@@ -228,7 +226,7 @@ export class FieldsRendererComponent<TEntity extends { [P in IdKey]: PropertyKey
     </div>
   </div>
   `,
-  styles: `
+    styles: `
   .stationary-wrapper {
     padding: 2em 1em;
   }
@@ -287,7 +285,7 @@ export class FieldsRendererComponent<TEntity extends { [P in IdKey]: PropertyKey
 
   }
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StationaryWithLineItemsComponent<TEntity extends { [P in IdKey]: PropertyKey }, TEntityLineItem extends { [P in IdKey]: PropertyKey }, IdKey extends string = 'id'> implements OnInit {
   entity = input.required<TEntity>();

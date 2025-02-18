@@ -2,8 +2,8 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { NavItem, SPMatMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-menu-layout';
 
 @Component({
-  selector: 'app-side-menu-layout-eample',
-  template: `
+    selector: 'app-side-menu-layout-eample',
+    template: `
     <sp-mat-menu-layout
       baseUrl="home"
       brandingImage="assets/angular.png"
@@ -33,7 +33,8 @@ import { NavItem, SPMatMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-si
       <app-sidemenu-info-pane></app-sidemenu-info-pane>
     </ng-template>
   `,
-  styles: [],
+    styles: [],
+    standalone: false
 })
 export class SideMenuLayoutExampleComponent implements OnInit {
   @ViewChild(SPMatMenuLayoutComponent) sideMenuLayout!: SPMatMenuLayoutComponent;

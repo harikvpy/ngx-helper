@@ -4,10 +4,9 @@ import { StationaryWithLineItemsComponent } from '@smallpearl/ngx-helper/station
 import { Invoice } from './data';
 
 @Component({
-  standalone: true,
-  imports: [StationaryWithLineItemsComponent],
-  selector: 'app-invoice-preview',
-  template: `
+    imports: [StationaryWithLineItemsComponent],
+    selector: 'app-invoice-preview',
+    template: `
     <sp-stationary-with-line-items
       [entity]="invoice()"
       title="INVOICE"
@@ -18,7 +17,7 @@ import { Invoice } from './data';
       [rightFooter]="rightFooterFields"
     >
     </sp-stationary-with-line-items>
-  `,
+  `
 })
 export class PreviewInvoiceComponent implements OnInit {
   invoice = input.required<Invoice>();

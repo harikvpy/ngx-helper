@@ -6,10 +6,9 @@ import { MatMenuModule } from '@angular/material/menu';
 import { SPMatMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-menu-layout';
 
 @Component({
-  selector: 'app-toolbar-end-buttons',
-  standalone: true,
-  imports: [CommonModule, MatIconModule, MatButtonModule, MatMenuModule],
-  template: `
+    selector: 'app-toolbar-end-buttons',
+    imports: [CommonModule, MatIconModule, MatButtonModule, MatMenuModule],
+    template: `
     <button mat-icon-button (click)="onNotificationsToggle()">
       <mat-icon>notifications</mat-icon>
     </button>
@@ -35,8 +34,8 @@ import { SPMatMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-menu-l
       </button>
     </mat-menu>
   `,
-  styles: [
-    `
+    styles: [
+        `
       .user-button {
         background: none;
         padding: 0;
@@ -50,7 +49,7 @@ import { SPMatMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-menu-l
         border-radius: 50%;
       }
     `,
-  ],
+    ]
 })
 export class ToolbarEndButtonsComponent {
   @Input() sideMenuLayout!: SPMatMenuLayoutComponent;

@@ -89,21 +89,20 @@ export class HeaderAlignmentDirective implements AfterViewInit {
  * A component to display a list of entities loaded from remote.
  */
 @Component({
-  standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    MatTableModule,
-    MatSortModule,
-    MatPaginatorModule,
-    MatButtonModule,
-    MatInputModule,
-    MatProgressSpinnerModule,
-    InfiniteScrollDirective,
-    HeaderAlignmentDirective,
-  ],
-  selector: 'sp-mat-entity-list',
-  template: `
+    imports: [
+        CommonModule,
+        RouterModule,
+        MatTableModule,
+        MatSortModule,
+        MatPaginatorModule,
+        MatButtonModule,
+        MatInputModule,
+        MatProgressSpinnerModule,
+        InfiniteScrollDirective,
+        HeaderAlignmentDirective,
+    ],
+    selector: 'sp-mat-entity-list',
+    template: `
     <div
       class="entities-list-wrapper"
       infiniteScroll
@@ -189,7 +188,7 @@ export class HeaderAlignmentDirective implements AfterViewInit {
       </div>
     </ng-template>
   `,
-  styles: [`
+    styles: [`
     .entities-list-wrapper {
       position: relative;
     }
@@ -223,8 +222,8 @@ export class HeaderAlignmentDirective implements AfterViewInit {
       font-weight: bold;
     }
     `,
-  ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    ],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SPMatEntityListComponent<
   TEntity extends { [P in IdKey]: PropertyKey },

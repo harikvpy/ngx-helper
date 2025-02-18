@@ -31,16 +31,15 @@ export interface SPContextMenuItem {
 }
 
 @Component({
-  standalone: true,
-  imports: [
-    RouterModule,
-    MatButtonModule,
-    MatIconModule,
-    MatMenuModule,
-    HoverDropDownDirective,
-  ],
-  selector: 'sp-mat-context-menu',
-  template: `
+    imports: [
+        RouterModule,
+        MatButtonModule,
+        MatIconModule,
+        MatMenuModule,
+        HoverDropDownDirective,
+    ],
+    selector: 'sp-mat-context-menu',
+    template: `
     <button
       #menuTrigger="matMenuTrigger"
       mat-icon-button
@@ -91,7 +90,7 @@ export interface SPContextMenuItem {
       }
     </mat-menu>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SPMatContextMenuComponent implements OnInit {
   /**

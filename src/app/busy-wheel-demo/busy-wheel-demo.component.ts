@@ -8,14 +8,13 @@ import {
 } from '@smallpearl/ngx-helper/mat-busy-wheel';
 
 @Component({
-  standalone: true,
-  imports: [
-    CommonModule,
-    MatButtonModule,
-    SPMatHostBusyWheelDirective,
-  ],
-  selector: 'app-busy-wheel-demo',
-  template: `
+    imports: [
+        CommonModule,
+        MatButtonModule,
+        SPMatHostBusyWheelDirective,
+    ],
+    selector: 'app-busy-wheel-demo',
+    template: `
   <h2>Busy Wheel Demo</h2>
   <div class="w-100 container">
     <div class="row">
@@ -31,7 +30,7 @@ import {
     </div>
   </div>
   `,
-  styles: `
+    styles: `
   .h-300px {
     height: 300px;
   }

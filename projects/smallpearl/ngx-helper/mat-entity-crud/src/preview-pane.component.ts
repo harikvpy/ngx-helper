@@ -13,10 +13,9 @@ import { getEntityCrudConfig } from './default-config';
  * the rest of the preview pane area.
  */
 @Component({
-  standalone: true,
-  imports: [MatToolbarModule, MatButtonModule, MatIconModule],
-  selector: 'sp-mat-entity-crud-preview-pane',
-  template: `
+    imports: [MatToolbarModule, MatButtonModule, MatIconModule],
+    selector: 'sp-mat-entity-crud-preview-pane',
+    template: `
   <div class="preview-wrapper">
     <mat-toolbar>
       <mat-toolbar-row>
@@ -45,7 +44,7 @@ import { getEntityCrudConfig } from './default-config';
     </div>
   </div>
   `,
-  styles: [`
+    styles: [`
     .preview-wrapper {
       display: flex;
       flex-direction: column;
@@ -59,7 +58,7 @@ import { getEntityCrudConfig } from './default-config';
       overflow: scroll;
     }
   `],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SPMatEntityCrudPreviewPaneComponent<TEntity> implements OnInit, OnDestroy {
 

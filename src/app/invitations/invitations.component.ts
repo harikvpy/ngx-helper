@@ -4,13 +4,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { RouterModule } from '@angular/router';
 
 @Component({
-  selector: 'app-invitations',
-  standalone: true,
-  imports: [CommonModule, RouterModule, MatButtonModule],
-  template: `
+    selector: 'app-invitations',
+    imports: [CommonModule, RouterModule, MatButtonModule],
+    template: `
   <h2>Invitations</h2>
     <button mat-raised-button routerLink="./new">New Invitation</button>
   `,
-  styles: [],
+    styles: []
 })
 export class InvitationsComponent {}

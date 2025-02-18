@@ -20,10 +20,9 @@ import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
 import { SPMatEntityCrudConfig, SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
 
 @Component({
-  standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, SPMatHostBusyWheelDirective],
-  selector: 'sp-create-edit-entity-host',
-  template: `
+    imports: [CommonModule, MatButtonModule, MatIconModule, SPMatHostBusyWheelDirective],
+    selector: 'sp-create-edit-entity-host',
+    template: `
     <div spHostBusyWheel="formBusyWheel">
       <div class="create-edit-topbar">
         <div class="title">
@@ -39,7 +38,7 @@ import { SPMatEntityCrudConfig, SPMatEntityCrudCreateEditBridge } from './mat-en
       <ng-container #clientFormContainer></ng-container>
     </div>
   `,
-  styles: `
+    styles: `
     .create-edit-topbar {
       display: flex;
       flex-direction: row;
@@ -57,7 +56,7 @@ import { SPMatEntityCrudConfig, SPMatEntityCrudCreateEditBridge } from './mat-en
 
     }
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEditBridge, OnInit, OnDestroy
 {

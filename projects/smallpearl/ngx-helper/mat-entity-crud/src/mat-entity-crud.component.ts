@@ -52,24 +52,23 @@ import {
 import { PreviewHostComponent } from './preview-host.component';
 
 @Component({
-  standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    MatButtonModule,
-    MatTableModule,
-    MatSortModule,
-    MatMenuModule,
-    MatSnackBarModule,
-    AngularSplitModule,
-    SPMatEntityListComponent,
-    SPMatContextMenuComponent,
-    FormViewHostComponent,
-    SPMatHostBusyWheelDirective,
-    PreviewHostComponent,
-  ],
-  selector: 'sp-mat-entity-crud',
-  template: `
+    imports: [
+        CommonModule,
+        RouterModule,
+        MatButtonModule,
+        MatTableModule,
+        MatSortModule,
+        MatMenuModule,
+        MatSnackBarModule,
+        AngularSplitModule,
+        SPMatEntityListComponent,
+        SPMatContextMenuComponent,
+        FormViewHostComponent,
+        SPMatHostBusyWheelDirective,
+        PreviewHostComponent,
+    ],
+    selector: 'sp-mat-entity-crud',
+    template: `
     <as-split direction="horizontal" [gutterSize]="6">
       <as-split-area [size]="entitiesPaneWidth()" [visible]="!entitiesPaneHidden()">
         <div
@@ -217,7 +216,7 @@ import { PreviewHostComponent } from './preview-host.component';
       </as-split-area>
     </as-split>
   `,
-  styles: `
+    styles: `
   .d-none {
     display: none;
   }
@@ -244,7 +243,7 @@ import { PreviewHostComponent } from './preview-host.component';
     font-weight: bold;
   }
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SPMatEntityCrudComponent<
     TEntity extends { [P in IdKey]: PropertyKey },
