@@ -101,7 +101,8 @@ $my-theme: mat.define-light-theme((
   density: -1
 ));
 
-@include mat.core();
+@include mat.elevation-classes();
+@include mat.app-background();
 
 @include mat.all-component-themes($my-theme);
 // Without this, only the material defined components (heading 1-5, title, subtitle, etc)
