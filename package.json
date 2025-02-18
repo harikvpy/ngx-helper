@@ -1,6 +1,6 @@
 {
   "name": "@smallpearl/ngx-helper",
-  "version": "0.26.8",
+  "version": "0.27.0",
   "scripts": {
     "ng": "ng",
     "app:start": "ng serve",
@@ -19,11 +19,11 @@
     "@angular/compiler": "^19.1.0",
     "@angular/core": "^19.1.0",
     "@angular/forms": "^19.1.0",
+    "@angular/localize": "^19.1.0",
     "@angular/material": "^19.1.4",
     "@angular/platform-browser": "^19.1.0",
     "@angular/platform-browser-dynamic": "^19.1.0",
     "@angular/router": "^19.1.0",
-    "@angular/localize": "^19.1.0",
     "angular-split": "^19.0.0",
     "google-libphonenumber": "^3.2.34",
     "lodash": "^4.17.21",
@@ -53,6 +53,7 @@
     "ng-packagr": "^19.1.2",
     "ngx-infinite-scroll": "^19.0.0",
     "ngx-mat-select-search": "^8.0.0",
+    "standard-version": "^9.5.0",
     "typescript": "~5.5.4"
   }
 }
