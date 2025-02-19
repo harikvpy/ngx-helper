@@ -1,29 +1,27 @@
 # ngx-helper
 
-A library of angular components that include widgets which are either:
-  * not part of the standard material library
-  * compose multiple standard material library widgets for a common use case
-    scenario.
+This is a library of angular components and other utility code that are not part of the standard angular/material library. Some components are composite components in that they combile multiple standard material library widgets for a common use case scenario.
 
-This library was generated with [Angular CLI](https://github.com/angular/angular-cli) version 15.2.0.
+This is meant to be a private library for my own consumption. But being a project derived from open source, I'm making it a public. Consequently, documentation is lacking and unit tests are at a bare minumum. Both are areas that I hope to address, but time is working against me.
 
-## Code scaffolding
+The best way to start using the components is to refer to code in the included `testapp` application. Each library feature is shown in a separate app page and can be seen by running the app (`ng serve`). The app's layout is driven by the `sp-mat-menu-layout` component which leverages material's sidemenu component to deliver a responsive hierarchical layout mechanism.
 
-Run `ng generate component component-name --project ngx-helper` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module --project ngx-helper`.
-> Note: Don't forget to add `--project ngx-helper` or else it will be added to the default project in your `angular.json` file. 
+# Components
 
-## Build
+| Component      | Description      |
+| ------------- | ------------- |
+| `sp-mat-menu-layout` | A responsive sidemenu layout framework that consists of a top bar with app branding and title. |
+| `sp-mat-select-entity`| A component to render foreignkey relationships where the entities are loaded from a remote and displayed. |
+| `sp-mat-file-input` | A component that can replace the standard ugly HTML file input. |
+| `sp-mat-tel-input` | A component to input telephone numbers. Numbers are validated at client using `google-libphonenumber`. |
+| `sp-mat-entity-list` | A component to display a table of entities loaded from the remote. This allows the columns to be specified as entity field names or as functors that return a `string` or `number`. |
+| `sp-mat-entity-crud` | A component that builds on top of `sp-mat-entity-list` providing a framework for doing CRUD operations. Note that the forms for the CRUD operations still have to be written by the consumer. However the framework provides a standard UX and a facade for common patterns such as prompting for save any changes made before navigating away, entity preview, etc. |
+| `sp-mat-context-menu` | A component to display a context menu. The menu items can be organized as groups with a title. Leverages `mat-menu` for implementations. |
+| `sp-mat-busy-wheel`| A component to show a spinner over any element in the page. This comes with a RxJS operator that can be added to the operator pipeline to show/hide the busy wheel when the async task is in progress. |
 
-Run `ng build ngx-helper` to build the project. The build artifacts will be stored in the `dist/` directory.
+# Pipes
 
-## Publishing
-
-After building your library with `ng build ngx-helper`, go to the dist folder `cd dist/ngx-helper` and run `npm publish`.
-
-## Running unit tests
-
-Run `ng test ngx-helper` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+| Pipe      | Description      |
+| ------------- | ------------- |
+| spCurrency | A pipe to render a number as a currency value with the currency prefix. |
+| spDate | A pipe to render a date as locale sensitive date string |
