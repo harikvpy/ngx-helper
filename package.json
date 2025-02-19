@@ -55,6 +55,6 @@
     "ngx-infinite-scroll": "^19.0.0",
     "ngx-mat-select-search": "^8.0.0",
     "standard-version": "^9.5.0",
-    "typescript": "~5.5.4"
+    "typescript": "^5.7.3"
   }
 }
