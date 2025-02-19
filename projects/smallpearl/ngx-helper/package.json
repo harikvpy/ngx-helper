@@ -7,6 +7,7 @@
     "@angular/cdk": "^19.1.0",
     "@angular/material": "^19.1.0",
     "@angular/forms": "^19.1.0",
+    "@jsverse/transloco": "7.5.1",
     "@ngneat/elf": "^2.5.1",
     "@ngneat/elf-entities": "^5.0.2",
     "angular-split": "^19.0.0",
