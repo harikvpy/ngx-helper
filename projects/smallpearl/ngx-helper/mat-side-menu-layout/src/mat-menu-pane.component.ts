@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  effect,
   Input,
   OnChanges,
   OnDestroy,
@@ -72,6 +73,13 @@ export class SPMatMenuPaneComponent implements OnInit, OnDestroy, AfterViewInit,
   destroy = new Subject<void>();
 
   menuItemComps = viewChildren(SPMatMenuListItemComponent);
+
+  // So that if menuItems is specified via an async pipe, we can highlight the
+  // current URL after the menuItems are loaded.
+  menuItemComps$ = effect(() => {
+    const components = this.menuItemComps();
+    this.highlightUrlMenuItem(this.router.routerState.snapshot.url);
+  });
 
   constructor(
     public cdr: ChangeDetectorRef,
