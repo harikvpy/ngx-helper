@@ -7,6 +7,7 @@ import {
   computed,
   ContentChildren,
   EventEmitter,
+  Injector,
   input,
   Output,
   QueryList,
@@ -562,9 +563,10 @@ export class SPMatEntityCrudComponent<
   constructor(
     http: HttpClient,
     private snackBar: MatSnackBar,
-    sanitizer: DomSanitizer
+    sanitizer: DomSanitizer,
+    injector: Injector,
   ) {
-    super(http, sanitizer);
+    super(http, sanitizer, injector);
     this.crudConfig = getEntityCrudConfig();
     if (this.crudConfig?.defaultItemActions) {
       this.defaultItemCrudActions.set(this.crudConfig?.defaultItemActions);

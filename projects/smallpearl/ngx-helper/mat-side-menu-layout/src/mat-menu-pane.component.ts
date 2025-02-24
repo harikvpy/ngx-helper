@@ -4,10 +4,12 @@ import {
   ChangeDetectorRef,
   Component,
   effect,
+  Injector,
   Input,
   OnChanges,
   OnDestroy,
   OnInit,
+  runInInjectionContext,
   SimpleChanges,
   TemplateRef,
   viewChildren
@@ -78,13 +80,16 @@ export class SPMatMenuPaneComponent implements OnInit, OnDestroy, AfterViewInit,
   // current URL after the menuItems are loaded.
   menuItemComps$ = effect(() => {
     const components = this.menuItemComps();
-    this.highlightUrlMenuItem(this.router.routerState.snapshot.url);
+    runInInjectionContext(this.injector, () => {
+      this.highlightUrlMenuItem(this.router.routerState.snapshot.url);
+    });
   });
 
   constructor(
     public cdr: ChangeDetectorRef,
     private layoutService: LayoutService,
-    private router: Router
+    private router: Router,
+    private injector: Injector
   ) {}
 
   ngOnInit() {

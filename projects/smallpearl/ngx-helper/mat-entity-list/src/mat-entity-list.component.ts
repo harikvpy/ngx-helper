@@ -11,11 +11,13 @@ import {
   ElementRef,
   EventEmitter,
   inject,
+  Injector,
   input,
   OnDestroy,
   OnInit,
   Output,
   QueryList,
+  runInInjectionContext,
   signal,
   viewChild,
   viewChildren
@@ -447,24 +449,26 @@ export class SPMatEntityListComponent<
   );
   _prevActiveEntity!: TEntity | undefined;
   _activeEntityChange = effect(() => {
-    const activeEntity = this.activeEntity();
-    // Though we can raise the selectEntity event directly from effect handler,
-    // that would prevent the event handler from being able to update any
-    // signals from inside it. So we generate the event asyncronously.
-    // Also, this effect handler will be invoked for the initial 'undefined'
-    // during which we shouldn't emit the selectEntity event. Therefore we
-    // keep another state variable to filter out this state.
-    if (activeEntity || this._prevActiveEntity) {
-      setTimeout(() => {
-        this._prevActiveEntity = activeEntity;
-        this.selectEntity.emit(activeEntity);
-        // if (this._prevActiveEntity && !activeEntity) {
-        //   this.selectEntity.emit(activeEntity);
-        // } else if (activeEntity) {
-        //   this.selectEntity.emit(activeEntity);
-        // }
-      });
-    }
+    runInInjectionContext(this.injector, () => {
+      const activeEntity = this.activeEntity();
+      // Though we can raise the selectEntity event directly from effect handler,
+      // that would prevent the event handler from being able to update any
+      // signals from inside it. So we generate the event asyncronously.
+      // Also, this effect handler will be invoked for the initial 'undefined'
+      // during which we shouldn't emit the selectEntity event. Therefore we
+      // keep another state variable to filter out this state.
+      if (activeEntity || this._prevActiveEntity) {
+        setTimeout(() => {
+          this._prevActiveEntity = activeEntity;
+          this.selectEntity.emit(activeEntity);
+          // if (this._prevActiveEntity && !activeEntity) {
+          //   this.selectEntity.emit(activeEntity);
+          // } else if (activeEntity) {
+          //   this.selectEntity.emit(activeEntity);
+          // }
+        });
+      }
+    });
   });
   @Output() selectEntity = new EventEmitter<TEntity | undefined>();
 
@@ -473,14 +477,17 @@ export class SPMatEntityListComponent<
   entityListConfig = getEntityListConfig();
 
   endpointChanged = effect(() => {
-    if (this.endpoint()) {
-      setTimeout(() => { this.refresh(); });
-    }
+    runInInjectionContext(this.injector, () => {
+      if (this.endpoint()) {
+        setTimeout(() => { this.refresh(); });
+      }
+    });
   });
 
   constructor(
     protected http: HttpClient,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private injector: Injector,
   ) {
     // if (!this.config) {
     //   this.config = new DefaultSPMatEntityListConfig();
