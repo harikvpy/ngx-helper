@@ -10,7 +10,7 @@
     "lib:test": "ng test @smallpearl/ngx-helper",
     "lib:test-rel": "ng test @smallpearl/ngx-helper --browsers ChromeHeadless --no-watch --no-progress",
     "lib:release": "cd projects/smallpearl/ngx-helper && standard-version --infile ../../../CHANGELOG.md",
-    "publish": "cd dist/smallpearl/ngx-helper && npm publish"
+    "publish": "cd dist/smallpearl/ngx-helper && npm publish --access=public"
   },
   "private": true,
   "dependencies": {
@@ -39,9 +39,12 @@
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^19.1.7",
-    "@angular/cli": "^19.1.7",
-    "@angular/compiler-cli": "^19.1.0",
+    "@angular-devkit/build-angular": "19.1.7",
+    "@angular-devkit/core": "19.1.7",
+    "@angular-devkit/schematics": "19.1.7",
+    "@angular/cli": "19.1.7",
+    "@angular/compiler-cli": "19.1.6",
+    "@angular/language-service": "19.1.6",
     "@types/google-libphonenumber": "^7.4.30",
     "@types/jasmine": "~5.1.0",
     "@types/lodash": "^4.17.15",
