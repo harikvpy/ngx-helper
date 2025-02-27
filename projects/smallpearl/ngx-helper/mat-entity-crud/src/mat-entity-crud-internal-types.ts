@@ -1,4 +1,8 @@
+import { SPContextMenuItem } from "@smallpearl/ngx-helper/mat-context-menu";
 import { Observable } from "rxjs";
+
+export const ITEM_ACTION_UPDATE = '_update_';
+export const ITEM_ACTION_DELETE = '_delete_';
 
 /**
  * SPMatEntityCrudCreateEditBridge implementer uses this interface to
@@ -64,4 +68,10 @@ export interface SPMatEntityCrudComponentBase<TEntity> {
    * @returns
    */
   closePreview: () => void;
+  /**
+   * Returns the context menu items for the entity. This can be used to build
+   * the context menu for an entity in its preview pane toolbar.
+   * @returns
+   */
+  getItemActions(): SPContextMenuItem[];
 }

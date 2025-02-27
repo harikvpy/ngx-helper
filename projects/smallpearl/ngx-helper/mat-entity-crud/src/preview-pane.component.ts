@@ -1,11 +1,12 @@
-import { ChangeDetectionStrategy, Component, Inject, input, OnDestroy, OnInit, Optional } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, Inject, input, InputSignal, OnDestroy, OnInit, Optional } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
+import { ITEM_ACTION_DELETE, ITEM_ACTION_UPDATE, SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
 import { SPMatEntityCrudConfig } from './mat-entity-crud-types';
 import { SP_MAT_ENTITY_CRUD_CONFIG } from './providers';
 import { getEntityCrudConfig } from './default-config';
+import { SPContextMenuItem } from '@smallpearl/ngx-helper/mat-context-menu';
 
 /**
  * A preview pane container to provide a consistent UX for all preview panes.
@@ -23,12 +24,12 @@ import { getEntityCrudConfig } from './default-config';
           <h2>{{ title() }}</h2>&nbsp;
         }
         @if (!hideUpdate()) {
-          <button mat-icon-button aria-label="Edit" (click)="onEdit()" [disabled]="disableUpdate()">
+          <button mat-icon-button aria-label="Edit" (click)="onEdit()" [disabled]="_disableUpdate()">
             <mat-icon>edit</mat-icon>
           </button>
         }
         @if (!hideDelete()) {
-          <button mat-icon-button aria-label="Delete" (click)="onDelete()" [disabled]="disableDelete()">
+          <button mat-icon-button aria-label="Delete" (click)="onDelete()" [disabled]="_disableDelete()">
             <mat-icon>delete</mat-icon>
           </button>
         }
@@ -70,12 +71,29 @@ export class SPMatEntityCrudPreviewPaneComponent<TEntity> implements OnInit, OnD
   disableDelete = input<boolean>(false);
   hideDelete = input<boolean>(false);
   config!: SPMatEntityCrudConfig;
+  itemActions!: SPContextMenuItem[];
+
+  _disableActionFactory = (role: string, signal?: InputSignal<boolean>) => {
+    return computed(() => {
+      if (signal && signal()) {
+        return true;
+      }
+      const actionFn = this.itemActions.find((a) => a.role === role)?.disable;
+      if (actionFn && actionFn(this.entity())) {
+        return true;
+      }
+      return false;
+    });
+  };
+  _disableUpdate = this._disableActionFactory(ITEM_ACTION_UPDATE, this.disableUpdate);
+  _disableDelete = this._disableActionFactory(ITEM_ACTION_DELETE, this.disableDelete);
 
   constructor() {
     this.config = getEntityCrudConfig();
   }
 
   ngOnInit() {
+    this.itemActions = this.entityCrudComponent().getItemActions();
   }
 
   ngOnDestroy(): void {

@@ -526,25 +526,26 @@ export class SPMatEntityCrudComponent<
   // entity so that we can run per item's allow item action function to
   // selectively disable one or more actions based on the item's state.
   _itemActions = computed(() => {
-    const actions =
-      this.itemActions() && this.itemActions().length
-        ? this.itemActions()
-        : this.defaultItemCrudActions();
-    let actionsCopy: SPContextMenuItem[] = JSON.parse(JSON.stringify(actions));
-    actionsCopy.forEach((action, index: number) => {
-      const orgDisable = actions[index]?.disable;
-      action.disable = (entity: TEntity) => {
-        if (orgDisable) {
-          return orgDisable(entity);
-        }
-        const allowItemActionFn = this.allowEntityActionFn();
-        if (allowItemActionFn) {
-          return !allowItemActionFn(entity, action.role ?? action.label);
-        }
-        return false;
-      };
-    });
-    return actionsCopy;
+    return this.getItemActions();
+    // const actions =
+    //   this.itemActions() && this.itemActions().length
+    //     ? this.itemActions()
+    //     : this.defaultItemCrudActions();
+    // let actionsCopy: SPContextMenuItem[] = JSON.parse(JSON.stringify(actions));
+    // actionsCopy.forEach((action, index: number) => {
+    //   const orgDisable = actions[index]?.disable;
+    //   action.disable = (entity: TEntity) => {
+    //     if (orgDisable) {
+    //       return orgDisable(entity);
+    //     }
+    //     const allowItemActionFn = this.allowEntityActionFn();
+    //     if (allowItemActionFn) {
+    //       return !allowItemActionFn(entity, action.role ?? action.label);
+    //     }
+    //     return false;
+    //   };
+    // });
+    // return actionsCopy;
   });
   // This uses the previewActive signal to compute the visible columns
   // when preview is activated. For now we just hide the 'action' column when
@@ -1033,5 +1034,36 @@ export class SPMatEntityCrudComponent<
     // return httpReqContext
     //   ? contextParamToHttpContext(httpReqContext)
     //   : undefined;
+  }
+
+  isItemActionAllowed(action: string, entity: TEntity) {
+    return false;
+  }
+
+  /**
+   * Returns the list of item actions. Calls 'allowItemActionFn' for each action
+   * to determine if the action is allowed for the given entity.
+   * @returns
+   */
+  getItemActions(): SPContextMenuItem[] {
+    const actions =
+      this.itemActions() && this.itemActions().length
+        ? this.itemActions()
+        : this.defaultItemCrudActions();
+    let actionsCopy: SPContextMenuItem[] = JSON.parse(JSON.stringify(actions));
+    actionsCopy.forEach((action, index: number) => {
+      const orgDisable = actions[index]?.disable;
+      action.disable = (entity: TEntity) => {
+        if (orgDisable) {
+          return orgDisable(entity);
+        }
+        const allowItemActionFn = this.allowEntityActionFn();
+        if (allowItemActionFn) {
+          return !allowItemActionFn(entity, action.role ?? action.label);
+        }
+        return false;
+      };
+    });
+    return actionsCopy;
   }
 }

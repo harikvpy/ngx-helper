@@ -76,7 +76,7 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
     <div style="width: 100%; height: 100%;">
       <mat-tab-group style="width: 100%; height: 100%;">
 
-        <!-- <mat-tab label="Simple">
+        <mat-tab label="Simple">
           <sp-mat-entity-crud
             #spEntityCrud1
             entityName="invoice"
@@ -90,12 +90,12 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
             itemsLabel="Invoices"
             newItemLabel="NEW INVOICE"
             editItemTitle="EDIT INVOICE"
-            (action)="onItemAction($event)"
             [crudOpFn]="crudOpFn"
             (selectEntity)="handleSelectEntity($event)"
             [createEditFormTemplate]="createEdit"
             [previewTemplate]="userPreview1"
             [editPaneWidth]="60"
+            [allowEntityActionFn]="allowInvoiceAction"
           >
           </sp-mat-entity-crud>
 
@@ -103,8 +103,6 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
             <sp-mat-entity-crud-preview-pane
               [entity]="data.entity"
               [entityCrudComponent]="spEntityCrudComponent1()!"
-              [hideUpdate]="true"
-              [disableDelete]="true"
             >
               <span previewToolbarContent>
                 <button mat-icon-button title="Print">
@@ -280,7 +278,7 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
               ></app-invoice-preview>
             </sp-mat-entity-crud-preview-pane>
           </ng-template>
-        </mat-tab> -->
+        </mat-tab>
 
         <mat-tab label="Users">
           <sp-mat-entity-crud
@@ -406,7 +404,16 @@ export class EntityCrudDemoComponent implements OnInit, SPMatEntityCrudCanDeacti
         type: 'bill_payment'
       }
     },
-  ]
+  ];
+
+  allowInvoiceAction = (invoice: Invoice, action: string) => {
+    // disable delete for Peter
+    if (invoice.customerDetail.name.startsWith('Peter')) {
+      return action !== '_delete_';
+    }
+    return true;
+  }
+
   crudOpFn(
     op: string,
     entityValue: any,
@@ -460,13 +467,6 @@ export class EntityCrudDemoComponent implements OnInit, SPMatEntityCrudCanDeacti
   }
 
   ngOnInit() {
-    // change userEndpoint every 5 seconds
-    // setInterval(() => {
-    //   const results = 10 + Math.floor(Math.random() * 100) + 1;
-    //   const endpoint = `https://randomuser.me/api/?results=${results}&nat=us,dk,fr,gb,es`;
-    //   console.log('changing userEndpoint to: ', endpoint);
-    //   this.userEndpoint.set(endpoint);
-    // }, 5*1000);
   }
 
   onItemAction(ev: { role: string; entity?: Invoice } | undefined) {
