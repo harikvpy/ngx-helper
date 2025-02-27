@@ -637,8 +637,8 @@ export class SPMatEntityCrudComponent<
     return true;
   }
 
-  override refresh() {
-    this.spEntitiesList()?.refresh();
+  override refresh(force = false) {
+    this.spEntitiesList()?.refresh(force);
   }
 
   closeCreateEdit(cancelled: boolean) {
@@ -764,7 +764,7 @@ export class SPMatEntityCrudComponent<
         })
       );
     } else if (refreshAfterEdit === 'all') {
-      this.spEntitiesList()?.refresh();
+      this.refresh(true);
       return of(null);
     }
 

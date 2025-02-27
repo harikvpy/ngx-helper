@@ -146,12 +146,13 @@ describe('SPMatEntityListComponent', () => {
     componentRef.setInput('httpReqContext', ['cache', true]);
     const http = TestBed.inject(HttpClient);
     let httpReqContextReceived = false;
-    spyOn(http, 'get').and.callFake(((url: string, options: any) => {
+    const httpGetSpy = spyOn(http, 'get').and.callFake(((url: string, options: any) => {
       httpReqContextReceived = options.context.get('cache') === true;
       return of(USER_DATA);
     }) as any); // 'as any' to suppress TSC function prototype mismatch
     fixture.detectChanges();
     tick();
+    expect(httpGetSpy).toHaveBeenCalledTimes(1);
     expect(component).toBeTruthy();
     const rows = fixture.debugElement.nativeElement.querySelectorAll('tr');
     // +1 for the <tr> in <thead>
@@ -159,6 +160,37 @@ describe('SPMatEntityListComponent', () => {
     const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
     expect(httpReqContextReceived).toBeTrue();
+  }));
+
+  it('should reload data when endpoint changes', fakeAsync(() => {
+    componentRef.setInput('columns', [
+      { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
+      'gender', 'cell'
+    ]);
+    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('httpReqContext', ['cache', true]);
+    const http = TestBed.inject(HttpClient);
+    let httpReqContextReceived = false;
+    const httpGetSpy = spyOn(http, 'get').and.callFake(((url: string, options: any) => {
+      httpReqContextReceived = options.context.get('cache') === true;
+      return of(USER_DATA);
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+    fixture.detectChanges();
+    tick();
+    expect(httpGetSpy).toHaveBeenCalledTimes(1);
+    expect(component).toBeTruthy();
+    const rows = fixture.debugElement.nativeElement.querySelectorAll('tr');
+    // +1 for the <tr> in <thead>
+    expect(rows.length).toEqual(USER_DATA.length+1);
+    const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
+    expect(paginator).toBeFalsy();
+    expect(httpReqContextReceived).toBeTrue();
+    httpGetSpy.calls.reset();
+    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=10&nat=us,dk,fr,gb');
+    fixture.detectChanges();
+    tick();
+    expect(httpGetSpy).toHaveBeenCalledTimes(1);
   }));
 
   it('should accept hybrid column definitions', fakeAsync(() => {
@@ -261,7 +293,7 @@ describe('SPMatEntityListComponent', () => {
     const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeTruthy();
     expect(getRequestPageParams).toBeTruthy();
-    expect(getRequestPageParams.endpoint).toEqual(endpoint);
+    expect(getRequestPageParams.endpoint).toEqual(endpoint.split('?')[0]);
     expect(getRequestPageParams.pageSize).toEqual(pageSize);
     expect(parseRequestResponseSpy).toHaveBeenCalled();
   }));

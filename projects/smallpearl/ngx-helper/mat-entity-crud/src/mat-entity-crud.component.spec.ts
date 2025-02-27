@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, ComponentRef, computed, input, OnInit, signal, viewChild } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButton, MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -580,7 +580,7 @@ describe('SPMatEntityCrudComponent', () => {
     expect(httpGETReqContextReceived).toBeTrue();
   });
 
-  it("should refresh all entities after CREATE when refreshAfterEdit='all'", async () => {
+  it("should refresh all entities after CREATE when refreshAfterEdit='all'", fakeAsync(() => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('disableCreate', true);
@@ -590,13 +590,15 @@ describe('SPMatEntityCrudComponent', () => {
     // componentRef.setInput('crudOpFn', crudOpFn);
     componentRef.setInput('refreshAfterEdit', 'all');
     fixture.autoDetectChanges();
+    tick();
     expect(getSpy).toHaveBeenCalledTimes(1);
     // Mocking object UPDATE by calling the bridge method directly
     // This should result in another call to load all entities as we have
     // set refreshAfterEdit='all'
-    await firstValueFrom(component.update(USER_DATA[0]['cell'], {gender: 'M'}));
+    firstValueFrom(component.update(USER_DATA[0]['cell'], {gender: 'M'}));
+    tick();
     expect(getSpy).toHaveBeenCalledTimes(2);
-  });
+  }));
 
   it("should call crudResponseParser after CREATE/UPDATE when refreshAfterEdit='object'", async () => {
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');

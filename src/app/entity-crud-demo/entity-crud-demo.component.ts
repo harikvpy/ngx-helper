@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  signal,
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -75,8 +76,7 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
     <div style="width: 100%; height: 100%;">
       <mat-tab-group style="width: 100%; height: 100%;">
 
-        <!-- Simple Standard crud view -->
-        <mat-tab label="Simple">
+        <!-- <mat-tab label="Simple">
           <sp-mat-entity-crud
             #spEntityCrud1
             entityName="invoice"
@@ -121,7 +121,6 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
 
         </mat-tab>
 
-        <!-- With newItemSubTypes showing a dropdown menu -->
         <mat-tab label="Item SubTypes">
           <sp-mat-entity-crud
             #spEntityCrud2
@@ -164,7 +163,6 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
           </ng-template>
         </mat-tab>
 
-        <!-- Customer header via template -->
         <mat-tab label="Override Header">
           <sp-mat-entity-crud
             #spEntityCrud3
@@ -227,7 +225,6 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
           </ng-template>
         </mat-tab>
 
-        <!-- Header with custom action buttons -->
         <mat-tab label="Override Action Buttons">
           <sp-mat-entity-crud
             #spEntityCrud4
@@ -283,8 +280,25 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
               ></app-invoice-preview>
             </sp-mat-entity-crud-preview-pane>
           </ng-template>
-        </mat-tab>
+        </mat-tab> -->
 
+        <mat-tab label="Users">
+          <sp-mat-entity-crud
+            #spEntityCrud1
+            entityName="user"
+            [endpoint]="userEndpoint()"
+            [columns]="userColumns"
+            [pageSize]="10"
+            idKey="id"
+            pagination="discrete"
+            [paginator]="paginator"
+            itemLabel="User"
+            itemsLabel="Users"
+            [editPaneWidth]="60"
+          >
+          </sp-mat-entity-crud>
+
+        </mat-tab>
       </mat-tab-group>
     </div>
 
@@ -313,7 +327,7 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EntityCrudDemoComponent implements OnInit, SPMatEntityCrudCanDeactivate {
-  userEndpoint = 'https://randomuser.me/api/?nat=us,gb';
+  userEndpoint = signal<string>('https://randomuser.me/api/?results=10&nat=us,dk,fr,gb');
   userColumns: SPEntityFieldSpec<User>[] = [
     { name: 'name', label: 'NAME', valueFn: (user: User) => user.name.first },
     { name: 'gender', label: 'GENDER' },
@@ -445,7 +459,15 @@ export class EntityCrudDemoComponent implements OnInit, SPMatEntityCrudCanDeacti
     return !!this.spEntityCrudComponent1()?.canDeactivate();
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    // change userEndpoint every 5 seconds
+    // setInterval(() => {
+    //   const results = 10 + Math.floor(Math.random() * 100) + 1;
+    //   const endpoint = `https://randomuser.me/api/?results=${results}&nat=us,dk,fr,gb,es`;
+    //   console.log('changing userEndpoint to: ', endpoint);
+    //   this.userEndpoint.set(endpoint);
+    // }, 5*1000);
+  }
 
   onItemAction(ev: { role: string; entity?: Invoice } | undefined) {
     console.log(`onItemAction - role: ${ev?.role}`);

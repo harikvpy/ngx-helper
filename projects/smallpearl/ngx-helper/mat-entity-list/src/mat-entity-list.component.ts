@@ -54,7 +54,17 @@ import {
 } from '@smallpearl/ngx-helper/entity-field';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { plural } from 'pluralize';
-import { finalize, Observable, Subscription, tap } from 'rxjs';
+import {
+  distinctUntilChanged,
+  filter,
+  finalize,
+  Observable,
+  Subject,
+  Subscription,
+  switchMap,
+  takeUntil,
+  tap
+} from 'rxjs';
 import { getEntityListConfig } from './config';
 import {
   SP_MAT_ENTITY_LIST_HTTP_CONTEXT,
@@ -83,6 +93,33 @@ export class HeaderAlignmentDirective implements AfterViewInit {
         this.el.nativeElement.style.justifyContent = this.headerAlignment();
       }
     }
+  }
+}
+
+/**
+ * Represents a request to load entities from the remote. This is used to
+ * compare two requests to determine if they are equal. This is useful to
+ * prevent duplicate requests being sent to the remote.
+ */
+class LoadRequest {
+  constructor(
+    public endpoint: string,
+    public params: HttpParams,
+    public force = false
+  ) {}
+
+  // Returns true if two LoadRequest objects are equal and this object's
+  // 'force' is not set to true.
+  isEqualToAndNotForced(prev: LoadRequest): boolean {
+    // console.log(
+    //   `isEqualToAndNotForced - ${this.endpoint}, ${this.params.toString()} ${
+    //     this.force
+    //   }, other: ${prev.endpoint}, ${prev.params.toString()}, ${prev.force}`
+    // );
+    return this.force
+      ? false
+      : this.endpoint.localeCompare(prev.endpoint) === 0 &&
+          this.params.toString().localeCompare(prev.params.toString()) === 0;
   }
 }
 
@@ -376,6 +413,7 @@ export class SPMatEntityListComponent<
   contentColumnDefs: MatColumnDef[] = [];
 
   subs$ = new Subscription();
+  destroy$ = new Subject<void>();
 
   // Pagination state
   entityCount = signal<number>(0);
@@ -476,9 +514,17 @@ export class SPMatEntityListComponent<
   fieldConfig = inject(SP_ENTITY_FIELD_CONFIG, { optional: true })!;
   entityListConfig = getEntityListConfig();
 
+  /**
+   * A signal that can be used to trigger loading of more entities from the
+   * remote. This can be visualized as the event loop of the entity list
+   * component.
+   */
+  loadRequest$ = new Subject<LoadRequest>();
+
   endpointChanged = effect(() => {
     runInInjectionContext(this.injector, () => {
       if (this.endpoint()) {
+        // console.log(`endpointChanged - ${this.endpoint()}`);
         setTimeout(() => { this.refresh(); });
       }
     });
@@ -507,22 +553,31 @@ export class SPMatEntityListComponent<
       ? this.paginator()
       : this.entityListConfig?.paginator;
 
-    this.subs$.add(
-      this.entities$
-        .pipe(
-          tap((entities) => {
-            // .data is a setter property, which ought to trigger the necessary
-            // signals resulting in mat-table picking up the changes without
-            // requiring us to call cdr.detectChanges() explicitly.
-            this.dataSource().data = entities;
-          })
-        )
-        .subscribe()
-    );
+    this.entities$
+      .pipe(
+        takeUntil(this.destroy$),
+        tap((entities) => {
+          // .data is a setter property, which ought to trigger the necessary
+          // signals resulting in mat-table picking up the changes without
+          // requiring us to call cdr.detectChanges() explicitly.
+          this.dataSource().data = entities;
+        })
+      )
+      .subscribe()
+
+    this.loadRequest$
+      .pipe(
+        takeUntil(this.destroy$),
+        filter((lr) => lr.endpoint !== '' || lr.force === true),
+        distinctUntilChanged((prev, current) => current.isEqualToAndNotForced(prev)),
+        switchMap((lr: LoadRequest) => this.doActualLoad(lr))
+      )
+      .subscribe()
   }
 
   ngOnDestroy(): void {
-    this.subs$.unsubscribe();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   ngAfterViewInit(): void {
@@ -530,6 +585,7 @@ export class SPMatEntityListComponent<
       this.buildContentColumnDefs();
       this.buildColumns();
       this.setupSort();
+      this.loadMoreEntities();
     }
   }
 
@@ -537,9 +593,9 @@ export class SPMatEntityListComponent<
    * Clear all entities in store and reload them from endpoint as if
    * the entities are being loaded for the first time.
    */
-  refresh() {
+  refresh(force = false) {
     this.pageIndex.set(0);
-    this.loadMoreEntities();
+    this.loadMoreEntities(force);
   }
 
   addEntity(entity: TEntity) {
@@ -704,88 +760,121 @@ export class SPMatEntityListComponent<
     }
   }
 
-  loadMoreEntities() {
+  loadMoreEntities(forceRefresh=false) {
+    this.loadRequest$.next(this.createNextLoadRequest(forceRefresh));
+  }
+
+  /**
+   * Creates a LoadRequest object for loading entities using the current state
+   * of the component. Therefore, if the request is for next page of entities,
+   * the LoadRequest object will have the updated page index. However, if
+   * pagination has been reset (refer to refresh()), the LoadRequest object
+   * will be for the first page of data. Note that when 'endpoint' value
+   * changes, the component's pagination state is reset causing a refresh()
+   * to be called, which in turn will create a new LoadRequest object for the
+   * first page of data.
+   * @returns LoadRequest object for the next load request.
+   */
+  private createNextLoadRequest(forceRefresh: boolean): LoadRequest {
     let pageParams = {};
+    const parts = this.endpoint().split('?');
+    const endpoint = parts[0];
     if (this._paginator) {
       pageParams = this._paginator.getRequestPageParams(
-        this.endpoint(),
+        endpoint,
         this.pageIndex(),
         this.pageSize()
       );
     }
-    const parts = this.endpoint().split('?');
-    let params = new HttpParams(parts.length > 1 ? { fromString: parts[1] } : undefined);
+    const paramsSet = new Map<string, string|number|boolean|null>();
     for (const key in pageParams) {
-      params = params.append(key, (pageParams as any)[key]);
+      paramsSet.set(key, (pageParams as any)[key]);
     }
+    if (parts.length > 1) {
+      const embeddedParams = new HttpParams({ fromString: parts[1] });
+      embeddedParams.keys().forEach((key) => {
+        paramsSet.set(key, embeddedParams.get(key));
+      });
+    }
+    let params = new HttpParams();
+    paramsSet.forEach((value, key) => {
+      params = params.set(key, value ? value.toString() : '');
+    });
+    // let params = new HttpParams(parts.length > 1 ? { fromString: parts[1] } : undefined);
+    // for (const key in pageParams) {
+    //   params = params.append(key, (pageParams as any)[key]);
+    // }
+    return new LoadRequest(endpoint, params, forceRefresh || !!this.entityLoaderFn());
+  }
 
-    // Inline check for input signal value before calling its value doesn't
-    // seem to work as of now. So we assign the value to a const and check
-    // it for undefined before calling it.
+  /**
+   * Does the actual load of entities from the remote or via calling the
+   * entityLoaderFn. This method is the workhorse of the entity list
+   * 'loader-loop'.
+   * @param lr
+   * @returns Observable that emits the response from the remote or from
+   * entityLoaderFn().
+   */
+  private doActualLoad(lr: LoadRequest) {
+    // console.log(`doActualLoad - endpoint: ${lr.endpoint}, params: ${lr.params.toString()}`);
     const loaderFn = this.entityLoaderFn();
+    const params = lr.params
     const obs =
       loaderFn !== undefined
         ? loaderFn({ params })
-        : this.http.get<any>(this.getUrl(parts[0]), {
+        : this.http.get<any>(this.getUrl(lr.endpoint), {
             context: this._httpReqContext(),
             params,
           });
 
     this.loading.set(true);
-    this.subs$.add(
-      obs
-        .pipe(
-          tap((resp) => {
-            // TODO: defer this to a pagination provider so that we can support
-            // many types of pagination. DRF itself has different schemes. And
-            // express may have yet another pagination protocol.
-            this.firstLoadDone = true;
-
-            if (this._paginator) {
-              // Convert HttpParams to JS object
-              const paramsObj: any = {};
-              params.keys().forEach(key => {
-                paramsObj[key] = params.get(key);
-              });
-              const { entities, total } = this._paginator.parseRequestResponse(
-                this.entityName(),
-                this._entityNamePlural()!,
-                this.endpoint(),
-                paramsObj,
-                resp
-              );
-              this.entityCount.set(total);
-              this.lastFetchedEntitiesCount.set(entities.length);
-              // this.pageIndex.set(this.pageIndex() + 1)
-              // entities = this._paginator.getEntitiesFromResponse(entities);
-              if (this.pagination() === 'discrete') {
-                this.store.reset();
-              } else if (this.pagination() === 'infinite') {
-                const pageSize = this._pageSize();
-                const entityCount = this.entityCount();
-                if (pageSize > 0) {
-                  const pageCount =
-                    Math.floor(entityCount / pageSize) +
-                    (entityCount % pageSize ? 1 : 0);
-                  this.hasMore.set(this.pageIndex() === pageCount);
-                } else {
-                  this.hasMore.set(false);
-                }
-              }
-              // store the entities in the store
-              // TODO: remove as any
-              this.store.update(upsertEntities(entities as any));
+    return obs.pipe(
+      tap((resp) => {
+        // TODO: defer this to a pagination provider so that we can support
+        // many types of pagination. DRF itself has different schemes. And
+        // express may have yet another pagination protocol.
+        this.firstLoadDone = true;
+        if (this._paginator) {
+          // Convert HttpParams to JS object
+          const paramsObj: any = {};
+          params.keys().forEach((key) => {
+            paramsObj[key] = params.get(key);
+          });
+          const { entities, total } = this._paginator.parseRequestResponse(
+            this.entityName(),
+            this._entityNamePlural()!,
+            this.endpoint(),
+            paramsObj,
+            resp
+          );
+          this.entityCount.set(total);
+          this.lastFetchedEntitiesCount.set(entities.length);
+          // this.pageIndex.set(this.pageIndex() + 1)
+          // entities = this._paginator.getEntitiesFromResponse(entities);
+          if (this.pagination() === 'discrete') {
+            this.store.reset();
+          } else if (this.pagination() === 'infinite') {
+            const pageSize = this._pageSize();
+            const entityCount = this.entityCount();
+            if (pageSize > 0) {
+              const pageCount =
+                Math.floor(entityCount / pageSize) +
+                (entityCount % pageSize ? 1 : 0);
+              this.hasMore.set(this.pageIndex() === pageCount);
             } else {
-              this.store.update(
-                upsertEntities(this.findArrayInResult(resp) as TEntity[])
-              );
+              this.hasMore.set(false);
             }
-          }),
-          finalize(() => {
-            this.loading.set(false);
-          })
-        )
-        .subscribe()
+          }
+          // store the entities in the store
+          // TODO: remove as any
+          this.store.update(upsertEntities(entities as any));
+        } else {
+          this.store.update(
+            upsertEntities(this.findArrayInResult(resp) as TEntity[])
+          );
+        }
+      }),
+      finalize(() => this.loading.set(false))
     );
   }
 
