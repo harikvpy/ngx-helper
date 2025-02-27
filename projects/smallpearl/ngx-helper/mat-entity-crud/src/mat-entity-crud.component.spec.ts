@@ -268,6 +268,7 @@ export class CreateEditUserComponent implements OnInit {
 
     <ng-template #userPreview let-data>
       <sp-mat-entity-crud-preview-pane
+        [entity]="data.entity"
         [title]="data.entity.name.first + ' ' + data.entity.name.last"
         [entityCrudComponent]="spEntityCrudComponent()!"
       >
@@ -688,7 +689,7 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     expect(nameRow.textContent).toEqual('FULL NAME');
   });
 
-  it('should show preview pane when a row is clicked', async () => {
+  it('should show preview pane when a row is clicked', fakeAsync(() => {
     expect(component).toBeTruthy();
     let createEditActivatedEvents: Array<{activated: boolean, cancelled: boolean|undefined, mode: 'edit'|'preview' }> = [];
     const sub = component.entityViewPaneActivated.asObservable().pipe(
@@ -700,7 +701,7 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     expect(rows.length).toEqual(USER_DATA.length);
     rows[0].click();  // click the first row
     testComponentFixture.detectChanges();
-    await new Promise(res => setTimeout(res, 100));
+    tick();
     const previewPane = testComponentFixture.debugElement.nativeElement.querySelector('sp-mat-entity-crud-preview-pane');
     expect(previewPane).toBeTruthy();
     // preview Pane should have the full name of the clicked user
@@ -713,6 +714,7 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
       button.click();
     }
     testComponentFixture.autoDetectChanges();
+    tick();
     // Test that createEditActivatedEvent was received with the correct args
     expect(createEditActivatedEvents.length).toEqual(2);
     expect(createEditActivatedEvents[0].activated).toBeTrue();
@@ -723,7 +725,7 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     expect(createEditActivatedEvents[1].cancelled).toEqual(undefined);
 
     sub.unsubscribe();
-  });
+  }));
 
   it('should show the create form when New button is selected', async () => {
     const http = TestBed.inject(HttpClient);

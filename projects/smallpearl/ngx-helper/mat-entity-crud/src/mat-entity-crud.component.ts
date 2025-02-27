@@ -868,7 +868,7 @@ export class SPMatEntityCrudComponent<
    */
   showCreateEditView(entity?: TEntity | undefined, params?: any) {
     const tmpl = this.createEditFormTemplate();
-    if (!this.createEditViewActive() && !this.previewActive() && tmpl) {
+    if (!this.createEditViewActive() && tmpl) {
       // If preview is active deactivate it
       if (this.previewActive()) {
         this.closePreviewImpl(true);
