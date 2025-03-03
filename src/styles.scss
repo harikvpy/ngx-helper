@@ -53,6 +53,8 @@ body {
   --sp-mat-menu-highlighted-menu-item-bg-color: var(--sidemenu-foreground);
   --sp-mat-menu-sidemenu-max-width: 260px;
   --mat-sidenav-container-width: 260px;
+  // This removes the transparency from the mat-select-search input box.
+  --mat-select-panel-background-color: var(--mat-sys-surface);
 }
 
 mat-sidenav {

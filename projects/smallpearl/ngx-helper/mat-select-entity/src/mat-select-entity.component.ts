@@ -1,5 +1,5 @@
 import { BooleanInput, coerceBooleanProperty } from '@angular/cdk/coercion';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { HttpClient, HttpContext, HttpContextToken, HttpParams } from '@angular/common/http';
 import {
   AfterViewInit,
@@ -19,6 +19,7 @@ import {
   Optional,
   Output,
   Self,
+  TemplateRef,
   ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NgControl, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -89,8 +90,8 @@ export type SPMatSelectEntityResponseParser = <
  * but this can be customized by specifying the `idKey' property value.
  */
 @Component({
-    selector: 'sp-mat-select-entity',
-    template: `
+  selector: 'sp-mat-select-entity',
+  template: `
     <mat-select
       [placeholder]="placeholder"
       (opened)="onSelectOpened($event)"
@@ -101,7 +102,9 @@ export type SPMatSelectEntityResponseParser = <
       <mat-select-trigger>
         {{ selectTriggerValue }}
         @if (selectTriggerValueAsArray.length > 1) {
-        <span class="addl-selection-count"> (+{{ selectTriggerValueAsArray.length - 1 }}) </span>
+        <span class="addl-selection-count">
+          (+{{ selectTriggerValueAsArray.length - 1 }})
+        </span>
         }
       </mat-select-trigger>
 
@@ -117,33 +120,52 @@ export type SPMatSelectEntityResponseParser = <
       </mat-option>
 
       <ng-container *ngIf="!group; else groupedOptions">
-        <span *ngIf="(filteredValues | async) as entities">
-          <mat-option class="sel-entity-option" *ngFor="let entity of entities" [value]="entityId(entity)">
+        <span *ngIf="filteredValues | async as entities">
+          <ng-template #defaultOptionLabelTemplate let-entity>
             {{ entityLabelFn(entity) }}
+          </ng-template>
+          @for (entity of entities; track entityId(entity)) {
+          <mat-option class="sel-entity-option" [value]="entityId(entity)">
+            <ng-container
+              *ngTemplateOutlet="
+                optionLabelTemplate() || defaultOptionLabelTemplate;
+                context: { $implicit: entity }
+              "
+            ></ng-container>
           </mat-option>
+          }
+
+          <!-- <mat-option class="sel-entity-option" *ngFor="let entity of entities" [value]="entityId(entity)">
+            {{ entityLabelFn(entity) }}
+          </mat-option> -->
         </span>
       </ng-container>
       <ng-template #groupedOptions>
-        <span *ngIf="(filteredGroupedValues | async) as groups">
+        <span *ngIf="filteredGroupedValues | async as groups">
           @for (group of groups; track groupLabel(group)) {
-            <mat-optgroup [label]="groupLabel(group)">
-              @for (entity of group.__items__; track entityId(entity)) {
-                <mat-option class="sel-entity-option" [value]="entityId(entity)">
-                  {{ entityLabelFn(entity) }}
-                </mat-option>
-              }
-            </mat-optgroup>
+          <mat-optgroup [label]="groupLabel(group)">
+            @for (entity of group.__items__; track entityId(entity)) {
+
+            <mat-option class="sel-entity-option" [value]="entityId(entity)">
+              {{ entityLabelFn(entity) }}
+            </mat-option>
+            }
+          </mat-optgroup>
           }
         </span>
       </ng-template>
 
-      <mat-option *ngIf="!multiple && inlineNew" class="add-item-option" value="0" (click)="$event.stopPropagation()"
+      <mat-option
+        *ngIf="!multiple && inlineNew"
+        class="add-item-option"
+        value="0"
+        (click)="$event.stopPropagation()"
         >⊕ {{ addItemText }}</mat-option
       >
     </mat-select>
   `,
-    styles: [
-        `
+  styles: [
+    `
       .add-item-option {
         padding-top: 2px;
         border-top: 1px solid gray;
@@ -152,14 +174,25 @@ export type SPMatSelectEntityResponseParser = <
         opacity: 0.75;
         font-size: 0.8em;
       }
-    `
-    ],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, MatSelectModule, NgxMatSelectSearchModule],
-    providers: [{ provide: MatFormFieldControl, useExisting: SPMatSelectEntityComponent }]
+    `,
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    CommonModule,
+    NgTemplateOutlet,
+    FormsModule,
+    ReactiveFormsModule,
+    MatSelectModule,
+    NgxMatSelectSearchModule,
+  ],
+  providers: [
+    { provide: MatFormFieldControl, useExisting: SPMatSelectEntityComponent },
+  ],
 })
-export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: PropertyKey }, IdKey extends string = 'id'>
-  implements
+export class SPMatSelectEntityComponent<
+  TEntity extends { [P in IdKey]: PropertyKey },
+  IdKey extends string = 'id'
+> implements
     OnInit,
     OnDestroy,
     AfterViewInit,
@@ -174,7 +207,10 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   // This mechanism is to suppress multiple fetches from the remote from the
   // same endpoint as that can occur if a form has multiple instances of
   // this component, with the same endpoint.
-  static _entitiesCache = new Map<string, { refCount: number; entities: Array<any> }>();
+  static _entitiesCache = new Map<
+    string,
+    { refCount: number; entities: Array<any> }
+  >();
 
   @ViewChild(MatSelect) matSel!: MatSelect;
 
@@ -192,7 +228,10 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
    * @param entity: TEntity object to test for 'search' string.
    * @param search - search string
    */
-  @Input({ required: false }) entityFilterFn!: (entity: TEntity, search: string) => boolean;
+  @Input({ required: false }) entityFilterFn!: (
+    entity: TEntity,
+    search: string
+  ) => boolean;
   /**
    * Entity idKey, if idKey is different from the default 'id'.
    */
@@ -210,7 +249,9 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   /**
    * Function to load entities from remote.
    */
-  @Input({ required: false }) loadFromRemoteFn!: (injector: Injector) => Observable<TEntity[]>;
+  @Input({ required: false }) loadFromRemoteFn!: (
+    injector: Injector
+  ) => Observable<TEntity[]>;
 
   @Input({ required: false }) inlineNew: boolean = false;
   /**
@@ -270,13 +311,33 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
    */
   responseParserFn = input<SPMatSelectEntityResponseParser>();
 
-  @Output() selectionChange = new EventEmitter<TEntity|TEntity[]>();
+  @Output() selectionChange = new EventEmitter<TEntity | TEntity[]>();
   @Output() createNewItemSelected = new EventEmitter<void>();
 
   // allow per component customization
   @Input() searchText!: string;
   @Input() notFoundText!: string;
   @Input() addItemText!: string;
+
+  /**
+   * Template for the option label. If not provided, the default label
+   * function will be used. Option label is what is placed inside the
+   * <mat-option> tag. The template gets an implicit 'entity' variable
+   * in the context, value for which is the entity object.
+   *
+   * For example:
+   * ```
+   *  <sp-mat-select-entity
+   *    [url]="'/api/v1/customers/'"
+   *    [entityLabelFn]="entity => entity.name"
+   *    [optionLabelTemplate]="optionLabelTemplate"
+   *  ></sp-mat-select-entity>
+   *  <ng-template #optionLabelTemplate let-entity>
+   *    {{ entity.name }} - {{ entity.description }}
+   *  </ng-template>
+   * ```
+   */
+  optionLabelTemplate = input<TemplateRef<any>>();
 
   _sideloadDataKey = computed<string>(() => {
     if (this.sideloadDataKey()) {
@@ -328,7 +389,9 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
     protected injector: Injector,
     @Optional() @Inject(MAT_FORM_FIELD) public _formField: MatFormField,
     @Optional() @Self() public ngControl: NgControl,
-    @Optional() @Inject(SP_MAT_SELECT_ENTITY_CONFIG) private config: SPMatSelectEntityConfig
+    @Optional()
+    @Inject(SP_MAT_SELECT_ENTITY_CONFIG)
+    private config: SPMatSelectEntityConfig
   ) {
     if (this.ngControl != null) {
       this.ngControl.valueAccessor = this;
@@ -378,10 +441,20 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   }
 
   private _initStrings() {
-    const config: SPMatSelectEntityConfig = this.config ?? DEFAULT_SP_MAT_SELECT_ENTITY_CONFIG;
-    if (!this.searchText) { this.searchText = config.i18n.search; }
-    if (!this.notFoundText) { this.notFoundText = config.i18n.notFound; }
-    if (!this.addItemText) { this.addItemText = config.i18n.addItem.replace(/\{\{\s*item\s*}}/, this.entityName ?? "**Item"); }
+    const config: SPMatSelectEntityConfig =
+      this.config ?? DEFAULT_SP_MAT_SELECT_ENTITY_CONFIG;
+    if (!this.searchText) {
+      this.searchText = config.i18n.search;
+    }
+    if (!this.notFoundText) {
+      this.notFoundText = config.i18n.notFound;
+    }
+    if (!this.addItemText) {
+      this.addItemText = config.i18n.addItem.replace(
+        /\{\{\s*item\s*}}/,
+        this.entityName ?? '**Item'
+      );
+    }
   }
 
   addEntity(entity: TEntity) {
@@ -393,7 +466,9 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
 
   get selectTriggerValue() {
     if (this.selectValue) {
-      const firstSelected = Array.isArray(this.selectValue) ? this.selectValue[0] : this.selectValue;
+      const firstSelected = Array.isArray(this.selectValue)
+        ? this.selectValue[0]
+        : this.selectValue;
       const selectedEntity = this._entities.get(firstSelected);
       return selectedEntity ? this.entityLabelFn(selectedEntity) : '';
     }
@@ -401,7 +476,9 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   }
 
   get selectTriggerValueAsArray() {
-    return Array.isArray(this.selectValue) ? (this.selectValue as Array<string | number>) : [];
+    return Array.isArray(this.selectValue)
+      ? (this.selectValue as Array<string | number>)
+      : [];
   }
 
   entityId(entity: TEntity) {
@@ -412,7 +489,7 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
     if (Array.isArray(entityId)) {
       if (this.multiple) {
         const selectedValues: any[] = [];
-        entityId.forEach(id => {
+        entityId.forEach((id) => {
           if (this._entities.has(id)) {
             selectedValues.push(id);
           }
@@ -445,16 +522,16 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
 
   set entities(items: TEntity[]) {
     if (!this.group) {
-      items.forEach(item => {
+      items.forEach((item) => {
         this._entities.set((item as any)[this.idKey], item);
       });
     } else {
-      this._groupedEntities = (items as any) as EntityGroup<TEntity>[];
-      this._groupedEntities.forEach(group => {
+      this._groupedEntities = items as any as EntityGroup<TEntity>[];
+      this._groupedEntities.forEach((group) => {
         const key = this.groupEntitiesKey();
         const groupEntities = (group as any)[key] as TEntity[];
         (group as any)['__items__'] = groupEntities;
-        groupEntities.forEach(item => {
+        groupEntities.forEach((item) => {
           this._entities.set((item as any)[this.idKey], item);
         });
       });
@@ -486,7 +563,10 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
 
   @Input()
   get required() {
-    return this._required ?? this.ngControl?.control?.hasValidator(Validators.required);
+    return (
+      this._required ??
+      this.ngControl?.control?.hasValidator(Validators.required)
+    );
   }
   set required(req: boolean) {
     this._required = coerceBooleanProperty(req);
@@ -501,7 +581,7 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
     return this._disabled ?? this.ngControl?.control?.disabled;
   }
   set disabled(value: BooleanInput) {
-    const disabled = coerceBooleanProperty(value);;
+    const disabled = coerceBooleanProperty(value);
     if (disabled !== this._disabled) {
       this.setDisabledState(disabled);
       this.stateChanges.next();
@@ -527,7 +607,9 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   }
 
   onFocusOut(event: FocusEvent) {
-    if (!this._elementRef.nativeElement.contains(event.relatedTarget as Element)) {
+    if (
+      !this._elementRef.nativeElement.contains(event.relatedTarget as Element)
+    ) {
       this.touched = true;
       this.focused = false;
       this.onTouched();
@@ -572,7 +654,9 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
       this.selectValue = ev.value;
       this.onTouched();
       this.onChanged(ev.value);
-      const selectedEntities: TEntity[] = ev.value.map(id => this._entities.get(id)) as TEntity[];
+      const selectedEntities: TEntity[] = ev.value.map((id) =>
+        this._entities.get(id)
+      ) as TEntity[];
       this.selectionChange.emit(selectedEntities);
     } else {
       if (ev.value !== '0') {
@@ -585,7 +669,7 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
         // previous value via 'lastSelectValue' member which is updated
         // whenever the select is opened.
         if (this.ngControl) {
-          this.ngControl.control?.setValue(this.lastSelectValue)
+          this.ngControl.control?.setValue(this.lastSelectValue);
         }
         ev.source.value = this.lastSelectValue;
         this.createNewItemSelected.emit();
@@ -608,7 +692,9 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
           if (this.entityFilterFn) {
             return this.entityFilterFn(member, search);
           }
-          return this.entityLabelFn(member).toLocaleLowerCase().includes(searchLwr);
+          return this.entityLabelFn(member)
+            .toLocaleLowerCase()
+            .includes(searchLwr);
         })
       );
     }
@@ -634,16 +720,16 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
       this.filteredGroupedValues.next(groupsCopy);
     } else {
       const groupEntitiesKey = this.groupEntitiesKey();
-      const groups = this._groupedEntities.map(ge => {
+      const groups = this._groupedEntities.map((ge) => {
         const label = this.groupLabel(ge);
         if (label.toLocaleLowerCase().includes(searchLwr)) {
-          return {...ge} as EntityGroup<TEntity>;
+          return { ...ge } as EntityGroup<TEntity>;
         } else {
-          const groupEntities = ge.__items__?.filter(
-            e => this.entityLabelFn(e).toLocaleLowerCase().includes(searchLwr)
+          const groupEntities = ge.__items__?.filter((e) =>
+            this.entityLabelFn(e).toLocaleLowerCase().includes(searchLwr)
           );
           const ret: any = {
-            ...ge
+            ...ge,
           };
           ret['__items__'] = groupEntities ?? [];
           return ret as EntityGroup<TEntity>;
@@ -651,11 +737,13 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
       });
       // filter out groups with no entities
       // console.log(`Groups: ${JSON.stringify(groups)}`);
-      this.filteredGroupedValues.next(groups.filter(
-        (group) =>
-          Array.isArray((group as any)[groupEntitiesKey]) &&
-          (group as any)['__items__'].length > 0
-      ));
+      this.filteredGroupedValues.next(
+        groups.filter(
+          (group) =>
+            Array.isArray((group as any)[groupEntitiesKey]) &&
+            (group as any)['__items__'].length > 0
+        )
+      );
     }
   }
 
@@ -673,15 +761,15 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
       let params!: HttpParams;
       if (this.httpParams) {
         params = new HttpParams({
-          fromString: this.httpParams.toString()
-        })
+          fromString: this.httpParams.toString(),
+        });
       } else {
         params = new HttpParams();
       }
-      params = params.set('paginate', false)
+      params = params.set('paginate', false);
       cacheKey = this.getCacheKey();
       if (this.existsInCache()) {
-        obs = of(this.getFromCache())
+        obs = of(this.getFromCache());
       } else {
         obs = this.http.get<any>(this.url, {
           context: this.getHttpReqContext(),
@@ -695,7 +783,7 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
         // Handle DRF paginated response
         const responseParserFn = this.responseParserFn();
         if (responseParserFn) {
-          entities = (responseParserFn(entities) as unknown) as TEntity[];
+          entities = responseParserFn(entities) as unknown as TEntity[];
         } else {
           if (
             !Array.isArray(entities) &&
@@ -703,7 +791,8 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
             Array.isArray(entities['results'])
           ) {
             entities = entities['results'];
-          } else if ( // sideloaded response, where entities are usually provided in 'entityName'
+          } else if (
+            // sideloaded response, where entities are usually provided in 'entityName'
             this._sideloadDataKey() &&
             !Array.isArray(entities) &&
             typeof entities === 'object' &&
@@ -749,8 +838,11 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   }
 
   groupEntitiesKey() {
-    return this.groupOptionsKey ? this.groupOptionsKey
-      : (this.entityName ? plural(this.entityName.toLocaleLowerCase()) : 'items');
+    return this.groupOptionsKey
+      ? this.groupOptionsKey
+      : this.entityName
+      ? plural(this.entityName.toLocaleLowerCase())
+      : 'items';
   }
 
   private existsInCache() {
@@ -766,8 +858,8 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
       let params!: HttpParams;
       if (this.httpParams) {
         params = new HttpParams({
-          fromString: this.httpParams.toString()
-        })
+          fromString: this.httpParams.toString(),
+        });
       } else {
         params = new HttpParams();
       }
@@ -779,7 +871,8 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
   private getFromCache() {
     const cacheKey = this.getCacheKey();
     if (cacheKey && SPMatSelectEntityComponent._entitiesCache.has(cacheKey)) {
-      return SPMatSelectEntityComponent._entitiesCache.get(cacheKey)?.entities as TEntity[]
+      return SPMatSelectEntityComponent._entitiesCache.get(cacheKey)
+        ?.entities as TEntity[];
     }
     return [];
   }
@@ -787,16 +880,21 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
     const cacheKey = this.getCacheKey();
     if (cacheKey) {
       if (!SPMatSelectEntityComponent._entitiesCache.has(cacheKey)) {
-        SPMatSelectEntityComponent._entitiesCache.set(cacheKey, {refCount: 0, entities});
+        SPMatSelectEntityComponent._entitiesCache.set(cacheKey, {
+          refCount: 0,
+          entities,
+        });
       }
-      const cacheEntry = SPMatSelectEntityComponent._entitiesCache.get(cacheKey);
+      const cacheEntry =
+        SPMatSelectEntityComponent._entitiesCache.get(cacheKey);
       cacheEntry!.refCount += 1;
     }
   }
   private removeFromCache() {
     const cacheKey = this.getCacheKey();
     if (cacheKey) {
-      const cacheEntry = SPMatSelectEntityComponent._entitiesCache.get(cacheKey);
+      const cacheEntry =
+        SPMatSelectEntityComponent._entitiesCache.get(cacheKey);
       if (cacheEntry) {
         cacheEntry!.refCount -= 1;
         if (cacheEntry.refCount <= 0) {
@@ -812,7 +910,7 @@ export class SPMatSelectEntityComponent<TEntity extends { [P in IdKey]: Property
     context.set(SP_MAT_SELECT_ENTITY_HTTP_CONTEXT, {
       entityName: this.entityName ?? '',
       entityNamePlural: this.entityName ? plural(this.entityName) : '',
-      endpoint: this.url
+      endpoint: this.url,
     });
     return context;
   }

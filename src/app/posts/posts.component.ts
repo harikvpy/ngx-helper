@@ -210,14 +210,41 @@ const BLOCKS: Block[] = [
                 <mat-form-field>
                   <mat-label>Select User2 (Remote)</mat-label>
                   <sp-mat-select-entity
+                    idKey="cell"
                     [url]="remoteUsersUrl"
                     [entityLabelFn]="remoteUserLabelFn"
-                    entityName="Remote User 2"
+                    entityName="user"
                     formControlName="remoteUser2"
                     (selectionChange)="onRemoteUserSelected2($event)"
                   ></sp-mat-select-entity>
                 </mat-form-field>
               </div>
+
+
+              <div class="p-2">
+                <mat-form-field>
+                  <mat-label>Custom Template</mat-label>
+                  <sp-mat-select-entity
+                    idKey="cell"
+                    [url]="remoteUsersUrl"
+                    [entityLabelFn]="remoteUserLabelFn"
+                    entityName="user"
+                    formControlName="remoteUser3"
+                    (selectionChange)="onRemoteUserSelected3($event)"
+                    [optionLabelTemplate]="myOptionLabelTemplate"
+                  ></sp-mat-select-entity>
+
+                </mat-form-field>
+
+                <ng-template #myOptionLabelTemplate let-entity>
+                  <span class="option-label">
+                    <img [src]="entity.picture.thumbnail" width="28" height="28" alt="Image">&nbsp;
+                    {{ entity.name.title + '。' + entity.name.first + '-' + entity.name.last }}
+                  </span>
+                </ng-template>
+
+              </div>
+
 
               <div class="p-2">
                 <mat-form-field>
@@ -271,6 +298,13 @@ const BLOCKS: Block[] = [
     font-size: 1.3em;
     font-weight: 800;
   }
+  .option-label {
+    text-overflow: ellipsis;
+    text-wrap: nowrap;
+  }
+  .option-label img {
+    border-radius: 50%;
+  }
   `,
     ]
 })
@@ -293,6 +327,7 @@ export class PostsComponent {
       user: [undefined, Validators.required],
       remoteUser1: [undefined],
       remoteUser2: [undefined],
+      remoteUser3: [undefined],
       unit: [undefined],
     });
     this.form.valueChanges
@@ -329,7 +364,11 @@ export class PostsComponent {
   }
 
   onRemoteUserSelected2(ev: any) {
-    console.log(`onRemoteUserSelected2 - ev: ${JSON.stringify(ev)}`);
+    console.log(`onRemoteUserSelected2 - ev: ${JSON.stringify(ev.cell)}`);
+  }
+
+  onRemoteUserSelected3(ev: any) {
+    console.log(`onRemoteUserSelected3 - ev: ${JSON.stringify(ev)}`);
   }
 
   onCreateNewUser(ev: any) {
