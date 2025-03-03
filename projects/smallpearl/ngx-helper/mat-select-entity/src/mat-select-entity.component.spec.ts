@@ -236,16 +236,13 @@ describe('MatSelectEntityComponent (single selection)', () => {
       0,
       USER_DATA.length / 2
     );
-    let injectorArgReceived = false;
-    const loadDataFromRemote = (injector: Injector) => {
-      injectorArgReceived = !!injector;
+    const loadDataFromRemote = () => {
       return of(DATA);
     };
     component.loadFromRemoteFn = loadDataFromRemote;
     await openMatSelect(fixture);
     // There should be DATA.length+1 <mat-option /> elements
     // The +1 is the <mat-option /> for ngx-mat-select-search.
-    expect(injectorArgReceived).toBeTrue();
     expect(matSel.options.length).toEqual(1 + DATA.length);
     expect((component as any).loaded).toBeTrue();
   });

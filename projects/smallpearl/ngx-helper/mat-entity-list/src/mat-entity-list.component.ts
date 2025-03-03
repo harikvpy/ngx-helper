@@ -786,25 +786,20 @@ export class SPMatEntityListComponent<
         this.pageSize()
       );
     }
-    const paramsSet = new Map<string, string|number|boolean|null>();
+    let httpParams = new HttpParams();
     for (const key in pageParams) {
-      paramsSet.set(key, (pageParams as any)[key]);
+      httpParams = httpParams.append(key, (pageParams as any)[key]);
     }
     if (parts.length > 1) {
       const embeddedParams = new HttpParams({ fromString: parts[1] });
       embeddedParams.keys().forEach((key) => {
-        paramsSet.set(key, embeddedParams.get(key));
+        const value = embeddedParams.getAll(key);
+        (value || []).forEach((v) => {
+          httpParams = httpParams.append(key, v);
+        });
       });
     }
-    let params = new HttpParams();
-    paramsSet.forEach((value, key) => {
-      params = params.set(key, value ? value.toString() : '');
-    });
-    // let params = new HttpParams(parts.length > 1 ? { fromString: parts[1] } : undefined);
-    // for (const key in pageParams) {
-    //   params = params.append(key, (pageParams as any)[key]);
-    // }
-    return new LoadRequest(endpoint, params, forceRefresh || !!this.entityLoaderFn());
+    return new LoadRequest(endpoint, httpParams, forceRefresh || !!this.entityLoaderFn());
   }
 
   /**

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient, provideHttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, ComponentRef, OnInit, signal, viewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
@@ -141,18 +141,24 @@ describe('SPMatEntityListComponent', () => {
       { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
       'gender', 'cell'
     ]);
-    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    const reqParams = new HttpParams().set('results', '100').set('nat', 'us,dk,fr,gb').set('include[]', 'name').
+      append('include[]', 'cell').append('include[]', 'phone');
+    componentRef.setInput('endpoint', `https://randomuser.me/api/?${reqParams.toString()}`);
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('httpReqContext', ['cache', true]);
     const http = TestBed.inject(HttpClient);
     let httpReqContextReceived = false;
+    let includeValues: string[]|null;
     const httpGetSpy = spyOn(http, 'get').and.callFake(((url: string, options: any) => {
       httpReqContextReceived = options.context.get('cache') === true;
+      const params = options.params as HttpParams;
+      includeValues = params.getAll('include[]');
       return of(USER_DATA);
     }) as any); // 'as any' to suppress TSC function prototype mismatch
     fixture.detectChanges();
     tick();
     expect(httpGetSpy).toHaveBeenCalledTimes(1);
+    expect(includeValues!).toEqual(['name', 'cell', 'phone']);
     expect(component).toBeTruthy();
     const rows = fixture.debugElement.nativeElement.querySelectorAll('tr');
     // +1 for the <tr> in <thead>
