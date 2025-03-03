@@ -10,22 +10,22 @@ import {
   ElementRef,
   EventEmitter,
   HostBinding,
-  Inject,
-  Injector,
+  inject,
   input,
   Input,
   OnDestroy,
   OnInit,
-  Optional,
   Output,
-  Self,
   TemplateRef,
   ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NgControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MAT_FORM_FIELD, MatFormField, MatFormFieldControl } from '@angular/material/form-field';
+import { MAT_FORM_FIELD, MatFormFieldControl } from '@angular/material/form-field';
 import { MatSelect, MatSelectChange, MatSelectModule } from '@angular/material/select';
+import { getNgxHelperConfig } from '@smallpearl/ngx-helper/core';
+import { camelCase } from 'lodash';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
+import { plural } from 'pluralize';
 import {
   BehaviorSubject,
   combineLatest,
@@ -38,9 +38,6 @@ import {
   tap
 } from 'rxjs';
 import { SP_MAT_SELECT_ENTITY_CONFIG, SPMatSelectEntityConfig } from './providers';
-import { getNgxHelperConfig } from '@smallpearl/ngx-helper/core';
-import { plural } from 'pluralize';
-import { camelCase } from 'lodash';
 
 export interface SPMatSelectEntityHttpContext {
   entityName: string;
@@ -249,9 +246,7 @@ export class SPMatSelectEntityComponent<
   /**
    * Function to load entities from remote.
    */
-  @Input({ required: false }) loadFromRemoteFn!: (
-    injector: Injector
-  ) => Observable<TEntity[]>;
+  @Input({ required: false }) loadFromRemoteFn!: () => Observable<TEntity[]>;
 
   @Input({ required: false }) inlineNew: boolean = false;
   /**
@@ -381,17 +376,23 @@ export class SPMatSelectEntityComponent<
   @HostBinding() id = `sp-select-entity-${SPMatSelectEntityComponent.nextId++}`;
   private _placeholder!: string;
   ngxHelperConfig = getNgxHelperConfig();
+  protected http = inject(HttpClient);
+  protected cdr = inject(ChangeDetectorRef);
+  protected _elementRef = inject(ElementRef<HTMLElement>);
+  protected _formField = inject(MAT_FORM_FIELD, {optional: true});
+  protected config = inject(SP_MAT_SELECT_ENTITY_CONFIG, {optional: true});
+  public ngControl = inject(NgControl, {optional: true});
 
   constructor(
-    protected http: HttpClient,
-    protected cdr: ChangeDetectorRef,
-    protected _elementRef: ElementRef<HTMLElement>,
-    protected injector: Injector,
-    @Optional() @Inject(MAT_FORM_FIELD) public _formField: MatFormField,
-    @Optional() @Self() public ngControl: NgControl,
-    @Optional()
-    @Inject(SP_MAT_SELECT_ENTITY_CONFIG)
-    private config: SPMatSelectEntityConfig
+    // protected http: HttpClient,
+    // protected cdr: ChangeDetectorRef,
+    // protected _elementRef: ElementRef<HTMLElement>,
+    // protected injector: Injector,
+    // @Optional() @Inject(MAT_FORM_FIELD) public _formField: MatFormField,
+    // @Optional() @Self() public ngControl: NgControl,
+    // @Optional()
+    // @Inject(SP_MAT_SELECT_ENTITY_CONFIG)
+    // private config: SPMatSelectEntityConfig
   ) {
     if (this.ngControl != null) {
       this.ngControl.valueAccessor = this;
@@ -756,7 +757,7 @@ export class SPMatSelectEntityComponent<
     let cacheKey!: string;
     let obs: Observable<TEntity[]>;
     if (this.loadFromRemoteFn) {
-      obs = this.loadFromRemoteFn(this.injector);
+      obs = this.loadFromRemoteFn();
     } else {
       let params!: HttpParams;
       if (this.httpParams) {
