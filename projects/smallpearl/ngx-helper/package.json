@@ -1,6 +1,6 @@
 {
   "name": "@smallpearl/ngx-helper",
-  "version": "0.29.31",
+  "version": "0.29.32",
   "peerDependencies": {
     "@angular/common": "^19.1.0",
     "@angular/core": "^19.1.0",
