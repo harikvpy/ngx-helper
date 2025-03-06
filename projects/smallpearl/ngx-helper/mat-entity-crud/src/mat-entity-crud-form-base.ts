@@ -2,7 +2,6 @@ import { ChangeDetectorRef, Component, computed, inject, input, OnDestroy, OnIni
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { setServerErrorsAsFormErrors } from '@smallpearl/ngx-helper/forms';
 import { Subscription } from 'rxjs';
-import { tap } from 'rxjs/operators';
 import { getEntityCrudConfig } from './default-config';
 import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
 
@@ -143,12 +142,7 @@ export abstract class SPMatEntityCrudFormBase<
     this.sub$.add(
       obs
         ?.pipe(
-          setServerErrorsAsFormErrors(this._form as unknown as UntypedFormGroup, this.cdr),
-          tap((res) => {
-            if (res) {
-              // this.bridge()?.close();
-            }
-          })
+          setServerErrorsAsFormErrors(this._form() as unknown as UntypedFormGroup, this.cdr)
         )
         .subscribe()
     );
