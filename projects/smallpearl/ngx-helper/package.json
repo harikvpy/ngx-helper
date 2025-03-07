@@ -1,6 +1,12 @@
 {
   "name": "@smallpearl/ngx-helper",
-  "version": "0.29.36",
+  "i18n": [
+    {
+      "scope": "sp-mat-entity-crud",
+      "path": "src/assets/i18n/"
+    }
+  ],
+  "version": "0.29.37",
   "peerDependencies": {
     "@angular/common": "^19.1.0",
     "@angular/core": "^19.1.0",
