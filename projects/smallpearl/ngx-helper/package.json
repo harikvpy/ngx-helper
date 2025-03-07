@@ -24,20 +24,7 @@
     "ngx-mat-select-search": "^8.0.0",
     "rxjs": "^7.0.0"
   },
-  "peerDependenciesMeta": {
-    "ngx-infinite-scroll": {
-      "optional": true
-    },
-    "angular-split": {
-      "optional": true
-    },
-    "@ngneat/elf": {
-      "optional": true
-    },
-    "@ngneat/elf-entities": {
-      "optional": true
-    }
-  },
+  "peerDependenciesMeta": {},
   "dependencies": {
     "tslib": "^2.3.0"
   },
