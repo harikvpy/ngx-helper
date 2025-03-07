@@ -51,6 +51,8 @@ import {
   SPMatEntityCrudResponseParser,
 } from './mat-entity-crud-types';
 import { PreviewHostComponent } from './preview-host.component';
+import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
     imports: [
@@ -61,6 +63,8 @@ import { PreviewHostComponent } from './preview-host.component';
         MatSortModule,
         MatMenuModule,
         MatSnackBarModule,
+        MatIconModule,
+        TranslocoModule,
         AngularSplitModule,
         SPMatEntityListComponent,
         SPMatContextMenuComponent,
@@ -68,13 +72,17 @@ import { PreviewHostComponent } from './preview-host.component';
         SPMatHostBusyWheelDirective,
         PreviewHostComponent,
     ],
+    providers: [
+      provideTranslocoScope('sp-mat-entity-crud')
+    ],
     selector: 'sp-mat-entity-crud',
     template: `
-    <as-split direction="horizontal" [gutterSize]="6">
+    <as-split direction="horizontal" [gutterSize]="6" *transloco="let t">
       <as-split-area [size]="entitiesPaneWidth()" [visible]="!entitiesPaneHidden()">
         <div
           [class]="crudConfig.listPaneWrapperClass"
         >
+          <h2>sp-mat-entity-crud.newItem: {{ t('spMatEntityCrud.newItem', {item: _itemLabel() }) }}</h2>
           <ng-content select="[breadCrumbs]"></ng-content>
 
           <ng-template #defaultActionButtons>
@@ -87,10 +95,12 @@ import { PreviewHostComponent } from './preview-host.component';
                 color="primary"
                 [matMenuTriggerFor]="newSubTypesMenu"
               >
-                {{
+              {{ t('spMatEntityCrud.newItem', {item: _itemLabel() }) }}
+              <mat-icon>expand_circle_down</mat-icon>
+                <!-- {{
                   newItemLabel() ??
                     crudConfig.i18n.newItemLabel(this._itemLabel())
-                }}&nbsp;&#9660;
+                }}&nbsp;&#9660; -->
                 <!-- down arrow-head -->
               </button>
               <mat-menu #newSubTypesMenu="matMenu">
@@ -112,10 +122,12 @@ import { PreviewHostComponent } from './preview-host.component';
                 (click)="onCreate($event)"
                 [routerLink]="newItemLink()"
               >
+               {{ t('spMatEntityCrud.newItem', {item: _itemLabel() }) }}
+<!--
                 {{
                   newItemLabel() ??
                     crudConfig.i18n.newItemLabel(this._itemLabel())
-                }}
+                }} -->
               </button>
               } }
             </div>
@@ -566,6 +578,7 @@ export class SPMatEntityCrudComponent<
     private snackBar: MatSnackBar,
     sanitizer: DomSanitizer,
     injector: Injector,
+    private transloco: TranslocoService
   ) {
     super(http, sanitizer, injector);
     this.crudConfig = getEntityCrudConfig();
@@ -577,9 +590,14 @@ export class SPMatEntityCrudComponent<
         { label: this.crudConfig.i18n.delete, role: '_delete_' },
       ]);
     }
+    this.transloco.selectTranslate('editItem', {item: 'Invoice'}, 'sp-mat-entity-crud').subscribe((t) => {
+      console.log(`MatEntityCrudComponent: "sp-mat-entity-crud.edit": ${t}, translate: ${this.transloco.translate('editItem', {item: 'Invoice'}, 'sp-mat-entity-crud')}`);
+    });
   }
 
-  override ngOnInit() {}
+  override ngOnInit() {
+    console.log('MatEntityCrudComponent: ngOnInit');
+  }
 
   override ngOnDestroy(): void {
     this.sub$.unsubscribe();

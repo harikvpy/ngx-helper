@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, isDevMode, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 
 import {
@@ -9,6 +9,7 @@ import {
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { provideTransloco } from '@jsverse/transloco';
 import { FORM_ERRORS, provideErrorTailorConfig } from '@ngneat/error-tailor';
 import { SP_NGX_HELPER_CONFIG } from '@smallpearl/ngx-helper/core';
 import {
@@ -23,6 +24,7 @@ import {
 import { Observable, of } from 'rxjs';
 import { routes } from './app.routes';
 import { MatErrorTailorControlErrorComponent } from './components/mat-error-tailor-control-error/mat-error-tailor-control-error.component';
+import { TranslocoHttpLoader } from './transloco-loader';
 
 const WebTelInputConfig: QQMatTelephoneInputConfig = {
   // To cache last value from our API request so that we don't have to
@@ -52,13 +54,23 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideAnimationsAsync(),
     provideHttpClient(withInterceptorsFromDi()),
-    {
-      provide: QQMAT_TELEPHONE_INPUT_CONFIG_PROVIDER,
-      useValue: WebTelInputConfig,
-    },
+    provideTransloco({
+      config: {
+        availableLangs: ['en', 'zh-hant'],
+        defaultLang: 'en',
+        // Remove this option if your application doesn't support changing language in runtime.
+        reRenderOnLangChange: true,
+        prodMode: !isDevMode(),
+      },
+      loader: TranslocoHttpLoader,
+    }),
     {
       provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
       useValue: { appearance: 'outline' },
+    },
+    {
+      provide: QQMAT_TELEPHONE_INPUT_CONFIG_PROVIDER,
+      useValue: WebTelInputConfig,
     },
     { provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 3000 } },
     provideErrorTailorConfig({
