@@ -55,34 +55,32 @@ import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsver
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-    imports: [
-        CommonModule,
-        RouterModule,
-        MatButtonModule,
-        MatTableModule,
-        MatSortModule,
-        MatMenuModule,
-        MatSnackBarModule,
-        MatIconModule,
-        TranslocoModule,
-        AngularSplitModule,
-        SPMatEntityListComponent,
-        SPMatContextMenuComponent,
-        FormViewHostComponent,
-        SPMatHostBusyWheelDirective,
-        PreviewHostComponent,
-    ],
-    providers: [
-      provideTranslocoScope('sp-mat-entity-crud')
-    ],
-    selector: 'sp-mat-entity-crud',
-    template: `
+  imports: [
+    CommonModule,
+    RouterModule,
+    MatButtonModule,
+    MatTableModule,
+    MatSortModule,
+    MatMenuModule,
+    MatSnackBarModule,
+    MatIconModule,
+    TranslocoModule,
+    AngularSplitModule,
+    SPMatEntityListComponent,
+    SPMatContextMenuComponent,
+    FormViewHostComponent,
+    SPMatHostBusyWheelDirective,
+    PreviewHostComponent,
+  ],
+  providers: [provideTranslocoScope('sp-mat-entity-crud')],
+  selector: 'sp-mat-entity-crud',
+  template: `
     <as-split direction="horizontal" [gutterSize]="6" *transloco="let t">
-      <as-split-area [size]="entitiesPaneWidth()" [visible]="!entitiesPaneHidden()">
-        <div
-          [class]="crudConfig.listPaneWrapperClass"
-        >
-          <h2>sp-mat-entity-crud.newItem: {{ t('spMatEntityCrud.newItem', {item: _itemLabel() }) }}</h2>
+      <as-split-area
+        [size]="entitiesPaneWidth()"
+        [visible]="!entitiesPaneHidden()"
+      >
+        <div [class]="listPaneWrapperClass()">
           <ng-content select="[breadCrumbs]"></ng-content>
 
           <ng-template #defaultActionButtons>
@@ -95,13 +93,11 @@ import { MatIconModule } from '@angular/material/icon';
                 color="primary"
                 [matMenuTriggerFor]="newSubTypesMenu"
               >
-              {{ t('spMatEntityCrud.newItem', {item: _itemLabel() }) }}
-              <mat-icon>expand_circle_down</mat-icon>
-                <!-- {{
+                {{
                   newItemLabel() ??
-                    crudConfig.i18n.newItemLabel(this._itemLabel())
-                }}&nbsp;&#9660; -->
-                <!-- down arrow-head -->
+                    t('spMatEntityCrud.newItem', { item: _itemLabel() })
+                }}
+                <mat-icon>expand_circle_down</mat-icon>
               </button>
               <mat-menu #newSubTypesMenu="matMenu">
                 @for (subtype of newItemSubTypes(); track $index) { @if
@@ -122,12 +118,10 @@ import { MatIconModule } from '@angular/material/icon';
                 (click)="onCreate($event)"
                 [routerLink]="newItemLink()"
               >
-               {{ t('spMatEntityCrud.newItem', {item: _itemLabel() }) }}
-<!--
                 {{
                   newItemLabel() ??
-                    crudConfig.i18n.newItemLabel(this._itemLabel())
-                }} -->
+                    t('spMatEntityCrud.newItem', { item: _itemLabel() })
+                }}
               </button>
               } }
             </div>
@@ -139,11 +133,11 @@ import { MatIconModule } from '@angular/material/icon';
                 {{ _title() }}
               </div>
               <span class="spacer"></span>
-            <!-- Hide the action buttons when Preview/Edit pane is active -->
+              <!-- Hide the action buttons when Preview/Edit pane is active -->
               @if (!entityPaneActive()) {
-                <ng-container
-                  [ngTemplateOutlet]="actionsTemplate() || defaultActionButtons"
-                ></ng-container>
+              <ng-container
+                [ngTemplateOutlet]="actionsTemplate() || defaultActionButtons"
+              ></ng-container>
               }
             </div>
           </ng-template>
@@ -193,25 +187,12 @@ import { MatIconModule } from '@angular/material/icon';
             }
           </td>
         </ng-container>
-
-        <!--
-        <div
-          [class]="crudConfig.listPaneWrapperClass"
-          [ngStyle]="{ display: createEditViewActive() ? 'inherit' : 'none' }"
-          spHostBusyWheel="formBusyWheel"
-        >
-          <ng-content select="[breadCrumbs]"></ng-content>
-          <sp-create-edit-entity-host
-            [itemLabel]="_itemLabel()"
-            [itemLabelPlural]="_itemLabelPlural()"
-            [entityCrudComponentBase]="this"
-            [clientViewTemplate]="createEditFormTemplate()"
-          ></sp-create-edit-entity-host>
-        </div>
-        -->
       </as-split-area>
       <as-split-area [size]="entityPaneWidth()" [visible]="entityPaneActive()">
-        <div [class]="crudConfig.previewPaneWrapperClass" spHostBusyWheel="formBusyWheel">
+        <div
+          [class]="previewPaneWrapperClass()"
+          spHostBusyWheel="formBusyWheel"
+        >
           <sp-entity-crud-preview-host
             [ngClass]="createEditViewActive() ? 'd-none' : 'd-inherit'"
             [entityCrudComponentBase]="this"
@@ -229,7 +210,7 @@ import { MatIconModule } from '@angular/material/icon';
       </as-split-area>
     </as-split>
   `,
-    styles: `
+  styles: `
   .d-none {
     display: none;
   }
@@ -256,7 +237,7 @@ import { MatIconModule } from '@angular/material/icon';
     font-weight: bold;
   }
   `,
-    changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SPMatEntityCrudComponent<
     TEntity extends { [P in IdKey]: PropertyKey },
@@ -287,7 +268,7 @@ export class SPMatEntityCrudComponent<
    */
   newItemLink = input<string | string[]>();
   /**
-   * If not specified, will use label from SPMatEntityCrudConfig.i18n.newItemLabel.
+   * If not specified, will default to 'New <itemLabel()>'.
    */
   newItemLabel = input<string | string[]>();
   /**
@@ -420,12 +401,31 @@ export class SPMatEntityCrudComponent<
    */
   previewPaneWidth = input<number>(50);
 
+  /**
+   * The class class that will be applied to the list pane wrapper.
+   */
+  listPaneWrapperClass = input<string>('sp-mat-crud-list-pane-wrapper-class');
+
+  /**
+   * The class class that will be applied to the preview pane wrapper.
+   */
+  previewPaneWrapperClass = input<string>(
+    'sp-mat-crud-preview-pane-wrapper-class'
+  );
+
+  /**
+   * The class class that will be applied to the preview pane content.
+   */
+  previewPaneContentClass = input<string>(
+    'sp-mat-crud-preview-pane-content-class'
+  );
+
   // INTERNAL PROPERTIES //
   // Derive a label from a camelCase source string. If the camelCase string
   // can be translated, it returns the translated string. If not, the function
   // converts the camelCase to 'Title Case' and returns it.
   private getLabel = (source: string) => {
-    const label = this.ngxHelperConfig.i18nTranslate(source);
+    const label = this.transloco.translate(source);
     if (label.localeCompare(source) !== 0) {
       // Successful translation, return it
       return label;
@@ -470,8 +470,8 @@ export class SPMatEntityCrudComponent<
    */
   @Output() entityViewPaneActivated = new EventEmitter<{
     activated: boolean;
-    cancelled: boolean|undefined;
-    mode: 'edit'|'preview';
+    cancelled: boolean | undefined;
+    mode: 'edit' | 'preview';
   }>();
 
   busyWheelId = `entityCrudBusyWheel-${Date.now()}`;
@@ -496,13 +496,23 @@ export class SPMatEntityCrudComponent<
   // Whether the pane that hosts the preview/edit-entity template is active.
   // We call it entityPane as it's used to either render a selected entity
   // or to edit one.
-  entityPaneActive = computed(() => !!this.previewedEntity() || this.createEditViewActive());
+  entityPaneActive = computed(
+    () => !!this.previewedEntity() || this.createEditViewActive()
+  );
   // Effective width of the entity pane.
-  entityPaneWidth = computed(() => !!this.previewedEntity() ? this.previewPaneWidth() : this.editPaneWidth());
+  entityPaneWidth = computed(() =>
+    this.entityPaneActive()
+      ? !!this.previewedEntity()
+        ? this.previewPaneWidth()
+        : this.editPaneWidth()
+      : 0
+  );
 
   // Width of the pane showing the list of entities. Calculated as
   entitiesPaneWidth = computed(() => 100 - this.entityPaneWidth());
-  entitiesPaneHidden = computed(() => this.entityPaneActive() && this.entityPaneWidth() === 100);
+  entitiesPaneHidden = computed(
+    () => this.entityPaneActive() && this.entityPaneWidth() === 100
+  );
 
   defaultItemCrudActions = signal<SPContextMenuItem[]>([]);
   columnsWithAction = computed(() => {
@@ -586,18 +596,19 @@ export class SPMatEntityCrudComponent<
       this.defaultItemCrudActions.set(this.crudConfig?.defaultItemActions);
     } else {
       this.defaultItemCrudActions.set([
-        { label: this.crudConfig.i18n.edit, role: '_update_' },
-        { label: this.crudConfig.i18n.delete, role: '_delete_' },
+        {
+          label: this.transloco.translate('spMatEntityCrud.edit'),
+          role: '_update_',
+        },
+        {
+          label: this.transloco.translate('spMatEntityCrud.delete'),
+          role: '_delete_',
+        },
       ]);
     }
-    this.transloco.selectTranslate('editItem', {item: 'Invoice'}, 'sp-mat-entity-crud').subscribe((t) => {
-      console.log(`MatEntityCrudComponent: "sp-mat-entity-crud.edit": ${t}, translate: ${this.transloco.translate('editItem', {item: 'Invoice'}, 'sp-mat-entity-crud')}`);
-    });
   }
 
-  override ngOnInit() {
-    console.log('MatEntityCrudComponent: ngOnInit');
-  }
+  override ngOnInit() {}
 
   override ngOnDestroy(): void {
     this.sub$.unsubscribe();
@@ -662,7 +673,11 @@ export class SPMatEntityCrudComponent<
 
   closeCreateEdit(cancelled: boolean) {
     this.createEditViewActive.set(false);
-    this.entityViewPaneActivated.emit({ activated: false, cancelled: !!cancelled, mode: 'edit' });
+    this.entityViewPaneActivated.emit({
+      activated: false,
+      cancelled: !!cancelled,
+      mode: 'edit',
+    });
   }
 
   canCancelEdit() {
@@ -708,7 +723,9 @@ export class SPMatEntityCrudComponent<
         if (entity) {
           this.spEntitiesList()?.addEntity(entity);
           this.snackBar.open(
-            this.crudConfig.i18n.createdItemNotification(this._itemLabel())
+            this.transloco.translate('spMatEntityCrud.createSuccess', {
+              item: this._itemLabel(),
+            })
           );
         }
       })
@@ -735,7 +752,9 @@ export class SPMatEntityCrudComponent<
         if (entity) {
           this.spEntitiesList()?.updateEntity(id, entity);
           this.snackBar.open(
-            this.crudConfig.i18n.updatedItemNotification(this._itemLabel())
+            this.transloco.translate('spMatEntityCrud.updateSuccess', {
+              item: this._itemLabel(),
+            })
           );
         }
       })
@@ -812,7 +831,11 @@ export class SPMatEntityCrudComponent<
         this.spEntitiesList()?.toggleActiveEntity(this.previewedEntity());
       }
       this.previewedEntity.set(undefined);
-      this.entityViewPaneActivated.emit({ activated: false, cancelled: undefined, mode: 'preview' });
+      this.entityViewPaneActivated.emit({
+        activated: false,
+        cancelled: undefined,
+        mode: 'preview',
+      });
     }
   }
 
@@ -834,8 +857,12 @@ export class SPMatEntityCrudComponent<
       event.preventDefault();
       event.stopImmediatePropagation();
       const params = {
-        title: this.newItemLabel() ?? this.crudConfig.i18n.newItemLabel(this._itemLabel()),
-      }
+        title:
+          this.newItemLabel() ??
+          this.transloco.translate('spMatEntityCrud.newItem', {
+            item: this._itemLabel(),
+          }),
+      };
       this.showCreateEditView(undefined, params);
       // const tmpl = this.createEditFormTemplate();
       // if (tmpl) {
@@ -855,8 +882,12 @@ export class SPMatEntityCrudComponent<
 
   onUpdate(entity: TEntity) {
     const params = {
-      title: this.editItemTitle() ?? this.crudConfig.i18n.editItemLabel(this._itemLabel()),
-    }
+      title:
+        this.editItemTitle() ??
+        this.transloco.translate('spMatEntityCrud.editItem', {
+          item: this._itemLabel(),
+        }),
+    };
     this.showCreateEditView(entity, params);
 
     // const tmpl = this.createEditFormTemplate();
@@ -894,7 +925,11 @@ export class SPMatEntityCrudComponent<
       const createEditHost = this.createEditHostComponent();
       createEditHost!.show(entity, params);
       this.createEditViewActive.set(true);
-      this.entityViewPaneActivated.emit({ activated: true, cancelled: undefined, mode: 'edit' });
+      this.entityViewPaneActivated.emit({
+        activated: true,
+        cancelled: undefined,
+        mode: 'edit',
+      });
     }
   }
 
@@ -905,7 +940,11 @@ export class SPMatEntityCrudComponent<
         const previewHost = this.previewHostComponent();
         this.previewedEntity.set(entity);
         previewHost?.show(entity, params);
-        this.entityViewPaneActivated.emit({ activated: true, cancelled: undefined, mode: 'preview' });
+        this.entityViewPaneActivated.emit({
+          activated: true,
+          cancelled: undefined,
+          mode: 'preview',
+        });
         // this.previewActivated.emit({ entity, activated: true });
       }
     }
@@ -923,8 +962,9 @@ export class SPMatEntityCrudComponent<
     // Do the delete prompt asynchronously so that the context menu is
     // dismissed before the prompt is displayed.
     setTimeout(() => {
-      const deletedItemPrompt = this.crudConfig.i18n.deleteItemMessage(
-        this._itemLabel()
+      const deletedItemPrompt = this.transloco.translate(
+        'spMatEntityCrud.deleteItemConfirm',
+        { item: this._itemLabel().toLocaleLowerCase() }
       );
       const yes = confirm(deletedItemPrompt);
       if (yes) {
@@ -953,10 +993,10 @@ export class SPMatEntityCrudComponent<
               tap(() => {
                 this.spEntitiesList()!.removeEntity(entityId);
                 // TODO: customize by providing an interface via SPMatEntityCrudConfig?
-                const deletedMessage =
-                  this.crudConfig.i18n.itemDeletedNotification(
-                    this._itemLabel()
-                  );
+                const deletedMessage = this.transloco.translate(
+                  'spMatEntityCrud.deleteItemSuccess',
+                  { item: this._itemLabel() }
+                );
                 this.snackBar.open(deletedMessage);
               })
             )
@@ -985,7 +1025,7 @@ export class SPMatEntityCrudComponent<
     return this.getUrl(entityEndpoint);
   }
 
-  handleSelectEntity(entity: TEntity|undefined) {
+  handleSelectEntity(entity: TEntity | undefined) {
     if (!this.createEditViewActive()) {
       if (this.previewTemplate()) {
         entity ? this.showPreviewView(entity) : this.hidePreviewView();
@@ -1083,5 +1123,9 @@ export class SPMatEntityCrudComponent<
       };
     });
     return actionsCopy;
+  }
+
+  getPreviewPaneContentClass() {
+    return this.previewPaneContentClass();
   }
 }

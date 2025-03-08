@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   EmbeddedViewRef,
+  inject,
   input,
   OnDestroy,
   OnInit,
@@ -18,6 +19,7 @@ import { Subscription, tap } from 'rxjs';
 import { getEntityCrudConfig } from './default-config';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
 import { SPMatEntityCrudConfig, SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
     imports: [CommonModule, MatButtonModule, MatIconModule, SPMatHostBusyWheelDirective],
@@ -31,7 +33,7 @@ import { SPMatEntityCrudConfig, SPMatEntityCrudCreateEditBridge } from './mat-en
         <div class="spacer"></div>
         <div class="close">
           <button mat-icon-button (click)="onClose()">
-            <mat-icon>close</mat-icon>
+            <mat-icon>cancel</mat-icon>
           </button>
         </div>
       </div>
@@ -72,6 +74,7 @@ export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEdit
   vc = viewChild('clientFormContainer', { read: ViewContainerRef });
   config!: SPMatEntityCrudConfig;
   sub$ = new Subscription();
+  transloco = inject(TranslocoService);
 
   constructor() {
     this.config = getEntityCrudConfig();
@@ -88,7 +91,12 @@ export class FormViewHostComponent<TEntity> implements SPMatEntityCrudCreateEdit
     if (params && params?.title) {
       this.title.set(params.title);
     } else {
-      this.title.set(entity ? this.config.i18n.editItemLabel(this.itemLabel()) : this.config.i18n.newItemLabel(this.itemLabel()));
+      // this.title.set(entity ? this.config.i18n.editItemLabel(this.itemLabel()) : this.config.i18n.newItemLabel(this.itemLabel()));
+      this.title.set(
+        this.transloco.translate(entity ? 'editItem' : 'newItem', {
+          item: this.itemLabel(),
+        })
+      );
     }
     this.params.set(params);
     this.createClientView();

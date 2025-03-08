@@ -74,4 +74,11 @@ export interface SPMatEntityCrudComponentBase<TEntity> {
    * @returns
    */
   getItemActions(): SPContextMenuItem[];
+
+  /**
+   * Returns the class to be used for the preview pane content. This interface
+   * is provided to allow the PreviewPaneComponent to access the client
+   * configured class for the preview pane content.
+   */
+  getPreviewPaneContentClass(): string;
 }

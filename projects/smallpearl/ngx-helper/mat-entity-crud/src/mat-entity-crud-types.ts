@@ -17,22 +17,13 @@ export type SPMatEntityCrudResponseParser = (
  * Global config for SPMatEntityList component.
  */
 export interface SPMatEntityCrudConfig {
-  i18n: {
-    newItemLabel: (itemLabel: string) => string;
-    editItemLabel: (itemLabel: string) => string;
-    edit: string;
-    delete: string;
-    deleteItemHeader: (itemLabel: string) => string;
-    deleteItemMessage: (itemLabel: string) => string;
-    itemDeletedNotification: (itemLabel: string) => string;
-    createdItemNotification: (itemLabel: string) => string;
-    updatedItemNotification: (itemLabel: string) => string;
-    loseChangesPrompt: string;
-  }
+  /**
+   * The item actions that will be shown for each item in the list.
+   * This defaults to 'Update' & 'Delete' actions, but can be customized
+   * by this property. Note the item actions can be set for individual
+   * <sp-mat-entity-crud> component through its itemActions property.
+   */
   defaultItemActions?: SPContextMenuItem[];
-  listPaneWrapperClass?: string;
-  previewPaneWrapperClass?: string;
-  previewPaneContentClass?: string;
   /**
    * Global crud response parser.
    */

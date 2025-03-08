@@ -9,9 +9,11 @@ import {
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
+import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { getEntitiesIds } from '@ngneat/elf-entities';
 import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
@@ -19,38 +21,16 @@ import { spFormatCurrency } from '@smallpearl/ngx-helper/locale';
 import { SPContextMenuItem } from '@smallpearl/ngx-helper/mat-context-menu';
 import {
   NewItemSubType,
-  SP_MAT_ENTITY_CRUD_CONFIG,
   SPMatEntityCrudComponent,
-  SPMatEntityCrudConfig,
+  SPMatEntityCrudPreviewPaneComponent,
 } from '@smallpearl/ngx-helper/mat-entity-crud';
 import { of } from 'rxjs';
-import { SPMatEntityCrudPreviewPaneComponent } from '../../../projects/smallpearl/ngx-helper/mat-entity-crud/src/preview-pane.component';
 import { MyPaginator } from '../entity-list-demo/paginater';
 import { User } from '../entity-list-demo/user';
+import { SPMatEntityCrudCanDeactivate } from './can-deactivate';
 import { CreateEditEntityDemoComponent } from './create-edit-entity-demo.component';
 import { Invoice, INVOICES } from './data';
 import { PreviewInvoiceComponent } from './preview-demo.component';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatMenuModule } from '@angular/material/menu';
-import { SPMatEntityCrudCanDeactivate } from './can-deactivate';
-
-const EntityCrudConfig: SPMatEntityCrudConfig = {
-  i18n: {
-    newItemLabel: (itemLabel: string) => 'New USER',
-    editItemLabel: (itemLabel: string) => 'Edit USER',
-    edit: 'Update',
-    delete: 'Remove',
-    deleteItemHeader: (itemLabel: string) => `Delete ${itemLabel}?`,
-    deleteItemMessage: (itemLabel: string) =>
-      `Are you sure you want to delete this ${itemLabel.toLocaleLowerCase()}?`,
-    itemDeletedNotification: (itemLabel: string) => `${itemLabel} deleted.`,
-    createdItemNotification: (itemLabel: string) => `${itemLabel} created.`,
-    updatedItemNotification: (itemLabel: string) => `${itemLabel} updated.`,
-    loseChangesPrompt: 'Are you okay with loosing changes?',
-  },
-  listPaneWrapperClass: 'sp-mat-crud-list-pane-wrapper-class',
-  previewPaneWrapperClass: 'sp-mat-crud-preview-pane-wrapper-class',
-};
 
 @Component({
     imports: [
@@ -67,9 +47,6 @@ const EntityCrudConfig: SPMatEntityCrudConfig = {
         CreateEditEntityDemoComponent,
         SPMatEntityCrudPreviewPaneComponent,
         PreviewInvoiceComponent,
-    ],
-    providers: [
-        { provide: SP_MAT_ENTITY_CRUD_CONFIG, useValue: EntityCrudConfig },
     ],
     selector: 'app-entity-crud-demo',
     template: `

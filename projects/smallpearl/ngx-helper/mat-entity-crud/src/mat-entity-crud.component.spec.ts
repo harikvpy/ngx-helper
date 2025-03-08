@@ -24,6 +24,7 @@ import { firstValueFrom, map, Observable, of, tap } from 'rxjs';
 import { NewItemSubType, SP_MAT_ENTITY_CRUD_HTTP_CONTEXT, SPMatEntityCrudCreateEditBridge, SPMatEntityCrudHttpContext } from './mat-entity-crud-types';
 import { SPMatEntityCrudComponent } from './mat-entity-crud.component';
 import { SPMatEntityCrudPreviewPaneComponent } from './preview-pane.component';
+import { getTranslocoModule } from '@smallpearl/ngx-helper/src/transloco-testing.module';
 
 interface User {
   name: { title: string; first: string; last: string };
@@ -249,6 +250,9 @@ export class CreateEditUserComponent implements OnInit {
         idKey="cell"
         [createEditFormTemplate]="createEdit"
         [previewTemplate]="userPreview"
+        listPaneWrapperClass="my-list-pane-wrapper-class"
+        previewPaneWrapperClass="my-preview-pane-wrapper-class"
+        previewPaneContentClass="my-preview-pane-content-class"
         [pageSize]="50"
         (action)="onAction($event)"
       >
@@ -333,16 +337,21 @@ describe('SPMatEntityCrudComponent', () => {
 
   async function createCrudComponent() {
     TestBed.configureTestingModule({
-      imports: [NoopAnimationsModule, SPMatEntityListComponent, SPMatEntityCrudTestComponent],
+      imports: [
+        NoopAnimationsModule,
+        SPMatEntityListComponent,
+        SPMatEntityCrudTestComponent,
+        getTranslocoModule(),
+      ],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         {
           provide: ActivatedRoute,
           useValue: {
-            snapshot: {params: {id: '100'}}
-          }
-        }
+            snapshot: { params: { id: '100' } },
+          },
+        },
       ],
     });
     fixture = TestBed.createComponent(SPMatEntityCrudComponent<User, 'cell'>);
@@ -654,7 +663,7 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      imports: [NoopAnimationsModule, SPMatEntityCrudTestComponent],
+      imports: [NoopAnimationsModule, SPMatEntityCrudTestComponent, getTranslocoModule()],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
@@ -687,6 +696,8 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     const nameRow = theadRows[0];
     // Column title set from content project <ng-container matColumnDef..>
     expect(nameRow.textContent).toEqual('FULL NAME');
+    const wrapperDiv = testComponentFixture.debugElement.nativeElement.querySelector('div.my-list-pane-wrapper-class');
+    expect(wrapperDiv).toBeTruthy();
   });
 
   it('should show preview pane when a row is clicked', fakeAsync(() => {
@@ -704,6 +715,11 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     tick();
     const previewPane = testComponentFixture.debugElement.nativeElement.querySelector('sp-mat-entity-crud-preview-pane');
     expect(previewPane).toBeTruthy();
+    // preview pane wrapper class shpould be set to 'my-preview-pane-wrapper-class'
+    expect(testComponentFixture.debugElement.nativeElement.querySelector('div.my-preview-pane-wrapper-class')).toBeTruthy();
+    // Preview pane should contain a <div class="my-preview-pane-content-class"> which is
+    // where the client content is projected.
+    expect(previewPane.querySelector('div.my-preview-pane-content-class')).toBeTruthy();
     // preview Pane should have the full name of the clicked user
     const h1 = previewPane.querySelector('h1');
     expect(h1).toBeTruthy();
@@ -917,5 +933,4 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     editFormComponent = testComponentFixture.debugElement.query(By.directive(CreateEditUserComponent));
     expect(editFormComponent).toBeTruthy();
   });
-
 });

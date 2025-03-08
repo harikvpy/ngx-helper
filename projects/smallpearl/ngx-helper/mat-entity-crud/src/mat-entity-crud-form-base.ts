@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, computed, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
+import { TranslocoService } from '@jsverse/transloco';
 import { setServerErrorsAsFormErrors } from '@smallpearl/ngx-helper/forms';
 import { Subscription } from 'rxjs';
 import { getEntityCrudConfig } from './default-config';
@@ -74,8 +75,8 @@ export abstract class SPMatEntityCrudFormBase<
   params = input<any>();
   sub$ = new Subscription();
   form = computed(() => this._form());
-
   crudConfig = getEntityCrudConfig();
+  transloco = inject(TranslocoService);
 
   cdr = inject(ChangeDetectorRef);
 
@@ -86,7 +87,9 @@ export abstract class SPMatEntityCrudFormBase<
   _canCancelEdit() {
     const form = this._form();
     if (form && form.touched) {
-      return window.confirm(this.crudConfig.i18n.loseChangesPrompt);
+      return window.confirm(
+        this.transloco.translate('spMatEntityCrud.loseChangesConfirm')
+      );
     }
     return true;
   }
