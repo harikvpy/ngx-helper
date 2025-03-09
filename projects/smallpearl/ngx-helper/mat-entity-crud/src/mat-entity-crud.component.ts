@@ -31,8 +31,10 @@ import {
 } from '@smallpearl/ngx-helper/mat-context-menu';
 import { SPMatEntityListComponent } from '@smallpearl/ngx-helper/mat-entity-list';
 
+import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { DomSanitizer } from '@angular/platform-browser';
+import { provideTranslocoScope, TranslocoModule } from '@jsverse/transloco';
 import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { AngularSplitModule } from 'angular-split';
 import { startCase } from 'lodash';
@@ -51,8 +53,6 @@ import {
   SPMatEntityCrudResponseParser,
 } from './mat-entity-crud-types';
 import { PreviewHostComponent } from './preview-host.component';
-import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
-import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   imports: [
@@ -587,8 +587,7 @@ export class SPMatEntityCrudComponent<
     http: HttpClient,
     private snackBar: MatSnackBar,
     sanitizer: DomSanitizer,
-    injector: Injector,
-    private transloco: TranslocoService
+    injector: Injector
   ) {
     super(http, sanitizer, injector);
     this.crudConfig = getEntityCrudConfig();

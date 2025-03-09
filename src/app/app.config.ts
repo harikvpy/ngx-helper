@@ -11,7 +11,6 @@ import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideTransloco } from '@jsverse/transloco';
 import { FORM_ERRORS, provideErrorTailorConfig } from '@ngneat/error-tailor';
-import { SP_NGX_HELPER_CONFIG } from '@smallpearl/ngx-helper/core';
 import {
   SP_ENTITY_FIELD_CONFIG,
   SPEntityFieldSpec,
@@ -113,12 +112,6 @@ export const appConfig: ApplicationConfig = {
         };
       },
       deps: [],
-    },
-    {
-      provide: SP_NGX_HELPER_CONFIG,
-      useValue: {
-        i18nTranslate: (label: string, context?: any) => label.toUpperCase(),
-      },
     },
     {
       provide: SP_MAT_ENTITY_CRUD_CONFIG,

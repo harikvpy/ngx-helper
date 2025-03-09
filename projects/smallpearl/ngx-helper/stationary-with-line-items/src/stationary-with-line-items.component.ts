@@ -1,6 +1,5 @@
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, input, OnInit, TemplateRef } from '@angular/core';
-import { getNgxHelperConfig } from '@smallpearl/ngx-helper/core';
 import { SP_ENTITY_FIELD_CONFIG, SPEntityField, SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 
 
@@ -93,8 +92,6 @@ export class FieldsRendererComponent<TEntity extends { [P in IdKey]: PropertyKey
     }
     return '';
   });
-
-  ngxHelperConfig = getNgxHelperConfig();
 
   constructor(public cdr: ChangeDetectorRef) {}
 
@@ -316,7 +313,6 @@ export class StationaryWithLineItemsComponent<TEntity extends { [P in IdKey]: Pr
 
   _items = computed(() => (this.entity() as any)[this.itemFieldName()]);
 
-  ngxHelperConfig = getNgxHelperConfig();
   ngxEntityFieldConfig = inject(SP_ENTITY_FIELD_CONFIG, { optional: true })!;
 
   constructor() {}
@@ -335,7 +331,7 @@ export class StationaryWithLineItemsComponent<TEntity extends { [P in IdKey]: Pr
    */
   getSPEntityFields<T>(fieldSpecs: Array<SPEntityFieldSpec<TEntity, IdKey> | string>|string|undefined): Array<SPEntityField<TEntity, IdKey>> {
     if (fieldSpecs && typeof fieldSpecs !== 'string') {
-      return fieldSpecs.map(spec => new SPEntityField<TEntity, IdKey>(spec, this.ngxHelperConfig, this.ngxEntityFieldConfig));
+      return fieldSpecs.map(spec => new SPEntityField<TEntity, IdKey>(spec, this.ngxEntityFieldConfig));
     }
     return [];
   }

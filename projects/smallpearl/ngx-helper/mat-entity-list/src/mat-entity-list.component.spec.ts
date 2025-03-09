@@ -6,12 +6,17 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MatTableModule } from '@angular/material/table';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
-import { SP_NGX_HELPER_CONFIG, SPNgxHelperConfig } from '@smallpearl/ngx-helper/core';
-import { FIELD_VALUE_FN, SP_ENTITY_FIELD_CONFIG, SPEntityFieldConfig, SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
+import {
+  FIELD_VALUE_FN,
+  SP_ENTITY_FIELD_CONFIG,
+  SPEntityFieldConfig,
+  SPEntityFieldSpec,
+} from '@smallpearl/ngx-helper/entity-field';
 import { of } from 'rxjs';
 import { SPMatEntityListConfig, SPMatEntityListPaginator } from './mat-entity-list-types';
 import { SPMatEntityListComponent } from './mat-entity-list.component';
 import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
+import { getTranslocoModule } from '@smallpearl/ngx-helper/src/transloco-testing.module';
 
 interface User {
   name: { title: string, first: string, last: string },
@@ -122,8 +127,17 @@ describe('SPMatEntityListComponent', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      imports: [NoopAnimationsModule, SPMatEntityListComponent, SPMatEntityListTestComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      imports: [
+        NoopAnimationsModule,
+        SPMatEntityListComponent,
+        SPMatEntityListTestComponent,
+        getTranslocoModule(),
+      ],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+      ],
     });
     fixture = TestBed.createComponent(SPMatEntityListComponent<User, 'cell'>);
     component = fixture.componentInstance;
@@ -317,12 +331,6 @@ describe('SPMatEntityListComponent', () => {
     TestBed.resetTestingModule();
     const myPaginator = new DRFPaginator()
 
-    const helperConfig: SPNgxHelperConfig = {
-      i18nTranslate: (label: string, context?: any) => {
-        return label;
-      },
-    };
-
     let globalFieldValueFnsCalled = false;
     const entityFieldConfig: SPEntityFieldConfig = {
       fieldValueFns: new Map<string, FIELD_VALUE_FN>([
@@ -368,21 +376,20 @@ describe('SPMatEntityListComponent', () => {
       globalUrlResolverCalled = true;
       return endpoint;
     });
-    let globali18nTranslateCalled = false;
-    spyOn(helperConfig, 'i18nTranslate').and.callFake((label: string, context?: any) => {
-      globali18nTranslateCalled = true;
-      return label;
-    });
 
     TestBed.configureTestingModule({
-      imports: [NoopAnimationsModule, SPMatEntityListComponent, SPMatEntityListTestComponent],
+      imports: [
+        NoopAnimationsModule,
+        SPMatEntityListComponent,
+        SPMatEntityListTestComponent,
+        getTranslocoModule(),
+      ],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: SP_NGX_HELPER_CONFIG, useValue: helperConfig },
         { provide: SP_MAT_ENTITY_LIST_CONFIG, useValue: entityListConfig },
-        { provide: SP_ENTITY_FIELD_CONFIG, useValue: entityFieldConfig }
+        { provide: SP_ENTITY_FIELD_CONFIG, useValue: entityFieldConfig },
       ],
     });
     fixture = TestBed.createComponent(SPMatEntityListComponent<User, 'cell'>);
@@ -420,7 +427,7 @@ describe('SPMatEntityListComponent', () => {
     // Verify that global paginator's 'getEntitiesFromResponse' was called.
     expect(globalPaginatorGetEntitiesFromResponseCalled).toBeTrue();
     expect(globalUrlResolverCalled).toBeTrue();
-    expect(globali18nTranslateCalled).toBeTrue();
+
     // Verify that global value function specified via SPMatEntityListConfig
     // is used for matching columns without any explicit value function or
     // client projected ng-template.

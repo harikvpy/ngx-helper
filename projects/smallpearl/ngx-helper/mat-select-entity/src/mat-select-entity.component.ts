@@ -22,7 +22,6 @@ import {
 import { ControlValueAccessor, FormsModule, NgControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_FORM_FIELD, MatFormFieldControl } from '@angular/material/form-field';
 import { MatSelect, MatSelectChange, MatSelectModule } from '@angular/material/select';
-import { getNgxHelperConfig } from '@smallpearl/ngx-helper/core';
 import { camelCase } from 'lodash';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { plural } from 'pluralize';
@@ -37,7 +36,7 @@ import {
   takeUntil,
   tap
 } from 'rxjs';
-import { SP_MAT_SELECT_ENTITY_CONFIG, SPMatSelectEntityConfig } from './providers';
+import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 export interface SPMatSelectEntityHttpContext {
   entityName: string;
@@ -51,15 +50,6 @@ export const SP_MAT_SELECT_ENTITY_HTTP_CONTEXT =
     entityNamePlural: '',
     endpoint: '',
   }));
-
-const DEFAULT_SP_MAT_SELECT_ENTITY_CONFIG: SPMatSelectEntityConfig =
-  {
-    i18n: {
-      search: 'Search',
-      notFound: 'Not found',
-      addItem: 'New Item',
-    },
-  };
 
 type EntityGroup<T> = {
   id?: PropertyKey;
@@ -89,77 +79,79 @@ export type SPMatSelectEntityResponseParser = <
 @Component({
   selector: 'sp-mat-select-entity',
   template: `
-    <mat-select
-      [placeholder]="placeholder"
-      (opened)="onSelectOpened($event)"
-      (selectionChange)="onSelectionChange($event)"
-      [multiple]="multiple"
-      [(ngModel)]="selectValue"
-    >
-      <mat-select-trigger>
-        {{ selectTriggerValue }}
-        @if (selectTriggerValueAsArray.length > 1) {
-        <span class="addl-selection-count">
-          (+{{ selectTriggerValueAsArray.length - 1 }})
-        </span>
-        }
-      </mat-select-trigger>
-
-      <mat-option>
-        <ngx-mat-select-search
-          [(ngModel)]="filterStr"
-          (ngModelChange)="this.filter$.next($event)"
-          [placeholderLabel]="searchText"
-          [noEntriesFoundLabel]="notFoundText"
-          [searching]="searching"
-        >
-        </ngx-mat-select-search>
-      </mat-option>
-
-      <ng-container *ngIf="!group; else groupedOptions">
-        <span *ngIf="filteredValues | async as entities">
-          <ng-template #defaultOptionLabelTemplate let-entity>
-            {{ entityLabelFn(entity) }}
-          </ng-template>
-          @for (entity of entities; track entityId(entity)) {
-          <mat-option class="sel-entity-option" [value]="entityId(entity)">
-            <ng-container
-              *ngTemplateOutlet="
-                optionLabelTemplate() || defaultOptionLabelTemplate;
-                context: { $implicit: entity }
-              "
-            ></ng-container>
-          </mat-option>
+    <ng-container *transloco="let t; scope: 'sp-mat-select-entity'">
+      <mat-select
+        [placeholder]="placeholder"
+        (opened)="onSelectOpened($event)"
+        (selectionChange)="onSelectionChange($event)"
+        [multiple]="multiple"
+        [(ngModel)]="selectValue"
+      >
+        <mat-select-trigger>
+          {{ selectTriggerValue }}
+          @if (selectTriggerValueAsArray.length > 1) {
+          <span class="addl-selection-count">
+            (+{{ selectTriggerValueAsArray.length - 1 }})
+          </span>
           }
+        </mat-select-trigger>
 
-          <!-- <mat-option class="sel-entity-option" *ngFor="let entity of entities" [value]="entityId(entity)">
-            {{ entityLabelFn(entity) }}
-          </mat-option> -->
-        </span>
-      </ng-container>
-      <ng-template #groupedOptions>
-        <span *ngIf="filteredGroupedValues | async as groups">
-          @for (group of groups; track groupLabel(group)) {
-          <mat-optgroup [label]="groupLabel(group)">
-            @for (entity of group.__items__; track entityId(entity)) {
+        <mat-option>
+          <ngx-mat-select-search
+            [(ngModel)]="filterStr"
+            (ngModelChange)="this.filter$.next($event)"
+            [placeholderLabel]="searchText() ? searchText() : t('spMatSelectEntity.search')"
+            [noEntriesFoundLabel]="notFoundText() ? notFoundText() : t('spMatSelectEntity.notFound')"
+            [searching]="searching"
+          >
+          </ngx-mat-select-search>
+        </mat-option>
 
-            <mat-option class="sel-entity-option" [value]="entityId(entity)">
+        <ng-container *ngIf="!group; else groupedOptions">
+          <span *ngIf="filteredValues | async as entities">
+            <ng-template #defaultOptionLabelTemplate let-entity>
               {{ entityLabelFn(entity) }}
+            </ng-template>
+            @for (entity of entities; track entityId(entity)) {
+            <mat-option class="sel-entity-option" [value]="entityId(entity)">
+              <ng-container
+                *ngTemplateOutlet="
+                  optionLabelTemplate() || defaultOptionLabelTemplate;
+                  context: { $implicit: entity }
+                "
+              ></ng-container>
             </mat-option>
             }
-          </mat-optgroup>
-          }
-        </span>
-      </ng-template>
 
-      <mat-option
-        *ngIf="!multiple && inlineNew"
-        class="add-item-option"
-        value="0"
-        (click)="$event.stopPropagation()"
-        >⊕ {{ addItemText }}</mat-option
-      >
-    </mat-select>
+            <!-- <mat-option class="sel-entity-option" *ngFor="let entity of entities" [value]="entityId(entity)">
+            {{ entityLabelFn(entity) }}
+          </mat-option> -->
+          </span>
+        </ng-container>
+        <ng-template #groupedOptions>
+          <span *ngIf="filteredGroupedValues | async as groups">
+            @for (group of groups; track groupLabel(group)) {
+            <mat-optgroup [label]="groupLabel(group)">
+              @for (entity of group.__items__; track entityId(entity)) {
+
+              <mat-option class="sel-entity-option" [value]="entityId(entity)">
+                {{ entityLabelFn(entity) }}
+              </mat-option>
+              }
+            </mat-optgroup>
+            }
+          </span>
+        </ng-template>
+
+        <mat-option
+          *ngIf="!multiple && inlineNew"
+          class="add-item-option"
+          value="0"
+          (click)="$event.stopPropagation()"
+          >⊕ {{ this.addItemText() ? this.addItemText() : t('spMatSelectEntity.addItem', { item: this.entityName }) }}</mat-option
+        >
+      </mat-select>
+    </ng-container>
   `,
   styles: [
     `
@@ -180,9 +172,11 @@ export type SPMatSelectEntityResponseParser = <
     FormsModule,
     ReactiveFormsModule,
     MatSelectModule,
+    TranslocoModule,
     NgxMatSelectSearchModule,
   ],
   providers: [
+    provideTranslocoScope('sp-mat-select-entity'),
     { provide: MatFormFieldControl, useExisting: SPMatSelectEntityComponent },
   ],
 })
@@ -310,9 +304,9 @@ export class SPMatSelectEntityComponent<
   @Output() createNewItemSelected = new EventEmitter<void>();
 
   // allow per component customization
-  @Input() searchText!: string;
-  @Input() notFoundText!: string;
-  @Input() addItemText!: string;
+  readonly searchText = input<string>();
+  readonly notFoundText = input<string>();
+  readonly addItemText = input<string>();
 
   /**
    * Template for the option label. If not provided, the default label
@@ -375,32 +369,20 @@ export class SPMatSelectEntityComponent<
   static nextId = 0;
   @HostBinding() id = `sp-select-entity-${SPMatSelectEntityComponent.nextId++}`;
   private _placeholder!: string;
-  ngxHelperConfig = getNgxHelperConfig();
   protected http = inject(HttpClient);
   protected cdr = inject(ChangeDetectorRef);
   protected _elementRef = inject(ElementRef<HTMLElement>);
-  protected _formField = inject(MAT_FORM_FIELD, {optional: true});
-  protected config = inject(SP_MAT_SELECT_ENTITY_CONFIG, {optional: true});
-  public ngControl = inject(NgControl, {optional: true});
+  protected _formField = inject(MAT_FORM_FIELD, { optional: true });
+  public ngControl = inject(NgControl, { optional: true });
+  transloco = inject(TranslocoService);
 
-  constructor(
-    // protected http: HttpClient,
-    // protected cdr: ChangeDetectorRef,
-    // protected _elementRef: ElementRef<HTMLElement>,
-    // protected injector: Injector,
-    // @Optional() @Inject(MAT_FORM_FIELD) public _formField: MatFormField,
-    // @Optional() @Self() public ngControl: NgControl,
-    // @Optional()
-    // @Inject(SP_MAT_SELECT_ENTITY_CONFIG)
-    // private config: SPMatSelectEntityConfig
-  ) {
+  constructor() {
     if (this.ngControl != null) {
       this.ngControl.valueAccessor = this;
     }
   }
 
   ngOnInit() {
-    this._initStrings();
     combineLatest([this.filter$.pipe(debounceTime(400)), this.load$])
       .pipe(
         takeUntil(this.destroy),
@@ -439,23 +421,6 @@ export class SPMatSelectEntityComponent<
     //     this.required = true;
     //   }
     // }
-  }
-
-  private _initStrings() {
-    const config: SPMatSelectEntityConfig =
-      this.config ?? DEFAULT_SP_MAT_SELECT_ENTITY_CONFIG;
-    if (!this.searchText) {
-      this.searchText = config.i18n.search;
-    }
-    if (!this.notFoundText) {
-      this.notFoundText = config.i18n.notFound;
-    }
-    if (!this.addItemText) {
-      this.addItemText = config.i18n.addItem.replace(
-        /\{\{\s*item\s*}}/,
-        this.entityName ?? '**Item'
-      );
-    }
   }
 
   addEntity(entity: TEntity) {

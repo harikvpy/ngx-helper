@@ -9,13 +9,18 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Observable, of, tap } from 'rxjs';
 import { SP_MAT_SELECT_ENTITY_HTTP_CONTEXT, SPMatSelectEntityComponent, SPMatSelectEntityHttpContext } from './mat-select-entity.component';
-import { SP_MAT_SELECT_ENTITY_CONFIG, SPMatSelectEntityConfig } from './providers';
 
 /**
  */
 interface User {
   id: number;
   name: string;
+}
+
+const eni18n = {
+  search: "Search",
+  notFound: "Not found",
+  addItem: "New {{ item }}"
 }
 
 const USER_DATA = [
@@ -105,9 +110,13 @@ describe('MatSelectEntityComponent (single selection)', () => {
       imports: [
         NoopAnimationsModule,
         FormsModule,
+        getTranslocoModule(),
         SPMatSelectEntityComponent,
       ],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting()
+      ],
     });
     fixture = TestBed.createComponent(SPMatSelectEntityComponent<User>);
     component = fixture.componentInstance;
@@ -301,7 +310,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
     await openMatSelect(fixture);
     expect(matSel.options.length).toEqual(2 + USER_DATA.length);
-    expect(matSel.options.last._getHostElement().innerText.includes('New Item')).toBeTrue();
+    expect(matSel.options.last._getHostElement().innerText.includes('add')).toBeTrue();
 
     // select the New Item option
     let createNewItemSelected = false;
@@ -318,11 +327,13 @@ describe('MatSelectEntityComponent (single selection)', () => {
 
   it("should maintain current value even when New Item is selected", async () => {
     component.inlineNew = true;
+    component.entityName = 'Item';
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
     await openMatSelect(fixture);
     expect(matSel.options.length).toEqual(2 + USER_DATA.length);
-    expect(matSel.options.last._getHostElement().innerText.includes('New Item')).toBeTrue();
+    console.log(`matSel.options.last._getHostElement().innerText: ${matSel.options.last._getHostElement().innerText}`);
+    expect(matSel.options.last._getHostElement().innerText.includes('spMatSelectEntity.addItem')).toBeTrue();
     // first select first item
     const firstOption = matSel.options.get(1);
     firstOption?.select(true);
@@ -362,6 +373,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { getTranslocoModule } from '@smallpearl/ngx-helper/src/transloco-testing.module';
 
 @Component({
     imports: [
@@ -430,6 +442,7 @@ describe('MatSelectEntityComponent Entities Cache', () => {
         NoopAnimationsModule,
         FormsModule,
         SelectEntityDemoComponent,
+        getTranslocoModule(),
       ],
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
@@ -481,6 +494,7 @@ describe('MatSelectEntityComponent (multiple selection)', () => {
       imports: [
         NoopAnimationsModule,
         SPMatSelectEntityComponent,
+        getTranslocoModule(),
       ],
       providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
@@ -590,27 +604,16 @@ describe('MatSelectEntityComponent (config object)', () => {
   let fixture!: ComponentFixture<SelectEntityComponent>;
   let matSel!: MatSelect;
 
-  const SelectEntityConfig: SPMatSelectEntityConfig = {
-    i18n: {
-      search: "Look",
-      notFound: "Nothing",
-      addItem: "Create New"
-    }
-  };
-
   beforeEach(async () => {
     TestBed.configureTestingModule({
       imports: [
         NoopAnimationsModule,
         SPMatSelectEntityComponent,
+        getTranslocoModule(),
       ],
       providers: [
         provideHttpClient(),
-        provideHttpClientTesting(),
-        {
-          provide: SP_MAT_SELECT_ENTITY_CONFIG,
-          useValue: SelectEntityConfig
-        }
+        provideHttpClientTesting()
       ],
     });
 
@@ -632,14 +635,11 @@ describe('MatSelectEntityComponent (config object)', () => {
 
   it("should display 'Create New' option", () => {
     expect(matSel).toBeTruthy();
-    expect(component.searchText).toEqual(SelectEntityConfig.i18n.search);
-    expect(component.notFoundText).toEqual(SelectEntityConfig.i18n.notFound);
-    expect(component.addItemText).toEqual(SelectEntityConfig.i18n.addItem);
     // One mat-option for ngx-select-search and another for 'Create New'
     expect(matSel.options.length).toEqual(2);
     const lastOption = matSel.options.last;
     expect(lastOption.value).toEqual('0');
-    expect(lastOption._text?.nativeElement.innerText.includes(SelectEntityConfig.i18n.addItem)).toBeTrue();
+    expect(lastOption._text?.nativeElement.innerText.includes('spMatSelectEntity.addItem')).toBeTrue();
   });
 });
 
@@ -653,6 +653,7 @@ describe('MatEntitySelectComponent (grouped entities)', () => {
       imports: [
         NoopAnimationsModule,
         SPMatSelectEntityComponent,
+        getTranslocoModule(),
       ],
       providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
@@ -751,6 +752,7 @@ describe('MatEntitySelectComponent (sideloaded response)', () => {
       imports: [
         NoopAnimationsModule,
         SPMatSelectEntityComponent,
+        getTranslocoModule(),
       ],
       providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();

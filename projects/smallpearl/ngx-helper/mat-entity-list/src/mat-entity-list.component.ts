@@ -35,6 +35,7 @@ import {
 } from '@angular/material/table';
 import { DomSanitizer } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { createStore } from '@ngneat/elf';
 import {
   addEntities,
@@ -46,7 +47,6 @@ import {
   upsertEntities,
   withEntities,
 } from '@ngneat/elf-entities';
-import { getNgxHelperConfig } from '@smallpearl/ngx-helper/core';
 import {
   SP_ENTITY_FIELD_CONFIG,
   SPEntityField,
@@ -127,20 +127,21 @@ class LoadRequest {
  * A component to display a list of entities loaded from remote.
  */
 @Component({
-    imports: [
-        CommonModule,
-        RouterModule,
-        MatTableModule,
-        MatSortModule,
-        MatPaginatorModule,
-        MatButtonModule,
-        MatInputModule,
-        MatProgressSpinnerModule,
-        InfiniteScrollDirective,
-        HeaderAlignmentDirective,
-    ],
-    selector: 'sp-mat-entity-list',
-    template: `
+  imports: [
+    CommonModule,
+    RouterModule,
+    MatTableModule,
+    MatSortModule,
+    MatPaginatorModule,
+    MatButtonModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
+    TranslocoModule,
+    InfiniteScrollDirective,
+    HeaderAlignmentDirective,
+  ],
+  selector: 'sp-mat-entity-list',
+  template: `
     <div
       class="entities-list-wrapper"
       infiniteScroll
@@ -190,16 +191,27 @@ class LoadRequest {
     </div>
     <!-- We keep the column definitions outside the <table> so that they can
     be dynamically added to the MatTable. -->
-    <span matSort="sorter()">
+    <span matSort="sorter()" *transloco="let t">
       @for (column of __columns(); track $index) {
       <ng-container [matColumnDef]="column.spec.name">
         @if (disableSort()) {
-        <th [class]="column.class" [headerAlignment]="column.options.alignment" mat-header-cell *matHeaderCellDef>
-          {{ column.label() }}
+        <th
+          [class]="column.class"
+          [headerAlignment]="column.options.alignment"
+          mat-header-cell
+          *matHeaderCellDef
+        >
+          {{ t(column.label()) }}
         </th>
         } @else {
-        <th [class]="column.class" [headerAlignment]="column.options.alignment" mat-header-cell mat-sort-header *matHeaderCellDef>
-          {{ column.label() }}
+        <th
+          [class]="column.class"
+          [headerAlignment]="column.options.alignment"
+          mat-header-cell
+          mat-sort-header
+          *matHeaderCellDef
+        >
+          {{ t(column.label()) }}
         </th>
         }
         <td
@@ -209,13 +221,13 @@ class LoadRequest {
           *matCellDef="let element"
           [routerLink]="column.getRouterLink(element)"
         >
-        @if (column.hasRouterLink(element)) {
+          @if (column.hasRouterLink(element)) {
           <a [routerLink]="column.getRouterLink(element)">
             <span [innerHTML]="column.value(element)"></span>
           </a>
-        } @else {
+          } @else {
           <span [innerHTML]="column.value(element)"></span>
-        }
+          }
         </td>
       </ng-container>
       }
@@ -226,42 +238,43 @@ class LoadRequest {
       </div>
     </ng-template>
   `,
-    styles: [`
-    .entities-list-wrapper {
-      position: relative;
-    }
-    .busy-overlay {
-      display: none;
-      height: 100%;
-      width: 100%;
-      position: absolute;
-      top: 0px;
-      left: 0px;
-      z-index: 1000;
-      opacity: 0.6;
-      background-color: transparent;
-    }
-    .show {
-      display: block;
-    }
-    .busy-spinner {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .infinite-scroll-loading {
-      display: none;
-      width: 100%;
-      padding: 8px;
-    }
-    .active-row {
-      font-weight: bold;
-    }
+  styles: [
+    `
+      .entities-list-wrapper {
+        position: relative;
+      }
+      .busy-overlay {
+        display: none;
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        z-index: 1000;
+        opacity: 0.6;
+        background-color: transparent;
+      }
+      .show {
+        display: block;
+      }
+      .busy-spinner {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .infinite-scroll-loading {
+        display: none;
+        width: 100%;
+        padding: 8px;
+      }
+      .active-row {
+        font-weight: bold;
+      }
     `,
-    ],
-    changeDetection: ChangeDetectionStrategy.OnPush
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SPMatEntityListComponent<
   TEntity extends { [P in IdKey]: PropertyKey },
@@ -288,8 +301,7 @@ export class SPMatEntityListComponent<
    * specified instead. That is, the value of this property is a heterogeneous
    * array consisting of SPEntityFieldSpec<> objects and strings.
    */
-  columns =
-    input.required<Array<SPEntityFieldSpec<TEntity, IdKey> | string>>();
+  columns = input.required<Array<SPEntityFieldSpec<TEntity, IdKey> | string>>();
 
   /**
    * Names of columns that are displayed. This will default to all the columns
@@ -356,7 +368,9 @@ export class SPMatEntityListComponent<
    * as an array of array. That is, `[[HttpContextToken<any>, any]]` and
    * initialize it appropriately.
    */
-  httpReqContext = input<[[HttpContextToken<any>, any]]|[HttpContextToken<any>, any]>();
+  httpReqContext = input<
+    [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any]
+  >();
   /* END CLIENT PROVIDED PARAMETERS */
 
   // *** INTERNAL *** //
@@ -380,10 +394,10 @@ export class SPMatEntityListComponent<
     context.set(SP_MAT_ENTITY_LIST_HTTP_CONTEXT, {
       entityName: this.entityName(),
       entityNamePlural: this._entityNamePlural(),
-      endpoint: this.endpoint()
-    })
+      endpoint: this.endpoint(),
+    });
     return context;
-  })
+  });
   _deferViewInit = input<boolean>(false);
   firstLoadDone = false;
   allColumnNames = signal<string[]>([]);
@@ -444,7 +458,9 @@ export class SPMatEntityListComponent<
   });
 
   __columns = computed<SPEntityField<TEntity, IdKey>[]>(() =>
-    this.columns().map((colDef) => new SPEntityField<TEntity, IdKey>(colDef, this.ngxHelperConfig, this.fieldConfig))
+    this.columns().map(
+      (colDef) => new SPEntityField<TEntity, IdKey>(colDef, this.fieldConfig)
+    )
   );
 
   // We isolate retrieving items from the remote and providing the items
@@ -510,7 +526,6 @@ export class SPMatEntityListComponent<
   });
   @Output() selectEntity = new EventEmitter<TEntity | undefined>();
 
-  ngxHelperConfig = getNgxHelperConfig();
   fieldConfig = inject(SP_ENTITY_FIELD_CONFIG, { optional: true })!;
   entityListConfig = getEntityListConfig();
 
@@ -525,21 +540,19 @@ export class SPMatEntityListComponent<
     runInInjectionContext(this.injector, () => {
       if (this.endpoint()) {
         // console.log(`endpointChanged - ${this.endpoint()}`);
-        setTimeout(() => { this.refresh(); });
+        setTimeout(() => {
+          this.refresh();
+        });
       }
     });
   });
+  transloco = inject(TranslocoService);
 
   constructor(
     protected http: HttpClient,
     private sanitizer: DomSanitizer,
-    private injector: Injector,
-  ) {
-    // if (!this.config) {
-    //   this.config = new DefaultSPMatEntityListConfig();
-    // }
-    // this.fieldConfig = inject(SP_ENTITY_FIELD_CONFIG, { optional: true })!;
-  }
+    private injector: Injector
+  ) {}
 
   ngOnInit() {
     // This is the reactive callback that listens for changes to table entities
@@ -563,16 +576,18 @@ export class SPMatEntityListComponent<
           this.dataSource().data = entities;
         })
       )
-      .subscribe()
+      .subscribe();
 
     this.loadRequest$
       .pipe(
         takeUntil(this.destroy$),
         filter((lr) => lr.endpoint !== '' || lr.force === true),
-        distinctUntilChanged((prev, current) => current.isEqualToAndNotForced(prev)),
+        distinctUntilChanged((prev, current) =>
+          current.isEqualToAndNotForced(prev)
+        ),
         switchMap((lr: LoadRequest) => this.doActualLoad(lr))
       )
-      .subscribe()
+      .subscribe();
   }
 
   ngOnDestroy(): void {
@@ -668,37 +683,6 @@ export class SPMatEntityListComponent<
     }
   }
 
-  // getColumnValue(
-  //   entity: TEntity,
-  //   column: SPEntityFieldSpec<TEntity>
-  // ) {
-  //   let val = undefined;
-  //   if (!column.valueFn) {
-  //     if (
-  //       this.config?.columnValueFns &&
-  //       this.config.columnValueFns.has(column.name)
-  //     ) {
-  //       val = this.config.columnValueFns.get(column.name)!(entity, column.name);
-  //     } else {
-  //       val = (entity as any)[column.name];
-  //     }
-  //   } else {
-  //     val = column.valueFn(entity);
-  //   }
-  //   if (val instanceof Date) {
-  //     return spFormatDate(val);
-  //   } else if (typeof val === 'boolean') {
-  //     return val ? '✔' : '✖';
-  //   }
-  //   return val;
-  // }
-
-  // getColumnLabel(column: SPEntityFieldSpec<TEntity>) {
-  //   return this.config && this.config?.i18nTranslate
-  //     ? this.config.i18nTranslate(column?.label || column.name)
-  //     : column?.label || column.name;
-  // }
-
   /**
    * Build the contentColumnDefs array by enumerating all of client's projected
    * content with matColumnDef directive.
@@ -760,7 +744,7 @@ export class SPMatEntityListComponent<
     }
   }
 
-  loadMoreEntities(forceRefresh=false) {
+  loadMoreEntities(forceRefresh = false) {
     this.loadRequest$.next(this.createNextLoadRequest(forceRefresh));
   }
 
@@ -799,7 +783,11 @@ export class SPMatEntityListComponent<
         });
       });
     }
-    return new LoadRequest(endpoint, httpParams, forceRefresh || !!this.entityLoaderFn());
+    return new LoadRequest(
+      endpoint,
+      httpParams,
+      forceRefresh || !!this.entityLoaderFn()
+    );
   }
 
   /**
@@ -813,7 +801,7 @@ export class SPMatEntityListComponent<
   private doActualLoad(lr: LoadRequest) {
     // console.log(`doActualLoad - endpoint: ${lr.endpoint}, params: ${lr.params.toString()}`);
     const loaderFn = this.entityLoaderFn();
-    const params = lr.params
+    const params = lr.params;
     const obs =
       loaderFn !== undefined
         ? loaderFn({ params })
@@ -899,7 +887,7 @@ export class SPMatEntityListComponent<
       : endpoint;
   }
 
-  toggleActiveEntity(entity: TEntity|undefined) {
+  toggleActiveEntity(entity: TEntity | undefined) {
     if (entity) {
       if (entity === this.activeEntity()) {
         this.activeEntity.set(undefined);

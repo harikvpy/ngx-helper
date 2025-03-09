@@ -1,4 +1,3 @@
-import { SPNgxHelperConfig } from '@smallpearl/ngx-helper/core';
 import {
   spFormatCurrency,
   spFormatDate,
@@ -51,7 +50,6 @@ export class SPEntityField<TEntity extends { [P in IdKey]: PropertyKey }, IdKey 
 
   constructor(
     spec: SPEntityFieldSpec<TEntity, IdKey> | string,
-    public helperConfig: SPNgxHelperConfig,
     public fieldConfig?: SPEntityFieldConfig
   ) {
     if (typeof spec === 'string') {
@@ -86,9 +84,7 @@ export class SPEntityField<TEntity extends { [P in IdKey]: PropertyKey }, IdKey 
    * @returns the label for the field.
    */
   label() {
-    return this.helperConfig.i18nTranslate(
-      this._fieldSpec.label ?? this._fieldSpec.name
-    );
+    return this._fieldSpec.label ?? this._fieldSpec.name
   }
 
   /**
