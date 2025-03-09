@@ -56,7 +56,6 @@ export interface SPContextMenuItem {
     <mat-menu #contextMenu="matMenu" [hasBackdrop]="hasBackdrop()">
       @for (menuItem of menuItems(); track $index) {
         @if (menuItem.role) {
-          @if (!itemDisabled(menuItem)) {
             <button
               mat-menu-item
               [routerLink]="menuItem.route ? menuItem.route : undefined"
@@ -68,13 +67,10 @@ export interface SPContextMenuItem {
               }
               {{ menuItem.label }}
             </button>
-          }
         } @else {
-          @if (!itemDisabled(menuItem)) {
-            <div style="padding: .2em 0.6em;">
-              <strong>{{ menuItem.label }}</strong>
-            </div>
-          }
+          <div style="padding: .2em 0.6em;">
+            <strong>{{ menuItem.label }}</strong>
+          </div>
         }
       <!-- <button
         mat-menu-item
