@@ -1,5 +1,7 @@
 # ngx-helper
 
+`NOTE: THIS LIBRARY IS UNDER ACTIVE DEVELOPMENT. EXPECT BREAKING CHANGES BETWEEN RELEASES. USE IT AT YOUR OWN RISK.`
+
 This is a library of angular components and other utility code that are not part of the standard angular/material library. Some components are composite components in that they combile multiple standard material library widgets for a common use case scenario.
 
 This is meant to be a private library for my own consumption. But being a project derived from open source, I'm making it a public. Consequently, documentation is lacking and unit tests are at a bare minumum. Both are areas that I hope to address, but time is working against me.
