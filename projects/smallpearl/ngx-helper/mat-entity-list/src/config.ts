@@ -7,6 +7,7 @@ export const DefaultSPMatEntityListConfig: SPMatEntityListConfig = {
   paginator: undefined,
   defaultPageSize: 50,
   pageSizes: [10, 25, 50, 100],
+  columnLabelFn: (entityName: string, columnName: string) => columnName,
 };
 
 /**

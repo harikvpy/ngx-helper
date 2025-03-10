@@ -35,7 +35,6 @@ import {
 } from '@angular/material/table';
 import { DomSanitizer } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
-import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { createStore } from '@ngneat/elf';
 import {
   addEntities,
@@ -59,6 +58,7 @@ import {
   filter,
   finalize,
   Observable,
+  of,
   Subject,
   Subscription,
   switchMap,
@@ -136,7 +136,6 @@ class LoadRequest {
     MatButtonModule,
     MatInputModule,
     MatProgressSpinnerModule,
-    TranslocoModule,
     InfiniteScrollDirective,
     HeaderAlignmentDirective,
   ],
@@ -191,7 +190,7 @@ class LoadRequest {
     </div>
     <!-- We keep the column definitions outside the <table> so that they can
     be dynamically added to the MatTable. -->
-    <span matSort="sorter()" *transloco="let t">
+    <span matSort="sorter()">
       @for (column of __columns(); track $index) {
       <ng-container [matColumnDef]="column.spec.name">
         @if (disableSort()) {
@@ -201,7 +200,7 @@ class LoadRequest {
           mat-header-cell
           *matHeaderCellDef
         >
-          {{ t(column.label()) }}
+        {{ getColumnLabel(column) | async }}
         </th>
         } @else {
         <th
@@ -211,7 +210,7 @@ class LoadRequest {
           mat-sort-header
           *matHeaderCellDef
         >
-          {{ t(column.label()) }}
+        {{ getColumnLabel(column) | async }}
         </th>
         }
         <td
@@ -301,7 +300,7 @@ export class SPMatEntityListComponent<
    * specified instead. That is, the value of this property is a heterogeneous
    * array consisting of SPEntityFieldSpec<> objects and strings.
    */
-  columns = input.required<Array<SPEntityFieldSpec<TEntity, IdKey> | string>>();
+  columns = input<Array<SPEntityFieldSpec<TEntity, IdKey> | string>>([]);
 
   /**
    * Names of columns that are displayed. This will default to all the columns
@@ -398,7 +397,7 @@ export class SPMatEntityListComponent<
     });
     return context;
   });
-  _deferViewInit = input<boolean>(false);
+  deferViewInit = input<boolean>(false);
   firstLoadDone = false;
   allColumnNames = signal<string[]>([]);
   _displayedColumns = computed(() =>
@@ -546,7 +545,6 @@ export class SPMatEntityListComponent<
       }
     });
   });
-  transloco = inject(TranslocoService);
 
   constructor(
     protected http: HttpClient,
@@ -596,7 +594,7 @@ export class SPMatEntityListComponent<
   }
 
   ngAfterViewInit(): void {
-    if (!this._deferViewInit()) {
+    if (!this.deferViewInit()) {
       this.buildContentColumnDefs();
       this.buildColumns();
       this.setupSort();
@@ -897,5 +895,19 @@ export class SPMatEntityListComponent<
     } else {
       this.activeEntity.set(undefined);
     }
+  }
+
+  getColumnLabel(field: SPEntityField<TEntity, IdKey>): Observable<string> {
+    if (field._fieldSpec.label) {
+      return of(field._fieldSpec.label);
+    }
+    if (this.entityListConfig && this.entityListConfig.columnLabelFn) {
+      const label = this.entityListConfig.columnLabelFn(
+        this.entityName(),
+        field._fieldSpec.name
+      );
+      return label instanceof Observable ? label : of(label);
+    }
+    return of(field._fieldSpec.name);
   }
 }

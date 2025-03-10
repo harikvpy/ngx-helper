@@ -59,18 +59,18 @@ export interface SPMatEntityListConfig {
   defaultPageSize?: number;
   pageSizes?: Array<number>;
   /**
-   * These are global column value functions.
-   *
-   * If a value function for a column is not explicitly specified, this map is
-   * looked up with the column name. If an entry exists in this table, it will
-   * be used to render the column's value.
-   *
-   * This is useful for formatting certain column types which tends to have the
-   * same name across the app. For instance columns such as 'amount', 'total'
-   * or 'balance'. Or 'date', 'timestamp', etc. The return value from the
-   * column value functions are deemed safe and therefore
+   * Provide a method to return the labels for the columns. This is useful when
+   * the columns are specified as the JSON object key names and the labels are
+   * to be transformed into a uniform manner (uppercase) or when the labels
+   * are to be dynamically localized. Note that the response can be an
+   * Observable<string> if the label is to be fetched/changed asynchronously
+   * (as that can happen in an app that supports dynamic changing of the UI
+   * language).
+   * @param entityName
+   * @param columnName
+   * @returns
    */
-  // columnValueFns?: Map<string, COLUMN_VALUE_FN>;
+  columnLabelFn?: (entityName: string, columnName: string) => string | Observable<string>;
 }
 
 /**

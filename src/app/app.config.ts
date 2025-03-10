@@ -9,7 +9,7 @@ import {
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { provideTransloco } from '@jsverse/transloco';
+import { provideTransloco, TranslocoService } from '@jsverse/transloco';
 import { FORM_ERRORS, provideErrorTailorConfig } from '@ngneat/error-tailor';
 import {
   SP_ENTITY_FIELD_CONFIG,
@@ -24,6 +24,8 @@ import { Observable, of } from 'rxjs';
 import { routes } from './app.routes';
 import { MatErrorTailorControlErrorComponent } from './components/mat-error-tailor-control-error/mat-error-tailor-control-error.component';
 import { TranslocoHttpLoader } from './transloco-loader';
+import { SP_MAT_ENTITY_LIST_CONFIG, SPMatEntityListConfig } from '@smallpearl/ngx-helper/mat-entity-list';
+import { MyPaginator } from './entity-list-demo/paginater';
 
 const WebTelInputConfig: QQMatTelephoneInputConfig = {
   // To cache last value from our API request so that we don't have to
@@ -46,6 +48,20 @@ const WebTelInputConfig: QQMatTelephoneInputConfig = {
   // List of countries displayed in the telephone input control
   // countries: 'TW|SG|MY|IN|US|GB',
 };
+
+class EntityListConfig implements SPMatEntityListConfig {
+  constructor(private transloco: TranslocoService) {}
+
+  paginator = new MyPaginator();
+  defaultPageSize = 50;
+  columnLabelFn = (entityName: string, columnName: string): string | Observable<string> => {
+    return this.transloco.selectTranslate(columnName);
+  };
+};
+
+const en = {}
+const de = {}
+const zhHant = {}
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -129,5 +145,10 @@ export const appConfig: ApplicationConfig = {
         >([['gender', { alignment: 'end' }]]),
       },
     },
+    {
+      provide: SP_MAT_ENTITY_LIST_CONFIG,
+      useClass: EntityListConfig,
+      deps: [TranslocoService],
+    }
   ],
 };

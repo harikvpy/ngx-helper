@@ -367,7 +367,12 @@ describe('SPMatEntityCrudComponent', () => {
     await createCrudComponent();
   })
 
-  it("should create", async () => {
+  const autoDetectChanges = async () => {
+    fixture.autoDetectChanges();
+    await new Promise(res => setTimeout(res, 120)); // wait for the async data to be loaded
+  }
+
+  it("should create", fakeAsync(() => {
     // await createCrudComponent();
     componentRef.setInput('columns', [
       { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
@@ -383,6 +388,7 @@ describe('SPMatEntityCrudComponent', () => {
       return of(USER_DATA);
     }) as any); // 'as any' to suppress TSC function prototype mismatch
     fixture.autoDetectChanges();
+    tick(100);
     expect(component).toBeTruthy();
     const rows = fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
     // +1 for the <tr> in <thead>
@@ -398,36 +404,38 @@ describe('SPMatEntityCrudComponent', () => {
     expect(component.getEntityUrl(USER_DATA[0].cell)).toEqual(
       `https://randomuser.me/api/${USER_DATA[0].cell}/?results=100&nat=us,dk,fr,gb`
     )
-  });
+  }));
 
-  it('should derive itemLabel[Plural] from entityName', async () => {
+  it('should derive itemLabel[Plural] from entityName', fakeAsync(() => {
     componentRef.setInput('entityName', 'userProfile');
     componentRef.setInput('itemLabel', undefined);
     componentRef.setInput('itemLabelPlural', undefined);
     fixture.detectChanges();
+    tick(100);
     expect(component._entityNamePlural()).toEqual('userProfiles');
     // userProfile converted to Title Case using lodash.startCase.
     expect(component._itemLabel()).toEqual('User Profile');
     // Default pluralization using 'pluralize' library
     expect(component._itemLabelPlural()).toEqual('User Profiles');
-  });
+  }));
 
-  it('should accept hybrid column definitions', async () => {
+  it('should accept hybrid column definitions', fakeAsync(() => {
     // await createCrudComponent();
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
     fixture.autoDetectChanges();
+    tick(100);
     expect(component).toBeTruthy();
     const rows = fixture.debugElement.nativeElement.querySelectorAll('tr');
     // +1 for the <tr> in <thead>
     expect(rows.length).toEqual(USER_DATA.length+1);
     const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
-  });
+  }));
 
-  it('should not display action column if  = true', async () => {
+  it('should not display action column if  = true', fakeAsync(() => {
     // await createCrudComponent();
     componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
@@ -435,6 +443,7 @@ describe('SPMatEntityCrudComponent', () => {
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
     fixture.autoDetectChanges();
+    tick(100);
     expect(component).toBeTruthy();
     const rows = fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
     // +1 for the <tr> in <thead>
@@ -444,7 +453,7 @@ describe('SPMatEntityCrudComponent', () => {
     const columns = rows[0].querySelectorAll('td');
     // columns should equal number columns as set in [columns] property value
     expect(columns.length).toEqual(USER_COLUMNS.length);
-  });
+  }));
 
   it('should not display "New Item" button disableCreate = true', async () => {
     // await createCrudComponent();
@@ -661,7 +670,7 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
   let component!: UserEntityCrudComponent;
   let componentRef!: ComponentRef<UserEntityCrudComponent>;
 
-  beforeEach(async () => {
+  beforeEach(fakeAsync(() => {
     TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, SPMatEntityCrudTestComponent, getTranslocoModule()],
       providers: [
@@ -682,9 +691,10 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
     testComponentFixture.autoDetectChanges()
-  });
+    tick(100);
+  }));
 
-  it('should take matColumnDef from projected content', async () => {
+  it('should take matColumnDef from projected content', fakeAsync(() => {
     const rows = testComponentFixture.debugElement.nativeElement.querySelectorAll('tr');
     // +1 for the <tr> in <thead>
     expect(rows.length).toEqual(USER_DATA.length+1);
@@ -698,7 +708,7 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     expect(nameRow.textContent).toEqual('FULL NAME');
     const wrapperDiv = testComponentFixture.debugElement.nativeElement.querySelector('div.my-list-pane-wrapper-class');
     expect(wrapperDiv).toBeTruthy();
-  });
+  }));
 
   it('should show preview pane when a row is clicked', fakeAsync(() => {
     expect(component).toBeTruthy();
@@ -743,7 +753,7 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     sub.unsubscribe();
   }));
 
-  it('should show the create form when New button is selected', async () => {
+  it('should show the create form when New button is selected', fakeAsync(() => {
     const http = TestBed.inject(HttpClient);
     const JOHN_SMITH: User = {
       name: {title: 'mr', first: 'John', last: 'Smith'},
@@ -783,9 +793,9 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
       const newCount = spEntityCrudComp.spEntitiesList()?.store.query(getEntitiesCount());
       expect(newCount).toEqual(USER_DATA.length+1);
     }
-  });
+  }));
 
-  it('should set form control errors when form control validation fails', async () => {
+  it('should set form control errors when form control validation fails', fakeAsync(() => {
     const http = TestBed.inject(HttpClient);
     const JOHN_SMITH: User = {
       name: {title: 'mr', first: 'John', last: 'Smith'},
@@ -829,9 +839,9 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
       const newCount = spEntityCrudComp.spEntitiesList()?.store.query(getEntitiesCount());
       expect(newCount).toEqual(USER_DATA.length);
     }
-  });
+  }));
 
-  it('should close the form when Bridge.close() is called', async () => {
+  it('should close the form when Bridge.close() is called', fakeAsync(() => {
     const http = TestBed.inject(HttpClient);
     const JOHN_SMITH: User = {
       name: {title: 'mr', first: 'John', last: 'Smith'},
@@ -890,9 +900,9 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     expect(createEditActivatedEvents[1].mode).toEqual('edit');
     expect(createEditActivatedEvents[1].cancelled).toBeFalse();
     sub?.unsubscribe();
-  });
+  }));
 
-  it('should show the new subtypes when New button is selected', async () => {
+  it('should show the new subtypes when New button is selected', fakeAsync(() => {
     const http = TestBed.inject(HttpClient);
     const JOHN_SMITH: User = {
       name: {title: 'mr', first: 'John', last: 'Smith'},
@@ -923,14 +933,14 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     expect(testComponent.lastAction.role).toEqual('car');
     (matMenuItems[1].nativeElement as HTMLElement).click();
     expect(testComponent.lastAction.role).toEqual('bike');
-  });
+  }));
 
-  it('should show the edit form when Edit context menu item is selected', async () => {
+  it('should show the edit form when Edit context menu item is selected', fakeAsync(() => {
     let editFormComponent = testComponentFixture.debugElement.query(By.directive(CreateEditUserComponent));
     expect(editFormComponent).toBeFalsy();
     // simulate item action by calling the mat-context-menu method directly
     component.onItemAction('_update_', USER_DATA[0]);
     editFormComponent = testComponentFixture.debugElement.query(By.directive(CreateEditUserComponent));
     expect(editFormComponent).toBeTruthy();
-  });
+  }));
 });

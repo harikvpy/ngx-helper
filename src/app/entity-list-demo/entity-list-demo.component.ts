@@ -7,22 +7,20 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { FIELD_VALUE_FN, SP_ENTITY_FIELD_CONFIG, SPEntityFieldConfig, SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { SPMatContextMenuComponent } from '@smallpearl/ngx-helper/mat-context-menu';
 import {
-  SP_MAT_ENTITY_LIST_CONFIG,
-  SPMatEntityListComponent,
-  SPMatEntityListConfig
+  SPMatEntityListComponent
 } from '@smallpearl/ngx-helper/mat-entity-list';
 import { MyPaginator } from './paginater';
 import { User } from './user';
 
-function provideMatEntityListConfig(): SPMatEntityListConfig {
-  return {
-    urlResolver: (endpoint: string) => {
-      return endpoint;
-    },
-    paginator: new MyPaginator(),
-    defaultPageSize: 50,
-  };
-}
+// function provideMatEntityListConfig(): SPMatEntityListConfig {
+//   return {
+//     urlResolver: (endpoint: string) => {
+//       return endpoint;
+//     },
+//     paginator: new MyPaginator(),
+//     defaultPageSize: 50,
+//   };
+// }
 
 function provideEntityFieldConfig(): SPEntityFieldConfig {
   return {
@@ -87,10 +85,10 @@ const ELEMENT_DATA: PeriodicElement[] = [
         SPMatContextMenuComponent,
     ],
     providers: [
-        {
-            provide: SP_MAT_ENTITY_LIST_CONFIG,
-            useFactory: provideMatEntityListConfig,
-        },
+        // {
+        //     provide: SP_MAT_ENTITY_LIST_CONFIG,
+        //     useFactory: provideMatEntityListConfig,
+        // },
         {
             provide: SP_ENTITY_FIELD_CONFIG,
             useFactory: provideEntityFieldConfig,
@@ -258,7 +256,6 @@ export class EntityListDemoComponent implements OnInit, AfterViewInit {
   hybridColumnDefs = [
     {
       name: 'name',
-      label: 'NAME',
       valueFn: (user: User) => user.name.first + ' ' + user.name.last,
     },
     'gender',

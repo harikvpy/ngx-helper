@@ -6,7 +6,9 @@ import {
   Component,
   computed,
   ContentChildren,
+  effect,
   EventEmitter,
+  inject,
   Injector,
   input,
   Output,
@@ -34,7 +36,7 @@ import { SPMatEntityListComponent } from '@smallpearl/ngx-helper/mat-entity-list
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { DomSanitizer } from '@angular/platform-browser';
-import { provideTranslocoScope, TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { AngularSplitModule } from 'angular-split';
 import { startCase } from 'lodash';
@@ -145,9 +147,10 @@ import { PreviewHostComponent } from './preview-host.component';
             [ngTemplateOutlet]="headerTemplate() || defaultHeaderTemplate"
           ></ng-container>
           <sp-mat-entity-list
+            #entitiesList
             [entityName]="entityName()"
             [entityNamePlural]="entityNamePlural()"
-            [_deferViewInit]="true"
+            [deferViewInit]="true"
             [endpoint]="endpoint()"
             [entityLoaderFn]="entityLoaderFn()"
             [columns]="columnsWithAction()"
@@ -476,7 +479,20 @@ export class SPMatEntityCrudComponent<
 
   busyWheelId = `entityCrudBusyWheel-${Date.now()}`;
   sub$ = new Subscription();
-  spEntitiesList = viewChild(SPMatEntityListComponent<TEntity, IdKey>);
+  spEntitiesList = viewChild<SPMatEntityListComponent<TEntity, IdKey>>('entitiesList');
+
+  // Theoritically, we ought to be able to initialize the mat-entities-list
+  // columns from ngAfterViewInit lifecycle hook. But for some strange reason
+  // when this hook is called, sp-mat-entities-list has not been initialized.
+  // Therefore `spEntitiesList()` is null. So we have to use a computed signal,
+  // which will be triggered when spEntitiesList() is initialized and use that
+  // to initialize the columns.
+  spEntitiesListInited = effect(() => {
+    if (this.spEntitiesList()) {
+      this._initEntitiesList();
+    }
+  });
+
   crudConfig!: SPMatEntityCrudConfig;
 
   // This is the internal component that will host the createEditFormTemplate
@@ -520,9 +536,9 @@ export class SPMatEntityCrudComponent<
       JSON.stringify(this.columns())
     );
     // JSON.parse(JSON.strigify()) does not clone function objects. So
-    // explicitly copy these over. So this is really a shallow clone as
-    // the cloned objects still refers to the function objects in the original
-    // object.
+    // we've to explicitly copy these over. So this is really a shallow clone
+    // as the cloned objects still refers to the function objects in the
+    // original object.
     this.columns().forEach((col, index: number, orgColumns) => {
       const orgCol = orgColumns[index];
       if (typeof orgCol !== 'string') {
@@ -582,6 +598,7 @@ export class SPMatEntityCrudComponent<
           .filter((name) => name !== 'action')
       : []
   );
+  transloco = inject(TranslocoService);
 
   constructor(
     http: HttpClient,
@@ -607,43 +624,17 @@ export class SPMatEntityCrudComponent<
     }
   }
 
-  override ngOnInit() {}
+  override ngOnInit() {
+  }
 
   override ngOnDestroy(): void {
     this.sub$.unsubscribe();
   }
 
+  /**
+   * Override so that we can suppress default action in SPMatEntityListComponent
+   */
   override ngAfterViewInit(): void {
-    const spEntitiesList = this.spEntitiesList();
-    if (spEntitiesList) {
-      // Build contentColumnDefs using our component's content. Then add our own
-      // 'action' column definition to it. Then set this as the value of
-      // child SPMatEntityListComponent.contentColumnDef. This way we force
-      // SPMatEntityListComponent to use our component's any project MatColumnDef
-      // content in the final mat-table.
-      const clientColumnDefs = this.clientColumnDefs;
-      if (clientColumnDefs && spEntitiesList) {
-        // Note that we process any content projected matColumnDef first and
-        // our own internal content later. And when we process our own internal
-        // columns (for now only 'action'), it's not added if a column with that
-        // name has already been defined via content projection. This allows the
-        // clients to override even internal columns with their column defintion.
-        let contentColumnDefs = new Array<MatColumnDef>();
-        clientColumnDefs.toArray().forEach((c) => contentColumnDefs.push(c));
-        this.componentColumns().forEach((ic) => {
-          if (!contentColumnDefs.find((c) => c.name === ic.name)) {
-            contentColumnDefs.push(ic);
-          }
-        });
-        spEntitiesList.contentColumnDefs = contentColumnDefs;
-      }
-      // This is a replication of SPMatEntityCrudList.ngAfterViewInit. That
-      // code is skipped as we declare set the _deferViewInit=true in
-      // sp-mat-entity-list declaration.
-      spEntitiesList.buildColumns();
-      spEntitiesList.setupSort();
-      spEntitiesList.loadMoreEntities();
-    }
   }
 
   /**
@@ -1126,5 +1117,43 @@ export class SPMatEntityCrudComponent<
 
   getPreviewPaneContentClass() {
     return this.previewPaneContentClass();
+  }
+
+  /**
+   * Initialize the columns for the mat-entities-list component. This is
+   * called when the <sp-mat-entities-list> component has been properly
+   * initialized.
+   */
+  private _initEntitiesList() {
+    const spEntitiesList = this.spEntitiesList();
+    if (spEntitiesList) {
+      // Build contentColumnDefs using our component's content. Then add our own
+      // 'action' column definition to it. Then set this as the value of
+      // child SPMatEntityListComponent.contentColumnDef. This way we force
+      // SPMatEntityListComponent to use our component's any project MatColumnDef
+      // content in the final mat-table.
+      const clientColumnDefs = this.clientColumnDefs;
+      if (clientColumnDefs.length && spEntitiesList) {
+        // Note that we process any content projected matColumnDef first and
+        // our own internal content later. And when we process our own internal
+        // columns (for now only 'action'), it's not added if a column with that
+        // name has already been defined via content projection. This allows the
+        // clients to override even internal columns with their column defintion.
+        let contentColumnDefs = new Array<MatColumnDef>();
+        clientColumnDefs.toArray().forEach((c) => contentColumnDefs.push(c));
+        this.componentColumns().forEach((ic) => {
+          if (!contentColumnDefs.find((c) => c.name === ic.name)) {
+            contentColumnDefs.push(ic);
+          }
+        });
+        spEntitiesList.contentColumnDefs = contentColumnDefs;
+      }
+      // This is a replication of SPMatEntityCrudList.ngAfterViewInit. That
+      // code is skipped as we declare <sp-mat-entity-list> with
+      // deferViewInit=true.
+      spEntitiesList.buildColumns();
+      spEntitiesList.setupSort();
+      spEntitiesList.loadMoreEntities();
+    }
   }
 }
