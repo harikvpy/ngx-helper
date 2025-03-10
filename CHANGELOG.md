@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.31.2](https://github.com/harikvpy/ngx-helper/compare/v0.31.1...v0.31.2) (2025-03-10)
+
 ### [0.31.1](https://github.com/harikvpy/ngx-helper/compare/v0.30.1...v0.31.1) (2025-03-10)
 
 ### [0.30.1](https://github.com/harikvpy/ngx-helper/compare/v0.29.41...v0.30.1) (2025-03-09)
