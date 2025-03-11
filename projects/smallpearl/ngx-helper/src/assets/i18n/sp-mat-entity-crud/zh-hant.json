@@ -2,6 +2,8 @@
   "save": "保存",
   "edit": "編輯",
   "delete": "刪除",
+  "createNew": "新建",
+  "refresh": "刷新",
   "newItem": "新建 {{item}}",
   "editItem": "編輯 {{item}}",
   "deleteItem": "刪除 {{item}}",

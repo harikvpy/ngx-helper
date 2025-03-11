@@ -2,6 +2,8 @@
   "save": "Save",
   "edit": "Update",
   "delete": "Delete",
+  "createNew": "Create New",
+  "refresh": "Refresh",
   "newItem": "New {{item}}",
   "editItem": "Update {{item}}",
   "deleteItem": "Delete {{item}}",

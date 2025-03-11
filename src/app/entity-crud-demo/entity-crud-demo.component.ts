@@ -15,6 +15,7 @@ import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslocoModule } from '@jsverse/transloco';
 import { getEntitiesIds } from '@ngneat/elf-entities';
 import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { spFormatCurrency } from '@smallpearl/ngx-helper/locale';
@@ -43,6 +44,7 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
         MatButtonModule,
         MatTabsModule,
         MatMenuModule,
+        TranslocoModule,
         SPMatEntityCrudComponent,
         CreateEditEntityDemoComponent,
         SPMatEntityCrudPreviewPaneComponent,
@@ -63,6 +65,7 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
             idKey="id"
             pagination="discrete"
             [paginator]="paginator"
+            title="{{'invoices'|transloco}}"
             itemLabel="Invoice"
             itemsLabel="Invoices"
             newItemLabel="NEW INVOICE"

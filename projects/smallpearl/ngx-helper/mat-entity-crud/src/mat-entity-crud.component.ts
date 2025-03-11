@@ -97,7 +97,7 @@ import { PreviewHostComponent } from './preview-host.component';
               >
                 {{
                   newItemLabel() ??
-                    t('spMatEntityCrud.newItem', { item: _itemLabel() })
+                    t('spMatEntityCrud.createNew', { item: _itemLabel() })
                 }}
                 <mat-icon>expand_circle_down</mat-icon>
               </button>
@@ -122,8 +122,9 @@ import { PreviewHostComponent } from './preview-host.component';
               >
                 {{
                   newItemLabel() ??
-                    t('spMatEntityCrud.newItem', { item: _itemLabel() })
+                    t('spMatEntityCrud.createNew', { item: _itemLabel() })
                 }}
+                <mat-icon>add_circle</mat-icon>
               </button>
               } }
             </div>
@@ -132,7 +133,7 @@ import { PreviewHostComponent } from './preview-host.component';
           <ng-template #defaultHeaderTemplate>
             <div class="action-bar">
               <div class="action-bar-title">
-                {{ _title() }}
+                {{ _title() | async }}
               </div>
               <span class="spacer"></span>
               <!-- Hide the action buttons when Preview/Edit pane is active -->
@@ -258,7 +259,7 @@ export class SPMatEntityCrudComponent<
    * Title string displayed above the component. If not specified, will use
    * itemLabelPlural() as the title.
    */
-  title = input<string>();
+  title = input<string|Observable<string>>();
   /**
    *
    */
@@ -447,9 +448,10 @@ export class SPMatEntityCrudComponent<
       : this.getLabel(plural(this.entityName()))
   );
   // Computed title
-  _title = computed(() =>
-    this.title() ? this.title() : this._itemLabelPlural()
-  );
+  _title = computed(() => {
+    const title = this.title() ? this.title() : this._itemLabelPlural();
+    return title instanceof Observable ? title : of(title);
+  });
   // endpoint with the QP string removed (if one was provided)
   _endpointSansParams = computed(() => this.endpoint().split('?')[0]);
   _endpointParams = computed(() => {});
