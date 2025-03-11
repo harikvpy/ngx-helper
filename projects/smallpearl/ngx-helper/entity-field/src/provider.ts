@@ -1,5 +1,5 @@
 import { InjectionToken } from '@angular/core';
-import { SPEntityFieldSpec } from './entity-field-spec';
+import { SPEntityFieldSpec } from './entity-field';
 
 
 export type FIELD_VALUE_FN = (entity: any, fieldName: string) => string|number|Date|boolean;

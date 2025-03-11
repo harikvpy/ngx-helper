@@ -15,7 +15,7 @@ import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { getEntitiesIds } from '@ngneat/elf-entities';
 import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { spFormatCurrency } from '@smallpearl/ngx-helper/locale';
@@ -340,8 +340,15 @@ export class EntityCrudDemoComponent
   invoiceColumns: SPEntityFieldSpec<Invoice>[] = [
     { name: 'id' },
     { name: 'date' },
-    { name: 'customer', valueFn: (item: Invoice) => item.customerDetail.name },
-    { name: 'terms', valueOptions: { alignment: 'center' } },
+    {
+      name: 'customer',
+      valueFn: (item: Invoice) => item.customerDetail.name
+    },
+    {
+      name: 'terms',
+      valueOptions: { alignment: 'center' },
+      valueFn: () => this.transloco.selectTranslate('30'),
+    },
     {
       name: 'balance',
       valueFn: (item: Invoice) => spFormatCurrency(item.balance) ?? '',
@@ -463,7 +470,11 @@ export class EntityCrudDemoComponent
     return of(null);
   }
 
-  constructor(private router: Router, private route: ActivatedRoute) {}
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private transloco: TranslocoService
+  ) {}
 
   canDeactivate(): boolean {
     return !!this.spEntityCrudComponent1()?.canDeactivate();

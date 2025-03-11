@@ -200,7 +200,7 @@ class LoadRequest {
           mat-header-cell
           *matHeaderCellDef
         >
-        {{ getColumnLabel(column) | async }}
+          {{ getColumnLabel(column) | async }}
         </th>
         } @else {
         <th
@@ -210,7 +210,7 @@ class LoadRequest {
           mat-sort-header
           *matHeaderCellDef
         >
-        {{ getColumnLabel(column) | async }}
+          {{ getColumnLabel(column) | async }}
         </th>
         }
         <td
@@ -224,8 +224,8 @@ class LoadRequest {
           <a [routerLink]="column.getRouterLink(element)">
             <span [innerHTML]="column.value(element)"></span>
           </a>
-          } @else {
-          <span [innerHTML]="column.value(element)"></span>
+          } @else { @let val = column.value(element);
+          <span [innerHTML]="isAsync(val) ? (val | async) : val"></span>
           }
         </td>
       </ng-container>
@@ -909,5 +909,9 @@ export class SPMatEntityListComponent<
       return label instanceof Observable ? label : of(label);
     }
     return of(field._fieldSpec.name);
+  }
+
+  isAsync(val: any) {
+    return val instanceof Observable;
   }
 }

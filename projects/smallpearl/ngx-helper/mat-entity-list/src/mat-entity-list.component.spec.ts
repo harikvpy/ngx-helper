@@ -152,8 +152,15 @@ describe('SPMatEntityListComponent', () => {
 
   it('should create and load data without paginator', fakeAsync(() => {
     componentRef.setInput('columns', [
-      { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
-      'gender', 'cell'
+      {
+        name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last
+      },
+      'gender',
+      {
+        name: 'cell',
+        // To verify that async cell values are properly evaluated
+        valueFn: (user: User) => of(user.cell)
+      }
     ]);
     const reqParams = new HttpParams().set('results', '100').set('nat', 'us,dk,fr,gb').set('include[]', 'name').
       append('include[]', 'cell').append('include[]', 'phone');
@@ -177,6 +184,12 @@ describe('SPMatEntityListComponent', () => {
     const rows = fixture.debugElement.nativeElement.querySelectorAll('tr');
     // +1 for the <tr> in <thead>
     expect(rows.length).toEqual(USER_DATA.length+1);
+    // cell nos column data
+    const cellNos = fixture.debugElement.nativeElement.querySelectorAll('td:nth-child(3)');
+    for (let index = 0; index < cellNos.length; index++) {
+      const cellNo = cellNos[index].innerText;
+      expect(cellNo).toEqual(USER_DATA[index].cell);
+    }
     const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
     expect(httpReqContextReceived).toBeTrue();

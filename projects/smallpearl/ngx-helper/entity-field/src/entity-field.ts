@@ -4,6 +4,9 @@ import {
   SPIntlDateFormat,
 } from '@smallpearl/ngx-helper/locale';
 import { SPEntityFieldConfig } from './provider';
+import { Observable } from 'rxjs';
+
+type FieldValueTypes = string | number | Date | boolean;
 
 /**
  * This structure defines the data formatting details for a field of the
@@ -38,7 +41,7 @@ export type SPEntityFieldSpec<TEntity extends { [P in IdKey]: PropertyKey },  Id
   };
   // If the column value cannot be derived by simple TEntity[name] lookup,
   // use this function to return a custom computed or formatted value.
-  valueFn?: (item: TEntity) => string | number | Date | boolean;
+  valueFn?: (item: TEntity) => FieldValueTypes | Observable<FieldValueTypes>;
 };
 
 /**
