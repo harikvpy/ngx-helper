@@ -179,16 +179,19 @@ import { PreviewHostComponent } from './preview-host.component';
           <td
             mat-cell
             *matCellDef="let element"
-            (click)="$event.stopImmediatePropagation()"
           >
-            @if (_itemActions().length) {
+            <!-- <button
+              mat-icon-button
+              hoverDropDown
+            >
+              <mat-icon>more_vert</mat-icon>
+            </button> -->
             <sp-mat-context-menu
-              [menuItems]="_itemActions()"
+              [menuItems]="_itemActions"
               (selected)="onItemAction($event, element)"
               [contextData]="element"
               [hasBackdrop]="true"
             ></sp-mat-context-menu>
-            }
           </td>
         </ng-container>
       </as-split-area>
@@ -562,31 +565,10 @@ export class SPMatEntityCrudComponent<
     }
     return cols;
   });
-  // Use a custom computed() signal to derive the action items for each
-  // entity so that we can run per item's allow item action function to
-  // selectively disable one or more actions based on the item's state.
-  _itemActions = computed(() => {
-    return this.getItemActions();
-    // const actions =
-    //   this.itemActions() && this.itemActions().length
-    //     ? this.itemActions()
-    //     : this.defaultItemCrudActions();
-    // let actionsCopy: SPContextMenuItem[] = JSON.parse(JSON.stringify(actions));
-    // actionsCopy.forEach((action, index: number) => {
-    //   const orgDisable = actions[index]?.disable;
-    //   action.disable = (entity: TEntity) => {
-    //     if (orgDisable) {
-    //       return orgDisable(entity);
-    //     }
-    //     const allowItemActionFn = this.allowEntityActionFn();
-    //     if (allowItemActionFn) {
-    //       return !allowItemActionFn(entity, action.role ?? action.label);
-    //     }
-    //     return false;
-    //   };
-    // });
-    // return actionsCopy;
-  });
+  // Provide per entity actions as a function so that the actions are
+  // enumerated only when the user clicks on the context menu button.
+  _itemActions = (entity: TEntity) => this.getItemActions(entity);
+
   // This uses the previewActive signal to compute the visible columns
   // when preview is activated. For now we just hide the 'action' column when
   // preview is active. We can further customize this logic by allowing the
@@ -1095,13 +1077,20 @@ export class SPMatEntityCrudComponent<
    * to determine if the action is allowed for the given entity.
    * @returns
    */
-  getItemActions(): SPContextMenuItem[] {
+  getItemActions(entity: TEntity): SPContextMenuItem[] {
+    // console.log(`SPMatEntityCrudComponent.getItemActions - entity: ${JSON.stringify(entity, null, 2)}`);
     const actions =
       this.itemActions() && this.itemActions().length
         ? this.itemActions()
         : this.defaultItemCrudActions();
     let actionsCopy: SPContextMenuItem[] = JSON.parse(JSON.stringify(actions));
-    actionsCopy.forEach((action, index: number) => {
+    actionsCopy.forEach((action: SPContextMenuItem, index: number) => {
+      // localize default action item labels (Update & Delete)
+      // Client specified action labels are to be localized by the client
+      // before supplying them to the component.
+      if (action.label.startsWith('spMatEntityCrud.')) {
+        action.label = this.transloco.translate(action.label);
+      }
       const orgDisable = actions[index]?.disable;
       action.disable = (entity: TEntity) => {
         if (orgDisable) {
@@ -1135,22 +1124,22 @@ export class SPMatEntityCrudComponent<
       // SPMatEntityListComponent to use our component's any project MatColumnDef
       // content in the final mat-table.
       const clientColumnDefs = this.clientColumnDefs;
-      if (clientColumnDefs.length && spEntitiesList) {
+      let contentColumnDefs = new Array<MatColumnDef>();
+      if (clientColumnDefs.length) {
         // Note that we process any content projected matColumnDef first and
         // our own internal content later. And when we process our own internal
         // columns (for now only 'action'), it's not added if a column with that
         // name has already been defined via content projection. This allows the
         // clients to override even internal columns with their column defintion.
-        let contentColumnDefs = new Array<MatColumnDef>();
         clientColumnDefs.toArray().forEach((c) => contentColumnDefs.push(c));
-        this.componentColumns().forEach((ic) => {
-          if (!contentColumnDefs.find((c) => c.name === ic.name)) {
-            contentColumnDefs.push(ic);
-          }
-        });
-        spEntitiesList.contentColumnDefs = contentColumnDefs;
       }
-      // This is a replication of SPMatEntityCrudList.ngAfterViewInit. That
+      this.componentColumns().forEach((ic) => {
+        if (!contentColumnDefs.find((c) => c.name === ic.name)) {
+          contentColumnDefs.push(ic);
+        }
+      });
+      spEntitiesList.contentColumnDefs = contentColumnDefs;
+    // This is a replication of SPMatEntityCrudList.ngAfterViewInit. That
       // code is skipped as we declare <sp-mat-entity-list> with
       // deferViewInit=true.
       spEntitiesList.buildColumns();

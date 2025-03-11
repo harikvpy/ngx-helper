@@ -1,14 +1,17 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   EventEmitter,
   input,
   OnInit,
   Output,
+  signal,
+  viewChild,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
+import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { RouterModule } from '@angular/router';
 import { HoverDropDownDirective } from '@smallpearl/ngx-helper/hover-dropdown';
 
@@ -41,12 +44,12 @@ export interface SPContextMenuItem {
     selector: 'sp-mat-context-menu',
     template: `
     <button
-      #menuTrigger="matMenuTrigger"
+      #menuTrigger
       mat-icon-button
       [matMenuTriggerFor]="contextMenu"
       hoverDropDown
       [menu]="contextMenu"
-      [hoverTrigger]="enableHover() ? menuTrigger : null"
+      (click)="$event.stopImmediatePropagation(); showMenu()"
     >
       @if (menuIconName()) {
       <mat-icon>{{ menuIconName() }}</mat-icon>
@@ -54,7 +57,7 @@ export interface SPContextMenuItem {
       {{ label() }}
     </button>
     <mat-menu #contextMenu="matMenu" [hasBackdrop]="hasBackdrop()">
-      @for (menuItem of menuItems(); track $index) {
+      @for (menuItem of _menuItems(); track $index) {
         @if (menuItem.role) {
             <button
               mat-menu-item
@@ -91,9 +94,14 @@ export interface SPContextMenuItem {
 export class SPMatContextMenuComponent implements OnInit {
   /**
    * The menu items to display. Refer to ContextMenuItem doc for details
-   * on the menu items.
+   * on the menu items. This can be an array ofSPContextMenuItem objects or
+   * a function that returns an array of SPContextMenuItem objects.
+   * If it is a function, the function will be called with the contextData
+   * as the argument when the user clicks on the menu trigger button.
    */
-  menuItems = input.required<SPContextMenuItem[]>();
+  menuItems = input.required<SPContextMenuItem[]|((contextData?: any) => SPContextMenuItem[])>();
+
+  _menuItems = signal<SPContextMenuItem[]>([])
   /**
    * Label to display for the context menu. If omitted will just show the
    * menuIcon.
@@ -124,10 +132,24 @@ export class SPMatContextMenuComponent implements OnInit {
    */
   @Output() selected = new EventEmitter<string>();
 
+  menuTrigger = viewChild(MatMenuTrigger);
+
   constructor() {}
 
   ngOnInit() {}
 
+  showMenu() {
+    const menuTrigger = this.menuTrigger();
+    const menuItems = this.menuItems();
+    if (typeof menuItems === 'function') {
+      this._menuItems.set(menuItems(this.contextData()));
+    } else {
+      this._menuItems.set(menuItems);
+    }
+    if (menuTrigger) {
+      menuTrigger.openMenu();
+    }
+  }
 
   onSelectMenuItem(item: SPContextMenuItem) {
     if (!item.route) {

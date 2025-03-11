@@ -73,7 +73,7 @@ export interface SPMatEntityCrudComponentBase<TEntity> {
    * the context menu for an entity in its preview pane toolbar.
    * @returns
    */
-  getItemActions(): SPContextMenuItem[];
+  getItemActions(entity?: TEntity): SPContextMenuItem[];
 
   /**
    * Returns the class to be used for the preview pane content. This interface
