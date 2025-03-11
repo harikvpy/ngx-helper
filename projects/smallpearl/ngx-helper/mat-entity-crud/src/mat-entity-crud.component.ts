@@ -41,7 +41,7 @@ import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { AngularSplitModule } from 'angular-split';
 import { startCase } from 'lodash';
 import { plural } from 'pluralize';
-import { map, Observable, of, Subscription, switchMap, tap } from 'rxjs';
+import { firstValueFrom, map, Observable, of, Subscription, switchMap, tap } from 'rxjs';
 import { getEntityCrudConfig } from './default-config';
 import { FormViewHostComponent } from './form-view-host.component';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
@@ -97,7 +97,9 @@ import { PreviewHostComponent } from './preview-host.component';
               >
                 {{
                   newItemLabel() ??
-                    t('spMatEntityCrud.createNew', { item: _itemLabel() })
+                    t('spMatEntityCrud.newItem', {
+                      item: _itemLabel() | async
+                    })
                 }}
                 <mat-icon>expand_circle_down</mat-icon>
               </button>
@@ -122,7 +124,9 @@ import { PreviewHostComponent } from './preview-host.component';
               >
                 {{
                   newItemLabel() ??
-                    t('spMatEntityCrud.createNew', { item: _itemLabel() })
+                    t('spMatEntityCrud.newItem', {
+                      item: _itemLabel() | async
+                    })
                 }}
                 <mat-icon>add_circle</mat-icon>
               </button>
@@ -176,10 +180,7 @@ import { PreviewHostComponent } from './preview-host.component';
         -->
         <ng-container matColumnDef="action">
           <th mat-header-cell *matHeaderCellDef></th>
-          <td
-            mat-cell
-            *matCellDef="let element"
-          >
+          <td mat-cell *matCellDef="let element">
             <!-- <button
               mat-icon-button
               hoverDropDown
@@ -208,8 +209,8 @@ import { PreviewHostComponent } from './preview-host.component';
           <!-- Create/Edit Entity -->
           <sp-create-edit-entity-host
             [ngClass]="createEditViewActive() ? 'd-inherit' : 'd-none'"
-            [itemLabel]="_itemLabel()"
-            [itemLabelPlural]="_itemLabelPlural()"
+            itemLabel="{{ _itemLabel() | async }}"
+            itemLabelPlural="{{ _itemLabelPlural() | async }}"
             [entityCrudComponentBase]="this"
             [clientViewTemplate]="createEditFormTemplate()"
           ></sp-create-edit-entity-host>
@@ -256,13 +257,14 @@ export class SPMatEntityCrudComponent<
   // entityName = input.required<string>();
   // entityNamePlural = input<string>();
 
-  itemLabel = input<string>();
-  itemLabelPlural = input<string>();
+  itemLabel = input<string | Observable<string>>();
+  itemLabelPlural = input<string | Observable<string>>();
+
   /**
    * Title string displayed above the component. If not specified, will use
    * itemLabelPlural() as the title.
    */
-  title = input<string|Observable<string>>();
+  title = input<string | Observable<string>>();
   /**
    *
    */
@@ -440,16 +442,19 @@ export class SPMatEntityCrudComponent<
     return startCase(source);
   };
 
-  _itemLabel = computed<string>(() =>
-    this.itemLabel()
-      ? (this.itemLabel() as string)
-      : this.getLabel(this.entityName())
-  );
-  _itemLabelPlural = computed<string>(() =>
-    this.itemLabelPlural()
-      ? (this.itemLabelPlural() as string)
-      : this.getLabel(plural(this.entityName()))
-  );
+  _itemLabel = computed<Observable<string>>(() => {
+    const itemLabel = this.itemLabel();
+    const label = itemLabel ? itemLabel : this.getLabel(this.entityName());
+    return label instanceof Observable ? label : of(label);
+  });
+  _itemLabelPlural = computed<Observable<string>>(() => {
+    const itemLabelPlural = this.itemLabelPlural();
+    const label = itemLabelPlural
+      ? itemLabelPlural
+      : this.getLabel(plural(this.entityName()));
+    return label instanceof Observable ? label : of(label);
+  });
+
   // Computed title
   _title = computed(() => {
     const title = this.title() ? this.title() : this._itemLabelPlural();
@@ -484,7 +489,8 @@ export class SPMatEntityCrudComponent<
 
   busyWheelId = `entityCrudBusyWheel-${Date.now()}`;
   sub$ = new Subscription();
-  spEntitiesList = viewChild<SPMatEntityListComponent<TEntity, IdKey>>('entitiesList');
+  spEntitiesList =
+    viewChild<SPMatEntityListComponent<TEntity, IdKey>>('entitiesList');
 
   // Theoritically, we ought to be able to initialize the mat-entities-list
   // columns from ngAfterViewInit lifecycle hook. But for some strange reason
@@ -608,8 +614,7 @@ export class SPMatEntityCrudComponent<
     }
   }
 
-  override ngOnInit() {
-  }
+  override ngOnInit() {}
 
   override ngOnDestroy(): void {
     this.sub$.unsubscribe();
@@ -618,8 +623,7 @@ export class SPMatEntityCrudComponent<
   /**
    * Override so that we can suppress default action in SPMatEntityListComponent
    */
-  override ngAfterViewInit(): void {
-  }
+  override ngAfterViewInit(): void {}
 
   /**
    * If the create/edit entity form is active, it calls its registered
@@ -830,39 +834,55 @@ export class SPMatEntityCrudComponent<
     if (!this.newItemLink() || this.newItemLink()?.length == 0) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      const params = {
-        title:
-          this.newItemLabel() ??
-          this.transloco.translate('spMatEntityCrud.newItem', {
-            item: this._itemLabel(),
-          }),
-      };
-      this.showCreateEditView(undefined, params);
-      // const tmpl = this.createEditFormTemplate();
-      // if (tmpl) {
-      //   // If preview is active deactivate it
-      //   if (this.previewActive()) {
-      //     this.closePreview();
-      //   }
-      //   const createEditHost = this.createEditHostComponent();
-      //   createEditHost!.show(undefined);
-      //   this.createEditViewActive.set(true);
-      // }
-    }
-    if (!this.createEditViewActive()) {
-      this.action.emit({ role: '_new_' });
+      firstValueFrom(this._itemLabel()).then((itemLabel) => {
+        const params = {
+          title:
+            this.newItemLabel() ??
+            this.transloco.translate('spMatEntityCrud.newItem', {
+              item: itemLabel
+            }),
+        };
+        this.showCreateEditView(undefined, params);
+        if (!this.createEditViewActive()) {
+          this.action.emit({ role: '_new_' });
+        }
+      });
+
+      // const params = {
+      //   title:
+      //     this.newItemLabel() ??
+      //     this.transloco.translate('spMatEntityCrud.newItem', {
+      //       item: this._itemLabel(),
+      //     }),
+      // };
+      // this.showCreateEditView(undefined, params);
     }
   }
 
   onUpdate(entity: TEntity) {
-    const params = {
-      title:
-        this.editItemTitle() ??
-        this.transloco.translate('spMatEntityCrud.editItem', {
-          item: this._itemLabel(),
-        }),
-    };
-    this.showCreateEditView(entity, params);
+
+    firstValueFrom(this._itemLabel()).then((itemLabel) => {
+      const params = {
+        title:
+          this.editItemTitle() ??
+          this.transloco.translate('spMatEntityCrud.editItem', {
+            item: itemLabel
+          }),
+      }
+      this.showCreateEditView(entity, params);
+      if (!this.createEditViewActive()) {
+        this.action.emit({ role: '_update_' });
+      }
+    });
+
+    // const params = {
+    //   title:
+    //     this.editItemTitle() ??
+    //     this.transloco.translate('spMatEntityCrud.editItem', {
+    //       item: this._itemLabel(),
+    //     }),
+    // };
+    // this.showCreateEditView(entity, params);
 
     // const tmpl = this.createEditFormTemplate();
     // if (tmpl) {
@@ -876,9 +896,9 @@ export class SPMatEntityCrudComponent<
     //     this.createEditViewActive.set(true);
     //   }
     // }
-    if (!this.createEditViewActive()) {
-      this.action.emit({ role: '_update_' });
-    }
+    // if (!this.createEditViewActive()) {
+    //   this.action.emit({ role: '_update_' });
+    // }
   }
 
   /**
@@ -936,47 +956,52 @@ export class SPMatEntityCrudComponent<
     // Do the delete prompt asynchronously so that the context menu is
     // dismissed before the prompt is displayed.
     setTimeout(() => {
-      const deletedItemPrompt = this.transloco.translate(
-        'spMatEntityCrud.deleteItemConfirm',
-        { item: this._itemLabel().toLocaleLowerCase() }
-      );
-      const yes = confirm(deletedItemPrompt);
-      if (yes) {
-        const entityId = (entity as any)[this.idKey()];
-
-        // If preview is active deactivate it
-        if (this.previewActive()) {
-          this.closePreviewImpl(false);
-        }
-
-        let obs!: Observable<any>;
-        const crudOpFn = this.crudOpFn();
-        if (crudOpFn) {
-          obs = crudOpFn('delete', entityId, undefined, this);
-        } else {
-          obs = this.http.delete<void>(this.getEntityUrl(entityId), {
-            context: this.getCrudReqHttpContext('delete'),
-          });
-        }
-
-        this.sub$.add(
-          obs
-            .pipe(
-              // TODO: how to display a busy wheel?
-              // showBusyWheelUntilComplete(this.busyWheelId),
-              tap(() => {
-                this.spEntitiesList()!.removeEntity(entityId);
-                // TODO: customize by providing an interface via SPMatEntityCrudConfig?
-                const deletedMessage = this.transloco.translate(
-                  'spMatEntityCrud.deleteItemSuccess',
-                  { item: this._itemLabel() }
-                );
-                this.snackBar.open(deletedMessage);
-              })
-            )
-            .subscribe()
+      // We use firstValueFrom() to get the value of the observable
+      // synchronously. firstValueFrom() also gracefully cleans up the
+      // observable after a value is emitted.
+      firstValueFrom(this._itemLabel()).then((itemLabel) => {
+        const deletedItemPrompt = this.transloco.translate(
+          'spMatEntityCrud.deleteItemConfirm',
+          { item: itemLabel.toLocaleLowerCase() }
         );
-      }
+        const yes = confirm(deletedItemPrompt);
+        if (yes) {
+          const entityId = (entity as any)[this.idKey()];
+
+          // If preview is active deactivate it
+          if (this.previewActive()) {
+            this.closePreviewImpl(false);
+          }
+
+          let obs!: Observable<any>;
+          const crudOpFn = this.crudOpFn();
+          if (crudOpFn) {
+            obs = crudOpFn('delete', entityId, undefined, this);
+          } else {
+            obs = this.http.delete<void>(this.getEntityUrl(entityId), {
+              context: this.getCrudReqHttpContext('delete'),
+            });
+          }
+
+          this.sub$.add(
+            obs
+              .pipe(
+                // TODO: how to display a busy wheel?
+                // showBusyWheelUntilComplete(this.busyWheelId),
+                tap(() => {
+                  this.spEntitiesList()!.removeEntity(entityId);
+                  // TODO: customize by providing an interface via SPMatEntityCrudConfig?
+                  const deletedMessage = this.transloco.translate(
+                    'spMatEntityCrud.deleteItemSuccess',
+                    { item: this._itemLabel() }
+                  );
+                  this.snackBar.open(deletedMessage);
+                })
+              )
+              .subscribe()
+          );
+        }
+      });
     });
   }
 
@@ -1139,7 +1164,7 @@ export class SPMatEntityCrudComponent<
         }
       });
       spEntitiesList.contentColumnDefs = contentColumnDefs;
-    // This is a replication of SPMatEntityCrudList.ngAfterViewInit. That
+      // This is a replication of SPMatEntityCrudList.ngAfterViewInit. That
       // code is skipped as we declare <sp-mat-entity-list> with
       // deferViewInit=true.
       spEntitiesList.buildColumns();

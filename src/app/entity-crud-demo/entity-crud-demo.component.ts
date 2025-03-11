@@ -34,27 +34,26 @@ import { Invoice, INVOICES } from './data';
 import { PreviewInvoiceComponent } from './preview-demo.component';
 
 @Component({
-    imports: [
-        CommonModule,
-        FormsModule,
-        MatTableModule,
-        MatSortModule,
-        MatProgressSpinnerModule,
-        MatIconModule,
-        MatButtonModule,
-        MatTabsModule,
-        MatMenuModule,
-        TranslocoModule,
-        SPMatEntityCrudComponent,
-        CreateEditEntityDemoComponent,
-        SPMatEntityCrudPreviewPaneComponent,
-        PreviewInvoiceComponent,
-    ],
-    selector: 'app-entity-crud-demo',
-    template: `
-    <div style="width: 100%; height: 100%;">
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatTableModule,
+    MatSortModule,
+    MatProgressSpinnerModule,
+    MatIconModule,
+    MatButtonModule,
+    MatTabsModule,
+    MatMenuModule,
+    TranslocoModule,
+    SPMatEntityCrudComponent,
+    CreateEditEntityDemoComponent,
+    SPMatEntityCrudPreviewPaneComponent,
+    PreviewInvoiceComponent,
+  ],
+  selector: 'app-entity-crud-demo',
+  template: `
+    <div style="width: 100%; height: 100%;" *transloco="let t">
       <mat-tab-group style="width: 100%; height: 100%;">
-
         <mat-tab label="Simple">
           <sp-mat-entity-crud
             #spEntityCrud1
@@ -65,11 +64,9 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
             idKey="id"
             pagination="discrete"
             [paginator]="paginator"
-            title="{{'invoices'|transloco}}"
-            itemLabel="Invoice"
-            itemsLabel="Invoices"
-            newItemLabel="NEW INVOICE"
-            editItemTitle="EDIT INVOICE"
+            title="{{ 'invoices' | transloco }}"
+            itemLabel="{{ t('invoice') }}"
+            itemLabelPlural="{{ t('invoices') }}"
             [crudOpFn]="crudOpFn"
             (selectEntity)="handleSelectEntity($event)"
             [createEditFormTemplate]="createEdit"
@@ -96,7 +93,6 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
               ></app-invoice-preview>
             </sp-mat-entity-crud-preview-pane>
           </ng-template>
-
         </mat-tab>
 
         <mat-tab label="Item SubTypes">
@@ -165,13 +161,19 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
             <div breadCrumbs>this is breadcrumb!</div>
           </sp-mat-entity-crud>
           <ng-template #customHeader>
-            <div class='header'>
+            <div class="header">
               <h2>CUSTOM HEADER</h2>
               <div class="spacer"></div>
               <div class="action-buttons">
                 <button mat-raised-button color="primary">New Invoice</button>
                 <button mat-raised-button color="primary">Import</button>
-                <button mat-raised-button color="primary" [matMenuTriggerFor]="moreItems">More</button>
+                <button
+                  mat-raised-button
+                  color="primary"
+                  [matMenuTriggerFor]="moreItems"
+                >
+                  More
+                </button>
               </div>
             </div>
             <mat-menu #moreItems="matMenu">
@@ -227,7 +229,11 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
           >
           </sp-mat-entity-crud>
           <ng-template #actionButtons>
-            <button mat-raised-button color="primary" [matMenuTriggerFor]="moreActions">
+            <button
+              mat-raised-button
+              color="primary"
+              [matMenuTriggerFor]="moreActions"
+            >
               More
               <mat-icon>expand_circle_down</mat-icon>
             </button>
@@ -275,9 +281,7 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
             [editPaneWidth]="60"
           >
           </sp-mat-entity-crud>
-
         </mat-tab>
-
       </mat-tab-group>
     </div>
 
@@ -289,7 +293,7 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
       ></app-create-edit-entity-demo>
     </ng-template>
   `,
-    styles: `
+  styles: `
   .header {
     display: flex;
     flex-direction: row;
@@ -303,10 +307,14 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
     gap: 0.2em;
   }
   `,
-    changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EntityCrudDemoComponent implements OnInit, SPMatEntityCrudCanDeactivate {
-  userEndpoint = signal<string>('https://randomuser.me/api/?results=10&nat=us,dk,fr,gb');
+export class EntityCrudDemoComponent
+  implements OnInit, SPMatEntityCrudCanDeactivate
+{
+  userEndpoint = signal<string>(
+    'https://randomuser.me/api/?results=10&nat=us,dk,fr,gb'
+  );
   userColumns: SPEntityFieldSpec<User>[] = [
     { name: 'name', label: 'NAME', valueFn: (user: User) => user.name.first },
     { name: 'gender', label: 'GENDER' },
@@ -317,13 +325,18 @@ export class EntityCrudDemoComponent implements OnInit, SPMatEntityCrudCanDeacti
     const localInvoices = [];
     for (let index = 0; index < 50; index++) {
       const copy = JSON.parse(JSON.stringify(INVOICES));
-      copy[0].id = 1000+index*2;
-      copy[1].id = 1000+index*2+1;
+      copy[0].id = 1000 + index * 2;
+      copy[1].id = 1000 + index * 2 + 1;
       localInvoices.push(copy[0]);
       localInvoices.push(copy[1]);
     }
-    return of({ count: 100, next: null, previous: null, results: localInvoices });
-  }
+    return of({
+      count: 100,
+      next: null,
+      previous: null,
+      results: localInvoices,
+    });
+  };
   invoiceColumns: SPEntityFieldSpec<Invoice>[] = [
     { name: 'id' },
     { name: 'date' },
@@ -332,58 +345,66 @@ export class EntityCrudDemoComponent implements OnInit, SPMatEntityCrudCanDeacti
     {
       name: 'balance',
       valueFn: (item: Invoice) => spFormatCurrency(item.balance) ?? '',
-      valueOptions: { alignment: 'end' }
+      valueOptions: { alignment: 'end' },
     },
   ];
   itemActions: SPContextMenuItem[] = [
-    { label: 'INCOME', role: ''},
-      { label: 'Edit', role: '_update_' },
-      { label: 'Remove', role: '_delete_' },
-    { label: 'EXPENSE', role: ''},
-      { label: 'Bill Payment', role: 'billPayment' },
-      {
-        label: 'Advance to Owner',
-        role: 'advanceToOwner',
-        disable: (item: Invoice) => {
-          return item.customerDetail.name.startsWith('Peter')
-        }
+    { label: 'INCOME', role: '' },
+    { label: 'Edit', role: '_update_' },
+    { label: 'Remove', role: '_delete_' },
+    { label: 'EXPENSE', role: '' },
+    { label: 'Bill Payment', role: 'billPayment' },
+    {
+      label: 'Advance to Owner',
+      role: 'advanceToOwner',
+      disable: (item: Invoice) => {
+        return item.customerDetail.name.startsWith('Peter');
       },
+    },
   ];
-  spEntityCrudComponent1 = viewChild('spEntityCrud1', {read: SPMatEntityCrudComponent});
-  spEntityCrudComponent2 = viewChild('spEntityCrud2', {read: SPMatEntityCrudComponent});
-  spEntityCrudComponent3 = viewChild('spEntityCrud3', {read: SPMatEntityCrudComponent});
-  spEntityCrudComponent4 = viewChild('spEntityCrud4', {read: SPMatEntityCrudComponent});
+  spEntityCrudComponent1 = viewChild('spEntityCrud1', {
+    read: SPMatEntityCrudComponent,
+  });
+  spEntityCrudComponent2 = viewChild('spEntityCrud2', {
+    read: SPMatEntityCrudComponent,
+  });
+  spEntityCrudComponent3 = viewChild('spEntityCrud3', {
+    read: SPMatEntityCrudComponent,
+  });
+  spEntityCrudComponent4 = viewChild('spEntityCrud4', {
+    read: SPMatEntityCrudComponent,
+  });
 
   paginator = new MyPaginator();
   newSubTypes: NewItemSubType[] = [
     {
       role: '',
-      label: 'INCOME'
+      label: 'INCOME',
     },
     {
       role: '_new_',
       label: 'Customer Payment',
       params: {
-        type: 'customer_payment'
-      }
+        type: 'customer_payment',
+      },
     },
     {
       role: '_new_',
       label: 'Customer Advance',
       params: {
-        type: 'customer_advance'
-      }
+        type: 'customer_advance',
+      },
     },
     {
       role: '',
-      label: 'EXPENSE'
+      label: 'EXPENSE',
     },
     {
       role: '_new_',
       label: 'Bill Payment',
       params: {
-        type: 'bill_payment'
-      }
+        type: 'bill_payment',
+      },
     },
   ];
 
@@ -393,7 +414,7 @@ export class EntityCrudDemoComponent implements OnInit, SPMatEntityCrudCanDeacti
       return action !== '_delete_';
     }
     return true;
-  }
+  };
 
   crudOpFn(
     op: string,
@@ -409,7 +430,7 @@ export class EntityCrudDemoComponent implements OnInit, SPMatEntityCrudCanDeacti
           customer: 1,
           customerDetail: {
             id: 1,
-            name: 'John'
+            name: 'John',
           },
           items: [],
           balance: 0,
@@ -431,12 +452,13 @@ export class EntityCrudDemoComponent implements OnInit, SPMatEntityCrudCanDeacti
             customer: 1,
             customerDetail: {
               id: 1,
-              name: 'John'
+              name: 'John',
             },
             items: [],
             balance: 0,
           },
-        } as unknown as Invoice);      }
+        } as unknown as Invoice);
+      }
     }
     return of(null);
   }
@@ -447,8 +469,7 @@ export class EntityCrudDemoComponent implements OnInit, SPMatEntityCrudCanDeacti
     return !!this.spEntityCrudComponent1()?.canDeactivate();
   }
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
   onItemAction(ev: { role: string; entity?: Invoice } | undefined) {
     console.log(`onItemAction - role: ${ev?.role}`);
@@ -465,8 +486,6 @@ export class EntityCrudDemoComponent implements OnInit, SPMatEntityCrudCanDeacti
   }
 
   handleSelectEntity(invoice: Invoice | undefined) {
-    console.log(
-      `handleSelectEntity - user: ${invoice ? invoice : undefined}`
-    );
+    console.log(`handleSelectEntity - user: ${invoice ? invoice : undefined}`);
   }
 }

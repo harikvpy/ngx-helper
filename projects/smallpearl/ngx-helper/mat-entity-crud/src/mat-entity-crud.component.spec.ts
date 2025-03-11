@@ -1,9 +1,28 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { Component, ComponentRef, computed, input, OnInit, signal, viewChild } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  Component,
+  ComponentRef,
+  computed,
+  input,
+  OnInit,
+  signal,
+  viewChild,
+} from '@angular/core';
+import {
+  ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from '@angular/core/testing';
+import {
+  FormControl,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { MatButton, MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -20,11 +39,16 @@ import {
   SPMatEntityListComponent,
   SPMatEntityListPaginator,
 } from '@smallpearl/ngx-helper/mat-entity-list';
-import { firstValueFrom, map, Observable, of, tap } from 'rxjs';
-import { NewItemSubType, SP_MAT_ENTITY_CRUD_HTTP_CONTEXT, SPMatEntityCrudCreateEditBridge, SPMatEntityCrudHttpContext } from './mat-entity-crud-types';
+import { getTranslocoModule } from '@smallpearl/ngx-helper/src/transloco-testing.module';
+import { firstValueFrom, of, tap } from 'rxjs';
+import {
+  NewItemSubType,
+  SP_MAT_ENTITY_CRUD_HTTP_CONTEXT,
+  SPMatEntityCrudCreateEditBridge,
+  SPMatEntityCrudHttpContext,
+} from './mat-entity-crud-types';
 import { SPMatEntityCrudComponent } from './mat-entity-crud.component';
 import { SPMatEntityCrudPreviewPaneComponent } from './preview-pane.component';
-import { getTranslocoModule } from '@smallpearl/ngx-helper/src/transloco-testing.module';
 
 interface User {
   name: { title: string; first: string; last: string };
@@ -35,8 +59,8 @@ interface User {
 const MOCK_USER: User = {
   name: { title: '', first: '', last: '' },
   gender: '',
-  cell: ''
-}
+  cell: '',
+};
 
 const USER_DATA: User[] = [
   {
@@ -103,19 +127,18 @@ const USER_COLUMNS: SPEntityFieldSpec<User, 'cell'>[] = [
 
 type UserEntityCrudComponent = SPMatEntityCrudComponent<User, 'cell'>;
 
-
 @Component({
-    imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        FormsModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatButtonModule,
-        MatSelectModule,
-    ],
-    selector: 'create-edit-user-demo',
-    template: `
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatSelectModule,
+  ],
+  selector: 'create-edit-user-demo',
+  template: `
     <form
       [formGroup]="form"
       (ngSubmit)="onNgSubmit()"
@@ -163,7 +186,7 @@ type UserEntityCrudComponent = SPMatEntityCrudComponent<User, 'cell'>;
         </button>
       </div>
     </form>
-  `
+  `,
 })
 export class CreateEditUserComponent implements OnInit {
   form!: FormGroup<{
@@ -230,17 +253,17 @@ export class CreateEditUserComponent implements OnInit {
  * this to test SPMatEntityCrudComponent
  */
 @Component({
-    imports: [
-        CommonModule,
-        MatTableModule,
-        SPMatEntityCrudComponent,
-        CreateEditUserComponent,
-        SPMatEntityCrudPreviewPaneComponent,
-    ],
-    template: `
+  imports: [
+    CommonModule,
+    MatTableModule,
+    SPMatEntityCrudComponent,
+    CreateEditUserComponent,
+    SPMatEntityCrudPreviewPaneComponent,
+  ],
+  template: `
     <div>
       <sp-mat-entity-crud
-        entityName='user'
+        entityName="user"
         itemLabel="User"
         itemLabelPlural="Users"
         [endpoint]="endpoint"
@@ -267,7 +290,10 @@ export class CreateEditUserComponent implements OnInit {
     </div>
 
     <ng-template #createEdit let-data>
-      <create-edit-user-demo [bridge]="data.bridge" [entity]="data.entity"></create-edit-user-demo>
+      <create-edit-user-demo
+        [bridge]="data.bridge"
+        [entity]="data.entity"
+      ></create-edit-user-demo>
     </ng-template>
 
     <ng-template #userPreview let-data>
@@ -281,15 +307,19 @@ export class CreateEditUserComponent implements OnInit {
         </div>
       </sp-mat-entity-crud-preview-pane>
     </ng-template>
-  `
+  `,
 })
 class SPMatEntityCrudTestComponent implements OnInit {
   displayedColumns = signal<string[]>([]);
   endpoint = 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb';
   columns = USER_COLUMNS;
   itemActions: SPContextMenuItem[] = [
-    { label: 'Edit', role: '_update_', },
-    { label: 'Delete', role: '_delete_', disable: (user: User) => user.cell.startsWith('(') }
+    { label: 'Edit', role: '_update_' },
+    {
+      label: 'Delete',
+      role: '_delete_',
+      disable: (user: User) => user.cell.startsWith('('),
+    },
   ];
   newSubTypes = input<NewItemSubType[]>();
 
@@ -298,7 +328,7 @@ class SPMatEntityCrudTestComponent implements OnInit {
 
   ngOnInit(): void {}
 
-  onAction(action: {role: string, entity?: User}) {
+  onAction(action: { role: string; entity?: User }) {
     this.lastAction = action;
   }
 }
@@ -325,8 +355,8 @@ class DRFPaginator implements SPMatEntityListPaginator {
     };
     return {
       total: 0,
-      entities: []
-    }
+      entities: [],
+    };
   }
 }
 
@@ -361,24 +391,31 @@ describe('SPMatEntityCrudComponent', () => {
     componentRef.setInput('itemLabel', 'User');
     componentRef.setInput('itemLabelPlural', 'Users');
     componentRef.setInput('columns', USER_COLUMNS);
-  };
+  }
 
   beforeEach(async () => {
     await createCrudComponent();
-  })
+  });
 
   const autoDetectChanges = async () => {
     fixture.autoDetectChanges();
-    await new Promise(res => setTimeout(res, 120)); // wait for the async data to be loaded
-  }
+    await new Promise((res) => setTimeout(res, 120)); // wait for the async data to be loaded
+  };
 
-  it("should create", fakeAsync(() => {
+  it('should create', fakeAsync(() => {
     // await createCrudComponent();
     componentRef.setInput('columns', [
-      { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
-      'gender', 'cell'
+      {
+        name: 'name',
+        valueFn: (user: User) => user.name.first + ' ' + user.name.last,
+      },
+      'gender',
+      'cell',
     ]);
-    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb'
+    );
     componentRef.setInput('idKey', 'cell');
     const http = TestBed.inject(HttpClient);
     componentRef.setInput('httpReqContext', ['cache', true]);
@@ -390,38 +427,46 @@ describe('SPMatEntityCrudComponent', () => {
     fixture.autoDetectChanges();
     tick(100);
     expect(component).toBeTruthy();
-    const rows = fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
+    const rows =
+      fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
     // +1 for the <tr> in <thead>
     expect(rows.length).toEqual(USER_DATA.length);
-    const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
+    const paginator =
+      fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
     expect(httpReqContextReceived).toBeTrue();
     const columns = rows[0].querySelectorAll('td');
     // +1 for action column
     expect(columns.length).toEqual(USER_COLUMNS.length + 1);
     // check _endpointSansParams() returns URL without the QP
-    expect(component._endpointSansParams()).toEqual('https://randomuser.me/api/');
+    expect(component._endpointSansParams()).toEqual(
+      'https://randomuser.me/api/'
+    );
     expect(component.getEntityUrl(USER_DATA[0].cell)).toEqual(
       `https://randomuser.me/api/${USER_DATA[0].cell}/?results=100&nat=us,dk,fr,gb`
-    )
+    );
   }));
 
-  it('should derive itemLabel[Plural] from entityName', fakeAsync(() => {
+  it('should derive itemLabel[Plural] from entityName', async () => {
     componentRef.setInput('entityName', 'userProfile');
     componentRef.setInput('itemLabel', undefined);
     componentRef.setInput('itemLabelPlural', undefined);
     fixture.detectChanges();
-    tick(100);
     expect(component._entityNamePlural()).toEqual('userProfiles');
     // userProfile converted to Title Case using lodash.startCase.
-    expect(component._itemLabel()).toEqual('User Profile');
+    const itemLabel = await firstValueFrom(component._itemLabel());
+    expect(itemLabel).toEqual('User Profile');
     // Default pluralization using 'pluralize' library
-    expect(component._itemLabelPlural()).toEqual('User Profiles');
-  }));
+    const itemLabelPlural = await firstValueFrom(component._itemLabelPlural());
+    expect(itemLabelPlural).toEqual('User Profiles');
+  });
 
   it('should accept hybrid column definitions', fakeAsync(() => {
     // await createCrudComponent();
-    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb'
+    );
     componentRef.setInput('idKey', 'cell');
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
@@ -430,14 +475,18 @@ describe('SPMatEntityCrudComponent', () => {
     expect(component).toBeTruthy();
     const rows = fixture.debugElement.nativeElement.querySelectorAll('tr');
     // +1 for the <tr> in <thead>
-    expect(rows.length).toEqual(USER_DATA.length+1);
-    const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
+    expect(rows.length).toEqual(USER_DATA.length + 1);
+    const paginator =
+      fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
   }));
 
   it('should not display action column if  = true', fakeAsync(() => {
     // await createCrudComponent();
-    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb'
+    );
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('disableItemActions', true);
     const http = TestBed.inject(HttpClient);
@@ -445,10 +494,12 @@ describe('SPMatEntityCrudComponent', () => {
     fixture.autoDetectChanges();
     tick(100);
     expect(component).toBeTruthy();
-    const rows = fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
+    const rows =
+      fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
     // +1 for the <tr> in <thead>
     expect(rows.length).toEqual(USER_DATA.length);
-    const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
+    const paginator =
+      fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
     const columns = rows[0].querySelectorAll('td');
     // columns should equal number columns as set in [columns] property value
@@ -457,31 +508,44 @@ describe('SPMatEntityCrudComponent', () => {
 
   it('should not display "New Item" button disableCreate = true', async () => {
     // await createCrudComponent();
-    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb'
+    );
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('disableCreate', true);
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
     fixture.autoDetectChanges();
-    const matButton = fixture.debugElement.query(By.directive(MatButton))
+    const matButton = fixture.debugElement.query(By.directive(MatButton));
     expect(matButton).toBeFalsy();
   });
 
   it("should refresh entity after CREATE when refreshAfterEdit='object'", async () => {
-    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb'
+    );
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('disableCreate', true);
     componentRef.setInput('crudHttpReqContext', ['cache', true]);
     const http = TestBed.inject(HttpClient);
     let httpPOSTReqContextReceived = false;
-    spyOn(http, 'post').and.callFake(((url: string, data:any, options: any) => {
+    spyOn(http, 'post').and.callFake(((
+      url: string,
+      data: any,
+      options: any
+    ) => {
       const cache = options.context.get('cache') === true;
-      const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
-      httpPOSTReqContextReceived = !!cache && !!crudContextParams && crudContextParams.op == 'create';
+      const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(
+        SP_MAT_ENTITY_CRUD_HTTP_CONTEXT
+      );
+      httpPOSTReqContextReceived =
+        !!cache && !!crudContextParams && crudContextParams.op == 'create';
       // console.log(JSON.stringify(crudContextParams, null, 2));
       return of({
         ...USER_DATA[0],
-        cell: '83939830309303'
+        cell: '83939830309303',
       });
     }) as any); // 'as any' to suppress TSC function prototype mismatch
 
@@ -490,11 +554,13 @@ describe('SPMatEntityCrudComponent', () => {
       if (url.includes('/83939830309303/')) {
         // refresh item
         const cache = options.context.get('cache') === true;
-        const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
-        httpGETReqContextReceived = !!cache && !!crudContextParams && crudContextParams.op == 'retrieve';
+        const crudContextParams: SPMatEntityCrudHttpContext =
+          options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
+        httpGETReqContextReceived =
+          !!cache && !!crudContextParams && crudContextParams.op == 'retrieve';
         return of({
           ...USER_DATA[0],
-          cell: '888'
+          cell: '888',
         });
       } else {
         // initial get users request
@@ -513,21 +579,34 @@ describe('SPMatEntityCrudComponent', () => {
     expect(res.cell).toEqual('888');
   });
 
-  it("should set custom HTTP request specifc context during CREATE", async () => {
-    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+  it('should set custom HTTP request specifc context during CREATE', async () => {
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb'
+    );
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('disableCreate', true);
-    componentRef.setInput('crudHttpReqContext', {'create': ['cache', true], 'retrieve': ['cache', true]});
+    componentRef.setInput('crudHttpReqContext', {
+      create: ['cache', true],
+      retrieve: ['cache', true],
+    });
     const http = TestBed.inject(HttpClient);
     let httpPOSTReqContextReceived = false;
-    spyOn(http, 'post').and.callFake(((url: string, data:any, options: any) => {
+    spyOn(http, 'post').and.callFake(((
+      url: string,
+      data: any,
+      options: any
+    ) => {
       const cache = options.context.get('cache') === true;
-      const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
-      httpPOSTReqContextReceived = !!cache && !!crudContextParams && crudContextParams.op == 'create';
+      const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(
+        SP_MAT_ENTITY_CRUD_HTTP_CONTEXT
+      );
+      httpPOSTReqContextReceived =
+        !!cache && !!crudContextParams && crudContextParams.op == 'create';
       // console.log(JSON.stringify(crudContextParams, null, 2));
       return of({
         ...USER_DATA[0],
-        cell: '83939830309303'
+        cell: '83939830309303',
       });
     }) as any); // 'as any' to suppress TSC function prototype mismatch
 
@@ -536,11 +615,13 @@ describe('SPMatEntityCrudComponent', () => {
       if (url.includes('/83939830309303/')) {
         // refresh item
         const cache = options.context.get('cache') === true;
-        const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
-        httpGETReqContextReceived = !!cache && !!crudContextParams && crudContextParams.op == 'retrieve';
+        const crudContextParams: SPMatEntityCrudHttpContext =
+          options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
+        httpGETReqContextReceived =
+          !!cache && !!crudContextParams && crudContextParams.op == 'retrieve';
         return of({
           ...USER_DATA[0],
-          cell: '888'
+          cell: '888',
         });
       } else {
         // initial get users request
@@ -560,7 +641,10 @@ describe('SPMatEntityCrudComponent', () => {
   });
 
   it("should refresh entity after UPDATE when refreshAfterEdit='object'", async () => {
-    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb'
+    );
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('disableCreate', true);
     componentRef.setInput('crudHttpReqContext', ['cache', true]);
@@ -570,11 +654,13 @@ describe('SPMatEntityCrudComponent', () => {
       if (url.includes('/83939830309303/')) {
         // refresh item
         const cache = options.context.get('cache') === true;
-        const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
-        httpGETReqContextReceived = !!cache && !!crudContextParams && crudContextParams.op == 'retrieve';
+        const crudContextParams: SPMatEntityCrudHttpContext =
+          options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
+        httpGETReqContextReceived =
+          !!cache && !!crudContextParams && crudContextParams.op == 'retrieve';
         return of({
           ...USER_DATA[0],
-          cell: '888'
+          cell: '888',
         });
       } else {
         // initial get users request
@@ -582,25 +668,37 @@ describe('SPMatEntityCrudComponent', () => {
       }
     }) as any); // 'as any' to suppress TSC function prototype mismatch
     let httpPATCHReqContextReceived = false;
-    spyOn(http, 'patch').and.callFake(((url: string, data: any, options: any) => {
+    spyOn(http, 'patch').and.callFake(((
+      url: string,
+      data: any,
+      options: any
+    ) => {
       const cache = options.context.get('cache') === true;
-      const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
-      httpPATCHReqContextReceived = !!cache && !!crudContextParams && crudContextParams.op === 'update';
+      const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(
+        SP_MAT_ENTITY_CRUD_HTTP_CONTEXT
+      );
+      httpPATCHReqContextReceived =
+        !!cache && !!crudContextParams && crudContextParams.op === 'update';
       return of({
         ...USER_DATA[0],
-        cell: '83939830309303'
+        cell: '83939830309303',
       });
     }) as any); // 'as any' to suppress TSC function prototype mismatch
     componentRef.setInput('refreshAfterEdit', 'object');
     fixture.autoDetectChanges();
     // Mocking object UPDATE by calling the bridge method directly
-    await firstValueFrom(component.update(USER_DATA[0]['cell'], {gender: 'M'}));
+    await firstValueFrom(
+      component.update(USER_DATA[0]['cell'], { gender: 'M' })
+    );
     expect(httpPATCHReqContextReceived).toBeTrue();
     expect(httpGETReqContextReceived).toBeTrue();
   });
 
   it("should refresh all entities after CREATE when refreshAfterEdit='all'", fakeAsync(() => {
-    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb'
+    );
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('disableCreate', true);
     const http = TestBed.inject(HttpClient);
@@ -614,21 +712,29 @@ describe('SPMatEntityCrudComponent', () => {
     // Mocking object UPDATE by calling the bridge method directly
     // This should result in another call to load all entities as we have
     // set refreshAfterEdit='all'
-    firstValueFrom(component.update(USER_DATA[0]['cell'], {gender: 'M'}));
+    firstValueFrom(component.update(USER_DATA[0]['cell'], { gender: 'M' }));
     tick();
     expect(getSpy).toHaveBeenCalledTimes(2);
   }));
 
   it("should call crudResponseParser after CREATE/UPDATE when refreshAfterEdit='object'", async () => {
-    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb'
+    );
     let crudOpCalled = 0;
-    const crudOpFn = (op: string, id: any, entityValue: any, entityCrudComponent: SPMatEntityCrudCreateEditBridge) => {
+    const crudOpFn = (
+      op: string,
+      id: any,
+      entityValue: any,
+      entityCrudComponent: SPMatEntityCrudCreateEditBridge
+    ) => {
       crudOpCalled++;
       return of({
         ...USER_DATA[0],
-        cell: '83939830309303'
-      });  // Fake data
-    }
+        cell: '83939830309303',
+      }); // Fake data
+    };
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('disableCreate', true);
     let crudResponseParserCalled = 0;
@@ -641,9 +747,9 @@ describe('SPMatEntityCrudComponent', () => {
       crudResponseParserCalled++;
       return {
         ...USER_DATA[0],
-        cell: '888' // deliberately return a different value for testing
-      }
-    }
+        cell: '888', // deliberately return a different value for testing
+      };
+    };
     componentRef.setInput('crudResponseParser', crudResponseParserFn);
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
@@ -654,12 +760,11 @@ describe('SPMatEntityCrudComponent', () => {
     const res = await firstValueFrom(component.create({}));
     // Once for 'create' and another for 'get' (because refreshAfterEdit='object')
     expect(crudOpCalled).toEqual(2);
-    expect(res.cell).toEqual('888');  // --> diff from crudOpFn() reply
+    expect(res.cell).toEqual('888'); // --> diff from crudOpFn() reply
     // Once for parsing the 'CREATE' response and the next for parsing
     // refreshAfterEdit='object' response.
     expect(crudResponseParserCalled).toEqual(2);
   });
-
 });
 
 describe('SPMatEntityCrudComponent client configurable behavior', () => {
@@ -672,68 +777,105 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
 
   beforeEach(fakeAsync(() => {
     TestBed.configureTestingModule({
-      imports: [NoopAnimationsModule, SPMatEntityCrudTestComponent, getTranslocoModule()],
+      imports: [
+        NoopAnimationsModule,
+        SPMatEntityCrudTestComponent,
+        getTranslocoModule(),
+      ],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         {
           provide: ActivatedRoute,
           useValue: {
-            snapshot: {params: {id: '100'}}
-          }
-        }
+            snapshot: { params: { id: '100' } },
+          },
+        },
       ],
     });
-    testComponentFixture = TestBed.createComponent(SPMatEntityCrudTestComponent);
+    testComponentFixture = TestBed.createComponent(
+      SPMatEntityCrudTestComponent
+    );
     testComponent = testComponentFixture.componentInstance;
     testComponentRef = testComponentFixture.componentRef;
     component = testComponent.spEntityCrudComponent()!;
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    testComponentFixture.autoDetectChanges()
+    testComponentFixture.autoDetectChanges();
     tick(100);
   }));
 
   it('should take matColumnDef from projected content', fakeAsync(() => {
-    const rows = testComponentFixture.debugElement.nativeElement.querySelectorAll('tr');
+    const rows =
+      testComponentFixture.debugElement.nativeElement.querySelectorAll('tr');
     // +1 for the <tr> in <thead>
-    expect(rows.length).toEqual(USER_DATA.length+1);
-    const paginator = testComponentFixture.debugElement.nativeElement.querySelector('mat-paginator');
+    expect(rows.length).toEqual(USER_DATA.length + 1);
+    const paginator =
+      testComponentFixture.debugElement.nativeElement.querySelector(
+        'mat-paginator'
+      );
     expect(paginator).toBeFalsy();
-    const theadRows: Element[] = testComponentFixture.debugElement.nativeElement.querySelectorAll('thead tr th');
+    const theadRows: Element[] =
+      testComponentFixture.debugElement.nativeElement.querySelectorAll(
+        'thead tr th'
+      );
     // +1 for 'action' column
     expect(theadRows.length).toEqual(USER_COLUMNS.length + 1);
     const nameRow = theadRows[0];
     // Column title set from content project <ng-container matColumnDef..>
     expect(nameRow.textContent).toEqual('FULL NAME');
-    const wrapperDiv = testComponentFixture.debugElement.nativeElement.querySelector('div.my-list-pane-wrapper-class');
+    const wrapperDiv =
+      testComponentFixture.debugElement.nativeElement.querySelector(
+        'div.my-list-pane-wrapper-class'
+      );
     expect(wrapperDiv).toBeTruthy();
   }));
 
   it('should show preview pane when a row is clicked', fakeAsync(() => {
     expect(component).toBeTruthy();
-    let createEditActivatedEvents: Array<{activated: boolean, cancelled: boolean|undefined, mode: 'edit'|'preview' }> = [];
-    const sub = component.entityViewPaneActivated.asObservable().pipe(
-      tap(event => {
-        createEditActivatedEvents.push(event);
-      })
-    ).subscribe();
-    const rows: HTMLElement[] = testComponentFixture.debugElement.nativeElement.querySelectorAll('tbody tr');
+    let createEditActivatedEvents: Array<{
+      activated: boolean;
+      cancelled: boolean | undefined;
+      mode: 'edit' | 'preview';
+    }> = [];
+    const sub = component.entityViewPaneActivated
+      .asObservable()
+      .pipe(
+        tap((event) => {
+          createEditActivatedEvents.push(event);
+        })
+      )
+      .subscribe();
+    const rows: HTMLElement[] =
+      testComponentFixture.debugElement.nativeElement.querySelectorAll(
+        'tbody tr'
+      );
     expect(rows.length).toEqual(USER_DATA.length);
-    rows[0].click();  // click the first row
+    rows[0].click(); // click the first row
     testComponentFixture.detectChanges();
     tick();
-    const previewPane = testComponentFixture.debugElement.nativeElement.querySelector('sp-mat-entity-crud-preview-pane');
+    const previewPane =
+      testComponentFixture.debugElement.nativeElement.querySelector(
+        'sp-mat-entity-crud-preview-pane'
+      );
     expect(previewPane).toBeTruthy();
     // preview pane wrapper class shpould be set to 'my-preview-pane-wrapper-class'
-    expect(testComponentFixture.debugElement.nativeElement.querySelector('div.my-preview-pane-wrapper-class')).toBeTruthy();
+    expect(
+      testComponentFixture.debugElement.nativeElement.querySelector(
+        'div.my-preview-pane-wrapper-class'
+      )
+    ).toBeTruthy();
     // Preview pane should contain a <div class="my-preview-pane-content-class"> which is
     // where the client content is projected.
-    expect(previewPane.querySelector('div.my-preview-pane-content-class')).toBeTruthy();
+    expect(
+      previewPane.querySelector('div.my-preview-pane-content-class')
+    ).toBeTruthy();
     // preview Pane should have the full name of the clicked user
     const h1 = previewPane.querySelector('h1');
     expect(h1).toBeTruthy();
-    expect(h1.textContent).toEqual(USER_DATA[0].name.first + ' ' + USER_DATA[0].name.last);
+    expect(h1.textContent).toEqual(
+      USER_DATA[0].name.first + ' ' + USER_DATA[0].name.last
+    );
 
     const button = previewPane.querySelector('button[aria-label="Close"]');
     if (button) {
@@ -756,9 +898,9 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
   it('should show the create form when New button is selected', fakeAsync(() => {
     const http = TestBed.inject(HttpClient);
     const JOHN_SMITH: User = {
-      name: {title: 'mr', first: 'John', last: 'Smith'},
+      name: { title: 'mr', first: 'John', last: 'Smith' },
       gender: 'female',
-      cell: '93039309'
+      cell: '93039309',
     };
     spyOn(http, 'post').and.returnValue(of(JOHN_SMITH));
     const spEntityCrudComp = testComponent.spEntityCrudComponent();
@@ -766,12 +908,18 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     if (spEntityCrudComp) {
       spEntityCrudCompSpy = spyOn(spEntityCrudComp, 'create').and.callThrough();
     }
-    const matButton = testComponentFixture.debugElement.query(By.directive(MatButton))
+    const matButton = testComponentFixture.debugElement.query(
+      By.directive(MatButton)
+    );
     matButton.nativeElement.click();
     testComponentFixture.detectChanges();
-    const createEditHost = testComponentFixture.debugElement.query(By.directive(CreateEditUserComponent));
+    tick();
+    const createEditHost = testComponentFixture.debugElement.query(
+      By.directive(CreateEditUserComponent)
+    );
     expect(createEditHost).toBeTruthy();
-    const inputs = testComponentFixture.debugElement.nativeElement.querySelectorAll('input');
+    const inputs =
+      testComponentFixture.debugElement.nativeElement.querySelectorAll('input');
     inputs[0].value = JOHN_SMITH.name.first;
     inputs[1].value = JOHN_SMITH.name.last;
     inputs[2].value = JOHN_SMITH.cell;
@@ -782,25 +930,32 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     // form control's value directly.
     // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
     // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
-    (createEditHost.componentInstance as CreateEditUserComponent).form.controls['gender'].setValue('female');
+    (createEditHost.componentInstance as CreateEditUserComponent).form.controls[
+      'gender'
+    ].setValue('female');
     testComponentFixture.detectChanges();
-    const submitButton = testComponentFixture.debugElement.nativeElement.querySelector("button[type='submit']");
+    const submitButton =
+      testComponentFixture.debugElement.nativeElement.querySelector(
+        "button[type='submit']"
+      );
     submitButton.click();
     testComponentFixture.detectChanges();
     // verify that create method has been called.
     expect(spEntityCrudCompSpy).toHaveBeenCalled();
     if (spEntityCrudComp) {
-      const newCount = spEntityCrudComp.spEntitiesList()?.store.query(getEntitiesCount());
-      expect(newCount).toEqual(USER_DATA.length+1);
+      const newCount = spEntityCrudComp
+        .spEntitiesList()
+        ?.store.query(getEntitiesCount());
+      expect(newCount).toEqual(USER_DATA.length + 1);
     }
   }));
 
   it('should set form control errors when form control validation fails', fakeAsync(() => {
     const http = TestBed.inject(HttpClient);
     const JOHN_SMITH: User = {
-      name: {title: 'mr', first: 'John', last: 'Smith'},
+      name: { title: 'mr', first: 'John', last: 'Smith' },
       gender: 'female',
-      cell: '93039309'
+      cell: '93039309',
     };
     spyOn(http, 'post').and.returnValue(of(JOHN_SMITH));
     const spEntityCrudComp = testComponent.spEntityCrudComponent();
@@ -808,12 +963,18 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     if (spEntityCrudComp) {
       spEntityCrudCompSpy = spyOn(spEntityCrudComp, 'create').and.callThrough();
     }
-    const matButton = testComponentFixture.debugElement.query(By.directive(MatButton))
+    const matButton = testComponentFixture.debugElement.query(
+      By.directive(MatButton)
+    );
     matButton.nativeElement.click();
     testComponentFixture.detectChanges();
-    const createEditHost = testComponentFixture.debugElement.query(By.directive(CreateEditUserComponent));
+    tick();
+    const createEditHost = testComponentFixture.debugElement.query(
+      By.directive(CreateEditUserComponent)
+    );
     expect(createEditHost).toBeTruthy();
-    const inputs = testComponentFixture.debugElement.nativeElement.querySelectorAll('input');
+    const inputs =
+      testComponentFixture.debugElement.nativeElement.querySelectorAll('input');
     inputs[0].value = JOHN_SMITH.name.first;
     inputs[1].value = JOHN_SMITH.name.last;
     inputs[2].value = JOHN_SMITH.cell.slice(0, 4);
@@ -824,19 +985,30 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     // form control's value directly.
     // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
     // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
-    (createEditHost.componentInstance as CreateEditUserComponent).form.controls['gender'].setValue('female');
+    (createEditHost.componentInstance as CreateEditUserComponent).form.controls[
+      'gender'
+    ].setValue('female');
     testComponentFixture.detectChanges();
-    const submitButton = testComponentFixture.debugElement.nativeElement.querySelector("button[type='submit']");
+    const submitButton =
+      testComponentFixture.debugElement.nativeElement.querySelector(
+        "button[type='submit']"
+      );
     submitButton.click();
     testComponentFixture.detectChanges();
     // verify that cell field has errors for not meeting the Validators.minLength
     // requirements. This error should look like {requiredLength: 8, actualLength: 4}
-    const cellErrors = (createEditHost.componentInstance as CreateEditUserComponent).form.controls['cell'].errors;
-    expect(cellErrors).toEqual({minlength: {requiredLength: 8, actualLength: 4}});
+    const cellErrors = (
+      createEditHost.componentInstance as CreateEditUserComponent
+    ).form.controls['cell'].errors;
+    expect(cellErrors).toEqual({
+      minlength: { requiredLength: 8, actualLength: 4 },
+    });
     // verify that create method has been called.
     expect(spEntityCrudCompSpy).toHaveBeenCalledTimes(0);
     if (spEntityCrudComp) {
-      const newCount = spEntityCrudComp.spEntitiesList()?.store.query(getEntitiesCount());
+      const newCount = spEntityCrudComp
+        .spEntitiesList()
+        ?.store.query(getEntitiesCount());
       expect(newCount).toEqual(USER_DATA.length);
     }
   }));
@@ -844,9 +1016,9 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
   it('should close the form when Bridge.close() is called', fakeAsync(() => {
     const http = TestBed.inject(HttpClient);
     const JOHN_SMITH: User = {
-      name: {title: 'mr', first: 'John', last: 'Smith'},
+      name: { title: 'mr', first: 'John', last: 'Smith' },
       gender: 'female',
-      cell: '93039309'
+      cell: '93039309',
     };
     spyOn(http, 'post').and.returnValue(of(JOHN_SMITH));
     const spEntityCrudComp = testComponent.spEntityCrudComponent();
@@ -854,18 +1026,31 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     if (spEntityCrudComp) {
       spEntityCrudCompSpy = spyOn(spEntityCrudComp, 'create').and.callThrough();
     }
-    let createEditActivatedEvents: Array<{activated: boolean, cancelled: boolean|undefined, mode: 'edit'|'preview' }> = [];
-    const sub = spEntityCrudComp?.entityViewPaneActivated.asObservable().pipe(
-      tap(event => {
-        createEditActivatedEvents.push(event);
-      })
-    ).subscribe();
-    const matButton = testComponentFixture.debugElement.query(By.directive(MatButton))
+    let createEditActivatedEvents: Array<{
+      activated: boolean;
+      cancelled: boolean | undefined;
+      mode: 'edit' | 'preview';
+    }> = [];
+    const sub = spEntityCrudComp?.entityViewPaneActivated
+      .asObservable()
+      .pipe(
+        tap((event) => {
+          createEditActivatedEvents.push(event);
+        })
+      )
+      .subscribe();
+    const matButton = testComponentFixture.debugElement.query(
+      By.directive(MatButton)
+    );
     matButton.nativeElement.click();
     testComponentFixture.detectChanges();
-    const createEditHost = testComponentFixture.debugElement.query(By.directive(CreateEditUserComponent));
+    tick();
+    const createEditHost = testComponentFixture.debugElement.query(
+      By.directive(CreateEditUserComponent)
+    );
     expect(createEditHost).toBeTruthy();
-    const inputs = testComponentFixture.debugElement.nativeElement.querySelectorAll('input');
+    const inputs =
+      testComponentFixture.debugElement.nativeElement.querySelectorAll('input');
     inputs[0].value = JOHN_SMITH.name.first;
     inputs[1].value = JOHN_SMITH.name.last;
     inputs[2].value = JOHN_SMITH.cell;
@@ -876,20 +1061,28 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     // form control's value directly.
     // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
     // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
-    (createEditHost.componentInstance as CreateEditUserComponent).form.controls['gender'].setValue('female');
+    (createEditHost.componentInstance as CreateEditUserComponent).form.controls[
+      'gender'
+    ].setValue('female');
     testComponentFixture.detectChanges();
-    (createEditHost.componentInstance as CreateEditUserComponent).bridge()?.close(false);
+    (createEditHost.componentInstance as CreateEditUserComponent)
+      .bridge()
+      ?.close(false);
     // const submitButton = testComponentFixture.debugElement.nativeElement.querySelector("button[type='submit']");
     // submitButton.click();
     // testComponentFixture.detectChanges();
     // verify that create method has been called.
     expect(spEntityCrudCompSpy).toHaveBeenCalledTimes(0);
     if (spEntityCrudComp) {
-      const newCount = spEntityCrudComp.spEntitiesList()?.store.query(getEntitiesCount());
+      const newCount = spEntityCrudComp
+        .spEntitiesList()
+        ?.store.query(getEntitiesCount());
       expect(newCount).toEqual(USER_DATA.length);
     }
     // CreateEditHost component should 've been destroyed
-    const createEditHostAfter = testComponentFixture.debugElement.query(By.directive(CreateEditUserComponent));
+    const createEditHostAfter = testComponentFixture.debugElement.query(
+      By.directive(CreateEditUserComponent)
+    );
     expect(createEditHostAfter).toBeFalsy();
     // Test that createEditActivatedEvent was received with the correct args
     expect(createEditActivatedEvents.length).toEqual(2);
@@ -905,9 +1098,9 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
   it('should show the new subtypes when New button is selected', fakeAsync(() => {
     const http = TestBed.inject(HttpClient);
     const JOHN_SMITH: User = {
-      name: {title: 'mr', first: 'John', last: 'Smith'},
+      name: { title: 'mr', first: 'John', last: 'Smith' },
       gender: 'female',
-      cell: '93039309'
+      cell: '93039309',
     };
     spyOn(http, 'post').and.returnValue(of(JOHN_SMITH));
     testComponentFixture.componentRef.setInput('newSubTypes', [
@@ -920,15 +1113,25 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     if (spEntityCrudComp) {
       spEntityCrudCompSpy = spyOn(spEntityCrudComp, 'create').and.callThrough();
     }
-    const matButton = testComponentFixture.debugElement.query(By.directive(MatButton))
+    const matButton = testComponentFixture.debugElement.query(
+      By.directive(MatButton)
+    );
     matButton.nativeElement.click();
     testComponentFixture.detectChanges();
-    const matMenu = testComponentFixture.debugElement.query(By.directive(MatMenu));
+    const matMenu = testComponentFixture.debugElement.query(
+      By.directive(MatMenu)
+    );
     expect(matMenu).toBeTruthy();
-    const matMenuItems = testComponentFixture.debugElement.queryAll(By.directive(MatMenuItem));
+    const matMenuItems = testComponentFixture.debugElement.queryAll(
+      By.directive(MatMenuItem)
+    );
     expect(matMenuItems.length).toEqual(2);
-    expect((matMenuItems[0].nativeElement as HTMLElement).innerText).toEqual('Car');
-    expect((matMenuItems[1].nativeElement as HTMLElement).innerText).toEqual('Bike');
+    expect((matMenuItems[0].nativeElement as HTMLElement).innerText).toEqual(
+      'Car'
+    );
+    expect((matMenuItems[1].nativeElement as HTMLElement).innerText).toEqual(
+      'Bike'
+    );
     (matMenuItems[0].nativeElement as HTMLElement).click();
     expect(testComponent.lastAction.role).toEqual('car');
     (matMenuItems[1].nativeElement as HTMLElement).click();
@@ -936,11 +1139,16 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
   }));
 
   it('should show the edit form when Edit context menu item is selected', fakeAsync(() => {
-    let editFormComponent = testComponentFixture.debugElement.query(By.directive(CreateEditUserComponent));
+    let editFormComponent = testComponentFixture.debugElement.query(
+      By.directive(CreateEditUserComponent)
+    );
     expect(editFormComponent).toBeFalsy();
     // simulate item action by calling the mat-context-menu method directly
     component.onItemAction('_update_', USER_DATA[0]);
-    editFormComponent = testComponentFixture.debugElement.query(By.directive(CreateEditUserComponent));
+    tick();
+    editFormComponent = testComponentFixture.debugElement.query(
+      By.directive(CreateEditUserComponent)
+    );
     expect(editFormComponent).toBeTruthy();
   }));
 });
