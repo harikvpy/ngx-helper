@@ -276,8 +276,8 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
             idKey="id"
             pagination="discrete"
             [paginator]="paginator"
-            itemLabel="User"
-            itemsLabel="Users"
+            [itemLabel]="t('user')"
+            [itemLabelPlural]="t('users')"
             [editPaneWidth]="60"
           >
           </sp-mat-entity-crud>
