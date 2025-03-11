@@ -198,17 +198,17 @@ import { PreviewHostComponent } from './preview-host.component';
       </as-split-area>
       <as-split-area [size]="entityPaneWidth()" [visible]="entityPaneActive()">
         <div
-          [class]="previewPaneWrapperClass()"
+          [class]="'preview-pane-wrapper ' + previewPaneWrapperClass()"
           spHostBusyWheel="formBusyWheel"
         >
           <sp-entity-crud-preview-host
-            [ngClass]="createEditViewActive() ? 'd-none' : 'd-inherit'"
+            [ngClass]="createEditViewActive() ? 'sp-hidden' : 'sp-visible'"
             [entityCrudComponentBase]="this"
             [clientViewTemplate]="previewTemplate()!"
           ></sp-entity-crud-preview-host>
           <!-- Create/Edit Entity -->
           <sp-create-edit-entity-host
-            [ngClass]="createEditViewActive() ? 'd-inherit' : 'd-none'"
+            [ngClass]="createEditViewActive() ? 'sp-visible' : 'sp-hidden'"
             itemLabel="{{ _itemLabel() | async }}"
             itemLabelPlural="{{ _itemLabelPlural() | async }}"
             [entityCrudComponentBase]="this"
@@ -219,11 +219,17 @@ import { PreviewHostComponent } from './preview-host.component';
     </as-split>
   `,
   styles: `
-  .d-none {
+  .sp-hidden {
     display: none;
   }
-  .d-inherit {
+  .sp-visible {
     display: inherit;
+    height: 100% !important;
+    width: 100% !important;
+  }
+  .preview-pane-wrapper {
+    height: 100% !important;
+    width: 100% !important;
   }
   .action-bar {
     display: flex;

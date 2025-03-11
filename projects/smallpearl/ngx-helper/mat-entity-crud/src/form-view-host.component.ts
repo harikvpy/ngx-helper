@@ -31,7 +31,7 @@ import { TranslocoService } from '@jsverse/transloco';
   ],
   selector: 'sp-create-edit-entity-host',
   template: `
-    <div spHostBusyWheel="formBusyWheel">
+    <div class="form-host"  spHostBusyWheel="formBusyWheel">
       <div class="create-edit-topbar">
         <div class="title">
           {{ title() }}
@@ -43,26 +43,37 @@ import { TranslocoService } from '@jsverse/transloco';
           </button>
         </div>
       </div>
-      <ng-container #clientFormContainer></ng-container>
+      <div class="form-container">
+        <ng-container #clientFormContainer></ng-container>
+      </div>
     </div>
   `,
   styles: `
-    .create-edit-topbar {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      min-height: 48px;
-    }
-    .create-edit-topbar .title {
-      font-size: 1.5em;
-      font-weight: 500;
-    }
-    .create-edit-topbar .spacer {
-      flex-grow: 1;
-    }
-    .create-edit-topbar .close {
-
-    }
+  .form-host {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex;
+    flex-direction: column;
+  }
+  .form-container {
+    flex-grow: 1;
+    overflow: auto;
+  }
+  .create-edit-topbar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    min-height: 48px;
+  }
+  .create-edit-topbar .title {
+    font-size: 1.5em;
+    font-weight: 500;
+  }
+  .create-edit-topbar .spacer {
+    flex-grow: 1;
+  }
+  .create-edit-topbar .close {
+  }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

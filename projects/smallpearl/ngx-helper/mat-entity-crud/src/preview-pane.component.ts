@@ -72,7 +72,8 @@ import {
       .preview-wrapper {
         display: flex;
         flex-direction: column;
-        height: 100%;
+        height: 100% !important;
+        width: 100% !important;
       }
       .spacer {
         flex: 1 1 auto;
