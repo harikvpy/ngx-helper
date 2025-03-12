@@ -273,7 +273,7 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
             [endpoint]="userEndpoint()"
             [columns]="userColumns"
             [pageSize]="10"
-            idKey="id"
+            idKey="cell"
             pagination="discrete"
             [paginator]="paginator"
             [itemLabel]="t('user')"
@@ -313,7 +313,7 @@ export class EntityCrudDemoComponent
   implements OnInit, SPMatEntityCrudCanDeactivate
 {
   userEndpoint = signal<string>(
-    'https://randomuser.me/api/?results=10&nat=us,dk,fr,gb'
+    'https://randomuser.me/api/?nat=us,dk,fr,gb'
   );
   userColumns: SPEntityFieldSpec<User>[] = [
     { name: 'name', label: 'NAME', valueFn: (user: User) => user.name.first },

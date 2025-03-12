@@ -15,7 +15,7 @@ export class MyPaginator implements SPMatEntityListPaginator {
     resp: any) {
     // console.log(`parseRequestResponse - params: ${JSON.stringify(params)}`);
     return {
-      total: 110,
+      total: resp['results'].length,
       entities: resp['results'],
     };
   }
