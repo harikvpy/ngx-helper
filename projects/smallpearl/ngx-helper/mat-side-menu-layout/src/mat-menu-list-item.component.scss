@@ -1,0 +1,62 @@
+@use '@angular/material' as mat;
+
+/**
+By default list-item-one-line-container-height is derived from the theme's
+density. So we hardcode the nav menu item height to 48px so as to override
+the global setting. Also we remove the border-radius from the list item.
+
+TODO: Hardcoding the height in pixels is not such a great idea as on screens
+with very large resolutions, the menu items may look too small. But for now,
+this is the best we can do.
+*/
+.menu-list-item {
+  @include mat.list-overrides((
+    list-item-one-line-container-height: 44px
+  ));
+  border-radius: 0px !important;
+  margin-right: 8px !important;
+}
+.pl-8 {
+  padding-left: 8px;
+}
+.twistie-separator {
+  flex: 1 1 0%;
+}
+.routeIcon {
+  margin-right: 10px;
+  font-size: 16pt;
+}
+.menu-item-text {
+  font-size: 10pt;
+}
+.menu-twistie {
+  font-size: 10pt;
+  height: 12px;
+  width: 12px;
+}
+mat-icon {
+  margin-left: 8px !important;
+  margin-right: 8px !important;
+}
+.menu-item-color {
+  background-color: var(--sp-mat-menu-menu-item-bg-color) !important;
+  color: var(--sp-mat-menu-menu-item-fg-color) !important;
+}
+.highlighted {
+  background-color: var(
+    --sp-mat-menu-highlighted-menu-item-bg-color
+  ) !important;
+  color: var(--sp-mat-menu-highlighted-menu-item-fg-color) !important;
+}
+.highlighted .menu-item-color {
+  background-color: var(
+    --sp-mat-menu-highlighted-menu-item-bg-color
+  ) !important;
+  color: var(--sp-mat-menu-highlighted-menu-item-fg-color) !important;
+}
+.mdc-list-item {
+  padding-right: 0px;
+}
+.menu-divider {
+  height: 1em;
+}

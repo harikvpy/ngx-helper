@@ -10,7 +10,7 @@ html {
       theme-type: light,
     ),
     typography: Lato,
-    density: -1
+    density: -3
   ), $overrides: (
     primary: #0080c8, // override primary color
   ));
@@ -34,7 +34,6 @@ body {
 // get styled. With this, the typography property is applied to
 // all HTML elements (p, div, span, etc). Thanks to https://stackoverflow.com/a/74614277/744769.
 // @include mat.all-component-typographies($my-theme);
-
 
 :root {
   --sidemenu-background: var(--mat-sys-primary);

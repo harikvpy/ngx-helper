@@ -75,66 +75,16 @@ import { NavItem } from './nav-item';
       <div class="menu-divider"></div>
     </ng-template>
   `,
-    styles: [
-        `
-      .menu-list-item {
-        margin-right: 8px !important;
-      }
-      .pl-8 {
-        padding-left: 8px;
-      }
-      .twistie-separator {
-        flex: 1 1 0%;
-      }
-      .routeIcon {
-        margin-right: 10px;
-        font-size: 16pt;
-      }
-      .menu-item-text {
-        font-size: 10pt;
-      }
-      .menu-twistie {
-        font-size: 10pt;
-        height: 12px;
-        width: 12px;
-      }
-      mat-icon {
-        margin-left: 8px !important;
-        margin-right: 8px !important;
-      }
-      .menu-item-color {
-        background-color: var(--sp-mat-menu-menu-item-bg-color) !important;
-        color: var(--sp-mat-menu-menu-item-fg-color) !important;
-      }
-      .highlighted {
-        background-color: var(
-          --sp-mat-menu-highlighted-menu-item-bg-color
-        ) !important;
-        color: var(--sp-mat-menu-highlighted-menu-item-fg-color) !important;
-      }
-      .highlighted .menu-item-color {
-        background-color: var(
-          --sp-mat-menu-highlighted-menu-item-bg-color
-        ) !important;
-        color: var(--sp-mat-menu-highlighted-menu-item-fg-color) !important;
-      }
-      .mdc-list-item {
-        padding-right: 0px;
-      }
-      .menu-divider {
-        height: 1em;
-      }
-    `,
-    ],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    animations: [
-        trigger('indicatorRotate', [
-            state('collapsed', style({ transform: 'rotate(0deg)' })),
-            state('expanded', style({ transform: 'rotate(180deg)' })),
-            transition('expanded <=> collapsed', animate('225ms cubic-bezier(0.4,0.0,0.2,1)')),
-        ]),
-    ],
-    standalone: false
+  styleUrls: ['./mat-menu-list-item.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  animations: [
+      trigger('indicatorRotate', [
+          state('collapsed', style({ transform: 'rotate(0deg)' })),
+          state('expanded', style({ transform: 'rotate(180deg)' })),
+          transition('expanded <=> collapsed', animate('225ms cubic-bezier(0.4,0.0,0.2,1)')),
+      ]),
+  ],
+  standalone: false
 })
 export class SPMatMenuListItemComponent implements OnInit, OnDestroy {
   expanded = false;
