@@ -60,20 +60,22 @@ body {
 mat-sidenav {
   width: 260px;
 }
-
 .ex-content-container {
   padding: 8px;
   height: 100%;
   overflow: scroll !important;
 }
 .sp-mat-crud-list-pane-wrapper-class {
-  padding: 0.2em;
+  padding: 0.4em;
 }
 .sp-mat-crud-preview-pane-wrapper-class {
-  padding: 0.2em;
+  padding: 0.0em;
 }
 .sp-mat-crud-preview-pane-content-class {
-  padding: 0.4em;
+  padding: 0.0em;
+}
+.sp-mat-crud-form-pane-content-class {
+  padding: 0.0em;
 }
 .text-end {
   text-align: end;

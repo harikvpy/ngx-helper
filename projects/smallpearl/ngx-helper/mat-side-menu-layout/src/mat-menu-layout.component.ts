@@ -103,6 +103,7 @@ import { NavItem } from './nav-item';
         height: 100vh;
         display: flex;
         flex-direction: column;
+        overflow-x: clip;
       }
       .layout-content-toolbar {
         border-bottom: 1px solid var(--sp-mat-menu-toolbar-border-color);

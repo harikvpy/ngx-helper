@@ -52,7 +52,8 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
   ],
   selector: 'app-entity-crud-demo',
   template: `
-    <div style="width: 100%; height: 100%;" *transloco="let t">
+    <ng-container *transloco="let t">
+
       <mat-tab-group style="width: 100%; height: 100%;">
         <mat-tab label="Simple">
           <sp-mat-entity-crud
@@ -71,7 +72,6 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
             (selectEntity)="handleSelectEntity($event)"
             [createEditFormTemplate]="createEdit"
             [previewTemplate]="userPreview1"
-            [editPaneWidth]="60"
             [allowEntityActionFn]="allowInvoiceAction"
           >
           </sp-mat-entity-crud>
@@ -283,7 +283,7 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
           </sp-mat-entity-crud>
         </mat-tab>
       </mat-tab-group>
-    </div>
+    </ng-container>
 
     <ng-template #createEdit let-data>
       <app-create-edit-entity-demo

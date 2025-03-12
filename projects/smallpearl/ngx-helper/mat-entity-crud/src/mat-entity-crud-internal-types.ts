@@ -81,4 +81,6 @@ export interface SPMatEntityCrudComponentBase<TEntity> {
    * configured class for the preview pane content.
    */
   getPreviewPaneContentClass(): string;
+
+  getFormPaneContentClass(): string;
 }

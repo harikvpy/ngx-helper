@@ -435,6 +435,11 @@ export class SPMatEntityCrudComponent<
     'sp-mat-crud-preview-pane-content-class'
   );
 
+  /**
+   * The CSS class that will be applied to the form pane content.
+   */
+  formPaneContentClass = input<string>('sp-mat-crud-form-pane-content-class');
+
   // INTERNAL PROPERTIES //
   // Derive a label from a camelCase source string. If the camelCase string
   // can be translated, it returns the translated string. If not, the function
@@ -845,7 +850,7 @@ export class SPMatEntityCrudComponent<
           title:
             this.newItemLabel() ??
             this.transloco.translate('spMatEntityCrud.newItem', {
-              item: itemLabel
+              item: itemLabel,
             }),
         };
         this.showCreateEditView(undefined, params);
@@ -866,15 +871,14 @@ export class SPMatEntityCrudComponent<
   }
 
   onUpdate(entity: TEntity) {
-
     firstValueFrom(this._itemLabel()).then((itemLabel) => {
       const params = {
         title:
           this.editItemTitle() ??
           this.transloco.translate('spMatEntityCrud.editItem', {
-            item: itemLabel
+            item: itemLabel,
           }),
-      }
+      };
       this.showCreateEditView(entity, params);
       if (!this.createEditViewActive()) {
         this.action.emit({ role: '_update_' });
@@ -1139,6 +1143,10 @@ export class SPMatEntityCrudComponent<
 
   getPreviewPaneContentClass() {
     return this.previewPaneContentClass();
+  }
+
+  getFormPaneContentClass(): string {
+    return this.formPaneContentClass();
   }
 
   /**

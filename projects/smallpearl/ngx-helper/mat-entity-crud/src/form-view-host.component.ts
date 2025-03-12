@@ -31,7 +31,7 @@ import { TranslocoService } from '@jsverse/transloco';
   ],
   selector: 'sp-create-edit-entity-host',
   template: `
-    <div class="form-host"  spHostBusyWheel="formBusyWheel">
+    <div [class]="'form-wrapper ' + entityCrudComponentBase().getFormPaneContentClass()"  spHostBusyWheel="formBusyWheel">
       <div class="create-edit-topbar">
         <div class="title">
           {{ title() }}
@@ -49,21 +49,19 @@ import { TranslocoService } from '@jsverse/transloco';
     </div>
   `,
   styles: `
-  .form-host {
+  .form-wrapper {
     width: 100% !important;
     height: 100% !important;
     display: flex;
     flex-direction: column;
-  }
-  .form-container {
-    flex-grow: 1;
-    overflow: auto;
+    padding: 0.4em;
   }
   .create-edit-topbar {
     display: flex;
     flex-direction: row;
     align-items: center;
     min-height: 48px;
+    padding-bottom: 0.4em;
   }
   .create-edit-topbar .title {
     font-size: 1.5em;
