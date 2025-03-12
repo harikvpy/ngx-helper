@@ -63,6 +63,10 @@ import { TranslocoService } from '@jsverse/transloco';
     min-height: 48px;
     padding-bottom: 0.4em;
   }
+  .form-container {
+    flex-grow: 1;
+    overflow: auto;
+  }
   .create-edit-topbar .title {
     font-size: 1.5em;
     font-weight: 500;
