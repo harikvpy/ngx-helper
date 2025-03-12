@@ -209,8 +209,6 @@ import { PreviewHostComponent } from './preview-host.component';
           <!-- Create/Edit Entity -->
           <sp-create-edit-entity-host
             [ngClass]="createEditViewActive() ? 'sp-visible' : 'sp-hidden'"
-            itemLabel="{{ _itemLabel() | async }}"
-            itemLabelPlural="{{ _itemLabelPlural() | async }}"
             [entityCrudComponentBase]="this"
             [clientViewTemplate]="createEditFormTemplate()"
           ></sp-create-edit-entity-host>
@@ -711,11 +709,13 @@ export class SPMatEntityCrudComponent<
         // render the new item in the mat-table.
         if (entity) {
           this.spEntitiesList()?.addEntity(entity);
-          this.snackBar.open(
-            this.transloco.translate('spMatEntityCrud.createSuccess', {
-              item: this._itemLabel(),
-            })
-          );
+          firstValueFrom(this._itemLabel()).then((itemLabel) => {
+            this.snackBar.open(
+              this.transloco.translate('spMatEntityCrud.createSuccess', {
+                item: itemLabel,
+              })
+            );
+          });
         }
       })
     );
@@ -740,11 +740,13 @@ export class SPMatEntityCrudComponent<
       tap((entity) => {
         if (entity) {
           this.spEntitiesList()?.updateEntity(id, entity);
-          this.snackBar.open(
-            this.transloco.translate('spMatEntityCrud.updateSuccess', {
-              item: this._itemLabel(),
-            })
-          );
+          firstValueFrom(this._itemLabel()).then((itemLabel) => {
+            this.snackBar.open(
+              this.transloco.translate('spMatEntityCrud.updateSuccess', {
+                item: itemLabel,
+              })
+            );
+          });
         }
       })
     );
@@ -845,70 +847,18 @@ export class SPMatEntityCrudComponent<
     if (!this.newItemLink() || this.newItemLink()?.length == 0) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      firstValueFrom(this._itemLabel()).then((itemLabel) => {
-        const params = {
-          title:
-            this.newItemLabel() ??
-            this.transloco.translate('spMatEntityCrud.newItem', {
-              item: itemLabel,
-            }),
-        };
-        this.showCreateEditView(undefined, params);
-        if (!this.createEditViewActive()) {
-          this.action.emit({ role: '_new_' });
-        }
-      });
-
-      // const params = {
-      //   title:
-      //     this.newItemLabel() ??
-      //     this.transloco.translate('spMatEntityCrud.newItem', {
-      //       item: this._itemLabel(),
-      //     }),
-      // };
-      // this.showCreateEditView(undefined, params);
+      this.showCreateEditView(undefined);
+      if (!this.createEditViewActive()) {
+        this.action.emit({ role: '_new_' });
+      }
     }
   }
 
   onUpdate(entity: TEntity) {
-    firstValueFrom(this._itemLabel()).then((itemLabel) => {
-      const params = {
-        title:
-          this.editItemTitle() ??
-          this.transloco.translate('spMatEntityCrud.editItem', {
-            item: itemLabel,
-          }),
-      };
-      this.showCreateEditView(entity, params);
-      if (!this.createEditViewActive()) {
-        this.action.emit({ role: '_update_' });
-      }
-    });
-
-    // const params = {
-    //   title:
-    //     this.editItemTitle() ??
-    //     this.transloco.translate('spMatEntityCrud.editItem', {
-    //       item: this._itemLabel(),
-    //     }),
-    // };
-    // this.showCreateEditView(entity, params);
-
-    // const tmpl = this.createEditFormTemplate();
-    // if (tmpl) {
-    //   // If preview is active deactivate it
-    //   if (this.previewActive()) {
-    //     this.closePreview();
-    //   }
-    //   const createEditHost = this.createEditHostComponent();
-    //   if (tmpl && createEditHost) {
-    //     createEditHost.show(entity);
-    //     this.createEditViewActive.set(true);
-    //   }
-    // }
-    // if (!this.createEditViewActive()) {
-    //   this.action.emit({ role: '_update_' });
-    // }
+    this.showCreateEditView(entity);
+    if (!this.createEditViewActive()) {
+      this.action.emit({ role: '_update_' });
+    }
   }
 
   /**
@@ -1001,11 +951,13 @@ export class SPMatEntityCrudComponent<
                 tap(() => {
                   this.spEntitiesList()!.removeEntity(entityId);
                   // TODO: customize by providing an interface via SPMatEntityCrudConfig?
-                  const deletedMessage = this.transloco.translate(
-                    'spMatEntityCrud.deleteItemSuccess',
-                    { item: this._itemLabel() }
-                  );
-                  this.snackBar.open(deletedMessage);
+                  firstValueFrom(this._itemLabel()).then((itemLabel) => {
+                    const deletedMessage = this.transloco.translate(
+                      'spMatEntityCrud.deleteItemSuccess',
+                      { item: itemLabel }
+                    );
+                    this.snackBar.open(deletedMessage);
+                  });
                 })
               )
               .subscribe()
@@ -1147,6 +1099,14 @@ export class SPMatEntityCrudComponent<
 
   getFormPaneContentClass(): string {
     return this.formPaneContentClass();
+  }
+
+  getItemLabel(): string|Observable<string> {
+    return this._itemLabel();
+  }
+
+  getItemLabelPlural(): string|Observable<string> {
+    return this._itemLabelPlural();
   }
 
   /**

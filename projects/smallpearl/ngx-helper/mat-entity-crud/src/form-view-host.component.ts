@@ -15,26 +15,31 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { SPMatHostBusyWheelDirective } from '@smallpearl/ngx-helper/mat-busy-wheel';
-import { firstValueFrom, Observable, of, Subscription, tap } from 'rxjs';
+import { combineLatest, finalize, mergeMap, Observable, of, Subscription, switchMap, tap } from 'rxjs';
 import { getEntityCrudConfig } from './default-config';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
 import { SPMatEntityCrudConfig, SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
-import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
   imports: [
     CommonModule,
     MatButtonModule,
     MatIconModule,
+    TranslocoModule,
     SPMatHostBusyWheelDirective,
   ],
   selector: 'sp-create-edit-entity-host',
   template: `
-    <div [class]="'form-wrapper ' + entityCrudComponentBase().getFormPaneContentClass()"  spHostBusyWheel="formBusyWheel">
+    <div [class]="'form-wrapper ' + entityCrudComponentBase().getFormPaneContentClass()"  spHostBusyWheel="formBusyWheel" *transloco="let t">
       <div class="create-edit-topbar">
         <div class="title">
-          {{ title() }}
+          @if (title()) {
+            {{ title() | async }}
+          } @else {
+            {{ t(('spMatEntityCrud.' + (entity() ? 'editItem' : 'newItem')), { item: (this._itemLabel() | async )}) }}
+          }
         </div>
         <div class="spacer"></div>
         <div class="close">
@@ -85,20 +90,18 @@ export class FormViewHostComponent<TEntity>
   entityCrudComponentBase =
     input.required<SPMatEntityCrudComponentBase<TEntity>>();
   clientViewTemplate = input<TemplateRef<any> | null>(null);
-  itemLabel = input.required<string | Observable<string>>();
-  itemLabelPlural = input.required<string | Observable<string>>();
 
   _itemLabel = computed<Observable<string>>(() => {
-    const label = this.itemLabel();
+    const label = this.entityCrudComponentBase().getItemLabel();
     return label instanceof Observable ? label : of(label);
   });
   _itemLabelPlural = computed<Observable<string>>(() => {
-    const label = this.itemLabelPlural();
+    const label = this.entityCrudComponentBase().getItemLabelPlural();
     return label instanceof Observable ? label : of(label);
   });
 
   entity = signal<TEntity | undefined>(undefined);
-  title = signal<string>('');
+  title = signal<Observable<string>|undefined>(undefined);
   params = signal<any>(undefined);
   clientFormView!: EmbeddedViewRef<any> | null;
   vc = viewChild('clientFormContainer', { read: ViewContainerRef });
@@ -119,15 +122,8 @@ export class FormViewHostComponent<TEntity>
   show(entity: TEntity | undefined, params?: any) {
     this.entity.set(entity);
     if (params && params?.title) {
-      this.title.set(params.title);
+      this.title.set(params.title instanceof Observable ? params.title : of(params.title));
     } else {
-      firstValueFrom(this._itemLabel()).then((itemLabel) => {
-        this.title.set(
-          this.transloco.translate(entity ? 'editItem' : 'newItem', {
-            item: itemLabel,
-          })
-        );
-      });
       // this.title.set(entity ? this.config.i18n.editItemLabel(this.itemLabel()) : this.config.i18n.newItemLabel(this.itemLabel()));
       // this.title.set(
       //   this.transloco.translate(entity ? 'editItem' : 'newItem', {
