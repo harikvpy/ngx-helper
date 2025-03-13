@@ -37,9 +37,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { DomSanitizer } from '@angular/platform-browser';
 import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
-import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { AngularSplitModule } from 'angular-split';
-import { startCase } from 'lodash';
+import { clone, startCase } from 'lodash';
 import { plural } from 'pluralize';
 import { firstValueFrom, map, Observable, of, Subscription, switchMap, tap } from 'rxjs';
 import { getEntityCrudConfig } from './default-config';
@@ -586,25 +585,7 @@ export class SPMatEntityCrudComponent<
 
   defaultItemCrudActions = signal<SPContextMenuItem[]>([]);
   columnsWithAction = computed(() => {
-    const cols: Array<SPEntityFieldSpec<TEntity, IdKey> | string> = JSON.parse(
-      JSON.stringify(this.columns())
-    );
-    // JSON.parse(JSON.strigify()) does not clone function objects. So
-    // we've to explicitly copy these over. So this is really a shallow clone
-    // as the cloned objects still refers to the function objects in the
-    // original object.
-    this.columns().forEach((col, index: number, orgColumns) => {
-      const orgCol = orgColumns[index];
-      if (typeof orgCol !== 'string') {
-        const newColumn = cols[index] as SPEntityFieldSpec<TEntity, IdKey>;
-        if (orgCol.valueFn) {
-          newColumn.valueFn = orgCol.valueFn;
-        }
-        if (orgCol.valueOptions) {
-          newColumn.valueOptions = orgCol.valueOptions;
-        }
-      }
-    });
+    const cols = clone(this.columns());
     const actionDefined =
       cols.find((c) =>
         typeof c === 'string' ? c === 'action' : c.name === 'action'

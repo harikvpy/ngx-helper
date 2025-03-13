@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  inject,
   OnInit,
   signal,
   viewChild,
@@ -338,11 +339,13 @@ export class EntityCrudDemoComponent
       results: localInvoices,
     });
   };
+  transloco = inject(TranslocoService);
   invoiceColumns: SPEntityFieldSpec<Invoice>[] = [
     { name: 'id' },
     { name: 'date' },
     {
       name: 'customer',
+      label: this.transloco.selectTranslate('customer'),
       valueFn: (item: Invoice) => item.customerDetail.name
     },
     {
@@ -474,7 +477,6 @@ export class EntityCrudDemoComponent
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private transloco: TranslocoService
   ) {}
 
   canDeactivate(): boolean {

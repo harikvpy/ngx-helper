@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnInit, QueryList, signal, viewChild, ViewChild, ViewChildren } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, inject, OnInit, QueryList, signal, viewChild, ViewChild, ViewChildren } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatColumnDef, MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -11,6 +11,7 @@ import {
 } from '@smallpearl/ngx-helper/mat-entity-list';
 import { MyPaginator } from './paginater';
 import { User } from './user';
+import { TranslocoService } from '@jsverse/transloco';
 
 // function provideMatEntityListConfig(): SPMatEntityListConfig {
 //   return {
@@ -239,13 +240,16 @@ const ELEMENT_DATA: PeriodicElement[] = [
 })
 export class EntityListDemoComponent implements OnInit, AfterViewInit {
   endpoint = 'https://randomuser.me/api/?nat=us,gb';
+  transloco = inject(TranslocoService);
   homoColumnDefs: SPEntityFieldSpec<User>[] = [
     {
       name: 'name',
       label: 'NAME',
       valueFn: (user: User) => user.name.first + ' ' + user.name.last
     },
-    { name: 'gender', label: 'GENDER',
+    {
+      name: 'gender',
+      label: this.transloco.selectTranslate('gender'),
       valueOptions: {
         routerLink: (u: User) => ['/']
       }
