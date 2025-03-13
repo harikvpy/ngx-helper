@@ -19,7 +19,7 @@ export type SPEntityFieldSpec<TEntity extends { [P in IdKey]: PropertyKey },  Id
   // key name to retrieve the value for the column from TEntity.
   name: string;
   // If omitted, 'name' will be used as field label.
-  label?: string;
+  label?: string|Observable<string>;
   // Column value specific formatting options. Currently, only used for
   // Date types.
   valueOptions?: {

@@ -1,6 +1,7 @@
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, input, OnInit, TemplateRef } from '@angular/core';
 import { SP_ENTITY_FIELD_CONFIG, SPEntityField, SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
+import { Observable, of } from 'rxjs';
 
 
 // @Component({
@@ -167,7 +168,7 @@ export class FieldsRendererComponent<TEntity extends { [P in IdKey]: PropertyKey
         <table>
           <thead>
             @for (field of _itemColumnFields(); track $index) {
-              <th [class]="field.class" [style.text-align]="field.spec.valueOptions?.alignment">{{ field.label() | uppercase }}</th>
+              <th [class]="field.class" [style.text-align]="field.spec.valueOptions?.alignment">{{ (fieldLabel(field) | async) | uppercase }}</th>
             }
           </thead>
           <tbody>
@@ -334,5 +335,10 @@ export class StationaryWithLineItemsComponent<TEntity extends { [P in IdKey]: Pr
       return fieldSpecs.map(spec => new SPEntityField<TEntity, IdKey>(spec, this.ngxEntityFieldConfig));
     }
     return [];
+  }
+
+  fieldLabel(field: SPEntityField<TEntity, IdKey>): Observable<string> {
+    const label = field.label()
+    return label instanceof Observable ? label : of(label);
   }
 }

@@ -899,7 +899,9 @@ export class SPMatEntityListComponent<
 
   getColumnLabel(field: SPEntityField<TEntity, IdKey>): Observable<string> {
     if (field._fieldSpec.label) {
-      return of(field._fieldSpec.label);
+      return field._fieldSpec.label instanceof Observable
+        ? field._fieldSpec.label
+        : of(field._fieldSpec.label);
     }
     if (this.entityListConfig && this.entityListConfig.columnLabelFn) {
       const label = this.entityListConfig.columnLabelFn(
