@@ -1085,7 +1085,7 @@ export class SPMatEntityCrudComponent<
       this.itemActions() && this.itemActions().length
         ? this.itemActions()
         : this.defaultItemCrudActions();
-    let actionsCopy: SPContextMenuItem[] = JSON.parse(JSON.stringify(actions));
+    let actionsCopy: SPContextMenuItem[] = clone(actions);
     actionsCopy.forEach((action: SPContextMenuItem, index: number) => {
       // localize default action item labels (Update & Delete)
       // Client specified action labels are to be localized by the client
