@@ -6,7 +6,7 @@
     "start": "npm run cpassets && ng serve",
     "cpassets": "cp -R projects/smallpearl/ngx-helper/src/assets/* ./src/assets",
     "lib:bump-build": "cd projects/smallpearl/ngx-helper && standard-version --infile ../../../CHANGELOG.md && cp README.md ../../.. && cd ../../.. && ng build @smallpearl/ngx-helper",
-    "lib:release": "npm run lib:test -- --browsers ChromeHeadless && cd projects/smallpearl/ngx-helper && standard-version --infile ../../../CHANGELOG.md && cp README.md ../../.. && cd ../../.. && ng build @smallpearl/ngx-helper && cd dist/smallpearl/ngx-helper && npm publish --access=public",
+    "lib:release": "npm run lib:test -- --browsers ChromeHeadless --watch=false --progress=false && cd projects/smallpearl/ngx-helper && standard-version --infile ../../../CHANGELOG.md && cp README.md ../../.. && cd ../../.. && ng build @smallpearl/ngx-helper && cd dist/smallpearl/ngx-helper && npm publish --access=public",
     "lib:build": "ng build @smallpearl/ngx-helper",
     "lib:watch": "ng build @smallpearl/ngx-helper --configuration development --watch",
     "lib:test": "ng test @smallpearl/ngx-helper",
