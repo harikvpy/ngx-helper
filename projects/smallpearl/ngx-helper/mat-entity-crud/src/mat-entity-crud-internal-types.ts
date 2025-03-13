@@ -82,6 +82,8 @@ export interface SPMatEntityCrudComponentBase<TEntity> {
    */
   getPreviewPaneContentClass(): string;
 
+  getFormPaneWrapperClass(): string;
+
   getFormPaneContentClass(): string;
 
   getItemLabel(): string|Observable<string>;

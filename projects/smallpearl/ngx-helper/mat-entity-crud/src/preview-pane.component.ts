@@ -76,7 +76,7 @@ import {
         width: 100% !important;
       }
       mat-toolbar {
-        background-color: var(--mat-sys-surface-variant);;
+        background-color: var(--mat-sys-surface-variant);
       }
       .spacer {
         flex: 1 1 auto;

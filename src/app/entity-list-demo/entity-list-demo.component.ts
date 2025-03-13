@@ -238,7 +238,7 @@ const ELEMENT_DATA: PeriodicElement[] = [
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EntityListDemoComponent implements OnInit, AfterViewInit {
-  endpoint = 'https://randomuser.me/api/?results=50&nat=us,gb';
+  endpoint = 'https://randomuser.me/api/?nat=us,gb';
   homoColumnDefs: SPEntityFieldSpec<User>[] = [
     {
       name: 'name',

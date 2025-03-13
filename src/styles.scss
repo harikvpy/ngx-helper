@@ -73,8 +73,18 @@ mat-sidenav {
 .sp-mat-crud-preview-pane-content-class {
   padding: 0.0em;
 }
+.sp-mat-crud-form-pane-wrapper-class {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 .sp-mat-crud-form-pane-content-class {
   padding: 0.0em;
+  max-width: 700px !important;
+}
+.sp-mat-crud-full-width-form-pane-content-class {
+  padding: 0.0em;
+  max-width: 100%;
 }
 .text-end {
   text-align: end;

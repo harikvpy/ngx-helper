@@ -421,6 +421,21 @@ export class SPMatEntityCrudComponent<
 
   /**
    * The class class that will be applied to the preview pane wrapper.
+   * Inside this wrapper, another div element with class='previewPaneContentClass()'
+   * will be created to host the preview content. The client supplied preview
+   * template will be rendered inside this div.
+   *
+   * +----------------------------------------+
+   * | previewPaneWrapperClass                |
+   * |----------------------------------------|
+   * | preview toolbar                        |
+   * |----------------------------------------|
+   * | +------------------------------------+ |
+   * | | div class=previewPaneContentClass()| |
+   * | |------------------------------------| |
+   * | | client supplied preview template   | |
+   * | +------------------------------------+ |
+   * +----------------------------------------+
    */
   previewPaneWrapperClass = input<string>(
     'sp-mat-crud-preview-pane-wrapper-class'
@@ -432,6 +447,25 @@ export class SPMatEntityCrudComponent<
   previewPaneContentClass = input<string>(
     'sp-mat-crud-preview-pane-content-class'
   );
+
+  /**
+   * The class class that will be applied to the form pane wrapper. Inside this
+   * wrapper, another div element with class='formPaneContentClass()' will be
+   * created to host the form content. The client supplied form template will
+   * be rendered inside this div.
+   *
+   * +----------------------------------------+
+   * | formPaneWrapperClass                   |
+   * | +------------------------------------+ |
+   * | | div class=formPaneContentClass()   | |
+   * | |------------------------------------| |
+   * | | form title + close button          | |
+   * | |------------------------------------| |
+   * | | client supplied form template      | |
+   * | +------------------------------------+ |
+   * +----------------------------------------+
+   */
+  formPaneWrapperClass = input<string>('sp-mat-crud-form-pane-wrapper-class');
 
   /**
    * The CSS class that will be applied to the form pane content.
@@ -1095,6 +1129,10 @@ export class SPMatEntityCrudComponent<
 
   getPreviewPaneContentClass() {
     return this.previewPaneContentClass();
+  }
+
+  getFormPaneWrapperClass() {
+    return this.formPaneWrapperClass();
   }
 
   getFormPaneContentClass(): string {

@@ -113,6 +113,7 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
             (selectEntity)="handleSelectEntity($event)"
             [createEditFormTemplate]="createEdit"
             [previewTemplate]="userPreview2"
+            formPaneContentClass="sp-mat-crud-full-width-form-pane-content-class"
             matSort
           >
           </sp-mat-entity-crud>

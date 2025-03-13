@@ -32,31 +32,37 @@ import { SPMatEntityCrudConfig, SPMatEntityCrudCreateEditBridge } from './mat-en
   ],
   selector: 'sp-create-edit-entity-host',
   template: `
-    <div [class]="'form-wrapper ' + entityCrudComponentBase().getFormPaneContentClass()"  spHostBusyWheel="formBusyWheel" *transloco="let t">
-      <div class="create-edit-topbar">
-        <div class="title">
-          @if (title()) {
-            {{ title() | async }}
-          } @else {
-            {{ t(('spMatEntityCrud.' + (entity() ? 'editItem' : 'newItem')), { item: (this._itemLabel() | async )}) }}
-          }
+    <div [class]="'sp-mat-crud-form-wrapper ' + entityCrudComponentBase().getFormPaneWrapperClass()"  spHostBusyWheel="formBusyWheel" *transloco="let t">
+      <div [class]="'sp-mat-crud-form-content ' + entityCrudComponentBase().getFormPaneContentClass()">
+        <div class="create-edit-topbar">
+          <div class="title">
+            @if (title()) {
+              {{ title() | async }}
+            } @else {
+              {{ t(('spMatEntityCrud.' + (entity() ? 'editItem' : 'newItem')), { item: (this._itemLabel() | async )}) }}
+            }
+          </div>
+          <div class="spacer"></div>
+          <div class="close">
+            <button mat-icon-button (click)="onClose()">
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </div>
         </div>
-        <div class="spacer"></div>
-        <div class="close">
-          <button mat-icon-button (click)="onClose()">
-            <mat-icon>cancel</mat-icon>
-          </button>
+        <div class="form-container">
+          <ng-container #clientFormContainer></ng-container>
         </div>
-      </div>
-      <div class="form-container">
-        <ng-container #clientFormContainer></ng-container>
       </div>
     </div>
   `,
   styles: `
-  .form-wrapper {
+  .sp-mat-crud-form-wrapper {
     width: 100% !important;
     height: 100% !important;
+  }
+  .sp-mat-crud-form-content {
+    height: 100%;
+    width: 100%;
     display: flex;
     flex-direction: column;
     padding: 0.4em;
@@ -66,9 +72,10 @@ import { SPMatEntityCrudConfig, SPMatEntityCrudCreateEditBridge } from './mat-en
     flex-direction: row;
     align-items: center;
     min-height: 48px;
-    padding-bottom: 0.4em;
+    padding: 0.4em;
   }
   .form-container {
+    padding-top: 0.4em;
     flex-grow: 1;
     overflow: auto;
   }
