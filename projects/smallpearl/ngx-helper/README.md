@@ -1,7 +1,12 @@
 # ngx-helper
 
-A library of UI components that covers requirements not met by standard 
-components in `@angular/material` library.
+`WARNING: THIS LIBRARY IS UNDER ACTIVE DEVELOPMENT. EXPECT BREAKING CHANGES BETWEEN RELEASES. USE IT AT YOUR OWN RISK.`
+
+This is a library of angular components and other utility code that are not part of the standard angular/material library. Some components are composite components in that they combile multiple standard material library widgets for a common use case scenario.
+
+This is meant to be a private library for my own experiments & consumption. Consequently, documentation is grossly inadequate and unit tests are not extensive. Both are areas that I hope to address, but time is working against me.
+
+The best way to start using the components is to refer to code in the included `testapp` application. Each library feature is shown in a separate app page and can be seen by running the app (`ng serve`). The app's layout is driven by the `sp-mat-menu-layout` component which leverages material's sidemenu component to deliver a responsive hierarchical layout mechanism.
 
 # Components
 
