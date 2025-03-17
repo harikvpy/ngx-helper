@@ -481,7 +481,7 @@ describe('SPMatEntityCrudComponent', () => {
     expect(paginator).toBeFalsy();
   }));
 
-  it('should not display action column if  = true', fakeAsync(() => {
+  it('should disable all action items if disableItemActions=true', fakeAsync(() => {
     // await createCrudComponent();
     componentRef.setInput(
       'endpoint',
@@ -503,7 +503,22 @@ describe('SPMatEntityCrudComponent', () => {
     expect(paginator).toBeFalsy();
     const columns = rows[0].querySelectorAll('td');
     // columns should equal number columns as set in [columns] property value
-    expect(columns.length).toEqual(USER_COLUMNS.length);
+    expect(columns.length).toEqual(USER_COLUMNS.length + 1);
+    // get the action button in the last column
+    const actionBtn = columns[columns.length - 1].querySelector('button');
+    expect(actionBtn).toBeTruthy();
+    actionBtn.click();
+    fixture.detectChanges();
+    tick(100);
+    const matMenu = fixture.debugElement.query(By.directive(MatMenu));
+    expect(matMenu).toBeTruthy();
+    // mat-menu-item buttons are dynamically crated in the document root
+    // and not under <mat-menu> element
+    const menuItems = document.querySelectorAll(
+      'button[mat-menu-item][disabled="true"]'
+    );
+    // one for "Update" and one for "Delete"
+    expect(menuItems.length).toEqual(2);
   }));
 
   it('should not display "New Item" button disableCreate = true', async () => {
