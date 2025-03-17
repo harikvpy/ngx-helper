@@ -590,7 +590,7 @@ export class SPMatEntityCrudComponent<
       cols.find((c) =>
         typeof c === 'string' ? c === 'action' : c.name === 'action'
       ) !== undefined;
-    if (!actionDefined && !this.disableItemActions()) {
+    if (!actionDefined) {
       cols.push('action');
     }
     return cols;
@@ -1105,6 +1105,11 @@ export class SPMatEntityCrudComponent<
         return false;
       };
     });
+    // If the item actions are disabled, disable all actions. Event user
+    // defined actions.
+    if (this.disableItemActions()) {
+      actionsCopy.forEach((a) => (a.disable = () => true));
+    }
     return actionsCopy;
   }
 

@@ -63,6 +63,7 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
             [entityLoaderFn]="invoicesLoaderFn"
             [columns]="invoiceColumns"
             [pageSize]="10"
+            [disableItemActions]="true"
             idKey="id"
             pagination="discrete"
             [paginator]="paginator"
