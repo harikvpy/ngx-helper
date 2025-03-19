@@ -768,6 +768,21 @@ export class SPMatEntityCrudComponent<
   }
 
   /**
+   * Thunk these methods to the internal <sp-mat-entity-list> component.
+   */
+  override addEntity(entity: TEntity): void {
+    this.spEntitiesList()?.addEntity(entity);
+  }
+
+  override removeEntity(id: TEntity[IdKey]): void {
+    this.spEntitiesList()?.removeEntity(id);
+  }
+
+  override updateEntity(id: TEntity[IdKey], entity: TEntity): void {
+    this.spEntitiesList()?.updateEntity(id, entity);
+  }
+
+  /**
    * Refresh the entity list, after a CRUD CREATE or UPDATE operation.
    * @param resp This is the response from the CRUD operation (CREATE/UPDATE).
    * @param method The CRUD operation post which REFRESH is requested.
