@@ -1036,7 +1036,9 @@ export class SPMatEntityCrudComponent<
     };
 
     let context = new HttpContext();
-    const crudHttpReqContext = this.crudHttpReqContext();
+    const crudHttpReqContext = this.crudHttpReqContext()
+      ? this.crudHttpReqContext()
+      : this.httpReqContext();
     if (crudHttpReqContext) {
       if (Array.isArray(crudHttpReqContext)) {
         // Same HttpContext for all crud requests
@@ -1047,14 +1049,7 @@ export class SPMatEntityCrudComponent<
         crudHttpReqContext[op]
       ) {
         contextParamToHttpContext(context, crudHttpReqContext[op]!);
-        // if (crudHttpReqContext[op]) {
-        //   context = contextParamToHttpContext(crudHttpReqContext[op] as any);
-        // } else if (crudHttpReqContext['crud']) {
-        //   context = contextParamToHttpContext(crudHttpReqContext['crud'] as any);
-        // }
       }
-      // } else if (this.httpReqContext()) {
-      //   context = contextParamToHttpContext(this.httpReqContext()!);
     }
 
     context.set(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT, {
