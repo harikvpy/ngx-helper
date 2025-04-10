@@ -74,7 +74,7 @@ export abstract class SPMatEntityCrudFormBase<
   bridge = input.required<SPMatEntityCrudCreateEditBridge>();
   params = input<any>();
   sub$ = new Subscription();
-  form = computed(() => this._form());
+  form = computed(() => this._form() as TFormGroup);
   crudConfig = getEntityCrudConfig();
   transloco = inject(TranslocoService);
 

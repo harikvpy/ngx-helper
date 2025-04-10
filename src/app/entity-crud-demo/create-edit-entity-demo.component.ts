@@ -28,7 +28,7 @@ type MyFormGroup = FormGroup<{
     selector: 'app-create-edit-entity-demo',
     template: `
     <form
-      [formGroup]="form()!"
+      [formGroup]="form()"
       (ngSubmit)="onSubmit()"
       class="d-flex flex-column align-items-start"
       errorTailor
