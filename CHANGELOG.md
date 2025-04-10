@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.31.22](https://github.com/harikvpy/ngx-helper/compare/v0.31.21...v0.31.22) (2025-04-10)
+
+
+### Bug Fixes
+
+* force typecast form() to TFormGroup ([015b9ff](https://github.com/harikvpy/ngx-helper/commit/015b9ff1839c6886de75bc8c9206d96684e439ac))
+* remove needless border from sidenav-branding ([3bfd964](https://github.com/harikvpy/ngx-helper/commit/3bfd96402c6e112d335586538ca185ed2230518d))
+
 ### [0.31.21](https://github.com/harikvpy/ngx-helper/compare/v0.31.20...v0.31.21) (2025-03-19)
 
 ### [0.31.20](https://github.com/harikvpy/ngx-helper/compare/v0.31.19...v0.31.20) (2025-03-19)
