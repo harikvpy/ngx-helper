@@ -74,6 +74,11 @@ export abstract class SPMatEntityCrudFormBase<
   bridge = input.required<SPMatEntityCrudCreateEditBridge>();
   params = input<any>();
   sub$ = new Subscription();
+  // Force typecast to TFormGroup so that we can use it in the template
+  // without having to use the non-nullable operator ! with every reference
+  // of form(). In any case the form() signal is always set in ngOnInit()
+  // method after the form is created. And if form() is not set, then there
+  // will be errors while loading the form in the template.
   form = computed(() => this._form() as TFormGroup);
   crudConfig = getEntityCrudConfig();
   transloco = inject(TranslocoService);
