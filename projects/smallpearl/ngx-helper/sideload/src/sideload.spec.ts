@@ -250,7 +250,6 @@ const MULTI_OBJECT_RESPONSE_WITH_KEY_MISMATCH = {
   }
 }
 
-
 const MULTI_OBJECT_RESPONSE_WITH_CUSTOM_KEY = {
   "contacts": [
     {
@@ -422,14 +421,14 @@ const ARRAY_VALUE_RESPONSE = {
       "name": "Post 1",
       "type": "Type A",
       "observers": [2],
-      "contact": 100,
+      "contact": 101,
     },
     {
       "id": 2,
       "name": "Post 2",
       "type": "Type B",
       "observers": [1],
-      "contact": 101
+      "contact": 100
     }
   ],
   "contacts": [
@@ -440,16 +439,22 @@ const ARRAY_VALUE_RESPONSE = {
     {
       "id": 101,
       "name": "Contact 101",
+    },
+    {
+      "id": 102,
+      "name": "Contact 102",
     }
   ],
   "observers": [
     {
       "id": 1,
       "name": "Observer 1",
+      "contact": 100,
     },
     {
       "id": 2,
       "name": "Observer 2",
+      "contact": 101,
     }
   ],
   "meta": {

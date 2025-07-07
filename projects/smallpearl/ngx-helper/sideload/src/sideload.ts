@@ -100,6 +100,7 @@ export function sideloadToComposite(
   };
   const isEntityKeyType = (value: string) =>
     typeof value === 'string' || typeof value === 'number';
+
   /**
    * Given an object, enumerates all keys of the object and for any key with
    * a matching sideload value, merges that into the 'obj', either by
@@ -144,7 +145,11 @@ export function sideloadToComposite(
               mergeStrategy === 'inplace'
                 ? key
                 : `${singular(key)}${appendObjSuffix}s`;
-            obj[targetKey] = matchingSideloadObjs;
+            obj[targetKey] = mergeSideloadIntoObjects(
+              matchingSideloadObjs,
+              mergeStrategy,
+              appendObjSuffix
+            );
           }
         } else {
           // Array of objects: recurse
@@ -161,7 +166,8 @@ export function sideloadToComposite(
         const keyPlural = getSideloadPluralKey(key);
         const sideloadId = getSideloadDataKey(key);
         const sideloadData = getSideloadArray(keyPlural);
-        if (sideloadData.length > 0) {
+        // The second check avoids duplicate merging of sideload data
+        if (sideloadData.length > 0 && !Object.prototype.hasOwnProperty.call(obj, keyPlural)) {
           const matchingSideloadObj = sideloadData.find(
             (so: any) => so?.[sideloadId] === value
           );
@@ -170,7 +176,7 @@ export function sideloadToComposite(
               mergeStrategy === 'inplace'
                 ? key
                 : `${singular(key)}${appendObjSuffix}`;
-            obj[targetKey] = matchingSideloadObj;
+            obj[targetKey] = {...matchingSideloadObj};
           }
         }
       }
@@ -178,9 +184,12 @@ export function sideloadToComposite(
     return obj;
   };
 
-  entities.forEach((entity) => {
-    mergeSideloadIntoObject(entity, mergeStrategy, appendObjSuffix);
-  });
+  const mergeSideloadIntoObjects = (objs: Array<any>, mergeStrategy: 'inplace' | 'append', appendObjSuffix: string) => {
+    return objs.map((obj) => {
+      return mergeSideloadIntoObject(obj, mergeStrategy, appendObjSuffix);
+    });
+  };
 
+  mergeSideloadIntoObjects(entities, mergeStrategy, appendObjSuffix);
   return resp[targetObjKey];
 }
