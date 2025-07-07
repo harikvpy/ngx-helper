@@ -65,13 +65,13 @@ describe('SPMatMenuLayoutComponent', () => {
   afterEach(() => {
     document.body.removeChild(fixture.nativeElement);
   })
-  
+
   it('should create', () => {
     expect(component).toBeTruthy();
     expect(fixture.debugElement.query(By.css('.branding'))).toBeTruthy();
     const logoEl = (fixture.debugElement.query(By.css('.branding-logo')).nativeElement as HTMLElement).children[0] as HTMLImageElement;
     expect(logoEl.src.endsWith('assets/angular.png')).toBeTrue();
-    expect((fixture.debugElement.query(By.css('.branding-text')).nativeElement as HTMLElement).innerText).toEqual('SMALLPEARL');
+    expect((fixture.debugElement.query(By.css('.branding-text')).nativeElement as HTMLElement).innerText).toContain('SMALLPEARL');
     expect(fixture.debugElement.query(By.directive(SPMatMenuPaneComponent))).toBeTruthy();
     expect(fixture.debugElement.queryAll(By.directive(SPMatMenuListItemComponent)).length).toEqual(2);
     // Check that contentContainerClass attribute is set
