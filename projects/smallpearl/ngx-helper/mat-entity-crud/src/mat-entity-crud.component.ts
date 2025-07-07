@@ -197,7 +197,7 @@ import { PreviewHostComponent } from './preview-host.component';
       </as-split-area>
       <as-split-area [size]="entityPaneWidth()" [visible]="entityPaneActive()">
         <div
-          [class]="'preview-pane-wrapper ' + previewPaneWrapperClass()"
+          [class]="'entity-pane-wrapper ' + previewPaneWrapperClass()"
           spHostBusyWheel="formBusyWheel"
         >
           <sp-entity-crud-preview-host
@@ -224,7 +224,7 @@ import { PreviewHostComponent } from './preview-host.component';
     height: 100% !important;
     width: 100% !important;
   }
-  .preview-pane-wrapper {
+  .entity-pane-wrapper {
     height: 100% !important;
     width: 100% !important;
   }
@@ -437,7 +437,7 @@ export class SPMatEntityCrudComponent<
    * +----------------------------------------+
    */
   previewPaneWrapperClass = input<string>(
-    'sp-mat-crud-preview-pane-wrapper-class'
+    'sp-mat-crud-entity-pane-wrapper-class'
   );
 
   /**
