@@ -55,14 +55,51 @@ export function sideloadToComposite(
     'timestamp',
     'modified',
     'created',
+    'createdAt',
+    'updatedAt',
+    'updated',
     'description',
     'notes',
     'desc',
+    'description',
+    'name',
+    'firstName',
+    'lastName',
+    'fullName',
+    'email',
+    'telephone',
+    'phone',
+    'mobile',
+    'address',
+    'title',
+    'content',
   ]);
   if (idKey) {
     KEYS_TO_SKIP.add(idKey);
   }
-
+  const getSideloadPluralKey = (key: string) => {
+    if (sideloadDataMap) {
+      const entry = sideloadDataMap.find(([objKey]) => objKey === key);
+      if (entry?.[1]) return entry[1];
+    }
+    // Prefer actual response keys to avoid pluralization mismatches
+    if (resp.hasOwnProperty(key)) return key;
+    const pluralKey = plural(key);
+    if (resp.hasOwnProperty(pluralKey)) return pluralKey;
+    return pluralKey;
+  };
+  const getSideloadDataKey = (key: string): string => {
+    if (sideloadDataMap) {
+      const entry = sideloadDataMap.find(([objKey]) => objKey === key);
+      // Prefer explicit sideload data key if provided, else fallback to idKey
+      if (entry) {
+        return entry[2] ?? idKey;
+      }
+    }
+    return idKey;
+  };
+  const isEntityKeyType = (value: string) =>
+    typeof value === 'string' || typeof value === 'number';
   /**
    * Given an object, enumerates all keys of the object and for any key with
    * a matching sideload value, merges that into the 'obj', either by
@@ -80,38 +117,61 @@ export function sideloadToComposite(
     appendObjSuffix: string = 'Detail'
   ) => {
     for (const key in obj) {
-      if (KEYS_TO_SKIP.has(key)) {
+      if (!Object.prototype.hasOwnProperty.call(obj, key) || KEYS_TO_SKIP.has(key)) {
         continue;
       }
       const value = obj[key];
-      if (typeof value === 'object') {
-        mergeSideloadIntoObject(value, mergeStrategy, appendObjSuffix);
-      } else if (typeof value !== 'number' || typeof value !== 'string') {
-        let keyPlural = plural(key);
-        let sideloadId = idKey;
-        if (sideloadDataMap) {
-          const sideloadDataMapEntry = sideloadDataMap.find(([objKey, sideloadDataKey]) => objKey.localeCompare(key) === 0);
-          if (sideloadDataMapEntry) {
-            keyPlural = sideloadDataMapEntry[1];
-            if (sideloadDataMapEntry.length > 2) {
-              sideloadId = sideloadDataMapEntry[2] as string;
-              // console.log(`sideloadId for ${keyPlural}: ${sideloadId}`)
-            }
+
+      // Helper to get sideload data array for a key
+      const getSideloadArray = (keyPlural: string) => {
+        const data = resp[keyPlural];
+        if (Array.isArray(data)) return data;
+        if (data != null) return [data];
+        return [];
+      };
+
+      if (Array.isArray(value) && value.length > 0) {
+        if (isEntityKeyType(value[0])) {
+          // Array of ids: merge sideloaded objects
+          const keyPlural = getSideloadPluralKey(key);
+          const sideloadId = getSideloadDataKey(key);
+          const sideloadData = getSideloadArray(keyPlural);
+          const matchingSideloadObjs = sideloadData.filter((so: any) =>
+            value.includes(so?.[sideloadId])
+          );
+          if (matchingSideloadObjs.length > 0) {
+            const targetKey =
+              mergeStrategy === 'inplace'
+                ? key
+                : `${singular(key)}${appendObjSuffix}s`;
+            obj[targetKey] = matchingSideloadObjs;
           }
+        } else {
+          // Array of objects: recurse
+          value.forEach((item: any) => {
+            if (typeof item === 'object' && item !== null) {
+              mergeSideloadIntoObject(item, mergeStrategy, appendObjSuffix);
+            }
+          });
         }
-        if (!allRespKeys.find((sk) => sk.localeCompare(keyPlural) == 0)) {
-          continue;
-        }
-        // console.log(`sideloadId for ${keyPlural}: ${sideloadId}`)
-        const sideloadData = Array.isArray(resp[keyPlural])
-          ? resp[keyPlural]
-          : [resp[keyPlural]];
-        const matchingSideloadObj = sideloadData.find(
-          (so: any) => so[sideloadId] === value
-        );
-        if (matchingSideloadObj) {
-          obj[mergeStrategy === 'inplace' ? key : `${key}${appendObjSuffix}`] =
-            matchingSideloadObj;
+      } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        // Nested object: recurse
+        mergeSideloadIntoObject(value, mergeStrategy, appendObjSuffix);
+      } else if (isEntityKeyType(value)) {
+        const keyPlural = getSideloadPluralKey(key);
+        const sideloadId = getSideloadDataKey(key);
+        const sideloadData = getSideloadArray(keyPlural);
+        if (sideloadData.length > 0) {
+          const matchingSideloadObj = sideloadData.find(
+            (so: any) => so?.[sideloadId] === value
+          );
+          if (matchingSideloadObj) {
+            const targetKey =
+              mergeStrategy === 'inplace'
+                ? key
+                : `${singular(key)}${appendObjSuffix}`;
+            obj[targetKey] = matchingSideloadObj;
+          }
         }
       }
     }

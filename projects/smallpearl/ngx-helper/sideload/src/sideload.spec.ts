@@ -415,6 +415,51 @@ const ALT_MULTI_OBJECT_RESPONSE = {
   }
 }
 
+const ARRAY_VALUE_RESPONSE = {
+  "posts": [
+    {
+      "id": 1,
+      "name": "Post 1",
+      "type": "Type A",
+      "observers": [2],
+      "contact": 100,
+    },
+    {
+      "id": 2,
+      "name": "Post 2",
+      "type": "Type B",
+      "observers": [1],
+      "contact": 101
+    }
+  ],
+  "contacts": [
+    {
+      "id": 100,
+      "name": "Contact 100",
+    },
+    {
+      "id": 101,
+      "name": "Contact 101",
+    }
+  ],
+  "observers": [
+    {
+      "id": 1,
+      "name": "Observer 1",
+    },
+    {
+      "id": 2,
+      "name": "Observer 2",
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "perPage": 50,
+    "totalResults": 2,
+    "totalPages": 1
+  }
+}
+
 describe('sideloadToComposite', () => {
   it('should merge sideload data into an array of composite objects (append)', () => {
     const customerPayments = sideloadToComposite(
@@ -424,6 +469,20 @@ describe('sideloadToComposite', () => {
     expect(customerPayments[0]['contactDetail']).toBeTruthy();
     expect(customerPayments[0]['accountDetail']).toBeTruthy();
     expect(customerPayments[0].items[0]['invoiceDetail']).toBeTruthy();
+  });
+
+  it("should merge sideload data with multiple values into an array of detail objects", () => {
+    const posts = sideloadToComposite(
+      JSON.parse(JSON.stringify(ARRAY_VALUE_RESPONSE)),
+      'posts', 'id');
+    expect(posts).toBeTruthy();
+    expect(posts[0]['observers']).toBeTruthy();
+    expect(posts[0]['observerDetails']).toBeTruthy();
+    expect(posts[0]['observerDetails'].length).toEqual(1);
+    expect(posts[0]['observerDetails'][0]['name']).toEqual('Observer 2');
+    expect(posts[1]['observerDetails']).toBeTruthy();
+    expect(posts[1]['observerDetails'].length).toEqual(1);
+    expect(posts[1]['observerDetails'][0]['name']).toEqual('Observer 1');
   });
 
   it("should return unmerged data when sideload keys don't match (append)", () => {
