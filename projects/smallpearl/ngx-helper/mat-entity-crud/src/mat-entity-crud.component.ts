@@ -1016,6 +1016,16 @@ export class SPMatEntityCrudComponent<
     return this.getUrl(entityEndpoint);
   }
 
+  getEntityActionUrl(entityId: TEntity[IdKey], action: string) {
+    const url = this.getEntityUrl(entityId);
+    const urlParts = url.split('?');
+    const actionUrl =
+      (urlParts[0].endsWith('/')
+        ? urlParts[0]
+        : urlParts[0] + '/') + `${action}/`;
+    return urlParts.length === 1 ? actionUrl : actionUrl + `?${urlParts[1]}`;
+  }
+
   handleSelectEntity(entity: TEntity | undefined) {
     if (!this.createEditViewActive()) {
       if (this.previewTemplate()) {
@@ -1167,7 +1177,7 @@ export class SPMatEntityCrudComponent<
     if (crudOpFn) {
       obs = crudOpFn(verb, id, data, this);
     } else {
-      const url = this.getEntityUrl(id) + verb + '/';
+      const url = this.getEntityActionUrl(id, verb);
       obs = this.http.post<TEntity>(url, data, {
         params: addlParams || {},
         context: this.getCrudReqHttpContext('update'),  // KLUDGE!: use 'update' request context
