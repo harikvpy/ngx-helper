@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpContext, HttpContextToken } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpContextToken, HttpParams } from '@angular/common/http';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -1141,6 +1141,50 @@ export class SPMatEntityCrudComponent<
 
   getItemLabelPlural(): string|Observable<string> {
     return this._itemLabelPlural();
+  }
+
+  /**
+   * Perform an action on the entity with the given id. The endpoint for the
+   * action is derived from the `verb` argument which is appended to the
+   * entity URL. This is following DRF specification where ViewSets can be
+   * extended with custom actions that are not part of the standard
+   * CRUD operations. Such methods will have a URL like
+   * `/api/v1/entity/<id>/<verb>/` where `<verb>` is the custom action verb.
+   * @param id
+   * @param verb
+   * @param addlParams
+   * @param data
+   */
+  doEntityAction(
+    id: TEntity[IdKey],
+    verb: string,
+    addlParams: HttpParams,
+    data: any,
+    busyWheelName: string = 'formBusyWheel'
+  ) {
+    let obs!: Observable<TEntity | null>;
+    const crudOpFn = this.crudOpFn();
+    if (crudOpFn) {
+      obs = crudOpFn(verb, id, data, this);
+    } else {
+      const url = this.getEntityUrl(id) + verb + '/';
+      obs = this.http.patch<TEntity>(url, data, {
+        params: addlParams || {},
+        context: this.getCrudReqHttpContext('update'),  // KLUDGE!: use 'update' request context
+      });
+    }
+
+    return obs.pipe(
+      showBusyWheelUntilComplete(busyWheelName),
+      switchMap((resp) =>
+        resp ? this.doRefreshAfterEdit(resp, 'update') : of(null)
+      ),
+      tap((entity) => {
+        if (entity) {
+          this.spEntitiesList()?.updateEntity(id, entity);
+        }
+      })
+    );
   }
 
   /**

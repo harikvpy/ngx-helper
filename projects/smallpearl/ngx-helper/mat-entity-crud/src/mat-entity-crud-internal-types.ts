@@ -94,28 +94,6 @@ export interface SPMatEntityCrudComponentBase<
 
   getItemLabelPlural(): string | Observable<string>;
 
-  /**
-   * Perform a custom action on the entity endpoint. The action is specified
-   * by the verb argument, which will be used to derive the final URL. This
-   * is keeping in line with DRF specification where viewsets can define
-   * custom action methods, which translate into endpoints with the same name
-   * ast he action method.
-   * @param id id of the entity to perform the action on.
-   * @param verb The action verb, which will be appended to the entity URL to
-   * derive the final URL for the POST request.
-   * @param addlParams additional query parameters to include in the request.
-   * Called `additional` as these are in addition to the query params specified
-   * in the CRUD's endpoint.
-   * @param data the data to send with the request for the POST
-   * @returns Observable<TEntity>
-   */
-  // entityAction(
-  //   id: string | number,
-  //   verb: string,
-  //   addlParams: HttpParams,
-  //   data: any,
-  // ): Observable<any>;
-
   /*
    * Remove the entity with the given id from the list of entities.
    * This is typically called by the client when it peforms the delete
@@ -136,4 +114,26 @@ export interface SPMatEntityCrudComponentBase<
    * @param data The updated entity.
    */
   updateEntity(id: TEntity[IdKey], data: TEntity): void;
+
+  /**
+   * Perform a custom action on the entity endpoint. The action is specified
+   * by the verb argument, which will be used to derive the final URL. This
+   * is keeping in line with DRF specification where viewsets can define
+   * custom action methods, which translate into endpoints with the same name
+   * ast he action method.
+   * @param id id of the entity to perform the action on.
+   * @param verb The action verb, which will be appended to the entity URL to
+   * derive the final URL for the POST request.
+   * @param addlParams additional query parameters to include in the request.
+   * Called `additional` as these are in addition to the query params specified
+   * in the CRUD's endpoint.
+   * @param data the data to send with the request for the POST
+   * @returns Observable<TEntity>
+   */
+  // doEntityAction(
+  //   id: string | number,
+  //   verb: string,
+  //   addlParams: HttpParams,
+  //   data: any,
+  // ): Observable<any>;
 }
