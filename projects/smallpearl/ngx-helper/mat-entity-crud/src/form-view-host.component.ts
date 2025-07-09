@@ -91,11 +91,11 @@ import { SPMatEntityCrudConfig, SPMatEntityCrudCreateEditBridge } from './mat-en
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FormViewHostComponent<TEntity>
+export class FormViewHostComponent<TEntity extends { [P in IdKey]: PropertyKey }, IdKey extends string = 'id'>
   implements SPMatEntityCrudCreateEditBridge, OnInit, OnDestroy
 {
   entityCrudComponentBase =
-    input.required<SPMatEntityCrudComponentBase<TEntity>>();
+    input.required<SPMatEntityCrudComponentBase<TEntity, IdKey>>();
   clientViewTemplate = input<TemplateRef<any> | null>(null);
 
   _itemLabel = computed<Observable<string>>(() => {

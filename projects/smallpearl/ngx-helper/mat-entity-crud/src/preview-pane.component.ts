@@ -90,11 +90,11 @@ import {
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SPMatEntityCrudPreviewPaneComponent<TEntity>
+export class SPMatEntityCrudPreviewPaneComponent<TEntity extends { [P in IdKey]: PropertyKey }, IdKey extends string = 'id'>
   implements OnInit, OnDestroy
 {
   entity = input.required<TEntity>();
-  entityCrudComponent = input.required<SPMatEntityCrudComponentBase<TEntity>>();
+  entityCrudComponent = input.required<SPMatEntityCrudComponentBase<TEntity, IdKey>>();
   title = input<string>();
   disableUpdate = input<boolean>(false);
   hideUpdate = input<boolean>(false);

@@ -18,10 +18,10 @@ import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
     template: ` <ng-container #previewComponent></ng-container> `,
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PreviewHostComponent<TEntity> implements OnInit, OnDestroy {
+export class PreviewHostComponent<TEntity extends { [P in IdKey]: PropertyKey }, IdKey extends string = 'id'> implements OnInit, OnDestroy {
   vc = viewChild('previewComponent', { read: ViewContainerRef });
 
-  entityCrudComponentBase = input.required<SPMatEntityCrudComponentBase<TEntity>>();
+  entityCrudComponentBase = input.required<SPMatEntityCrudComponentBase<TEntity, IdKey>>();
   clientViewTemplate = input<TemplateRef<any> | null>(null);
   entity = signal<TEntity|undefined>(undefined);
   clientView!: EmbeddedViewRef<any> | null;

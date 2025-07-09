@@ -8,7 +8,7 @@ import { Observable } from "rxjs";
 export type SPMatEntityCrudResponseParser = (
   entityName: string,
   idKey: string,
-  method: 'create' | 'retrieve' | 'update' | 'delete',
+  method: string, // 'create' | 'retrieve' | 'update' | 'delete',
   resp: any
 ) => any|undefined;
 
@@ -93,7 +93,7 @@ export type CRUD_OP_FN<
   TEntity extends { [P in IdKey]: PropertyKey },
   IdKey extends string = 'id'
 > = (
-  op: 'get' | 'create' | 'update' | 'delete',
+  op: string,
   id: TEntity[IdKey] | undefined, // valid only for 'get', 'update' & 'delete'
   entityValue: any, // valid only for 'create' & 'update'
   entityCrudComponent: any,

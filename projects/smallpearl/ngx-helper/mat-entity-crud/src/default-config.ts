@@ -5,7 +5,7 @@ import { SP_MAT_ENTITY_CRUD_CONFIG } from "./providers";
 function defaultCrudResponseParser(
   entityName: string,
   idKey: string,
-  method: 'create' | 'retrieve' | 'update' | 'delete',
+  method: string, // 'create' | 'retrieve' | 'update' | 'delete',
   resp: any
 ) {
   // If the response is an object with a property '<idKey>', return it as

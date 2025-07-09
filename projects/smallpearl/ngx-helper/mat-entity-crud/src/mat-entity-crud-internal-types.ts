@@ -1,3 +1,4 @@
+import { HttpParams } from "@angular/common/http";
 import { SPContextMenuItem } from "@smallpearl/ngx-helper/mat-context-menu";
 import { Observable } from "rxjs";
 
@@ -10,7 +11,10 @@ export const ITEM_ACTION_DELETE = '_delete_';
  * component would use the hideCreateEdit() to close itself, when user cancels
  * the create/edit operation.
  */
-export interface SPMatEntityCrudComponentBase<TEntity> {
+export interface SPMatEntityCrudComponentBase<
+    TEntity extends { [P in IdKey]: PropertyKey },
+    IdKey extends string = 'id'
+> {
   /**
    * FormViewHostComponent will call this to close the Create/Edit pane.
    * SPMatEntityCrudComponentBase implementor will destroy the client form
@@ -86,7 +90,50 @@ export interface SPMatEntityCrudComponentBase<TEntity> {
 
   getFormPaneContentClass(): string;
 
-  getItemLabel(): string|Observable<string>;
+  getItemLabel(): string | Observable<string>;
 
-  getItemLabelPlural(): string|Observable<string>;
+  getItemLabelPlural(): string | Observable<string>;
+
+  /**
+   * Perform a custom action on the entity endpoint. The action is specified
+   * by the verb argument, which will be used to derive the final URL. This
+   * is keeping in line with DRF specification where viewsets can define
+   * custom action methods, which translate into endpoints with the same name
+   * ast he action method.
+   * @param id id of the entity to perform the action on.
+   * @param verb The action verb, which will be appended to the entity URL to
+   * derive the final URL for the POST request.
+   * @param addlParams additional query parameters to include in the request.
+   * Called `additional` as these are in addition to the query params specified
+   * in the CRUD's endpoint.
+   * @param data the data to send with the request for the POST
+   * @returns Observable<TEntity>
+   */
+  // entityAction(
+  //   id: string | number,
+  //   verb: string,
+  //   addlParams: HttpParams,
+  //   data: any,
+  // ): Observable<any>;
+
+  /*
+   * Remove the entity with the given id from the list of entities.
+   * This is typically called by the client when it peforms the delete
+   * operation itself without using the MatEntityCrud's delete operation.
+   *
+   * @param id The id of the entity to remove.
+   * @returns None
+  **/
+  removeEntity(id: TEntity[IdKey]): void;
+
+  /**
+   * Update the entity with the given id in the list of entities.
+   * This is typically called by the client when it has performed an update
+   * on the entity itself and want to reflect the resulting changed
+   * entity in the list view.
+   *
+   * @param id The id of the entity to update.
+   * @param data The updated entity.
+   */
+  updateEntity(id: TEntity[IdKey], data: TEntity): void;
 }

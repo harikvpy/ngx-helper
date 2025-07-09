@@ -255,7 +255,7 @@ export class SPMatEntityCrudComponent<
     IdKey extends string = 'id'
   >
   extends SPMatEntityListComponent<TEntity, IdKey>
-  implements SPMatEntityCrudComponentBase<TEntity>, AfterViewInit
+  implements SPMatEntityCrudComponentBase<TEntity, IdKey>, AfterViewInit
 {
   // entityName = input.required<string>();
   // entityNamePlural = input<string>();
