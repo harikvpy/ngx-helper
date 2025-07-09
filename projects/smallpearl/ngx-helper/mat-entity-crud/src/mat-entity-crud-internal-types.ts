@@ -130,10 +130,11 @@ export interface SPMatEntityCrudComponentBase<
    * @param data the data to send with the request for the POST
    * @returns Observable<TEntity>
    */
-  // doEntityAction(
-  //   id: string | number,
-  //   verb: string,
-  //   addlParams: HttpParams,
-  //   data: any,
-  // ): Observable<any>;
+  doEntityAction(
+    id: TEntity[IdKey],
+    verb: string,
+    addlParams: HttpParams,
+    data: any,
+    busyWheelName: string
+  ): Observable<any>;
 }
