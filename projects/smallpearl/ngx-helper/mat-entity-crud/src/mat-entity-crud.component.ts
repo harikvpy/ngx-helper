@@ -1168,7 +1168,7 @@ export class SPMatEntityCrudComponent<
       obs = crudOpFn(verb, id, data, this);
     } else {
       const url = this.getEntityUrl(id) + verb + '/';
-      obs = this.http.patch<TEntity>(url, data, {
+      obs = this.http.post<TEntity>(url, data, {
         params: addlParams || {},
         context: this.getCrudReqHttpContext('update'),  // KLUDGE!: use 'update' request context
       });
