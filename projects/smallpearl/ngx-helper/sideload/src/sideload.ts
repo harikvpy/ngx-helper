@@ -171,13 +171,27 @@ export function sideloadToComposite(
           const matchingSideloadObj = sideloadData.find(
             (so: any) => so?.[sideloadId] === value
           );
-          if (matchingSideloadObj) {
+
+          // Merge any FKs in the inner object with their sideloaded data
+          const compositeSideloadObj = mergeSideloadIntoObject(
+            matchingSideloadObj || {},
+            mergeStrategy,
+            appendObjSuffix
+          );
+          if (compositeSideloadObj) {
             const targetKey =
               mergeStrategy === 'inplace'
                 ? key
                 : `${singular(key)}${appendObjSuffix}`;
-            obj[targetKey] = {...matchingSideloadObj};
+            obj[targetKey] = { ...compositeSideloadObj };
           }
+          // if (matchingSideloadObj) {
+          //   const targetKey =
+          //     mergeStrategy === 'inplace'
+          //       ? key
+          //       : `${singular(key)}${appendObjSuffix}`;
+          //   obj[targetKey] = { ...matchingSideloadObj };
+          // }
         }
       }
     }

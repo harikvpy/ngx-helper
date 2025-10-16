@@ -1,94 +1,106 @@
 import { sideloadToComposite } from "./sideload";
 
 const MULTI_OBJECT_RESPONSE = {
-  "contacts": [
+  contacts: [
     {
-      "id": 37,
-      "type": "CU",
-      "salutation": "dr",
-      "contact": "Hsu Chia-Ling",
-      "company": "",
-      "displayName": "Chia-Ling",
-      "address": "",
-      "telephoneWork": "",
-      "telephoneMobile": "",
-      "email": "",
-      "website": "",
-      "notes": "",
-      "terms": 0,
-      "locked": false,
-      "customerDue": 3350.0,
-      "balance": 3350.0
-    }
+      id: 37,
+      type: 'CU',
+      salutation: 'dr',
+      contact: 'Hsu Chia-Ling',
+      company: '',
+      displayName: 'Chia-Ling',
+      address: '',
+      telephoneWork: '',
+      telephoneMobile: '',
+      email: '',
+      website: '',
+      notes: '',
+      terms: 0,
+      locked: false,
+      customerDue: 3350.0,
+      balance: 3350.0,
+      account: 1198
+    },
   ],
-  "accounts": [
+  accounts: [
     {
-      "id": 1197,
-      "name": "FirstBankNTD",
-      "notes": null,
-      "type": "BAN",
-      "category": "AS",
-      "active": true,
-      "system": false,
-      "balance": 4600.0,
-      "parent": null
-    }
-  ],
-  "invoices": [
-    {
-      "id": 74,
-      "date": "2024-11-26",
-      "number": "1000",
-      "contact": 37,
-      "terms": 0,
-      "isPaid": false,
-      "notes": "",
-      "total": 1800.0,
-      "balance": 800.0,
-      "links": {
-        "items": "items/"
-      }
-    }
-  ],
-  "customerPayments": [
-    {
-      "id": 50,
-      "number": 1,
-      "date": "2024-11-26",
-      "contact": 37,
-      "amount": 1800.0,
-      "balance": 800.0,
-      "account": 1197,
-      "reference": null,
-      "notes": null,
-      "items": [
-        {
-          "id": 39,
-          "invoice": 74,
-          "amount": 1000.0
-        }
-      ]
+      id: 1197,
+      name: 'FirstBankNTD',
+      notes: null,
+      type: 'BAN',
+      category: 'AS',
+      active: true,
+      system: false,
+      balance: 4600.0,
+      parent: null,
     },
     {
-      "id": 51,
-      "number": 2,
-      "date": "2024-11-26",
-      "contact": 37,
-      "amount": 1000.0,
-      "balance": 1000.0,
-      "account": 1197,
-      "reference": null,
-      "notes": null,
-      "items": []
-    }
+      id: 1198,
+      name: 'Fubon',
+      notes: null,
+      type: 'BAN',
+      category: 'AS',
+      active: true,
+      system: false,
+      balance: 100.0,
+      parent: null,
+    },
   ],
-  "meta": {
-    "page": 1,
-    "perPage": 50,
-    "totalResults": 2,
-    "totalPages": 1
-  }
-}
+  invoices: [
+    {
+      id: 74,
+      date: '2024-11-26',
+      number: '1000',
+      contact: 37,
+      terms: 0,
+      isPaid: false,
+      notes: '',
+      total: 1800.0,
+      balance: 800.0,
+      links: {
+        items: 'items/',
+      },
+    },
+  ],
+  customerPayments: [
+    {
+      id: 50,
+      number: 1,
+      date: '2024-11-26',
+      contact: 37,
+      amount: 1800.0,
+      balance: 800.0,
+      account: 1197,
+      reference: null,
+      notes: null,
+      items: [
+        {
+          id: 39,
+          invoice: 74,
+          amount: 1000.0,
+        },
+      ],
+    },
+    {
+      id: 51,
+      number: 2,
+      date: '2024-11-26',
+      contact: 37,
+      amount: 1000.0,
+      balance: 1000.0,
+      account: 1197,
+      reference: null,
+      notes: null,
+      items: [],
+    },
+  ],
+  meta: {
+    page: 1,
+    perPage: 50,
+    totalResults: 2,
+    totalPages: 1,
+  },
+};
 
 const SINGLE_OBJECT_RESPONSE = {
   "contacts": [
@@ -587,4 +599,29 @@ describe('sideloadToComposite', () => {
     expect(typeof customerPayments[0]['account']).toEqual('object');
     expect(typeof customerPayments[0].items[0]['invoice']).toEqual('object');
   });
+
+  it('should recursively merge sideload data into an array of composite objects (append)', () => {
+    const customerPayments = sideloadToComposite(
+      JSON.parse(JSON.stringify(MULTI_OBJECT_RESPONSE)),
+      'customerPayments',
+      'id',
+      'append',
+      'Detail',
+      [
+        ['customer', 'contacts'],
+        ['account', 'accounts'],
+      ]
+    );
+    expect(customerPayments).toBeTruthy();
+    expect(customerPayments[0]['contactDetail']).toBeTruthy();
+    expect(customerPayments[0]['accountDetail']).toBeTruthy();
+    // inner level merge - contact -> account => contact -> accountDetail
+    expect(customerPayments[0]['contactDetail']['accountDetail']).toBeTruthy();
+    expect(customerPayments[0]['contactDetail']['account']).toEqual(
+      customerPayments[0]['contactDetail']['accountDetail']['id']
+    );
+    expect(customerPayments[0].items[0]['invoiceDetail']).toBeTruthy();
+  });
+
+
 });
