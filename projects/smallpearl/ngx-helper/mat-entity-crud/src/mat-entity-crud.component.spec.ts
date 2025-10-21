@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient, provideHttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import {
   Component,
@@ -34,13 +34,13 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { getEntitiesCount } from '@ngneat/elf-entities';
 import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
-import { SPContextMenuItem } from '@smallpearl/ngx-helper/mat-context-menu';
 import {
   SPMatEntityListComponent,
   SPMatEntityListPaginator,
 } from '@smallpearl/ngx-helper/mat-entity-list';
 import { getTranslocoModule } from '@smallpearl/ngx-helper/src/transloco-testing.module';
 import { firstValueFrom, of, tap } from 'rxjs';
+import { MatEntityCrudItemAction } from './mat-entity-crud-item-action';
 import {
   NewItemSubType,
   SP_MAT_ENTITY_CRUD_HTTP_CONTEXT,
@@ -313,12 +313,20 @@ class SPMatEntityCrudTestComponent implements OnInit {
   displayedColumns = signal<string[]>([]);
   endpoint = 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb';
   columns = USER_COLUMNS;
-  itemActions: SPContextMenuItem[] = [
+  itemActions: MatEntityCrudItemAction<User, 'cell'>[] = [
     { label: 'Edit', role: '_update_' },
     {
       label: 'Delete',
       role: '_delete_',
       disable: (user: User) => user.cell.startsWith('('),
+    },
+    {
+      label: 'Revoke Access',
+      role: 'revoke_access',
+      httpRequestParameters: {
+        method: 'POST',
+        urlPath: 'revoke_access/',
+      },
     },
   ];
   newSubTypes = input<NewItemSubType[]>();
@@ -352,10 +360,6 @@ class DRFPaginator implements SPMatEntityListPaginator {
     return {
       total: resp['total'],
       entities: resp['results'],
-    };
-    return {
-      total: 0,
-      entities: [],
     };
   }
 }
@@ -489,6 +493,10 @@ describe('SPMatEntityCrudComponent', () => {
     );
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('disableItemActions', true);
+    componentRef.setInput('itemActions', [
+      { label: 'Edit', role: '_update_' },
+      { label: 'Delete', role: '_delete_' },
+    ]);
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
     fixture.autoDetectChanges();
@@ -519,6 +527,140 @@ describe('SPMatEntityCrudComponent', () => {
     );
     // one for "Update" and one for "Delete"
     expect(menuItems.length).toEqual(2);
+  }));
+
+  it('should invoke custom action handlers', fakeAsync(() => {
+    // await createCrudComponent();
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb'
+    );
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableItemActions', false);
+
+    let customAction2Called = false;
+    let customAction3Called = false;
+    const ITEM_ACTIONS = [
+      {
+        label: 'Custom Action 1',
+        role: 'custom_action_1',
+        httpRequestParameters: {
+          method: 'POST',
+          urlPath: 'custom_action_1/',
+          params: new HttpParams().set('verbose', 'true'),
+          body: {
+            info: 'some data',
+          },
+        },
+      },
+      {
+        label: 'Custom Action 2',
+        role: 'custom_action_2',
+        action: (entity: User) => {
+          customAction2Called = true;
+        },
+      },
+      {
+        label: 'Custom Action 3',
+        role: 'custom_action_3',
+        httpRequestParameters: {
+          method: 'POST',
+          urlPath: 'custom_action_3/',
+          params: new HttpParams().set('verbose', 'true'),
+          body: {
+            info: 'some data',
+          },
+        },
+        action: (entity: User) => {
+          customAction3Called = true;
+        },
+      },
+    ];
+    componentRef.setInput('itemActions', ITEM_ACTIONS);
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    fixture.autoDetectChanges();
+    tick(100);
+    expect(component).toBeTruthy();
+    const rows =
+      fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
+    // +1 for the <tr> in <thead>
+    expect(rows.length).toEqual(USER_DATA.length);
+    const columns = rows[0].querySelectorAll('td');
+    // columns should equal number columns as set in [columns] property value
+    expect(columns.length).toEqual(USER_COLUMNS.length + 1);
+    // get the action button in the last column
+    const actionBtn = columns[columns.length - 1].querySelector('button');
+    expect(actionBtn).toBeTruthy();
+
+    {
+      actionBtn.click();
+      fixture.detectChanges();
+      const matMenu = fixture.debugElement.query(
+        By.directive(MatMenu)
+      );
+      expect(matMenu).toBeTruthy();
+      const matMenuItems = fixture.debugElement.queryAll(
+        By.directive(MatMenuItem)
+      );
+      expect(matMenuItems.length).toEqual(ITEM_ACTIONS.length);
+
+      expect((matMenuItems[1].nativeElement as HTMLElement).innerText).toEqual(
+        'Custom Action 2'
+      );
+      matMenuItems[1].nativeElement.click();
+      fixture.detectChanges();
+      expect(customAction2Called).toBeTrue();
+    }
+
+    // click action button 1
+    {
+      actionBtn.click();
+      fixture.detectChanges();
+      const matMenu = fixture.debugElement.query(By.directive(MatMenu));
+      expect(matMenu).toBeTruthy();
+      const matMenuItems = fixture.debugElement.queryAll(
+        By.directive(MatMenuItem)
+      );
+      expect(matMenuItems.length).toEqual(ITEM_ACTIONS.length);
+
+      // Custom Action 1
+      expect((matMenuItems[0].nativeElement as HTMLElement).innerText).toEqual(
+        'Custom Action 1'
+      );
+
+      // Validate HTTP POST call for custom action 1
+      spyOn(http, 'post').and.callFake(((url: string, data: any, options: any) => {
+        expect(url).toContain('custom_action_1/');
+        expect(data).toEqual({ info: 'some data' });
+        expect(options.params.get('verbose')).toEqual('true');
+        return of({});
+      }) as any); // 'as any' to suppress TSC function prototype mismatch
+
+      matMenuItems[0].nativeElement.click();
+      fixture.detectChanges();
+      expect(http.post).toHaveBeenCalled();
+    }
+    // Verify that action handler is preferred over HTTP request for Custom Action 3
+    // even though `httpParameters` is specified.
+    {
+      actionBtn.click();
+      fixture.detectChanges();
+      const matMenu = fixture.debugElement.query(By.directive(MatMenu));
+      expect(matMenu).toBeTruthy();
+      const matMenuItems = fixture.debugElement.queryAll(
+        By.directive(MatMenuItem)
+      );
+      expect(matMenuItems.length).toEqual(ITEM_ACTIONS.length);
+
+      expect((matMenuItems[2].nativeElement as HTMLElement).innerText).toEqual(
+        'Custom Action 3'
+      );
+      matMenuItems[2].nativeElement.click();
+      fixture.detectChanges();
+      expect(customAction3Called).toBeTrue();
+    }
+
   }));
 
   it('should not display "New Item" button disableCreate = true', async () => {

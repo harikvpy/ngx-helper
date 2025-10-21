@@ -28,8 +28,7 @@ import {
   SPMatHostBusyWheelDirective
 } from '@smallpearl/ngx-helper/mat-busy-wheel';
 import {
-  SPContextMenuItem,
-  SPMatContextMenuComponent,
+  SPMatContextMenuComponent
 } from '@smallpearl/ngx-helper/mat-context-menu';
 import { SPMatEntityListComponent } from '@smallpearl/ngx-helper/mat-entity-list';
 
@@ -44,6 +43,7 @@ import { firstValueFrom, map, Observable, of, Subscription, switchMap, tap } fro
 import { getEntityCrudConfig } from './default-config';
 import { FormViewHostComponent } from './form-view-host.component';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
+import { MatEntityCrudItemAction } from './mat-entity-crud-item-action';
 import {
   ALLOW_ITEM_ACTION_FN,
   CRUD_OP_FN,
@@ -271,7 +271,7 @@ export class SPMatEntityCrudComponent<
   /**
    *
    */
-  itemActions = input<SPContextMenuItem[]>([]);
+  itemActions = input<MatEntityCrudItemAction<TEntity, IdKey>[]>([]);
   /**
    * Specify the list of router paths that will be set as the value for
    * [routerLink] for the 'New {{ item }}' button. If not specified,
@@ -583,7 +583,7 @@ export class SPMatEntityCrudComponent<
     () => this.entityPaneActive() && this.entityPaneWidth() === 100
   );
 
-  defaultItemCrudActions = signal<SPContextMenuItem[]>([]);
+  defaultItemCrudActions = signal<MatEntityCrudItemAction<TEntity, IdKey>[]>([]);
   columnsWithAction = computed(() => {
     const cols = clone(this.columns());
     const actionDefined =
@@ -861,13 +861,44 @@ export class SPMatEntityCrudComponent<
   }
 
   onItemAction(role: string, entity: TEntity) {
-    if (role === '_update_') {
-      this.onUpdate(entity);
-    } else if (role === '_delete_') {
-      this.onDelete(entity);
-    } else {
-      this.action.emit({ role, entity });
+    // Handle default roles, which always get default behavior. If you want
+    // a custom behavior, change the role to a custom one.
+    if (role === '_update_' || role === '_delete_') {
+      role === '_update_' ? this.onUpdate(entity) : this.onDelete(entity);
+      return;
     }
+
+    // Find the SPMatEntityCrudItemAction for this role to see if it's
+    // allowed.
+    const actionItem = this.itemActions().find((a) => a.role === role);
+    if (!actionItem) {
+      return;
+    }
+
+    // If a custom action handler is specified, call it.
+    if (actionItem?.action) {
+      actionItem.action(entity);
+      return;
+    }
+
+    // Perform custom HTTP action
+    const httpRequestParameters: MatEntityCrudItemAction<
+      TEntity,
+      IdKey
+    >['httpRequestParameters'] = actionItem?.httpRequestParameters || {
+      method: 'POST',
+      urlPath: actionItem.role,
+    };
+    const verb = httpRequestParameters?.urlPath || actionItem?.role;
+    if (!verb) {
+      return;
+    }
+    this.doEntityAction(
+      (entity as any)[this.idKey()],
+      verb,
+      httpRequestParameters.params || new HttpParams(),
+      httpRequestParameters.body
+    );
   }
 
   onCreate(event: Event) {
@@ -1020,9 +1051,8 @@ export class SPMatEntityCrudComponent<
     const url = this.getEntityUrl(entityId);
     const urlParts = url.split('?');
     const actionUrl =
-      (urlParts[0].endsWith('/')
-        ? urlParts[0]
-        : urlParts[0] + '/') + `${action}/`;
+      (urlParts[0].endsWith('/') ? urlParts[0] : urlParts[0] + '/') +
+      `${action}/`;
     return urlParts.length === 1 ? actionUrl : actionUrl + `?${urlParts[1]}`;
   }
 
@@ -1084,10 +1114,6 @@ export class SPMatEntityCrudComponent<
       op,
     });
     return context;
-    // const httpReqContext = this.httpReqContext();
-    // return httpReqContext
-    //   ? contextParamToHttpContext(httpReqContext)
-    //   : undefined;
   }
 
   isItemActionAllowed(action: string, entity: TEntity) {
@@ -1099,14 +1125,14 @@ export class SPMatEntityCrudComponent<
    * to determine if the action is allowed for the given entity.
    * @returns
    */
-  getItemActions(entity: TEntity): SPContextMenuItem[] {
+  getItemActions(entity: TEntity): MatEntityCrudItemAction<TEntity, IdKey>[] {
     // console.log(`SPMatEntityCrudComponent.getItemActions - entity: ${JSON.stringify(entity, null, 2)}`);
     const actions =
       this.itemActions() && this.itemActions().length
         ? this.itemActions()
         : this.defaultItemCrudActions();
-    let actionsCopy: SPContextMenuItem[] = clone(actions);
-    actionsCopy.forEach((action: SPContextMenuItem, index: number) => {
+    let actionsCopy: MatEntityCrudItemAction<TEntity, IdKey>[] = clone(actions);
+    actionsCopy.forEach((action: MatEntityCrudItemAction<TEntity, IdKey>, index: number) => {
       // localize default action item labels (Update & Delete)
       // Client specified action labels are to be localized by the client
       // before supplying them to the component.
@@ -1145,11 +1171,11 @@ export class SPMatEntityCrudComponent<
     return this.formPaneContentClass();
   }
 
-  getItemLabel(): string|Observable<string> {
+  getItemLabel(): string | Observable<string> {
     return this._itemLabel();
   }
 
-  getItemLabelPlural(): string|Observable<string> {
+  getItemLabelPlural(): string | Observable<string> {
     return this._itemLabelPlural();
   }
 
@@ -1180,7 +1206,7 @@ export class SPMatEntityCrudComponent<
       const url = this.getEntityActionUrl(id, verb);
       obs = this.http.post<TEntity>(url, data, {
         params: addlParams || {},
-        context: this.getCrudReqHttpContext('update'),  // KLUDGE!: use 'update' request context
+        context: this.getCrudReqHttpContext('update'), // KLUDGE!: use 'update' request context
       });
     }
 
