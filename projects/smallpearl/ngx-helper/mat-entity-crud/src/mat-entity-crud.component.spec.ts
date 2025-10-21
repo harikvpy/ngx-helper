@@ -543,10 +543,10 @@ describe('SPMatEntityCrudComponent', () => {
     const ITEM_ACTIONS = [
       {
         label: 'Custom Action 1',
-        role: 'custom_action_1',
+        role: 'custom_action_1/',
         httpRequestParameters: {
           method: 'POST',
-          urlPath: 'custom_action_1/',
+          urlPath: 'custom_action_1',
           params: new HttpParams().set('verbose', 'true'),
           body: {
             info: 'some data',
@@ -593,26 +593,6 @@ describe('SPMatEntityCrudComponent', () => {
     const actionBtn = columns[columns.length - 1].querySelector('button');
     expect(actionBtn).toBeTruthy();
 
-    {
-      actionBtn.click();
-      fixture.detectChanges();
-      const matMenu = fixture.debugElement.query(
-        By.directive(MatMenu)
-      );
-      expect(matMenu).toBeTruthy();
-      const matMenuItems = fixture.debugElement.queryAll(
-        By.directive(MatMenuItem)
-      );
-      expect(matMenuItems.length).toEqual(ITEM_ACTIONS.length);
-
-      expect((matMenuItems[1].nativeElement as HTMLElement).innerText).toEqual(
-        'Custom Action 2'
-      );
-      matMenuItems[1].nativeElement.click();
-      fixture.detectChanges();
-      expect(customAction2Called).toBeTrue();
-    }
-
     // click action button 1
     {
       actionBtn.click();
@@ -630,8 +610,14 @@ describe('SPMatEntityCrudComponent', () => {
       );
 
       // Validate HTTP POST call for custom action 1
-      spyOn(http, 'post').and.callFake(((url: string, data: any, options: any) => {
+      spyOn(http, 'post').and.callFake(((
+        url: string,
+        data: any,
+        options: any
+      ) => {
         expect(url).toContain('custom_action_1/');
+        const parts = url.split('?');
+        expect(parts[0].endsWith('custom_action_1/')).toBeTrue();
         expect(data).toEqual({ info: 'some data' });
         expect(options.params.get('verbose')).toEqual('true');
         return of({});
@@ -641,6 +627,26 @@ describe('SPMatEntityCrudComponent', () => {
       fixture.detectChanges();
       expect(http.post).toHaveBeenCalled();
     }
+
+    // Click action button 2
+    {
+      actionBtn.click();
+      fixture.detectChanges();
+      const matMenu = fixture.debugElement.query(By.directive(MatMenu));
+      expect(matMenu).toBeTruthy();
+      const matMenuItems = fixture.debugElement.queryAll(
+        By.directive(MatMenuItem)
+      );
+      expect(matMenuItems.length).toEqual(ITEM_ACTIONS.length);
+
+      expect((matMenuItems[1].nativeElement as HTMLElement).innerText).toEqual(
+        'Custom Action 2'
+      );
+      matMenuItems[1].nativeElement.click();
+      fixture.detectChanges();
+      expect(customAction2Called).toBeTrue();
+    }
+
     // Verify that action handler is preferred over HTTP request for Custom Action 3
     // even though `httpParameters` is specified.
     {
@@ -660,7 +666,6 @@ describe('SPMatEntityCrudComponent', () => {
       fixture.detectChanges();
       expect(customAction3Called).toBeTrue();
     }
-
   }));
 
   it('should not display "New Item" button disableCreate = true', async () => {
