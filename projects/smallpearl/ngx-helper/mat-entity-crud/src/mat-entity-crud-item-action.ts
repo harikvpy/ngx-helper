@@ -28,7 +28,21 @@ export interface MatEntityCrudItemAction<
   TEntity extends { [P in IdKey]: PropertyKey },
   IdKey extends string = 'id'
 > extends SPContextMenuItem {
-
+  /**
+   * Optional confirmation prompt message to be shown to the user
+   * before performing the action. If specified, the user must confirm
+   * the action before it is executed.
+   */
+  confirmPrompt?: string;
+  /**
+   * Optional message to be shown to the user after the action is
+   * successfully performed.
+   */
+  successMessage?: string;
+  /**
+   * Optional error message to be shown to the user if the action fails.
+   */
+  errorMessage?: string;
   /**
    * HTTP request parameters for actions that map to HTTP REST API
    * endpoints on the item at the server. This property is used when

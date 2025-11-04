@@ -39,7 +39,7 @@ import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsver
 import { AngularSplitModule } from 'angular-split';
 import { clone, startCase } from 'lodash';
 import { plural } from 'pluralize';
-import { firstValueFrom, map, Observable, of, Subscription, switchMap, tap } from 'rxjs';
+import { catchError, EMPTY, firstValueFrom, map, Observable, of, Subscription, switchMap, tap, throwError } from 'rxjs';
 import { getEntityCrudConfig } from './default-config';
 import { FormViewHostComponent } from './form-view-host.component';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
@@ -893,12 +893,39 @@ export class SPMatEntityCrudComponent<
     if (!verb) {
       return;
     }
+
+    // If a confirm prompt is specified, display it and return if user
+    // selects 'Cancel'.
+    if (actionItem?.confirmPrompt) {
+      if (!confirm(actionItem.confirmPrompt)) {
+        return;
+      }
+    }
+
     this.doEntityAction(
       (entity as any)[this.idKey()],
       verb,
       httpRequestParameters.params || new HttpParams(),
       httpRequestParameters.body
-    );
+    ).pipe(
+      tap((response) => {
+        const successMessage = actionItem?.successMessage ||
+          this.transloco.translate('spMatEntityCrud.done');
+        this.snackBar.open(successMessage || "Done");
+      }),
+      catchError((error) => {
+        /**
+         * If an errorMessage is specified in the actionItem, display it.
+         * Otherwise rethrow the error so that it can be handled by the
+         * global error handler.
+         */
+        if (actionItem?.errorMessage) {
+          this.snackBar.open(actionItem.errorMessage);
+          return EMPTY;
+        }
+        return throwError(() => error);
+      })
+    ).subscribe();
   }
 
   onCreate(event: Event) {
@@ -1050,6 +1077,9 @@ export class SPMatEntityCrudComponent<
   getEntityActionUrl(entityId: TEntity[IdKey], action: string) {
     const url = this.getEntityUrl(entityId);
     const urlParts = url.split('?');
+    if (action.endsWith('/')) {
+      action = action.slice(0, -1); // We'll be adding the trailing slash
+    }
     const actionUrl =
       (urlParts[0].endsWith('/') ? urlParts[0] : urlParts[0] + '/') +
       `${action}/`;

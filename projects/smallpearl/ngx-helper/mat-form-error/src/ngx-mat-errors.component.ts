@@ -39,9 +39,32 @@ import { findErrorsForControl } from './utils/find-error-for-control';
 import { getAbstractControls } from './utils/get-abstract-controls';
 import { getControlWithError } from './utils/get-control-with-error';
 
+/**
+ * Default error messages for form controls. These messages can be overridden
+ * by providing custom messages using the {@link NGX_MAT_ERROR_ADDL_OPTIONS}
+ * injection token. Typically, this is initialized in the root module
+ * (or AppComponent) of the application, providing the app with a global set
+ * of validation error messages.
+ *
+ * Messages specific to each form can be provided using the
+ * {@link NGX_MAT_ERROR_ADDL_OPTIONS} injection token (see below).
+ */
 export const NGX_MAT_ERROR_DEFAULT_OPTIONS = new InjectionToken<
   ErrorMessages | Observable<ErrorMessages>
 >('NGX_MAT_ERROR_DEFAULT_OPTIONS');
+
+/**
+ * Additional error messages to be merged with the default error messages.
+ * These messages will override the default messages if the same key is
+ * provided. This is useful for adding custom error messages specific to a
+ * form, without having to redefine all the default messages.
+ *
+ * Typically, this is provided in the component or module where the form
+ * is defined.
+ */
+export const NGX_MAT_ERROR_ADDL_OPTIONS = new InjectionToken<
+  ErrorMessages | Observable<ErrorMessages>
+>('NGX_MAT_ERROR_ADDL_OPTIONS');
 
 @Component({
     selector: 'ngx-mat-errors, [ngx-mat-errors]',
@@ -64,6 +87,10 @@ export class NgxMatErrors implements OnDestroy {
   private readonly messages$ = coerceToObservable(
     inject(NGX_MAT_ERROR_DEFAULT_OPTIONS)
   );
+  private readonly addlMessages$ = coerceToObservable(
+    inject(NGX_MAT_ERROR_ADDL_OPTIONS, {optional: true}) ?? of({})
+  );
+
   private readonly defaultControl = inject(NgxMatErrorControl, {
     host: true,
   });
@@ -95,15 +122,17 @@ export class NgxMatErrors implements OnDestroy {
       firstControlWithError$,
       customErrorMessages$,
       this.messages$,
+      this.addlMessages$,
     ]).pipe(
-      map(([controlWithError, customErrorMessages, messages]) => {
+      map(([controlWithError, customErrorMessages, messages, addlMessages]) => {
         if (!controlWithError) {
           return;
         }
+        const allMessages = { ...messages, ...addlMessages };
         const errors = controlWithError.errors!,
           errorsOrErrorDef = findErrorsForControl(
             controlWithError,
-            messages,
+            allMessages,
             customErrorMessages.toArray()
           );
         if (!errorsOrErrorDef) {
@@ -118,7 +147,7 @@ export class NgxMatErrors implements OnDestroy {
         }
         // errorsOrErrorDef: string[]
         const msgs = errorsOrErrorDef.map(key => {
-          const message = messages[key];
+          const message = allMessages[key];
           return typeof message === 'function'
           ? message(errors[key])
           : message
