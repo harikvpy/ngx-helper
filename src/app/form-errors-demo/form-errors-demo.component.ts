@@ -3,14 +3,24 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { errorMessagesEnFactory, NGX_MAT_ERROR_CONFIG_EN, NGX_MAT_ERROR_DEFAULT_OPTIONS, NgxErrorList, NgxMatErrors } from '@smallpearl/ngx-helper/mat-form-error';
+import { errorMessagesEnFactory, NGX_MAT_ERROR_ADDL_OPTIONS, NGX_MAT_ERROR_CONFIG_EN, NGX_MAT_ERROR_DEFAULT_OPTIONS, NgxErrorList, NgxMatErrors } from '@smallpearl/ngx-helper/mat-form-error';
 
 export const NGX_MAT_ERROR_DEFAULT_CONFIG: FactoryProvider = {
   useFactory: (locale: string) => ({
     ...errorMessagesEnFactory(locale),
-    dateNotWithinCurrentFiscalPeriod: "Date not within current fiscal period",
+    // dateNotWithinCurrentFiscalPeriod:
+    //   'The selected date is not within the current fiscal period. Please choose a valid date.',
   }),
   provide: NGX_MAT_ERROR_DEFAULT_OPTIONS,
+  deps: [LOCALE_ID],
+};
+
+const NGX_MAT_ERROR_ADDITIONAL_CONFIG: FactoryProvider = {
+  useFactory: () => ({
+    dateNotWithinCurrentFiscalPeriod:
+      'The selected date is not within the current fiscal period. Please choose a valid date.',
+  }),
+  provide: NGX_MAT_ERROR_ADDL_OPTIONS,
   deps: [LOCALE_ID],
 };
 
@@ -70,7 +80,8 @@ export const NGX_MAT_ERROR_DEFAULT_CONFIG: FactoryProvider = {
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [
         NGX_MAT_ERROR_CONFIG_EN,
-        NGX_MAT_ERROR_DEFAULT_CONFIG
+        NGX_MAT_ERROR_DEFAULT_CONFIG,
+        NGX_MAT_ERROR_ADDITIONAL_CONFIG,
     ]
 })
 
@@ -92,7 +103,7 @@ export class FormErrorDemoComponent implements OnInit {
     if (!value?.age || value.age < 40) {
       this.form.setErrors({
         dateNotWithinCurrentFiscalPeriod: true,
-        minlength: true,
+        // minlength: true,
         required: true
       });
       const name = this.form.get('name') as FormControl;

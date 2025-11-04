@@ -22,13 +22,15 @@ import { MatErrorHarness } from '@angular/material/form-field/testing';
 import { MatInputModule } from '@angular/material/input';
 import { MatInputHarness } from '@angular/material/input/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { delay, from, interval, map, of, take, tap, zip } from 'rxjs';
+import { NgxErrorList } from './ngx-error-list.component';
+import { NgxMatErrorDef } from './ngx-mat-error-def.directive';
 import {
+  NGX_MAT_ERROR_ADDL_OPTIONS,
   NGX_MAT_ERROR_DEFAULT_OPTIONS,
   NgxMatErrors,
 } from './ngx-mat-errors.component';
-import { delay, from, interval, map, of, take, tap, zip } from 'rxjs';
 import type { ErrorMessages, LengthError } from './types';
-import { NgxErrorList } from './ngx-error-list.component';
 
 export const defaultProviders: Provider[] = [
   {
@@ -40,6 +42,12 @@ export const defaultProviders: Provider[] = [
       email: 'email',
     },
   },
+  {
+    provide: NGX_MAT_ERROR_ADDL_OPTIONS,
+    useValue: {
+      alreadyExists: 'Item already exists',
+    },
+  },
 ];
 
 export const defaultImports = [
@@ -47,7 +55,8 @@ export const defaultImports = [
   MatFormFieldModule,
   MatInputModule,
   NgxMatErrors,
-  NgxErrorList
+  NgxMatErrorDef,
+  NgxErrorList,
 ];
 
 function createControl(value: string) {
@@ -59,7 +68,7 @@ function updateControlValidators(control: FormControl) {
   control.updateValueAndValidity();
 }
 
-xdescribe('NgxMatErrors', () => {
+describe('NgxMatErrors', () => {
   let loader: HarnessLoader;
 
   beforeEach(() => {
@@ -283,6 +292,42 @@ xdescribe('NgxMatErrors', () => {
       updateControlValidators(fixture.componentInstance.control);
       await matInput.setValue('as');
       expect(await matError.getText()).toBe('email');
+    });
+  });
+
+  describe('with addl error messages', () => {
+    @Component({
+      changeDetection: ChangeDetectionStrategy.OnPush,
+      imports: [...defaultImports],
+      providers: [...defaultProviders],
+      template: `
+        <mat-form-field>
+          <mat-label>Label</mat-label>
+          <input matInput [formControl]="control" />
+          <mat-error ngx-mat-errors></mat-error>
+        </mat-form-field>
+      `,
+    })
+    class NgxMatErrorWithoutDef {
+      // We'll set the error explicitly in the test
+      control = new FormControl("", []);
+    }
+
+    let fixture: ComponentFixture<NgxMatErrorWithoutDef>;
+    beforeEach(() => {
+      fixture = TestBed.createComponent(NgxMatErrorWithoutDef);
+      fixture.detectChanges();
+      loader = TestbedHarnessEnvironment.loader(fixture);
+    });
+
+    it('should display error messages from the additional messages', async () => {
+      fixture.componentInstance.control.setErrors({
+        alreadyExists: true,
+      });
+      const matInput = await loader.getHarness(MatInputHarness);
+      await matInput.blur();
+      const matError = await loader.getHarness(MatErrorHarness);
+      expect(await matError.getText()).toBe('Item already exists');
     });
   });
 
