@@ -1,15 +1,15 @@
 import { formatDate } from '@angular/common';
 import { type FactoryProvider, LOCALE_ID } from '@angular/core';
+import { NGX_MAT_ERROR_DEFAULT_OPTIONS } from '../ngx-mat-errors.component';
 import type {
   EndDateError,
   ErrorMessages,
   LengthError,
   MaxError,
   MinError,
-  StartDateError,
   ParseError,
+  StartDateError,
 } from '../types';
-import { NGX_MAT_ERROR_DEFAULT_OPTIONS } from '../ngx-mat-errors.component';
 
 export function errorMessagesEnFactory(
   locale: string,
