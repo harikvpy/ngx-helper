@@ -22,6 +22,7 @@ import {
 import { ControlValueAccessor, FormsModule, NgControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_FORM_FIELD, MatFormFieldControl } from '@angular/material/form-field';
 import { MatSelect, MatSelectChange, MatSelectModule } from '@angular/material/select';
+import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { camelCase } from 'lodash';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { plural } from 'pluralize';
@@ -36,7 +37,6 @@ import {
   takeUntil,
   tap
 } from 'rxjs';
-import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 export interface SPMatSelectEntityHttpContext {
   entityName: string;
@@ -110,7 +110,7 @@ export type SPMatSelectEntityResponseParser = <
         <ng-container *ngIf="!group; else groupedOptions">
           <span *ngIf="filteredValues | async as entities">
             <ng-template #defaultOptionLabelTemplate let-entity>
-              {{ entityLabelFn(entity) }}
+              {{ _entityLabelFn()(entity) }}
             </ng-template>
             @for (entity of entities; track entityId(entity)) {
             <mat-option class="sel-entity-option" [value]="entityId(entity)">
@@ -124,7 +124,7 @@ export type SPMatSelectEntityResponseParser = <
             }
 
             <!-- <mat-option class="sel-entity-option" *ngFor="let entity of entities" [value]="entityId(entity)">
-            {{ entityLabelFn(entity) }}
+            {{ _entityLabelFn()(entity) }}
           </mat-option> -->
           </span>
         </ng-container>
@@ -135,7 +135,7 @@ export type SPMatSelectEntityResponseParser = <
               @for (entity of group.__items__; track entityId(entity)) {
 
               <mat-option class="sel-entity-option" [value]="entityId(entity)">
-                {{ entityLabelFn(entity) }}
+                {{ _entityLabelFn()(entity) }}
               </mat-option>
               }
             </mat-optgroup>
@@ -210,7 +210,7 @@ export class SPMatSelectEntityComponent<
    * Entity label function. Given an entity return its natural label
    * to display to the user.
    */
-  @Input({ required: true }) entityLabelFn!: (entity: TEntity) => string;
+  @Input() entityLabelFn!: (entity: TEntity) => string;
 
   // OPTIONAL PROPERTIES //
   /**
@@ -328,6 +328,16 @@ export class SPMatSelectEntityComponent<
    */
   optionLabelTemplate = input<TemplateRef<any>>();
 
+  _entityLabelFn = computed<(entity: TEntity) => string>(() => {
+    const fn = this.entityLabelFn;
+    if (fn) {
+      return fn;
+    }
+    return (entity: TEntity) => {
+      return (entity as any)['name'] || (entity as any)['label'] || String((entity as any)[this.idKey]);
+    }
+  });
+
   _sideloadDataKey = computed<string>(() => {
     if (this.sideloadDataKey()) {
       return this.sideloadDataKey() as string;
@@ -436,7 +446,7 @@ export class SPMatSelectEntityComponent<
         ? this.selectValue[0]
         : this.selectValue;
       const selectedEntity = this._entities.get(firstSelected);
-      return selectedEntity ? this.entityLabelFn(selectedEntity) : '';
+      return selectedEntity ? this._entityLabelFn()(selectedEntity) : '';
     }
     return '';
   }
@@ -658,7 +668,8 @@ export class SPMatSelectEntityComponent<
           if (this.entityFilterFn) {
             return this.entityFilterFn(member, search);
           }
-          return this.entityLabelFn(member)
+          const labelFn = this._entityLabelFn();
+          return labelFn(member)
             .toLocaleLowerCase()
             .includes(searchLwr);
         })
@@ -692,7 +703,7 @@ export class SPMatSelectEntityComponent<
           return { ...ge } as EntityGroup<TEntity>;
         } else {
           const groupEntities = ge.__items__?.filter((e) =>
-            this.entityLabelFn(e).toLocaleLowerCase().includes(searchLwr)
+            this._entityLabelFn()(e).toLocaleLowerCase().includes(searchLwr)
           );
           const ret: any = {
             ...ge,
