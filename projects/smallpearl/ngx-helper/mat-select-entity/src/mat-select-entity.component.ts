@@ -79,7 +79,13 @@ export type SPMatSelectEntityResponseParser = <
 @Component({
   selector: 'sp-mat-select-entity',
   template: `
-    <ng-container *transloco="let t; scope: 'sp-mat-select-entity'">
+    <div
+      *transloco="let t; scope: 'sp-mat-select-entity'"
+      (focusin)="onFocusIn($event)"
+      (focusout)="onFocusOut($event)"
+      role="group"
+      [attr.aria-labelledby]="_formField?.getLabelId()"
+    >
       <mat-select
         [placeholder]="placeholder"
         (opened)="onSelectOpened($event)"
@@ -100,8 +106,12 @@ export type SPMatSelectEntityResponseParser = <
           <ngx-mat-select-search
             [(ngModel)]="filterStr"
             (ngModelChange)="this.filter$.next($event)"
-            [placeholderLabel]="searchText() ? searchText() : t('spMatSelectEntity.search')"
-            [noEntriesFoundLabel]="notFoundText() ? notFoundText() : t('spMatSelectEntity.notFound')"
+            [placeholderLabel]="
+              searchText() ? searchText() : t('spMatSelectEntity.search')
+            "
+            [noEntriesFoundLabel]="
+              notFoundText() ? notFoundText() : t('spMatSelectEntity.notFound')
+            "
             [searching]="searching"
           >
           </ngx-mat-select-search>
@@ -148,10 +158,15 @@ export type SPMatSelectEntityResponseParser = <
           class="add-item-option"
           value="0"
           (click)="$event.stopPropagation()"
-          >⊕ {{ this.addItemText() ? this.addItemText() : t('spMatSelectEntity.addItem', { item: this.entityName }) }}</mat-option
+          >⊕
+          {{
+            this.addItemText()
+              ? this.addItemText()
+              : t('spMatSelectEntity.addItem', { item: this.entityName })
+          }}</mat-option
         >
       </mat-select>
-    </ng-container>
+    </div>
   `,
   styles: [
     `
@@ -308,6 +323,8 @@ export class SPMatSelectEntityComponent<
   readonly notFoundText = input<string>();
   readonly addItemText = input<string>();
 
+  controlType = 'sp-mat-select-entity';
+
   /**
    * Template for the option label. If not provided, the default label
    * function will be used. Option label is what is placed inside the
@@ -334,8 +351,12 @@ export class SPMatSelectEntityComponent<
       return fn;
     }
     return (entity: TEntity) => {
-      return (entity as any)['name'] || (entity as any)['label'] || String((entity as any)[this.idKey]);
-    }
+      return (
+        (entity as any)['name'] ||
+        (entity as any)['label'] ||
+        String((entity as any)[this.idKey])
+      );
+    };
   });
 
   _sideloadDataKey = computed<string>(() => {
@@ -567,12 +588,11 @@ export class SPMatSelectEntityComponent<
   private _disabled!: boolean;
 
   get empty() {
-    // TODO
     return !this.value;
   }
+
   get errorState(): boolean {
-    // TODO
-    return false;
+    return !!this.ngControl?.invalid && this.touched;
   }
 
   onFocusIn(event: FocusEvent) {
@@ -595,17 +615,10 @@ export class SPMatSelectEntityComponent<
 
   setDescribedByIds(ids: string[]) {}
 
-  onContainerClick() {
-    // this._focusMonitor.focusVia(this.countrySelect, 'program');
-    // if (this.parts.controls.national.valid) {
-    //   this._focusMonitor.focusVia(this.nationalInput, 'program');
-    // } else if (this.parts.controls.country.valid) {
-    //   this._focusMonitor.focusVia(this.nationalInput, 'program');
-    // // } else if (this.parts.controls.national.valid) {
-    // //   this._focusMonitor.focusVia(this.nationalInput, 'program');
-    // } else {
-    //   this._focusMonitor.focusVia(this.countrySelect, 'program');
-    // }
+  onContainerClick(event: MouseEvent) {
+    if ((event.target as Element).tagName.toLowerCase() != 'mat-select') {
+      this._elementRef.nativeElement.querySelector('mat-select').focus();
+    }
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -669,9 +682,7 @@ export class SPMatSelectEntityComponent<
             return this.entityFilterFn(member, search);
           }
           const labelFn = this._entityLabelFn();
-          return labelFn(member)
-            .toLocaleLowerCase()
-            .includes(searchLwr);
+          return labelFn(member).toLocaleLowerCase().includes(searchLwr);
         })
       );
     }
