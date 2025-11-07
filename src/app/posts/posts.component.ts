@@ -145,7 +145,6 @@ const BLOCKS: Block[] = [
         MatFormFieldModule,
         MatSelectModule,
         InfiniteScrollDirective,
-        SPMatSelectEntityComponent,
     ],
     template: `
   <!--
