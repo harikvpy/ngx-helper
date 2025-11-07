@@ -76,6 +76,11 @@ export class SideMenuLayoutExampleComponent implements OnInit {
       icon: 'language'
     },
     {
+      route: 'selectentitydemo',
+      text: 'SELECT ENTITY',
+      icon: 'select_all'
+    },
+    {
       route: 'entitylistdemo',
       text: 'ENTITY LIST',
       icon: 'list_alt',

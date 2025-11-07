@@ -53,6 +53,13 @@ const routes: Routes = [
           ),
       },
       {
+        path: 'selectentitydemo',
+        loadComponent: () =>
+          import('../select-entity-demo/select-entity-demo.component').then(
+            (m) => m.SelectEntityDemoComponent
+          ),
+      },
+      {
         path: 'entitylistdemo',
         loadComponent: () =>
           import('../entity-list-demo/entity-list-demo.component').then(

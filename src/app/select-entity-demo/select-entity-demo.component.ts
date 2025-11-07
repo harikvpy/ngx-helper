@@ -4,7 +4,6 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { SPMatSelectEntityComponent } from '@smallpearl/ngx-helper/mat-select-entity';
-import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { of, tap } from 'rxjs';
 
 /**
@@ -138,39 +137,107 @@ const BLOCKS: Block[] = [
 ];
 
 @Component({
-    selector: 'app-posts',
+    selector: 'app-select-entity-demo',
     imports: [
         CommonModule,
         ReactiveFormsModule,
         MatFormFieldModule,
         MatSelectModule,
-        InfiniteScrollDirective,
         SPMatSelectEntityComponent,
     ],
     template: `
-  <!--
-    infiniteScrollContainer=".sp-sidenav-content-container"
-    [fromRoot]="true"
-  -->
-  <div class="posts-wrapper"
-    infiniteScroll
-    infiniteScrollContainer=".posts-scroller"
-    (scrolled)="onScrollDown()"
-    (scrolledUp)="onScrollUp()"
-    [scrollWindow]="false"
-    [infiniteScrollDistance]="1.5"
-  >
-    <div class="posts-scroller">
-      <div class="posts-container">
-        <div class="posts-row-1">
+  <div class="select-entity-demo-wrapper">
+    <div class="select-entity-demo-scroller">
+      <div class="select-entity-demo-container">
+        <div class="select-entity-demo-row-1">
+          <div class="fs-2">Select Entity Demo</div>
           <div class="">
-            <p>Posts Content</p>
+            <form [formGroup]="form">
+              <div class="p-2">
+                <mat-form-field>
+                  <mat-label>Select User with 'Add User'</mat-label>
+                  <sp-mat-select-entity
+                    [loadFromRemoteFn]="loadUsers"
+                    entityName="User"
+                    [entityLabelFn]="userLabelFn"
+                    formControlName="user"
+                    (selectionChange)="onUserSelected($event)"
+                    (createNewItemSelected)="onCreateNewUser($event)"
+                    [inlineNew]="true"
+                  ></sp-mat-select-entity>
+                </mat-form-field>
+              </div>
+              <div class="p-2">
+                <mat-form-field>
+                  <mat-label>Select Unit (grouping)</mat-label>
+                  <sp-mat-select-entity
+                    [loadFromRemoteFn]="loadUnits"
+                    entityName="Unit"
+                    [entityLabelFn]="unitLabelFn"
+                    [group]="true"
+                    [groupLabelFn]="blockLabelFn"
+                    formControlName="unit"
+                    (selectionChange)="onUnitSelected($event)"
+                  ></sp-mat-select-entity>
+                </mat-form-field>
+              </div>
+              <div class="p-2">
+                <mat-form-field>
+                  <mat-label>Select User1 (Remote)</mat-label>
+                  <sp-mat-select-entity
+                    [url]="remoteUsersUrl"
+                    [entityLabelFn]="remoteUserLabelFn"
+                    entityName="Remote User 1"
+                    formControlName="remoteUser1"
+                    (selectionChange)="onRemoteUserSelected1($event)"
+                  ></sp-mat-select-entity>
+                </mat-form-field>
+              </div>
+              <div class="p-2">
+                <mat-form-field>
+                  <mat-label>Select User2 (Remote)</mat-label>
+                  <sp-mat-select-entity
+                    idKey="cell"
+                    [url]="remoteUsersUrl"
+                    [entityLabelFn]="remoteUserLabelFn"
+                    entityName="user"
+                    formControlName="remoteUser2"
+                    (selectionChange)="onRemoteUserSelected2($event)"
+                  ></sp-mat-select-entity>
+                </mat-form-field>
+              </div>
+
+
+              <div class="p-2">
+                <mat-form-field>
+                  <mat-label>Custom Template</mat-label>
+                  <sp-mat-select-entity
+                    idKey="cell"
+                    [url]="remoteUsersUrl"
+                    [entityLabelFn]="remoteUserLabelFn"
+                    entityName="user"
+                    formControlName="remoteUser3"
+                    (selectionChange)="onRemoteUserSelected3($event)"
+                    [optionLabelTemplate]="myOptionLabelTemplate"
+                  ></sp-mat-select-entity>
+
+                </mat-form-field>
+
+                <ng-template #myOptionLabelTemplate let-entity>
+                  <span class="option-label">
+                    <img [src]="entity.picture.thumbnail" width="28" height="28" alt="Image">&nbsp;
+                    {{ entity.name.title + '。' + entity.name.first + '-' + entity.name.last }}
+                  </span>
+                </ng-template>
+
+              </div>
+            </form>
           </div>
         </div>
-        <div class="posts-row-2">
+        <div class="select-entity-demo-row-2">
 
         </div>
-        <div class="posts-row-3"></div>
+        <div class="select-entity-demo-row-3"></div>
       </div>
     </div>
   </div>
@@ -179,29 +246,25 @@ const BLOCKS: Block[] = [
   .fs-2 {
     font-size: 2em;
   }
-  .posts-wrapper {
+  .select-entity-demo-wrapper {
     display: flex;
     flex-flow: column;
     height: 100%;
-    margin-top: 50px;
   }
-  .posts-scroller {
+  .select-entity-demo-scroller {
     overflow-y: auto;
   }
-  .posts-container {
+  .select-entity-demo-container {
     height: 1500px;
   }
-  .posts-row-1 {
+  .select-entity-demo-row-1 {
     height: 500px;
-    background-color: yellow;
   }
-  .posts-row-2 {
+  .select-entity-demo-row-2 {
     height: 500px;
-    background-color: cyan;
   }
-  .posts-row-3 {
+  .select-entity-demo-row-3 {
     height: 500px;
-    background-color: indigo;
   }
   .h2 {
     font-size: 1.3em;
@@ -217,7 +280,7 @@ const BLOCKS: Block[] = [
   `,
     ]
 })
-export class PostsComponent {
+export class SelectEntityDemoComponent {
   loadUsers = () => of(USER_DATA);
   loadUnits = () => of(BLOCKS);
   userLabelFn = (u: User) => u.name;
