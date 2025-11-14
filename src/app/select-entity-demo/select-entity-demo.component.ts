@@ -3,163 +3,233 @@ import { Component, ElementRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { SPEntityListPaginator, SPPageParams } from '@smallpearl/ngx-helper/entities';
 import { SPMatSelectEntityComponent } from '@smallpearl/ngx-helper/mat-select-entity';
 import { of, tap } from 'rxjs';
+import { USER_DATA } from './user-data';
 
 /**
  */
 interface User {
   id: number;
-  name: string;
-}
-
-const USER_DATA = [
-  { id: 1, name: 'Mariam Trevarthen' },
-  { id: 2, name: 'Lanny Nathanson' },
-  { id: 3, name: 'Jaye Nevin' },
-  { id: 4, name: 'Cordelia Blauser' },
-  { id: 5, name: 'Talisha Houk' },
-  { id: 6, name: 'Kirsten Jerkins' },
-  { id: 7, name: 'Kandace Oleary' },
-  { id: 8, name: 'Tammara Michell' },
-  { id: 9, name: 'Lily Rainwater' },
-  { id: 10, name: 'Izola Silversmith' },
-];
-
-interface Block {
-  id: number;
-  name: string;
-  units: Unit[];
+  name: {
+    title: string;
+    first: string;
+    last: string;
+  };
+  phone: string;
 }
 
 interface Unit {
   id: number;
   name: string;
+  block: number;
+  blockName: string;
 }
 
-const BLOCKS: Block[] = [
+const UNITS: Unit[] = [
   {
     id: 1000,
-    name: 'East',
-    units: [
-      {
-        id: 1000,
-        name: '2A',
-      },
-      {
-        id: 1001,
-        name: '2B',
-      },
-      {
-        id: 1002,
-        name: '2C',
-      },
-      {
-        id: 1003,
-        name: '3A',
-      },
-      {
-        id: 1004,
-        name: '3B',
-      },
-      {
-        id: 1005,
-        name: '3C',
-      },
-      {
-        id: 1006,
-        name: '4A',
-      },
-      {
-        id: 1007,
-        name: '4B',
-      },
-      {
-        id: 1008,
-        name: '4C',
-      },
-      {
-        id: 1009,
-        name: '5A',
-      },
-      {
-        id: 1010,
-        name: '5B',
-      },
-      {
-        id: 1011,
-        name: '5C',
-      },
-    ],
+    name: '2A',
+    block: 1000,
+    blockName: 'East',
   },
   {
     id: 1001,
-    name: 'West',
-    units: [
-      {
-        id: 2000,
-        name: '2A',
-      },
-      {
-        id: 2001,
-        name: '2B',
-      },
-      {
-        id: 2002,
-        name: '2C',
-      },
-      {
-        id: 2003,
-        name: '3A',
-      },
-      {
-        id: 2004,
-        name: '3B',
-      },
-      {
-        id: 2005,
-        name: '3C',
-      },
-      {
-        id: 2006,
-        name: '4A',
-      },
-      {
-        id: 2007,
-        name: '4B',
-      },
-      {
-        id: 2008,
-        name: '4C',
-      },
-    ],
+    name: '2B',
+    block: 1000,
+    blockName: 'East',
+  },
+  {
+    id: 1002,
+    name: '2C',
+    block: 1000,
+    blockName: 'East',
+  },
+  {
+    id: 2000,
+    name: '2A',
+    block: 1001,
+    blockName: 'West',
+  },
+  {
+    id: 2001,
+    name: '2B',
+    block: 1001,
+    blockName: 'West',
+  },
+  {
+    id: 2002,
+    name: '2C',
+    block: 1001,
+    blockName: 'West',
   },
 ];
 
+interface RandomUser {
+  gender: string;
+  name: {
+    title: string;
+    first: string;
+    last: string;
+  };
+  location: any;
+  email: string;
+  login: any;
+  dob: any;
+  registered: any;
+  phone: string;
+  cell: string;
+  id: any;
+  picture: any;
+  nat: string;
+}
+
+class RandomUserResponsePaginator implements SPEntityListPaginator {
+
+   /**
+   * Random user API request pagination params are:
+   * - page: page number (starting from 1)
+   * - results: number of results per page
+   */
+    getRequestPageParams(endpoint: string, pageIndex: number, pageSize: number): SPPageParams {
+        return {
+          page: pageIndex + 1,
+          results: pageSize,
+        };
+    }
+
+    /**
+     * Random user API response looks like:
+     * {
+     *   "results": [ ... ],
+     *   "info": {
+     *     "seed": "abc",
+     *     "results": 10,
+     *     "page": 1,
+     *     "version": "1.3"
+     *   }
+     * }
+     */
+    parseRequestResponse<
+      TEntity extends { [P in IdKey]: PropertyKey },
+      IdKey extends string = 'id'
+    >(
+      entityName: string,
+      entityNamePlural: string,
+      endpoint: string,
+      params: SPPageParams,
+      resp: any
+    ) {
+      return {
+        total: resp.info.results * 3,
+        entities: resp.results,
+      };
+    };
+}
+
+const serveUserData = (
+  pageIndex: number,
+  pageSize: number,
+  searchValue: string | undefined
+) => {
+  pageIndex = pageIndex - 1;
+  console.log(
+    `serveUserData - pageIndex: ${pageIndex}, pageSize: ${pageSize}, searchValue: ${searchValue}`
+  );
+  let filteredData = USER_DATA;
+  if (searchValue && searchValue.length > 0) {
+    const svLower = searchValue.toLowerCase();
+    filteredData = USER_DATA.filter(
+      (u) =>
+        u.name.first.toLowerCase().indexOf(svLower) >= 0 ||
+        u.name.last.toLowerCase().indexOf(svLower) >= 0
+    );
+  }
+  const startIndex = pageIndex * pageSize;
+  return of({
+    meta: {
+      total: USER_DATA.length,
+    },
+    users: [...filteredData.slice(startIndex, startIndex + pageSize)]
+  });
+};
+
+/**
+ * A paginator that serves static USER_DATA with pagination and search
+ * filtering.
+ */
+class StaticUserDataPaginator implements SPEntityListPaginator {
+  getRequestPageParams(
+    endpoint: string,
+    pageIndex: number,
+    pageSize: number
+  ): SPPageParams {
+    return {
+      page: pageIndex + 1,
+      results: pageSize,
+    };
+  }
+
+  parseRequestResponse<
+    TEntity extends { [P in IdKey]: PropertyKey },
+    IdKey extends string = 'id'
+  >(
+    entityName: string,
+    entityNamePlural: string,
+    endpoint: string,
+    params: SPPageParams,
+    resp: any // TEntity[]
+  ) {
+    const searchStr = params?.['search'] as string;
+    let totalUsers = USER_DATA.length;
+    // If search string is provided, calculate totalUsers accordingly
+    if (searchStr && searchStr.length > 0) {
+      const svLower = searchStr.toLowerCase();
+      const allUsers = USER_DATA.filter(
+        (u) =>
+          u.name.title.toLowerCase().indexOf(svLower) >= 0 ||
+          u.name.first.toLowerCase().indexOf(svLower) >= 0 ||
+          u.name.last.toLowerCase().indexOf(svLower) >= 0
+      );
+      totalUsers = allUsers.length;
+    }
+    // console.log(
+    //   `StaticUserDataPaginator.parseRequestResponse - params: ${JSON.stringify(
+    //     params
+    //   )} resp.length: ${resp.length}, totalUsers: ${totalUsers}`
+    // );
+    return {
+      total: resp['meta'].total,
+      entities: resp['users'],
+    };
+  }
+}
+
 @Component({
-    selector: 'app-select-entity-demo',
-    imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        MatFormFieldModule,
-        MatSelectModule,
-        SPMatSelectEntityComponent,
-    ],
-    template: `
-  <div class="select-entity-demo-wrapper">
-    <div class="select-entity-demo-scroller">
-      <div class="select-entity-demo-container">
-        <div class="select-entity-demo-row-1">
-          <div class="fs-2">Select Entity Demo</div>
-          <div class="">
-            <form [formGroup]="form">
+  selector: 'app-select-entity-demo',
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    SPMatSelectEntityComponent,
+  ],
+  template: `
+    <div class="select-entity-demo-wrapper">
+      <div class="select-entity-demo-scroller">
+        <div class="select-entity-demo-container">
+          <div class="select-entity-demo-row-1">
+            <div class="fs-2">Select Entity Demo</div>
+            <div class="">
+              <form [formGroup]="form">
               <div class="p-2">
                 <mat-form-field>
-                  <mat-label>Select User with 'Add User'</mat-label>
+                  <mat-label>User (Add User)</mat-label>
                   <sp-mat-select-entity
-                    [loadFromRemoteFn]="loadUsers"
-                    entityName="User"
-                    [entityLabelFn]="userLabelFn"
+                    [url]="loadUsers"
+                    entityName="user"
+                    [labelFn]="userLabelFn"
                     formControlName="user"
                     (selectionChange)="onUserSelected($event)"
                     (createNewItemSelected)="onCreateNewUser($event)"
@@ -167,48 +237,52 @@ const BLOCKS: Block[] = [
                   ></sp-mat-select-entity>
                 </mat-form-field>
               </div>
+
               <div class="p-2">
                 <mat-form-field>
-                  <mat-label>Select Unit (grouping)</mat-label>
+                  <mat-label>Unit (Grouped)</mat-label>
                   <sp-mat-select-entity
-                    [loadFromRemoteFn]="loadUnits"
-                    entityName="Unit"
-                    [entityLabelFn]="unitLabelFn"
-                    [group]="true"
-                    [groupLabelFn]="blockLabelFn"
+                    [url]="loadUnits"
+                    entityName="unit"
+                    [labelFn]="unitLabelFn"
+                    [groupByFn]="groupByFn"
                     formControlName="unit"
                     (selectionChange)="onUnitSelected($event)"
                   ></sp-mat-select-entity>
                 </mat-form-field>
               </div>
-              <div class="p-2">
-                <mat-form-field>
-                  <mat-label>Select User1 (Remote)</mat-label>
-                  <sp-mat-select-entity
-                    [url]="remoteUsersUrl"
-                    [entityLabelFn]="remoteUserLabelFn"
-                    entityName="Remote User 1"
-                    formControlName="remoteUser1"
-                    (selectionChange)="onRemoteUserSelected1($event)"
-                  ></sp-mat-select-entity>
-                </mat-form-field>
-              </div>
-              <div class="p-2">
-                <mat-form-field>
-                  <mat-label>Select User2 (Remote)</mat-label>
-                  <sp-mat-select-entity
-                    idKey="cell"
-                    [url]="remoteUsersUrl"
-                    [entityLabelFn]="remoteUserLabelFn"
-                    entityName="user"
-                    formControlName="remoteUser2"
-                    (selectionChange)="onRemoteUserSelected2($event)"
-                  ></sp-mat-select-entity>
-                </mat-form-field>
-              </div>
+                <div class="p-2">
+                  <mat-form-field>
+                    <mat-label>User (Local)</mat-label>
+                    <sp-mat-select-entity
+                      [url]="remoteUsersFn"
+                      entityName="user"
+                      [labelFn]="remoteUserLabelFn"
+                      [pageSize]="20"
+                      idKey="phone"
+                      formControlName="remoteUser1"
+                      (selectionChange)="onRemoteUserSelected1($event)"
+                      [paginator]="staticUserPaginator"
+                    ></sp-mat-select-entity>
+                  </mat-form-field>
+                </div>
+                <div class="p-2">
+                  <mat-form-field>
+                    <mat-label>User (Remote)</mat-label>
+                    <sp-mat-select-entity
+                      [url]="remoteUsersUrl"
+                      entityName="user"
+                      idKey="cell"
+                      [labelFn]="remoteUserLabelFn"
+                      formControlName="remoteUser2"
+                      [paginator]="remoteUserPaginator"
+                      (selectionChange)="onRemoteUserSelected2($event)"
+                    ></sp-mat-select-entity>
+                  </mat-form-field>
+                </div>
+                <!-- -->
 
-
-              <div class="p-2">
+                <!-- <div class="p-2">
                 <mat-form-field>
                   <mat-label>Custom Template</mat-label>
                   <sp-mat-select-entity
@@ -229,70 +303,73 @@ const BLOCKS: Block[] = [
                     {{ entity.name.title + '。' + entity.name.first + '-' + entity.name.last }}
                   </span>
                 </ng-template>
-
-              </div>
-            </form>
+              </div> -->
+              </form>
+            </div>
           </div>
+          <div class="select-entity-demo-row-2"></div>
+          <div class="select-entity-demo-row-3"></div>
         </div>
-        <div class="select-entity-demo-row-2">
-
-        </div>
-        <div class="select-entity-demo-row-3"></div>
       </div>
     </div>
-  </div>
   `,
-    styles: [`
-  .fs-2 {
-    font-size: 2em;
-  }
-  .select-entity-demo-wrapper {
-    display: flex;
-    flex-flow: column;
-    height: 100%;
-  }
-  .select-entity-demo-scroller {
-    overflow-y: auto;
-  }
-  .select-entity-demo-container {
-    height: 1500px;
-  }
-  .select-entity-demo-row-1 {
-    height: 500px;
-  }
-  .select-entity-demo-row-2 {
-    height: 500px;
-  }
-  .select-entity-demo-row-3 {
-    height: 500px;
-  }
-  .h2 {
-    font-size: 1.3em;
-    font-weight: 800;
-  }
-  .option-label {
-    text-overflow: ellipsis;
-    text-wrap: nowrap;
-  }
-  .option-label img {
-    border-radius: 50%;
-  }
-  `,
-    ]
+  styles: [
+    `
+      .fs-2 {
+        font-size: 2em;
+      }
+      .select-entity-demo-wrapper {
+        display: flex;
+        flex-flow: column;
+        height: 100%;
+      }
+      .select-entity-demo-scroller {
+        overflow-y: auto;
+      }
+      .select-entity-demo-container {
+        height: 1500px;
+      }
+      .select-entity-demo-row-1 {
+        height: 500px;
+      }
+      .select-entity-demo-row-2 {
+        height: 500px;
+      }
+      .select-entity-demo-row-3 {
+        height: 500px;
+      }
+      .h2 {
+        font-size: 1.3em;
+        font-weight: 800;
+      }
+      .option-label {
+        text-overflow: ellipsis;
+        text-wrap: nowrap;
+      }
+      .option-label img {
+        border-radius: 50%;
+      }
+    `,
+  ],
 })
 export class SelectEntityDemoComponent {
   loadUsers = () => of(USER_DATA);
-  loadUnits = () => of(BLOCKS);
-  userLabelFn = (u: User) => u.name;
-  blockLabelFn = (u: Block) => u.name;
+  loadUnits = () => of(UNITS);
+  userLabelFn = (u: User) => u.name.title + ' ' + u.name.first + ' ' + u.name.last;
   unitLabelFn = (u: Unit) => u.name;
   entities = USER_DATA;
   form!: FormGroup;
   @ViewChild(SPMatSelectEntityComponent)
   selectEntityCtrl!: SPMatSelectEntityComponent<User>;
+  remoteUsersFn = serveUserData;
+  groupByFn = (unit: Unit) => unit.blockName;
 
+  pureRemoteUsersUrl = 'https://randomuser.me/api/?nat=us,dk,fr,gb';
   remoteUsersUrl = 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb';
-  remoteUserLabelFn = (user: any) => `${user.name.title}. ${user.name.first} ${user.name.last}`;
+  remoteUserLabelFn = (user: any) =>
+    `${user.name.title}. ${user.name.first} ${user.name.last}`;
+  remoteUserPaginator = new RandomUserResponsePaginator();
+  staticUserPaginator = new StaticUserDataPaginator();
 
   constructor(private fb: FormBuilder, private host: ElementRef) {
     this.form = this.fb.group({
@@ -347,7 +424,7 @@ export class SelectEntityDemoComponent {
     console.log(`onCreateNewUser - ev: ${JSON.stringify(ev)}`);
   }
 
-  onUnitSelected(ev: User | User[]) {
+  onUnitSelected(ev: any) {
     console.log(`onUnitSelected - ev: ${JSON.stringify(ev)}`);
   }
 

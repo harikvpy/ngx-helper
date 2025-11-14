@@ -105,9 +105,9 @@ const USER_DATA = [
               </mat-option>
             </mat-select> -->
             <sp-mat-select-entity
-              [loadFromRemoteFn]="loadUsers"
+              [url]="loadUsers"
               entityName="User"
-              [entityLabelFn]="userLabelFn"
+              [labelFn]="userLabelFn"
               formControlName="user"
             ></sp-mat-select-entity>
             <mat-error ngx-mat-errors></mat-error>

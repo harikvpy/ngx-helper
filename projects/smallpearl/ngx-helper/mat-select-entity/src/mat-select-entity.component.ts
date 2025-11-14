@@ -1,6 +1,11 @@
 import { BooleanInput, coerceBooleanProperty } from '@angular/cdk/coercion';
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
-import { HttpClient, HttpContext, HttpContextToken, HttpParams } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpContext,
+  HttpContextToken,
+  HttpParams,
+} from '@angular/common/http';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -17,26 +22,56 @@ import {
   OnInit,
   Output,
   TemplateRef,
-  ViewChild
+  viewChild,
 } from '@angular/core';
-import { ControlValueAccessor, FormsModule, NgControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MAT_FORM_FIELD, MatFormFieldControl } from '@angular/material/form-field';
-import { MatSelect, MatSelectChange, MatSelectModule } from '@angular/material/select';
-import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
-import { camelCase } from 'lodash';
+import {
+  ControlValueAccessor,
+  FormsModule,
+  NgControl,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import {
+  MAT_FORM_FIELD,
+  MatFormFieldControl,
+} from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import {
+  MatSelect,
+  MatSelectChange,
+  MatSelectModule,
+} from '@angular/material/select';
+import {
+  provideTranslocoScope,
+  TranslocoModule,
+  TranslocoService,
+} from '@jsverse/transloco';
+import { getEntity, hasEntity, selectAllEntities, upsertEntities } from '@ngneat/elf-entities';
+import {
+  SPEntityLoaderFn,
+  SPPagedEntityLoader,
+} from '@smallpearl/ngx-helper/entities';
+import {
+  SPMatEntityListPaginator,
+  SPPageParams,
+} from '@smallpearl/ngx-helper/mat-entity-list';
+import { getEntityListConfig } from '@smallpearl/ngx-helper/mat-entity-list/src/config';
+import { MatSelectInfiniteScrollDirective } from '@smallpearl/ngx-helper/mat-select-infinite-scroll';
+import { capitalize } from 'lodash';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { plural } from 'pluralize';
 import {
-  BehaviorSubject,
   combineLatest,
   debounceTime,
+  distinctUntilChanged,
   Observable,
-  of,
+  startWith,
   Subject,
-  switchMap,
   takeUntil,
   tap
 } from 'rxjs';
+
 
 export interface SPMatSelectEntityHttpContext {
   entityName: string;
@@ -51,13 +86,10 @@ export const SP_MAT_SELECT_ENTITY_HTTP_CONTEXT =
     endpoint: '',
   }));
 
-type EntityGroup<T> = {
-  id?: PropertyKey;
-  name?: string;
-  label?: string;
-  description?: string;
-  items?: T[];
-  __items__?: T[];  // for internal use
+// Internal type to represent a group of entities. Used when grouping is enabled.
+type EntityGroup<TEntity> = {
+  label: string;
+  entities: TEntity[];
 };
 
 export type SPMatSelectEntityResponseParser = <
@@ -66,6 +98,91 @@ export type SPMatSelectEntityResponseParser = <
 >(
   response: any
 ) => Array<TEntity>;
+
+// Default paginator implementation. This can handle dynamic-rest and DRF
+// native pagination schemes. It also has a fallback to handle response conists
+// of an array of entities.
+class DefaultPaginator implements SPMatEntityListPaginator {
+  getRequestPageParams(
+    endpoint: string,
+    page: number,
+    pageSize: number
+  ): SPPageParams {
+    return {
+      page: page + 1,
+      pageSize,
+    };
+  }
+
+  parseRequestResponse<
+    TEntity extends { [P in IdKey]: PropertyKey },
+    IdKey extends string = 'id'
+  >(
+    entityName: string,
+    entityNamePlural: string,
+    endpoint: string,
+    params: SPPageParams,
+    resp: any
+  ) {
+    if (Array.isArray(resp)) {
+      return {
+        total: resp.length,
+        entities: resp,
+      };
+    }
+
+    if (typeof resp === 'object') {
+      const keys = Object.keys(resp);
+      // Handle dynamic-rest sideloaded response
+      // Rudimentary sideloaded response support. This should work for most
+      // of the sideloaded responses where the main entities are stored
+      // under the plural entity name key and resp['meta'] object contains
+      // the total count.
+      if (
+        keys.includes(entityNamePlural) &&
+        Array.isArray(resp[entityNamePlural])
+      ) {
+        let total = resp[entityNamePlural].length;
+        if (
+          keys.includes('meta') &&
+          typeof resp['meta'] === 'object' &&
+          typeof resp['meta']['total'] === 'number'
+        ) {
+          total = resp['meta']['total'];
+        }
+        return {
+          total,
+          entities: resp[entityNamePlural],
+        };
+      }
+
+      // Handle django-rest-framework style response
+      if (keys.includes('results') && Array.isArray(resp['results'])) {
+        let total = resp['results'].length;
+        if (keys.includes('count') && typeof resp['count'] === 'number') {
+          total = resp['count'];
+        }
+        return {
+          total,
+          entities: resp['results'],
+        };
+      }
+
+      // Finally, look for "items" key
+      if (keys.includes('items') && Array.isArray(resp['items'])) {
+        return {
+          total: resp['items'].length,
+          entities: resp['items'],
+        };
+      }
+    }
+
+    return {
+      total: 0,
+      entities: [],
+    };
+  }
+}
 
 /**
  * This is a generic component to display a <mat-select> for a FK field
@@ -90,8 +207,10 @@ export type SPMatSelectEntityResponseParser = <
         [placeholder]="placeholder"
         (opened)="onSelectOpened($event)"
         (selectionChange)="onSelectionChange($event)"
-        [multiple]="multiple"
+        [multiple]="multiple()"
         [(ngModel)]="selectValue"
+        msInfiniteScroll
+        (infiniteScroll)="onInfiniteScroll()"
       >
         <mat-select-trigger>
           {{ selectTriggerValue }}
@@ -104,6 +223,7 @@ export type SPMatSelectEntityResponseParser = <
 
         <mat-option>
           <ngx-mat-select-search
+            class="flex-grow-1"
             [(ngModel)]="filterStr"
             (ngModelChange)="this.filter$.next($event)"
             [placeholderLabel]="
@@ -117,44 +237,42 @@ export type SPMatSelectEntityResponseParser = <
           </ngx-mat-select-search>
         </mat-option>
 
-        <ng-container *ngIf="!group; else groupedOptions">
-          <span *ngIf="filteredValues | async as entities">
-            <ng-template #defaultOptionLabelTemplate let-entity>
-              {{ _entityLabelFn()(entity) }}
-            </ng-template>
-            @for (entity of entities; track entityId(entity)) {
-            <mat-option class="sel-entity-option" [value]="entityId(entity)">
-              <ng-container
-                *ngTemplateOutlet="
-                  optionLabelTemplate() || defaultOptionLabelTemplate;
-                  context: { $implicit: entity }
-                "
-              ></ng-container>
-            </mat-option>
-            }
-
-            <!-- <mat-option class="sel-entity-option" *ngFor="let entity of entities" [value]="entityId(entity)">
-            {{ _entityLabelFn()(entity) }}
-          </mat-option> -->
-          </span>
-        </ng-container>
-        <ng-template #groupedOptions>
-          <span *ngIf="filteredGroupedValues | async as groups">
-            @for (group of groups; track groupLabel(group)) {
-            <mat-optgroup [label]="groupLabel(group)">
-              @for (entity of group.__items__; track entityId(entity)) {
-
-              <mat-option class="sel-entity-option" [value]="entityId(entity)">
-                {{ _entityLabelFn()(entity) }}
-              </mat-option>
-              }
-            </mat-optgroup>
-            }
-          </span>
+        <ng-template #defaultOptionLabelTemplate let-entity>
+          {{ _entityLabelFn()(entity) }}
         </ng-template>
+        @if (!_group()) { @if (filteredValues | async; as entities) { @for
+        (entity of entities; track entityId(entity)) {
+        <mat-option class="sel-entity-option" [value]="entityId(entity)">
+          <ng-container
+            *ngTemplateOutlet="
+              optionLabelTemplate() || defaultOptionLabelTemplate;
+              context: { $implicit: entity }
+            "
+          ></ng-container>
+        </mat-option>
+        } } } @else { @if (filteredGroupedValues | async; as groups) { @for
+        (group of groups; track group.label) {
+        <mat-optgroup [label]="group.label">
+          @for (entity of group.entities; track entityId(entity)) {
+          <mat-option class="sel-entity-option" [value]="entityId(entity)">
+            <ng-container
+              *ngTemplateOutlet="
+                optionLabelTemplate() || defaultOptionLabelTemplate;
+                context: { $implicit: entity }
+              "
+            ></ng-container>
+          </mat-option>
+          }
+        </mat-optgroup>
+        } } }
 
+        <!--
+        Create New option is displayed only if there is a filter string.
+        The logic behind this behavior being that user searches for a matching
+        item and when not finding one, would like to add a new one.
+        -->
+        @if (inlineNew() && filterStr.length > 0) {
         <mat-option
-          *ngIf="!multiple && inlineNew"
           class="add-item-option"
           value="0"
           (click)="$event.stopPropagation()"
@@ -162,9 +280,12 @@ export type SPMatSelectEntityResponseParser = <
           {{
             this.addItemText()
               ? this.addItemText()
-              : t('spMatSelectEntity.addItem', { item: this.entityName })
-          }}</mat-option
-        >
+              : t('spMatSelectEntity.addItem', {
+                  item: this._capitalizedEntityName()
+                })
+          }}
+        </mat-option>
+        }
       </mat-select>
     </div>
   `,
@@ -172,7 +293,7 @@ export type SPMatSelectEntityResponseParser = <
     `
       .add-item-option {
         padding-top: 2px;
-        border-top: 1px solid gray;
+        border-top: 1px solid var(--mat-sys-outline);
       }
       .addl-selection-count {
         opacity: 0.75;
@@ -187,8 +308,11 @@ export type SPMatSelectEntityResponseParser = <
     FormsModule,
     ReactiveFormsModule,
     MatSelectModule,
+    MatButtonModule,
+    MatIconModule,
     TranslocoModule,
     NgxMatSelectSearchModule,
+    MatSelectInfiniteScrollDirective,
   ],
   providers: [
     provideTranslocoScope('sp-mat-select-entity'),
@@ -212,56 +336,22 @@ export class SPMatSelectEntityComponent<
   //
   // This mechanism is to suppress multiple fetches from the remote from the
   // same endpoint as that can occur if a form has multiple instances of
-  // this component, with the same endpoint.
+  // this component with the same url.
   static _entitiesCache = new Map<
     string,
     { refCount: number; entities: Array<any> }
   >();
 
-  @ViewChild(MatSelect) matSel!: MatSelect;
+  //**** REQUIRED ATTRIBUTES ****//
+  /**
+   * Url or entity loader fn.
+   */
+  url = input.required<string | SPEntityLoaderFn>();
 
-  // REQUIRED PROPERTIES //
-  /**
-   * Entity label function. Given an entity return its natural label
-   * to display to the user.
-   */
-  @Input() entityLabelFn!: (entity: TEntity) => string;
-
-  // OPTIONAL PROPERTIES //
-  /**
-   * Entity filter function - return a boolean if the entity is to be included
-   * in the filtered entities list.
-   * @param entity: TEntity object to test for 'search' string.
-   * @param search - search string
-   */
-  @Input({ required: false }) entityFilterFn!: (
-    entity: TEntity,
-    search: string
-  ) => boolean;
-  /**
-   * Entity idKey, if idKey is different from the default 'id'.
-   */
-  @Input({ required: false }) idKey = 'id';
-  /**
-   * URL of the remote from where entities are to be loaded.
-   * This won't be used if `loadFromRemoteFn` is specified.
-   */
-  @Input({ required: false }) url!: string;
-  /**
-   * Parameters to be added to the HTTP request to retrieve data from
-   * remote. This won't be used if `loadFromRemoteFn` is specified.
-   */
-  @Input({ required: false }) httpParams!: HttpParams;
-  /**
-   * Function to load entities from remote.
-   */
-  @Input({ required: false }) loadFromRemoteFn!: () => Observable<TEntity[]>;
-
-  @Input({ required: false }) inlineNew: boolean = false;
   /**
    * Entity name, that is used to form the "New { item }" menu item if
    * inlineNew=true. This is also used as the key of the object in GET response
-   * if the reponse JSON is not an array and rather an object, where the values
+   * if the reponse JSON is an object (sideloaded response), where the values
    * are stored indexed by the server model name. For eg:-
    *
    * {
@@ -272,53 +362,81 @@ export class SPMatSelectEntityComponent<
    *    ]
    * }
    */
-  @Input({ required: false }) entityName!: string;
+  entityName = input.required<string>();
+
+  //**** OPTIONAL ATTRIBUTES ****//
+
+  // Plural entity name, used when grouping options. If not specified, it is
+  // derived by pluralizing the entityName.
+  pluralEntityName = input<string>();
+
+  // Entity label function - function that takes an entity object and returns
+  // a string label for it. If not specified, a default label function is used
+  // that returns the value of 'name' or 'label' or 'title' property. If
+  // none of these properties are present, the entity's id is returned as
+  // string.
+  labelFn = input<(entity: TEntity) => string>();
+
+  // Entity filter function - return a boolean if the entity is to be included
+  // in the filtered entities list.
+  filterFn = input<(entity: TEntity, search: string) => boolean>();
+
+  // Entity idKey, if idKey is different from the default 'id'.
+  idKey = input<string>('id');
+
+  // Parameters to be added to the HTTP request to retrieve data from
+  // remote. This won't be used if `loadFromRemoteFn` is specified.
+  httpParams = input<HttpParams>();
+
+  // Set to true to show "Add { item }" option in the select dropdown.
+  // Selecting this option, will emit `createNewItemSelected` event.
+  inlineNew = input<boolean>(false);
+
+  // Paginator for the remote entity list. This is used to determine the
+  // pagination parameters for the API request. If not specified, the global
+  // paginator specified in SPMatEntityListConfig will be used. If that too is
+  // not specified, a default paginator will be used. Default paginator can
+  // handle DRF native PageNumberPagination and dynamic-rest style pagination.
+  paginator = input<SPMatEntityListPaginator>();
+
   // Set to true to allow multiple option selection. The returned value
   // would be an array of entity ids.
-  @Input({ required: false }) multiple = false;
-  /*
-    Whether to group options using <mat-optgroup></mat-optgroup>.
-    If set to true, the response from the server should be an array of
-    groups of TEntity objects, where each object is of the form:
-      [
-        {
-          id: <id>,
-          name|label: <>,
-          items|<plural_entityName>|<custom_key>: [
-              TEntity,
-              ...
-          ]
-        },
-        ...
-      ]
-  */
-  @Input({ required: false }) group = false;
+  multiple = input<boolean>(false);
+
   /**
-   * The group object key name under which options are stored. Defaults to
-   * 'items' or pluralized 'entityName'. Ideally the client class should
-   * explicitly set this property value.
+   * The entity key name that is used to classify entities into groups.
+   * Entities with the same key value will be grouped together. If this is
+   * specified, grouping will be enabled.
+   * @see groupByFn
    */
-  @Input({ required: false }) groupOptionsKey!: string;
+  groupOptionsKey = input<string>();
+
   /**
-   * If groupOptions = true, specify this to provide accurate label for each
-   * group. If not specified, group label will be determined by looking up one
-   * of the standard fields - name, label or description - whichever comes
-   * first.
+   * A function that takes a TEntity and returns the group id (string)
+   * that the entity belongs to. If this is specified, grouping of entities
+   * in the select will be enabled. This takes precedence over
+   * `groupOptionsKey`.
+   * @see groupOptionsKey
    */
-  @Input({ required: false }) groupLabelFn!: (group: any) => string;
-  /**
-   * Sideload data key name.
-   */
-  sideloadDataKey = input<string>();
-  /**
-   * Parser function to return the list of entities from the GET response.
-   */
-  responseParserFn = input<SPMatSelectEntityResponseParser>();
+  groupByFn = input<(entity: TEntity) => string>();
 
   @Output() selectionChange = new EventEmitter<TEntity | TEntity[]>();
   @Output() createNewItemSelected = new EventEmitter<void>();
 
-  // allow per component customization
+  // Number of entities to be loaded per page from the server. This will be
+  // passed to PagedEntityLoader to load entities in pages. Defaults to 50.
+  // Adjust this accordingly based on the average size of your entities to
+  // optimize server round-trips and memory usage.
+  pageSize = input<number>(50);
+
+  // Search parameter name to be used in the HTTP request.
+  // Defaults to 'search'. That is when a search string is specified and
+  // the entire entity list has not been fetched, a fresh HTTP request is made
+  // to the remote server with `?<searchParamName>=<search string>` parameter.
+  searchParamName = input<string>('search');
+
+  // i18n localization support toallow per component customization of
+  // some strings used.
   readonly searchText = input<string>();
   readonly notFoundText = input<string>();
   readonly addItemText = input<string>();
@@ -335,7 +453,7 @@ export class SPMatSelectEntityComponent<
    * ```
    *  <sp-mat-select-entity
    *    [url]="'/api/v1/customers/'"
-   *    [entityLabelFn]="entity => entity.name"
+   *    [labelFn]="entity => entity.name"
    *    [optionLabelTemplate]="optionLabelTemplate"
    *  ></sp-mat-select-entity>
    *  <ng-template #optionLabelTemplate let-entity>
@@ -345,8 +463,9 @@ export class SPMatSelectEntityComponent<
    */
   optionLabelTemplate = input<TemplateRef<any>>();
 
-  _entityLabelFn = computed<(entity: TEntity) => string>(() => {
-    const fn = this.entityLabelFn;
+  // a computed version of labelFn that provides a default implementation
+  protected _entityLabelFn = computed<(entity: TEntity) => string>(() => {
+    const fn = this.labelFn();
     if (fn) {
       return fn;
     }
@@ -354,20 +473,44 @@ export class SPMatSelectEntityComponent<
       return (
         (entity as any)['name'] ||
         (entity as any)['label'] ||
-        String((entity as any)[this.idKey])
+        (entity as any)['title'] ||
+        String((entity as any)[this.idKey()])
       );
     };
   });
 
-  _sideloadDataKey = computed<string>(() => {
-    if (this.sideloadDataKey()) {
-      return this.sideloadDataKey() as string;
-    }
-    return this.entityName ? plural(camelCase(this.entityName)) : 'results';
+  protected _pluralEntityName = computed<string>(() => {
+    const pluralEntityName = this.pluralEntityName();
+    return pluralEntityName ? pluralEntityName : plural(this.entityName());
   });
 
-  private _entities = new Map<PropertyKey, TEntity>();
-  private _groupedEntities = new Array<EntityGroup<TEntity>>();
+  protected _capitalizedEntityName = computed<string>(() =>
+    capitalize(this.entityName())
+  );
+
+  // Whether to group options. Grouping is enabled when either groupOptionsKey
+  // or groupByFn is specified.
+  protected _group = computed<boolean>(() => {
+    return !!this.groupOptionsKey() || !!this.groupByFn();
+  });
+
+  protected _groupEntitiesKey = computed<string>(() => {
+    const groupOptionsKey = this.groupOptionsKey();
+    return groupOptionsKey
+      ? groupOptionsKey
+      : this.entityName()
+      ? this._pluralEntityName()
+      : 'items';
+  });
+
+  protected _paginator = computed<SPMatEntityListPaginator>(() => {
+    const paginator = this.paginator();
+    const entityListConfigPaginator = this.entityListConfig
+      ?.paginator as SPMatEntityListPaginator;
+    return paginator
+      ? paginator
+      : entityListConfigPaginator ?? new DefaultPaginator();
+  });
 
   stateChanges = new Subject<void>();
   focused = false;
@@ -384,18 +527,19 @@ export class SPMatSelectEntityComponent<
   searching = false;
   filterStr: string = '';
 
-  filter$ = new BehaviorSubject<string>('');
-  // ControlValueAccessor callback
+  filter$ = new Subject<string>();
+
+  // ControlValueAccessor callbacks
   onChanged = (_: any) => {};
   onTouched = () => {};
-  @ViewChild(MatSelect) matSelect!: MatSelect;
+
+  // @ViewChild(MatSelect) matSelect!: MatSelect;
+  matSelect = viewChild(MatSelect);
 
   filteredValues = new Subject<TEntity[]>();
   filteredGroupedValues = new Subject<EntityGroup<TEntity>[]>();
 
   destroy = new Subject<void>();
-  private loaded = false;
-  private load$ = new BehaviorSubject<boolean>(false);
 
   static nextId = 0;
   @HostBinding() id = `sp-select-entity-${SPMatSelectEntityComponent.nextId++}`;
@@ -407,38 +551,107 @@ export class SPMatSelectEntityComponent<
   public ngControl = inject(NgControl, { optional: true });
   transloco = inject(TranslocoService);
 
+  // For the global paginator. We'll abstract this into an independent
+  // configuration that can be shared across both mat-entity-list and
+  // mat-select-entity later.
+  entityListConfig = getEntityListConfig();
+
+  pagedEntityLoader!: SPPagedEntityLoader<TEntity, IdKey>;
+
   constructor() {
     if (this.ngControl != null) {
       this.ngControl.valueAccessor = this;
     }
   }
 
+  /**
+   * Conditions for loading entities:
+   *
+   * 1. When the select is opened, if entities have not already been loaded.
+   * 2. When the search string changes.
+   * 3. When the scroll reaches the bottom and more entities are available
+   *    to be loaded.
+   *
+   * We need to create an 'observer-loop' that can handle the above.
+   */
+
   ngOnInit() {
-    combineLatest([this.filter$.pipe(debounceTime(400)), this.load$])
+    this.pagedEntityLoader = new SPPagedEntityLoader<TEntity, IdKey>(
+      this.entityName(),
+      this.url(),
+      this.http,
+      this.pageSize(),
+      this._paginator(),
+      this.searchParamName(),
+      this.idKey(),
+      this._pluralEntityName(),
+      undefined,
+      this.httpParams()
+    );
+    this.pagedEntityLoader.start();
+
+    // A rudimentary mechanism to detect which of the two observables
+    // emitted the latest value. We reset this array to 'false' after
+    // processing every combined emission.
+    const emittedObservable = [false, false];
+    const store$ = this.pagedEntityLoader.store.pipe(selectAllEntities());
+    const filter$ = this.filter$.pipe(
+      startWith(''),
+      distinctUntilChanged(),
+      debounceTime(400)
+    );
+
+    const emittedStatusObservable = (obs: Observable<any>, index: number) =>
+      obs.pipe(tap(() => (emittedObservable[index] = true)));
+
+    // We need to determine if the emission is owing to a change in
+    // filterStr or a change in the entities in pagedEntityLoader.store$.
+    //
+    //  1. If entities in pagedEntityLoader.store$ have changed, we just need
+    //     to filter the entities in local store using the current filterStr.
+    //  2. If filterStr has changed, there are two cases to handle:-
+    //     a. If all entities have been loaded, we don't need to reload
+    //        entities. Instead we just have to filter the entities in
+    //        local store using the filterStr.
+    //     b. If all entities have not been loaded, we trigger a server
+    //        load with the new filterStr as the search param.
+    //
+    // The following logic implements the above.
+    combineLatest([
+      emittedStatusObservable(store$, 0),
+      emittedStatusObservable(filter$, 1),
+    ])
       .pipe(
         takeUntil(this.destroy),
-        switchMap(([str, load]) => {
-          if (load && !this.loaded) {
-            this.searching = true;
-            this.cdr.detectChanges();
-            return this.loadFromRemote();
+        tap(([entities, filterStr]) => {
+          if (emittedObservable.every((eo) => eo)) {
+            // initial emission. This can be combined with the case immediately
+            // below it. But we keep it separate for clarity.
+            emittedObservable[0] = emittedObservable[1] = false;
+            this.filterEntities(entities, filterStr);
+          } else if (emittedObservable[0]) {
+            emittedObservable[0] = false;
+            this.filterEntities(entities, filterStr);
           } else {
-            return of(this.entities ?? []);
+            emittedObservable[1] = false;
+            if (this.pagedEntityLoader.allEntitiesLoaded()) {
+              this.filterEntities(entities, filterStr);
+            } else {
+              this.pagedEntityLoader.setSearchParamValue(filterStr);
+              // This will cause an emission from store$ observable as the
+              // 'forceRefresh=true' arg causes the store to be reset.
+              this.pagedEntityLoader.loadNextPage(true);
+            }
           }
-        }),
-        tap(() => {
-          if (this.group) {
-            this.filterGroupedValues(this.filterStr);
-          } else {
-            this.filterValues(this.filterStr);
-          }
-          this.cdr.detectChanges();
         })
       )
       .subscribe();
   }
+
   ngOnDestroy(): void {
     this.destroy.next();
+    this.destroy.complete();
+    this.pagedEntityLoader.stop();
     this.removeFromCache();
     this.stateChanges.complete();
   }
@@ -452,12 +665,14 @@ export class SPMatSelectEntityComponent<
     //     this.required = true;
     //   }
     // }
+    // load first page
+    // this.pagedEntityLoader.loadMoreEntities();
   }
 
   addEntity(entity: TEntity) {
-    this._entities.set((entity as any)[this.idKey], entity);
-    // So that the newly added entity will be added to the <mat-option> list.
-    this.filterValues(this.filterStr);
+    this.pagedEntityLoader.store.update(
+      upsertEntities(entity)
+    );
     this.cdr.detectChanges();
   }
 
@@ -466,7 +681,9 @@ export class SPMatSelectEntityComponent<
       const firstSelected = Array.isArray(this.selectValue)
         ? this.selectValue[0]
         : this.selectValue;
-      const selectedEntity = this._entities.get(firstSelected);
+      const selectedEntity = this.pagedEntityLoader.getEntity(
+        firstSelected as TEntity[IdKey]
+      );
       return selectedEntity ? this._entityLabelFn()(selectedEntity) : '';
     }
     return '';
@@ -479,15 +696,17 @@ export class SPMatSelectEntityComponent<
   }
 
   entityId(entity: TEntity) {
-    return (entity as any)[this.idKey];
+    return (entity as any)[this.idKey()];
   }
 
   writeValue(entityId: string | number | string[] | number[]): void {
+    const store = this.pagedEntityLoader.store;
+    const entities = this.pagedEntityLoader.getEntities();
     if (Array.isArray(entityId)) {
-      if (this.multiple) {
+      if (this.multiple()) {
         const selectedValues: any[] = [];
         entityId.forEach((id) => {
-          if (this._entities.has(id)) {
+          if (store.query(hasEntity(id as TEntity[IdKey]))) {
             selectedValues.push(id);
           }
         });
@@ -495,44 +714,33 @@ export class SPMatSelectEntityComponent<
         this.cdr.detectChanges();
       }
     } else {
-      if (this._entities.has(entityId)) {
+      if (store.query(hasEntity(entityId as TEntity[IdKey]))) {
+      // if (this._entities.has(entityId)) {
         this.selectValue = entityId;
         if (this.filterStr) {
           this.filterStr = '';
-          this.filterValues(this.filterStr);
+          // this.filterNonGroupedEntities(entities, this.filterStr);
         }
         this.cdr.detectChanges();
       }
     }
   }
+
   registerOnChange(fn: any): void {
     this.onChanged = fn;
   }
+
   registerOnTouched(fn: any): void {
     this.onTouched = fn;
   }
 
   @Input()
   get entities(): TEntity[] {
-    return Array.from(this._entities.values());
+    return this.pagedEntityLoader.getEntities();
   }
 
   set entities(items: TEntity[]) {
-    if (!this.group) {
-      items.forEach((item) => {
-        this._entities.set((item as any)[this.idKey], item);
-      });
-    } else {
-      this._groupedEntities = items as any as EntityGroup<TEntity>[];
-      this._groupedEntities.forEach((group) => {
-        const key = this.groupEntitiesKey();
-        const groupEntities = (group as any)[key] as TEntity[];
-        (group as any)['__items__'] = groupEntities;
-        groupEntities.forEach((item) => {
-          this._entities.set((item as any)[this.idKey], item);
-        });
-      });
-    }
+    this.pagedEntityLoader.setEntities(items);
   }
 
   @Input()
@@ -623,20 +831,24 @@ export class SPMatSelectEntityComponent<
 
   setDisabledState(isDisabled: boolean): void {
     this._disabled = isDisabled;
-    if (this.matSelect) {
-      this.matSelect.setDisabledState(isDisabled);
+    const matSelect = this.matSelect();
+    if (matSelect) {
+      matSelect.setDisabledState(isDisabled);
       this.cdr.detectChanges();
     }
   }
+
   onSelectOpened(ev: any) {
     // Store the current select value so that we can restore it if user
     // eventually selects 'New Item' option.
     this.lastSelectValue = this.selectValue;
     // If values have not been loaded from remote, trigger a load.
-    if (!this.loaded) {
-      this.load$.next(true); // this will trigger the loadFromRemote() call.
+    if (this.pagedEntityLoader.totalEntitiesAtRemote() === 0) {
+      // first load
+      this.pagedEntityLoader.loadNextPage();
     }
   }
+
   onSelectionChange(ev: MatSelectChange) {
     // console.log('SelectionChange - sel:', ev);
     if (Array.isArray(ev.value)) {
@@ -644,7 +856,7 @@ export class SPMatSelectEntityComponent<
       this.onTouched();
       this.onChanged(ev.value);
       const selectedEntities: TEntity[] = ev.value.map((id) =>
-        this._entities.get(id)
+        this.pagedEntityLoader.store.query(getEntity(id))
       ) as TEntity[];
       this.selectionChange.emit(selectedEntities);
     } else {
@@ -652,7 +864,9 @@ export class SPMatSelectEntityComponent<
         this.selectValue = ev.value;
         this.onTouched();
         this.onChanged(ev.value);
-        this.selectionChange.emit(this._entities.get(ev.value));
+        this.selectionChange.emit(
+          this.pagedEntityLoader.store.query(getEntity(ev.value))
+        );
       } else {
         // New Item activated, return value to previous value. We track
         // previous value via 'lastSelectValue' member which is updated
@@ -667,24 +881,44 @@ export class SPMatSelectEntityComponent<
     }
   }
 
-  filterValues(search: string) {
-    const searchLwr = search.toLocaleLowerCase();
-    const entities = this.entities;
-    if (!entities) {
-      return;
+  /**
+   * Wrapper to filter entities based on whether grouping is enabled or not.
+   * Calls one of the two filtering methods -- filterGroupedEntities() or
+   * filterNonGroupedEntities().
+   * @param entities
+   * @param filterStr
+   * @returns
+   */
+  filterEntities(entities: TEntity[], filterStr: string) {
+    this.searching = true;
+    let retval: number | undefined;
+    if (this._group()) {
+      this.filterGroupedEntities(entities, filterStr);
+    } else {
+      this.filterNonGroupedEntities(entities, filterStr);
     }
+    this.searching = false;
+  }
+
+  /**
+   * Filters the entities based on the search string.
+   * @param search The search string to filter entities.
+   * @returns The number of entities in the filtered result set or undefined.
+   */
+  filterNonGroupedEntities(entities: TEntity[], search: string) {
+    const searchLwr = search.toLocaleLowerCase();
     if (!search) {
       this.filteredValues.next(entities.slice());
     } else {
-      this.filteredValues.next(
-        entities.filter((member) => {
-          if (this.entityFilterFn) {
-            return this.entityFilterFn(member, search);
-          }
-          const labelFn = this._entityLabelFn();
-          return labelFn(member).toLocaleLowerCase().includes(searchLwr);
-        })
-      );
+      const filteredEntities = entities.filter((member) => {
+        const filterFn = this.filterFn();
+        if (filterFn) {
+          return filterFn(member, search);
+        }
+        const labelFn = this._entityLabelFn();
+        return labelFn(member).toLocaleLowerCase().includes(searchLwr);
+      });
+      this.filteredValues.next(filteredEntities);
     }
   }
 
@@ -695,142 +929,61 @@ export class SPMatSelectEntityComponent<
    * groups are to be included and within those groups, only entities whose
    * label matches the search string are to be included in the result set.
    * @param search
-   * @returns
+   * @returns number of groups in the filtered result set.
    */
-  filterGroupedValues(search: string) {
+  filterGroupedEntities(entities: TEntity[], search: string) {
     const searchLwr = search.toLocaleLowerCase();
-    const groups = this._groupedEntities;
-    if (!groups) {
-      return;
-    }
+    // First filter entities by the search string, if it's specified
+    let filteredEntities: TEntity[];
     if (!search) {
-      const groupsCopy = groups.slice();
-      this.filteredGroupedValues.next(groupsCopy);
+      filteredEntities = entities;
     } else {
-      const groupEntitiesKey = this.groupEntitiesKey();
-      const groups = this._groupedEntities.map((ge) => {
-        const label = this.groupLabel(ge);
-        if (label.toLocaleLowerCase().includes(searchLwr)) {
-          return { ...ge } as EntityGroup<TEntity>;
-        } else {
-          const groupEntities = ge.__items__?.filter((e) =>
-            this._entityLabelFn()(e).toLocaleLowerCase().includes(searchLwr)
-          );
-          const ret: any = {
-            ...ge,
-          };
-          ret['__items__'] = groupEntities ?? [];
-          return ret as EntityGroup<TEntity>;
+      filteredEntities = entities.filter((member) => {
+        const filterFn = this.filterFn();
+        if (filterFn) {
+          return filterFn(member, search);
         }
+        const labelFn = this._entityLabelFn();
+        return labelFn(member).toLocaleLowerCase().includes(searchLwr);
       });
-      // filter out groups with no entities
-      // console.log(`Groups: ${JSON.stringify(groups)}`);
-      this.filteredGroupedValues.next(
-        groups.filter(
-          (group) =>
-            Array.isArray((group as any)[groupEntitiesKey]) &&
-            (group as any)['__items__'].length > 0
-        )
-      );
     }
+    this.filteredGroupedValues.next(this.groupEntities(filteredEntities));
   }
 
-  loadFromRemote() {
-    if (!this.url && !this.loadFromRemoteFn) {
-      // If user had initialized entities, they will be dispalyed
-      // in the options list. If not, options would be empty.
-      return of(this.group ? this.groupEntities : this.entities);
+  /**
+   * Helper to arrange the given array of entities into groups based on the
+   * groupByFn or groupOptionsKey. groupByFn takes precedence over
+   * groupOptionsKey.
+   * @param entities
+   * @returns EntityGroup<TEntity>[]
+   */
+  protected groupEntities(entities: TEntity[]): EntityGroup<TEntity>[] {
+    let groupByFn!: (entity: TEntity) => string;
+    if (this.groupByFn()) {
+      groupByFn = this.groupByFn()!;
+    } else if (this.groupOptionsKey()) {
+      groupByFn = (entity: TEntity) => {
+        const key = this.groupOptionsKey()!;
+        return (entity as any)[key] ?? '???';
+      };
     }
-    let cacheKey!: string;
-    let obs: Observable<TEntity[]>;
-    if (this.loadFromRemoteFn) {
-      obs = this.loadFromRemoteFn();
-    } else {
-      let params!: HttpParams;
-      if (this.httpParams) {
-        params = new HttpParams({
-          fromString: this.httpParams.toString(),
-        });
-      } else {
-        params = new HttpParams();
+
+    const groupedEntitiesMap = new Map<string | number, TEntity[]>();
+    entities.forEach((entity) => {
+      const groupId = groupByFn!(entity);
+      if (!groupedEntitiesMap.has(groupId)) {
+        groupedEntitiesMap.set(groupId, []);
       }
-      params = params.set('paginate', false);
-      cacheKey = this.getCacheKey();
-      if (this.existsInCache()) {
-        obs = of(this.getFromCache());
-      } else {
-        obs = this.http.get<any>(this.url, {
-          context: this.getHttpReqContext(),
-          params,
-        });
-      }
-    }
-    return obs.pipe(
-      tap((entities) => {
-        this.searching = false; // remote loading done, will hide the loading wheel
-        // Handle DRF paginated response
-        const responseParserFn = this.responseParserFn();
-        if (responseParserFn) {
-          entities = responseParserFn(entities) as unknown as TEntity[];
-        } else {
-          if (
-            !Array.isArray(entities) &&
-            entities['results'] &&
-            Array.isArray(entities['results'])
-          ) {
-            entities = entities['results'];
-          } else if (
-            // sideloaded response, where entities are usually provided in 'entityName'
-            this._sideloadDataKey() &&
-            !Array.isArray(entities) &&
-            typeof entities === 'object' &&
-            entities[this._sideloadDataKey()] &&
-            Array.isArray(entities[this._sideloadDataKey()])
-          ) {
-            entities = entities[this._sideloadDataKey()];
-          }
-        }
-        if (Array.isArray(entities)) {
-          this.entities = entities;
-          // if (this.group) {
-          //   this._groupedEntities = entities as EntityGroup<TEntity>[];
-          // } else {
-          //   this.entities = entities;
-          // }
-        }
-        this.loaded = true;
-        this.addToCache(entities);
-        this.cdr.detectChanges();
-      })
-    );
-  }
-
-  groupLabel(group: EntityGroup<TEntity>): string {
-    if (this.groupLabelFn) {
-      return this.groupLabelFn(group);
-    }
-    const standardLabelFields = ['name', 'label', 'desc', 'description'];
-    for (let index = 0; index < standardLabelFields.length; index++) {
-      const labelField = standardLabelFields[index];
-      if ((group as any)[labelField]) {
-        return (group as any)[labelField];
-      }
-    }
-    return `Group ${String(group.id)}`;
-  }
-
-  groupEntities(group: EntityGroup<TEntity>): TEntity[] {
-    const key = this.groupEntitiesKey();
-    console.log(`groupEntities - group: ${JSON.stringify(group)}, key: ${key}`);
-    return (group as any)[this.groupEntitiesKey()] ?? [];
-  }
-
-  groupEntitiesKey() {
-    return this.groupOptionsKey
-      ? this.groupOptionsKey
-      : this.entityName
-      ? plural(this.entityName.toLocaleLowerCase())
-      : 'items';
+      groupedEntitiesMap.get(groupId)!.push(entity);
+    });
+    let entityGroups: EntityGroup<TEntity>[] = [];
+    groupedEntitiesMap.forEach((entities, groupId) => {
+      entityGroups.push({
+        label: String(groupId),
+        entities,
+      });
+    });
+    return entityGroups;
   }
 
   private existsInCache() {
@@ -842,7 +995,7 @@ export class SPMatSelectEntityComponent<
   }
 
   private getCacheKey() {
-    if (!this.loadFromRemoteFn) {
+    if (typeof this.url() !== 'function') {
       let params!: HttpParams;
       if (this.httpParams) {
         params = new HttpParams({
@@ -856,6 +1009,7 @@ export class SPMatSelectEntityComponent<
     }
     return ''; // empty string evalutes to boolean(false)
   }
+
   private getFromCache() {
     const cacheKey = this.getCacheKey();
     if (cacheKey && SPMatSelectEntityComponent._entitiesCache.has(cacheKey)) {
@@ -864,6 +1018,7 @@ export class SPMatSelectEntityComponent<
     }
     return [];
   }
+
   private addToCache(entities: TEntity[]) {
     const cacheKey = this.getCacheKey();
     if (cacheKey) {
@@ -878,6 +1033,7 @@ export class SPMatSelectEntityComponent<
       cacheEntry!.refCount += 1;
     }
   }
+
   private removeFromCache() {
     const cacheKey = this.getCacheKey();
     if (cacheKey) {
@@ -896,10 +1052,21 @@ export class SPMatSelectEntityComponent<
     const context = new HttpContext();
     const entityName = this.entityName;
     context.set(SP_MAT_SELECT_ENTITY_HTTP_CONTEXT, {
-      entityName: this.entityName ?? '',
-      entityNamePlural: this.entityName ? plural(this.entityName) : '',
-      endpoint: this.url,
+      entityName: this.entityName(),
+      entityNamePlural: this._pluralEntityName(),
+      endpoint: this.url() as string,
     });
     return context;
+  }
+
+  /**
+   * If more entities are available, load the next page of entities.
+   * This method is triggered when user scrolls to the bottom of the options
+   * list. Well almost to the bottom of the options list. :)
+   */
+  onInfiniteScroll() {
+    if (this.pagedEntityLoader.hasMore() && !this.pagedEntityLoader.loading()) {
+      this.pagedEntityLoader.loadNextPage();
+    }
   }
 }
