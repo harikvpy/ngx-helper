@@ -1,5 +1,5 @@
 {
   "search": "Search",
   "notFound": "Not found",
-  "addItem": "Add {{item}}"
+  "createNew": "Create New"
 }

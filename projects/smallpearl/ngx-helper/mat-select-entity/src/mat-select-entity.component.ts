@@ -272,9 +272,9 @@ class DefaultPaginator implements SPMatEntityListPaginator {
           (click)="$event.stopPropagation()"
           >⊕
           {{
-            this.addItemText()
-              ? this.addItemText()
-              : t('spMatSelectEntity.addItem', {
+            this.createNewText()
+              ? this.createNewText()
+              : t('spMatSelectEntity.createNew', {
                   item: this._capitalizedEntityName()
                 })
           }}
@@ -383,7 +383,7 @@ export class SPMatSelectEntityComponent<
   // some strings used.
   readonly searchText = input<string>();
   readonly notFoundText = input<string>();
-  readonly addItemText = input<string>();
+  readonly createNewText = input<string>();
 
   controlType = 'sp-mat-select-entity';
 
