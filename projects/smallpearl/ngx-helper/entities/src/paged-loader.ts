@@ -8,8 +8,7 @@ import { computed, Directive, inject, input } from '@angular/core';
 import { createStore, setProps, withProps } from '@ngneat/elf';
 import { getAllEntities, getEntitiesCount, getEntity, upsertEntities, withEntities } from '@ngneat/elf-entities';
 import { getPaginationData, setPage, skipWhilePageExists, updatePaginationData, withPagination } from '@ngneat/elf-pagination';
-import { SPMatEntityListPaginator, SPPageParams } from '@smallpearl/ngx-helper/mat-entity-list';
-import { getEntityListConfig } from '@smallpearl/ngx-helper/mat-entity-list/src/config';
+import { SP_MAT_ENTITY_LIST_CONFIG, SPMatEntityListPaginator, SPPageParams } from '@smallpearl/ngx-helper/mat-entity-list';
 import { capitalize } from 'lodash';
 import { plural } from 'pluralize';
 import {
@@ -309,14 +308,19 @@ export abstract class SPPagedEntityLoader<
     return context;
   });
 
-  entityListConfig = getEntityListConfig();
+  entityListConfig = inject(SP_MAT_ENTITY_LIST_CONFIG, {
+    optional: true,
+  });
   protected _paginator = computed<SPMatEntityListPaginator>(() => {
     const paginator = this.paginator();
     const entityListConfigPaginator = this.entityListConfig
-      ?.paginator as SPMatEntityListPaginator;
+      ? (this.entityListConfig.paginator as SPMatEntityListPaginator)
+      : undefined;
     return paginator
       ? paginator
-      : entityListConfigPaginator ?? new DefaultPaginator();
+      : entityListConfigPaginator
+      ? entityListConfigPaginator
+      : new DefaultPaginator();
   });
 
   // We create it here so that store member variable will have the correct
