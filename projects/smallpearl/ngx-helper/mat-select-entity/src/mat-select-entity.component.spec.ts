@@ -382,7 +382,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
     expect(component.value).toEqual(DET_MOOSA.id);
   });
 
-  it('should have New Item option when inlineNew=true', async () => {
+  it('should have New Item option when inlineNew=true and filterStr length > 0', async () => {
     fixture.autoDetectChanges();
     matSel = fixture.debugElement.query(
       By.directive(MatSelect)
@@ -393,6 +393,33 @@ describe('MatSelectEntityComponent (single selection)', () => {
     // fixture.detectChanges();
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    await openMatSelect(fixture);
+    expect(
+      matSel.options.last._getHostElement().innerText.includes('create')
+    ).toBeTrue();
+
+    // select the New Item option
+    let createNewItemSelected = false;
+    const sub$ = component.createNewItemSelected
+      .pipe(
+        tap((entity) => {
+          createNewItemSelected = true;
+        })
+      )
+      .subscribe();
+    matSel.options.last.select(true);
+    expect(createNewItemSelected).toBeTrue();
+  });
+
+  it('should have New Item option when inlineNew=true and entities at remote length = 0', async () => {
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(
+      By.directive(MatSelect)
+    ).componentInstance;
+    fixture.componentRef.setInput('inlineNew', true);
+    // fixture.detectChanges();
+    const http = TestBed.inject(HttpClient);
+    spyOn(http, 'get').and.returnValue(of([])); // return empty list
     await openMatSelect(fixture);
     expect(
       matSel.options.last._getHostElement().innerText.includes('create')
