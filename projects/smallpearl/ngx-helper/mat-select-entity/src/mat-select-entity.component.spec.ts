@@ -39,7 +39,7 @@ interface User {
 const eni18n = {
   search: 'Search',
   notFound: 'Not found',
-  addItem: 'New {{ item }}',
+  createNew: 'Create New',
 };
 
 const USER_DATA = [
@@ -395,7 +395,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
     await openMatSelect(fixture);
     expect(
-      matSel.options.last._getHostElement().innerText.includes('add')
+      matSel.options.last._getHostElement().innerText.includes('create')
     ).toBeTrue();
 
     // select the New Item option
@@ -432,7 +432,7 @@ describe('MatSelectEntityComponent (single selection)', () => {
     expect(
       matSel.options.last
         ._getHostElement()
-        .innerText.includes('spMatSelectEntity.addItem')
+        .innerText.includes('spMatSelectEntity.createNew')
     ).toBeTrue();
     // first select first item
     const firstOption = matSel.options.get(1);
