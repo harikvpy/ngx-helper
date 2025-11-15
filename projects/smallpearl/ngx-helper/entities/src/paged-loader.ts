@@ -456,18 +456,6 @@ export abstract class SPPagedEntityLoader<
   }
 
   /**
-   * Returns the next page number to be loaded. This is based on the current
-   * page number stored in the internal pagination state. Note that this method
-   * only makes sense when pages are loaded sequentially as in an infinite
-   * scroll UI.
-   * @returns
-   */
-  nextPageNumber(): number {
-    const paginationData = this.store.query(getPaginationData());
-    return paginationData.currentPage + 1;
-  }
-
-  /**
    * Returns the total number of pages available at the remote.
    * @returns
    */
@@ -483,17 +471,18 @@ export abstract class SPPagedEntityLoader<
    * @param forceRefresh
    */
   loadNextPage(forceRefresh = false) {
+    const paginationData = this.store.query(getPaginationData());
+
     if (forceRefresh) {
       this.store.reset();
-    } else if (this.nextPageNumber() > this.totalPages()) {
+    } else if (paginationData.currentPage >= this.totalPages()) {
       return;
     }
 
-    const paginationData = this.store.query(getPaginationData());
     this.loadRequest$.next(
       new LoadRequest(
         this.url(),
-        paginationData.currentPage + 1,
+        paginationData.currentPage,
         this.searchParamValue,
         false
       )
@@ -636,7 +625,7 @@ export abstract class SPPagedEntityLoader<
             total: total,
             perPage: this.pageSize(),
             lastPage: lr.pageNumber,
-            currentPage: lr.pageNumber,
+            currentPage: lr.pageNumber + 1,
           }),
           setPage(
             lr.pageNumber,
