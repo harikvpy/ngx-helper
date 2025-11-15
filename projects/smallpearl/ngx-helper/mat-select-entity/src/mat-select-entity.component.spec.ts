@@ -527,7 +527,7 @@ export class SelectEntityDemoComponent implements OnInit {
   ngOnInit() {}
 }
 
-xdescribe('MatSelectEntityComponent Entities Cache', () => {
+describe('MatSelectEntityComponent Entities Cache', () => {
   let demoComponent!: SelectEntityDemoComponent;
   let demoFixture!: ComponentFixture<SelectEntityDemoComponent>;
 

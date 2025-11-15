@@ -1,10 +1,8 @@
 import { BooleanInput, coerceBooleanProperty } from '@angular/cdk/coercion';
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import {
-  HttpClient,
   HttpContext,
-  HttpContextToken,
-  HttpParams,
+  HttpContextToken
 } from '@angular/common/http';
 import {
   AfterViewInit,
@@ -49,18 +47,14 @@ import {
 } from '@jsverse/transloco';
 import { getEntity, hasEntity, selectAllEntities, upsertEntities } from '@ngneat/elf-entities';
 import {
-  SPEntityLoaderFn,
-  SPPagedEntityLoader,
+  SPPagedEntityLoader
 } from '@smallpearl/ngx-helper/entities';
 import {
   SPMatEntityListPaginator,
   SPPageParams,
 } from '@smallpearl/ngx-helper/mat-entity-list';
-import { getEntityListConfig } from '@smallpearl/ngx-helper/mat-entity-list/src/config';
 import { MatSelectInfiniteScrollDirective } from '@smallpearl/ngx-helper/mat-select-infinite-scroll';
-import { capitalize } from 'lodash';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
-import { plural } from 'pluralize';
 import {
   combineLatest,
   debounceTime,
@@ -320,9 +314,11 @@ class DefaultPaginator implements SPMatEntityListPaginator {
   ],
 })
 export class SPMatSelectEntityComponent<
-  TEntity extends { [P in IdKey]: PropertyKey },
-  IdKey extends string = 'id'
-> implements
+    TEntity extends { [P in IdKey]: PropertyKey },
+    IdKey extends string = 'id'
+  >
+  extends SPPagedEntityLoader<TEntity, IdKey>
+  implements
     OnInit,
     OnDestroy,
     AfterViewInit,
@@ -337,38 +333,12 @@ export class SPMatSelectEntityComponent<
   // This mechanism is to suppress multiple fetches from the remote from the
   // same endpoint as that can occur if a form has multiple instances of
   // this component with the same url.
-  static _entitiesCache = new Map<
-    string,
-    { refCount: number; entities: Array<any> }
-  >();
-
-  //**** REQUIRED ATTRIBUTES ****//
-  /**
-   * Url or entity loader fn.
-   */
-  url = input.required<string | SPEntityLoaderFn>();
-
-  /**
-   * Entity name, that is used to form the "New { item }" menu item if
-   * inlineNew=true. This is also used as the key of the object in GET response
-   * if the reponse JSON is an object (sideloaded response), where the values
-   * are stored indexed by the server model name. For eg:-
-   *
-   * {
-   *    'customers': [
-   *      {...},
-   *      {...},
-   *      {...},
-   *    ]
-   * }
-   */
-  entityName = input.required<string>();
+  // static _entitiesCache = new Map<
+  //   string,
+  //   { refCount: number; entities: Array<any> }
+  // >();
 
   //**** OPTIONAL ATTRIBUTES ****//
-
-  // Plural entity name, used when grouping options. If not specified, it is
-  // derived by pluralizing the entityName.
-  pluralEntityName = input<string>();
 
   // Entity label function - function that takes an entity object and returns
   // a string label for it. If not specified, a default label function is used
@@ -381,23 +351,9 @@ export class SPMatSelectEntityComponent<
   // in the filtered entities list.
   filterFn = input<(entity: TEntity, search: string) => boolean>();
 
-  // Entity idKey, if idKey is different from the default 'id'.
-  idKey = input<string>('id');
-
-  // Parameters to be added to the HTTP request to retrieve data from
-  // remote. This won't be used if `loadFromRemoteFn` is specified.
-  httpParams = input<HttpParams>();
-
   // Set to true to show "Add { item }" option in the select dropdown.
   // Selecting this option, will emit `createNewItemSelected` event.
   inlineNew = input<boolean>(false);
-
-  // Paginator for the remote entity list. This is used to determine the
-  // pagination parameters for the API request. If not specified, the global
-  // paginator specified in SPMatEntityListConfig will be used. If that too is
-  // not specified, a default paginator will be used. Default paginator can
-  // handle DRF native PageNumberPagination and dynamic-rest style pagination.
-  paginator = input<SPMatEntityListPaginator>();
 
   // Set to true to allow multiple option selection. The returned value
   // would be an array of entity ids.
@@ -422,18 +378,6 @@ export class SPMatSelectEntityComponent<
 
   @Output() selectionChange = new EventEmitter<TEntity | TEntity[]>();
   @Output() createNewItemSelected = new EventEmitter<void>();
-
-  // Number of entities to be loaded per page from the server. This will be
-  // passed to PagedEntityLoader to load entities in pages. Defaults to 50.
-  // Adjust this accordingly based on the average size of your entities to
-  // optimize server round-trips and memory usage.
-  pageSize = input<number>(50);
-
-  // Search parameter name to be used in the HTTP request.
-  // Defaults to 'search'. That is when a search string is specified and
-  // the entire entity list has not been fetched, a fresh HTTP request is made
-  // to the remote server with `?<searchParamName>=<search string>` parameter.
-  searchParamName = input<string>('search');
 
   // i18n localization support toallow per component customization of
   // some strings used.
@@ -479,15 +423,6 @@ export class SPMatSelectEntityComponent<
     };
   });
 
-  protected _pluralEntityName = computed<string>(() => {
-    const pluralEntityName = this.pluralEntityName();
-    return pluralEntityName ? pluralEntityName : plural(this.entityName());
-  });
-
-  protected _capitalizedEntityName = computed<string>(() =>
-    capitalize(this.entityName())
-  );
-
   // Whether to group options. Grouping is enabled when either groupOptionsKey
   // or groupByFn is specified.
   protected _group = computed<boolean>(() => {
@@ -503,14 +438,19 @@ export class SPMatSelectEntityComponent<
       : 'items';
   });
 
-  protected _paginator = computed<SPMatEntityListPaginator>(() => {
-    const paginator = this.paginator();
-    const entityListConfigPaginator = this.entityListConfig
-      ?.paginator as SPMatEntityListPaginator;
-    return paginator
-      ? paginator
-      : entityListConfigPaginator ?? new DefaultPaginator();
-  });
+  // For the global paginator. We'll abstract this into an independent
+  // configuration that can be shared across both mat-entity-list and
+  // mat-select-entity later.
+  // entityListConfig = getEntityListConfig();
+
+  // protected _paginator = computed<SPMatEntityListPaginator>(() => {
+  //   const paginator = this.paginator();
+  //   const entityListConfigPaginator = this.entityListConfig
+  //     ?.paginator as SPMatEntityListPaginator;
+  //   return paginator
+  //     ? paginator
+  //     : entityListConfigPaginator ?? new DefaultPaginator();
+  // });
 
   stateChanges = new Subject<void>();
   focused = false;
@@ -544,21 +484,17 @@ export class SPMatSelectEntityComponent<
   static nextId = 0;
   @HostBinding() id = `sp-select-entity-${SPMatSelectEntityComponent.nextId++}`;
   private _placeholder!: string;
-  protected http = inject(HttpClient);
+  //protected http = inject(HttpClient);
   protected cdr = inject(ChangeDetectorRef);
   protected _elementRef = inject(ElementRef<HTMLElement>);
   protected _formField = inject(MAT_FORM_FIELD, { optional: true });
   public ngControl = inject(NgControl, { optional: true });
   transloco = inject(TranslocoService);
 
-  // For the global paginator. We'll abstract this into an independent
-  // configuration that can be shared across both mat-entity-list and
-  // mat-select-entity later.
-  entityListConfig = getEntityListConfig();
-
-  pagedEntityLoader!: SPPagedEntityLoader<TEntity, IdKey>;
+  // pagedEntityLoader!: SPPagedEntityLoader<TEntity, IdKey>;
 
   constructor() {
+    super();
     if (this.ngControl != null) {
       this.ngControl.valueAccessor = this;
     }
@@ -576,25 +512,25 @@ export class SPMatSelectEntityComponent<
    */
 
   ngOnInit() {
-    this.pagedEntityLoader = new SPPagedEntityLoader<TEntity, IdKey>(
-      this.entityName(),
-      this.url(),
-      this.http,
-      this.pageSize(),
-      this._paginator(),
-      this.searchParamName(),
-      this.idKey(),
-      this._pluralEntityName(),
-      undefined,
-      this.httpParams()
-    );
-    this.pagedEntityLoader.start();
+    // this.pagedEntityLoader = new SPPagedEntityLoader<TEntity, IdKey>(
+    //   this.entityName(),
+    //   this.url(),
+    //   this.http,
+    //   this.pageSize(),
+    //   this._paginator(),
+    //   this.searchParamName(),
+    //   this.idKey(),
+    //   this._pluralEntityName(),
+    //   undefined,
+    //   this.httpParams()
+    // );
+    this.startLoader();
 
     // A rudimentary mechanism to detect which of the two observables
     // emitted the latest value. We reset this array to 'false' after
     // processing every combined emission.
     const emittedObservable = [false, false];
-    const store$ = this.pagedEntityLoader.store.pipe(selectAllEntities());
+    const store$ = this.store.pipe(selectAllEntities());
     const filter$ = this.filter$.pipe(
       startWith(''),
       distinctUntilChanged(),
@@ -634,13 +570,13 @@ export class SPMatSelectEntityComponent<
             this.filterEntities(entities, filterStr);
           } else {
             emittedObservable[1] = false;
-            if (this.pagedEntityLoader.allEntitiesLoaded()) {
+            if (this.allEntitiesLoaded()) {
               this.filterEntities(entities, filterStr);
             } else {
-              this.pagedEntityLoader.setSearchParamValue(filterStr);
+              this.setSearchParamValue(filterStr);
               // This will cause an emission from store$ observable as the
               // 'forceRefresh=true' arg causes the store to be reset.
-              this.pagedEntityLoader.loadNextPage(true);
+              this.loadNextPage(true);
             }
           }
         })
@@ -651,8 +587,8 @@ export class SPMatSelectEntityComponent<
   ngOnDestroy(): void {
     this.destroy.next();
     this.destroy.complete();
-    this.pagedEntityLoader.stop();
-    this.removeFromCache();
+    this.stopLoader();
+    // this.removeFromCache();
     this.stateChanges.complete();
   }
 
@@ -666,13 +602,11 @@ export class SPMatSelectEntityComponent<
     //   }
     // }
     // load first page
-    // this.pagedEntityLoader.loadMoreEntities();
+    // this.loadMoreEntities();
   }
 
   addEntity(entity: TEntity) {
-    this.pagedEntityLoader.store.update(
-      upsertEntities(entity)
-    );
+    this.store.update(upsertEntities(entity));
     this.cdr.detectChanges();
   }
 
@@ -681,7 +615,7 @@ export class SPMatSelectEntityComponent<
       const firstSelected = Array.isArray(this.selectValue)
         ? this.selectValue[0]
         : this.selectValue;
-      const selectedEntity = this.pagedEntityLoader.getEntity(
+      const selectedEntity = this.getEntity(
         firstSelected as TEntity[IdKey]
       );
       return selectedEntity ? this._entityLabelFn()(selectedEntity) : '';
@@ -700,8 +634,8 @@ export class SPMatSelectEntityComponent<
   }
 
   writeValue(entityId: string | number | string[] | number[]): void {
-    const store = this.pagedEntityLoader.store;
-    const entities = this.pagedEntityLoader.getEntities();
+    const store = this.store;
+    const entities = this.getEntities();
     if (Array.isArray(entityId)) {
       if (this.multiple()) {
         const selectedValues: any[] = [];
@@ -715,7 +649,7 @@ export class SPMatSelectEntityComponent<
       }
     } else {
       if (store.query(hasEntity(entityId as TEntity[IdKey]))) {
-      // if (this._entities.has(entityId)) {
+        // if (this._entities.has(entityId)) {
         this.selectValue = entityId;
         if (this.filterStr) {
           this.filterStr = '';
@@ -736,11 +670,11 @@ export class SPMatSelectEntityComponent<
 
   @Input()
   get entities(): TEntity[] {
-    return this.pagedEntityLoader.getEntities();
+    return this.getEntities();
   }
 
   set entities(items: TEntity[]) {
-    this.pagedEntityLoader.setEntities(items);
+    this.setEntities(items);
   }
 
   @Input()
@@ -843,9 +777,9 @@ export class SPMatSelectEntityComponent<
     // eventually selects 'New Item' option.
     this.lastSelectValue = this.selectValue;
     // If values have not been loaded from remote, trigger a load.
-    if (this.pagedEntityLoader.totalEntitiesAtRemote() === 0) {
+    if (this.totalEntitiesAtRemote() === 0) {
       // first load
-      this.pagedEntityLoader.loadNextPage();
+      this.loadNextPage();
     }
   }
 
@@ -856,7 +790,7 @@ export class SPMatSelectEntityComponent<
       this.onTouched();
       this.onChanged(ev.value);
       const selectedEntities: TEntity[] = ev.value.map((id) =>
-        this.pagedEntityLoader.store.query(getEntity(id))
+        this.store.query(getEntity(id))
       ) as TEntity[];
       this.selectionChange.emit(selectedEntities);
     } else {
@@ -865,7 +799,7 @@ export class SPMatSelectEntityComponent<
         this.onTouched();
         this.onChanged(ev.value);
         this.selectionChange.emit(
-          this.pagedEntityLoader.store.query(getEntity(ev.value))
+          this.store.query(getEntity(ev.value))
         );
       } else {
         // New Item activated, return value to previous value. We track
@@ -986,67 +920,67 @@ export class SPMatSelectEntityComponent<
     return entityGroups;
   }
 
-  private existsInCache() {
-    const cacheKey = this.getCacheKey();
-    if (cacheKey) {
-      return SPMatSelectEntityComponent._entitiesCache.has(cacheKey);
-    }
-    return false;
-  }
+  // private existsInCache() {
+  //   const cacheKey = this.getCacheKey();
+  //   if (cacheKey) {
+  //     return SPMatSelectEntityComponent._entitiesCache.has(cacheKey);
+  //   }
+  //   return false;
+  // }
 
-  private getCacheKey() {
-    if (typeof this.url() !== 'function') {
-      let params!: HttpParams;
-      if (this.httpParams) {
-        params = new HttpParams({
-          fromString: this.httpParams.toString(),
-        });
-      } else {
-        params = new HttpParams();
-      }
-      // params = params.set('paginate', false)
-      return `${this.url}?${params.toString()}`;
-    }
-    return ''; // empty string evalutes to boolean(false)
-  }
+  // private getCacheKey() {
+  //   if (typeof this.url() !== 'function') {
+  //     let params!: HttpParams;
+  //     if (this.httpParams) {
+  //       params = new HttpParams({
+  //         fromString: this.httpParams.toString(),
+  //       });
+  //     } else {
+  //       params = new HttpParams();
+  //     }
+  //     // params = params.set('paginate', false)
+  //     return `${this.url}?${params.toString()}`;
+  //   }
+  //   return ''; // empty string evalutes to boolean(false)
+  // }
 
-  private getFromCache() {
-    const cacheKey = this.getCacheKey();
-    if (cacheKey && SPMatSelectEntityComponent._entitiesCache.has(cacheKey)) {
-      return SPMatSelectEntityComponent._entitiesCache.get(cacheKey)
-        ?.entities as TEntity[];
-    }
-    return [];
-  }
+  // private getFromCache() {
+  //   const cacheKey = this.getCacheKey();
+  //   if (cacheKey && SPMatSelectEntityComponent._entitiesCache.has(cacheKey)) {
+  //     return SPMatSelectEntityComponent._entitiesCache.get(cacheKey)
+  //       ?.entities as TEntity[];
+  //   }
+  //   return [];
+  // }
 
-  private addToCache(entities: TEntity[]) {
-    const cacheKey = this.getCacheKey();
-    if (cacheKey) {
-      if (!SPMatSelectEntityComponent._entitiesCache.has(cacheKey)) {
-        SPMatSelectEntityComponent._entitiesCache.set(cacheKey, {
-          refCount: 0,
-          entities,
-        });
-      }
-      const cacheEntry =
-        SPMatSelectEntityComponent._entitiesCache.get(cacheKey);
-      cacheEntry!.refCount += 1;
-    }
-  }
+  // private addToCache(entities: TEntity[]) {
+  //   const cacheKey = this.getCacheKey();
+  //   if (cacheKey) {
+  //     if (!SPMatSelectEntityComponent._entitiesCache.has(cacheKey)) {
+  //       SPMatSelectEntityComponent._entitiesCache.set(cacheKey, {
+  //         refCount: 0,
+  //         entities,
+  //       });
+  //     }
+  //     const cacheEntry =
+  //       SPMatSelectEntityComponent._entitiesCache.get(cacheKey);
+  //     cacheEntry!.refCount += 1;
+  //   }
+  // }
 
-  private removeFromCache() {
-    const cacheKey = this.getCacheKey();
-    if (cacheKey) {
-      const cacheEntry =
-        SPMatSelectEntityComponent._entitiesCache.get(cacheKey);
-      if (cacheEntry) {
-        cacheEntry!.refCount -= 1;
-        if (cacheEntry.refCount <= 0) {
-          SPMatSelectEntityComponent._entitiesCache.delete(cacheKey);
-        }
-      }
-    }
-  }
+  // private removeFromCache() {
+  //   const cacheKey = this.getCacheKey();
+  //   if (cacheKey) {
+  //     const cacheEntry =
+  //       SPMatSelectEntityComponent._entitiesCache.get(cacheKey);
+  //     if (cacheEntry) {
+  //       cacheEntry!.refCount -= 1;
+  //       if (cacheEntry.refCount <= 0) {
+  //         SPMatSelectEntityComponent._entitiesCache.delete(cacheKey);
+  //       }
+  //     }
+  //   }
+  // }
 
   private getHttpReqContext() {
     const context = new HttpContext();
@@ -1065,8 +999,8 @@ export class SPMatSelectEntityComponent<
    * list. Well almost to the bottom of the options list. :)
    */
   onInfiniteScroll() {
-    if (this.pagedEntityLoader.hasMore() && !this.pagedEntityLoader.loading()) {
-      this.pagedEntityLoader.loadNextPage();
+    if (this.hasMore() && !this.loading()) {
+      this.loadNextPage();
     }
   }
 }

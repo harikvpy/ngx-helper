@@ -4,17 +4,20 @@ import {
   HttpContextToken,
   HttpParams,
 } from '@angular/common/http';
-import { computed } from '@angular/core';
+import { computed, Directive, inject, input } from '@angular/core';
 import { createStore, setProps, withProps } from '@ngneat/elf';
 import { getAllEntities, getEntitiesCount, getEntity, upsertEntities, withEntities } from '@ngneat/elf-entities';
 import { getPaginationData, setPage, skipWhilePageExists, updatePaginationData, withPagination } from '@ngneat/elf-pagination';
-import { SPMatEntityListPaginator } from '@smallpearl/ngx-helper/mat-entity-list';
+import { SPMatEntityListPaginator, SPPageParams } from '@smallpearl/ngx-helper/mat-entity-list';
+import { getEntityListConfig } from '@smallpearl/ngx-helper/mat-entity-list/src/config';
+import { capitalize } from 'lodash';
 import { plural } from 'pluralize';
 import {
   distinctUntilChanged,
   filter,
   finalize,
   Observable,
+  of,
   Subject,
   Subscription,
   switchMap,
@@ -80,11 +83,98 @@ const DEFAULT_STATE_PROPS: StateProps = {
   loading: false,
 }
 
+// Default paginator implementation. This can handle dynamic-rest and DRF
+// native pagination schemes. It also has a fallback to handle response conists
+// of an array of entities.
+class DefaultPaginator implements SPMatEntityListPaginator {
+  getRequestPageParams(
+    endpoint: string,
+    page: number,
+    pageSize: number
+  ): SPPageParams {
+    return {
+      page: page + 1,
+      pageSize,
+    };
+  }
+
+  parseRequestResponse<
+    TEntity extends { [P in IdKey]: PropertyKey },
+    IdKey extends string = 'id'
+  >(
+    entityName: string,
+    entityNamePlural: string,
+    endpoint: string,
+    params: SPPageParams,
+    resp: any
+  ) {
+    if (Array.isArray(resp)) {
+      return {
+        total: resp.length,
+        entities: resp,
+      };
+    }
+
+    if (typeof resp === 'object') {
+      const keys = Object.keys(resp);
+      // Handle dynamic-rest sideloaded response
+      // Rudimentary sideloaded response support. This should work for most
+      // of the sideloaded responses where the main entities are stored
+      // under the plural entity name key and resp['meta'] object contains
+      // the total count.
+      if (
+        keys.includes(entityNamePlural) &&
+        Array.isArray(resp[entityNamePlural])
+      ) {
+        let total = resp[entityNamePlural].length;
+        if (
+          keys.includes('meta') &&
+          typeof resp['meta'] === 'object' &&
+          typeof resp['meta']['total'] === 'number'
+        ) {
+          total = resp['meta']['total'];
+        }
+        return {
+          total,
+          entities: resp[entityNamePlural],
+        };
+      }
+
+      // Handle django-rest-framework style response
+      if (keys.includes('results') && Array.isArray(resp['results'])) {
+        let total = resp['results'].length;
+        if (keys.includes('count') && typeof resp['count'] === 'number') {
+          total = resp['count'];
+        }
+        return {
+          total,
+          entities: resp['results'],
+        };
+      }
+
+      // Finally, look for "items" key
+      if (keys.includes('items') && Array.isArray(resp['items'])) {
+        return {
+          total: resp['items'].length,
+          entities: resp['items'],
+        };
+      }
+    }
+
+    return {
+      total: 0,
+      entities: [],
+    };
+  }
+}
+
 /**
- * A class to load entities from a remote endpoint in a paged manner. Entities
- * can be loaded in one of two ways:
+ * An abstract class that you can use wherever you would like to load entities
+ * from a remote endpoint in a paged manner. Entities can be loaded in one of
+ * two ways:
+ *
  * 1. By providing an entityLoaderFn that takes an endpoint and HttpParams
- *    and returns a Promise of entities.
+ *    and returns a Observable of entities.
  * 2. Or by providing a URL and using the default loader that uses HttpClient
  *    to load entities.
  * This class uses RxJS to manage the loading of entities and provides
@@ -93,37 +183,116 @@ const DEFAULT_STATE_PROPS: StateProps = {
  *
  * How to use this class:
  *
- * 1. Create an instance of PagedEntityLoader providing the URL or entity
- *    loader function as argument. You may also provide a paginator to manage
- *    page parameters.
- * 2. After your component is initialized, call the start() method to start
- *    listening for load requests.
- * 3. Call loadMoreEntities() method to load the next page of entities.
- *    Typically, you would want to call this from `ngAfterViewInit()`. Make sure
- *    to call this method after you call `start()`.
- * 4. Whenever your component needs to load more entities, call the
- *    loadMoreEntities() method. You can optionally provide a boolean argument
- *    to force refresh the data.
- * 5. Entities are stored in an internal entities store. You can access the
- *    entities using the entityCount, pageIndex, pageSize, loading, and hasMore
- *    signals.
- * 6. When your component is destroyed, call the stop() method to clean up
- *    subscriptions.
+ * 1. Dervice your component from SPPagedEntityLoader.
+ * 2. After your component is initialized, call the startLoader() method to
+ *    get the component going. This sets up the necessary subscriptions to
+ *    listen for load requests. Load requests are triggered by calling the
+ *    loadPage() or loadNextPage() methods.
+ * 3. If your component supports infinite scrolling, call loadMoreEntities()
+ *    method to load the next page of entities when it detects a scroll event.
+ * 4. If you component needs to load a specific page (via a pagination control),
+ *    call the loadPage(pageNumber) method to load the specified page.
+ * 5. Entities are stored in an internal entities store which is an @ngneat/elf
+ *    store. You can subscribe to the store's query to get the list of entities.
+ * 6. When your component is destroyed, call the stopLoader() method to clean up
+ *    internal subscriptions.
+ *
+ * The class is decorated with Angular's @Directive decorator so that we can
+ * use signals for the input properties and dependency injection for HttpClient.
+ * There are no abstract methods as such, but the class is meant to be extended
+ * by your component to provide the necessary configuration via input properties.
+ * This is why it is declared as abstract.
  */
-export class SPPagedEntityLoader<
+@Directive({
+  selector: '**spPagedEntityLoader**',
+})
+export abstract class SPPagedEntityLoader<
   TEntity extends { [P in IdKey]: PropertyKey },
   IdKey extends string = 'id'
 > {
+  // We cache the entities that we fetch from remote here. Cache is indexed
+  // by the endpoint. Each endpoint also keeps a refCount, which is incremented
+  // for each instance of the component using the same endpoint. When this
+  // refcount reaches 0, the endpoint is removed from the cache.
+  //
+  // This mechanism is to suppress multiple fetches from the remote from the
+  // same endpoint as that can occur if a form has multiple instances of
+  // this component with the same url.
+  static _entitiesCache = new Map<string, { refCount: number; resp: any }>();
+  // cache keys for this instance
+  cacheKeys = new Set<string>();
+
+  // Current search parameter value. This is used to load entities
+  // matching the search string.
   searchParamValue: string | undefined;
+
+  //** REQUIRED ATTRIBUTES **//
+  /**
+   * Entity name, that is used to form the "New { item }" menu item if
+   * inlineNew=true. This is also used as the key of the object in GET response
+   * if the reponse JSON is an object (sideloaded response), where the values
+   * are stored indexed by the server model name. For eg:-
+   *
+   * {
+   *    'customers': [
+   *      {...},
+   *      {...},
+   *      {...},
+   *    ]
+   * }
+   */
+  entityName = input.required<string>();
+  url = input.required<string | SPEntityLoaderFn>();
+
+  //** OPTIONAL ATTRIBUTES **//
+  // Number of entities to be loaded per page from the server. This will be
+  // passed to PagedEntityLoader to load entities in pages. Defaults to 50.
+  // Adjust this accordingly based on the average size of your entities to
+  // optimize server round-trips and memory usage.
+  pageSize = input<number>(50);
+
+  // Paginator for the remote entity list. This is used to determine the
+  // pagination parameters for the API request. If not specified, the global
+  // paginator specified in SPMatEntityListConfig will be used. If that too is
+  // not specified, a default paginator will be used. Default paginator can
+  // handle DRF native PageNumberPagination and dynamic-rest style pagination.
+  paginator = input<SPMatEntityListPaginator>();
+
+  // Search parameter name to be used in the HTTP request.
+  // Defaults to 'search'. That is when a search string is specified and
+  // the entire entity list has not been fetched, a fresh HTTP request is made
+  // to the remote server with `?<searchParamName>=<search string>` parameter.
+  searchParamName = input<string>('search');
+
+  // Entity idKey, if idKey is different from the default 'id'.
+  idKey = input<string>('id');
+
+  // Plural entity name, used when grouping options. If not specified, it is
+  // derived by pluralizing the entityName.
+  pluralEntityName = input<string | undefined>(undefined); // defaults to pluralized entityName
+
+  httpReqContext = input<
+    [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any] | undefined
+  >(undefined); // defaults to empty context
+
+  // Parameters to be added to the HTTP request to retrieve data from
+  // remote. This won't be used if `loadFromRemoteFn` is specified.
+  httpParams = input<HttpParams | undefined>(undefined); // defaults to empty params
 
   // Mechanism to default pageSize to last entities length.
   protected loadRequest$ = new Subject<LoadRequest>();
   protected sub$: Subscription | undefined;
   protected _pageSize = computed<number>(() =>
-    this.pageSize ? this.pageSize : 50
+    this.pageSize() ? this.pageSize() : 50
   );
-  protected _entityNamePlural = computed(() =>
-    this.entityNamePlural ? this.entityNamePlural : plural(this.entityName)
+
+  protected _pluralEntityName = computed<string>(() => {
+    const pluralEntityName = this.pluralEntityName();
+    return pluralEntityName ? pluralEntityName : plural(this.entityName());
+  });
+
+  protected _capitalizedEntityName = computed<string>(() =>
+    capitalize(this.entityName())
   );
 
   protected _httpReqContext = computed(() => {
@@ -140,11 +309,21 @@ export class SPPagedEntityLoader<
     return context;
   });
 
+  entityListConfig = getEntityListConfig();
+  protected _paginator = computed<SPMatEntityListPaginator>(() => {
+    const paginator = this.paginator();
+    const entityListConfigPaginator = this.entityListConfig
+      ?.paginator as SPMatEntityListPaginator;
+    return paginator
+      ? paginator
+      : entityListConfigPaginator ?? new DefaultPaginator();
+  });
+
   // We create it here so that store member variable will have the correct
   // type. Unfortunately elf doesn't have a simple generic type that we can
   // use to declare the type of the store and then initialize it later.
   // We will recreate it in the constructor to have the correct idKey.
-  readonly store = createStore(
+  protected store = createStore(
     { name: Math.random().toString(36).slice(2) },
     withEntities<TEntity, IdKey>({ idKey: 'id' as IdKey }),
     withProps<StateProps>(DEFAULT_STATE_PROPS),
@@ -153,36 +332,26 @@ export class SPPagedEntityLoader<
     })
   );
 
-  constructor(
-    protected entityName: string,
-    protected endpointOrLoaderFn: string | SPEntityLoaderFn,
-    protected http: HttpClient,
-    protected pageSize: number,
-    protected paginator: SPMatEntityListPaginator,
-    protected searchParamName: string = 'search',
-    protected idKey = 'id',
-    protected entityNamePlural?: string, // defaults to pluralized entityName
-    protected httpReqContext?: // defaults to empty context
-    [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any],
-    protected httpParams?: HttpParams // defaults to empty params
-  ) {
-    // Recreate store with the correct idKey. We have to do this after
-    // the idKey is available from the constructor argument.
-    this.store = createStore(
-      { name: Math.random().toString(36).slice(2) },
-      withEntities<TEntity, IdKey>({ idKey: this.idKey as IdKey }),
-      withProps<StateProps>(DEFAULT_STATE_PROPS),
-      withPagination({
-        initialPage: 0,
-      })
-    );
-  }
+  protected http = inject(HttpClient);
+
+  constructor() {}
 
   /**
    * Starts listening for load requests and processes them. Call this from your
    * component's ngOnInit() or ngAfterViewInit() method.
    */
-  start() {
+  startLoader() {
+    // Recreate store with the correct idKey. We have to do this after
+    // the idKey is available from the constructor argument.
+    this.store = createStore(
+      { name: Math.random().toString(36).slice(2) },
+      withEntities<TEntity, IdKey>({ idKey: this.idKey() as IdKey }),
+      withProps<StateProps>(DEFAULT_STATE_PROPS),
+      withPagination({
+        initialPage: 0,
+      })
+    );
+
     this.sub$ = this.loadRequest$
       .pipe(
         filter((lr) => lr.endpoint !== '' || lr.force === true),
@@ -197,11 +366,15 @@ export class SPPagedEntityLoader<
   /**
    * Stops listening for load requests and cleans up subscriptions.
    */
-  stop() {
+  stopLoader() {
     if (this.sub$) {
       this.sub$.unsubscribe();
       this.sub$ = undefined;
     }
+    // Remove references to this component's pages from the cache. If this
+    // is the only component using those cached pages, they will be cleared
+    // from the cache.
+    this.removeFromCache();
   }
 
   /**
@@ -265,9 +438,7 @@ export class SPPagedEntityLoader<
    * @returns
    */
   endpoint(): string {
-    return this.endpointOrLoaderFn instanceof Function
-      ? ''
-      : (this.endpointOrLoaderFn as string);
+    return this.url() instanceof Function ? '' : (this.url() as string);
   }
 
   /**
@@ -276,12 +447,7 @@ export class SPPagedEntityLoader<
    */
   loadPage(pageNumber: number) {
     this.loadRequest$.next(
-      new LoadRequest(
-        this.endpointOrLoaderFn,
-        pageNumber,
-        this.searchParamValue,
-        false
-      )
+      new LoadRequest(this.url(), pageNumber, this.searchParamValue, false)
     );
   }
 
@@ -322,7 +488,7 @@ export class SPPagedEntityLoader<
     const paginationData = this.store.query(getPaginationData());
     this.loadRequest$.next(
       new LoadRequest(
-        this.endpointOrLoaderFn,
+        this.url(),
         paginationData.currentPage + 1,
         this.searchParamValue,
         false
@@ -351,42 +517,48 @@ export class SPPagedEntityLoader<
   // pagination properties are updated.
   protected doActualLoad(lr: LoadRequest) {
     const loaderFn =
-      typeof this.endpointOrLoaderFn === 'function'
-        ? this.endpointOrLoaderFn
+      typeof this.url() === 'function'
+        ? (this.url() as SPEntityLoaderFn)
         : undefined;
     let obs: Observable<any>;
     let paramsObj: any = {};
     const pageSize = this._pageSize();
     if (loaderFn) {
-      obs = loaderFn(lr.pageNumber, pageSize, lr.searchStr);
+      obs = (loaderFn as SPEntityLoaderFn)(
+        lr.pageNumber,
+        pageSize,
+        lr.searchStr
+      );
       paramsObj = {
         page: lr.pageNumber,
         pageSize,
       };
       if (lr.searchStr) {
-        paramsObj[this.searchParamName] = lr.searchStr || '';
+        paramsObj[this.searchParamName()] = lr.searchStr || '';
       }
     } else {
       // Form the HttpParams which consists of pagination params and any
       // embedded params in the URL which doesn't conflict with the page
       // params.
-      const urlParts = (this.endpointOrLoaderFn as string).split('?');
-      const pageParams = this.paginator.getRequestPageParams(
+      const urlParts = (this.url() as string).split('?');
+      const pageParams = this._paginator().getRequestPageParams(
         urlParts[0],
         lr.pageNumber,
         pageSize
       );
       if (lr.searchStr) {
-        pageParams[this.searchParamName] = lr.searchStr || '';
+        pageParams[this.searchParamName()] = lr.searchStr || '';
       }
       let httpParams = new HttpParams({ fromObject: pageParams });
-      if (this.httpParams) {
-        this.httpParams.keys().forEach((key) => {
-          const value = this.httpParams!.getAll(key);
-          (value || []).forEach((v) => {
-            httpParams = httpParams.append(key, v);
+      if (this.httpParams()) {
+        this.httpParams()!
+          .keys()
+          .forEach((key) => {
+            const value = this.httpParams()!.getAll(key);
+            (value || []).forEach((v) => {
+              httpParams = httpParams.append(key, v);
+            });
           });
-        });
       }
       if (urlParts.length > 1) {
         const embeddedParams = new HttpParams({ fromString: urlParts[1] });
@@ -399,10 +571,17 @@ export class SPPagedEntityLoader<
           });
         });
       }
-      obs = this.http.get<any>(urlParts[0], {
-        context: this._httpReqContext(),
-        params: httpParams,
-      });
+      const cacheKey = this.getCacheKey(urlParts[0], httpParams);
+      if (this.existsInCache(cacheKey)) {
+        obs = of(this.getFromCache(cacheKey));
+      } else {
+        obs = this.http
+          .get<any>(urlParts[0], {
+            context: this._httpReqContext(),
+            params: httpParams,
+          })
+          .pipe(tap((resp) => this.addToCache(cacheKey, resp)));
+      }
 
       // Convert HttpParams to JS object
       httpParams.keys().forEach((key) => {
@@ -417,6 +596,7 @@ export class SPPagedEntityLoader<
       }))
     );
     return obs.pipe(
+      // skipWhilePageExistsInCacheOrCache(cacheKey, resp),
       skipWhilePageExists(this.store, lr.pageNumber),
       tap((resp) => {
         let hasMore = false;
@@ -431,9 +611,9 @@ export class SPPagedEntityLoader<
           total = resp.length;
           entities = resp;
         } else {
-          const result = this.paginator.parseRequestResponse(
-            this.entityName,
-            this._entityNamePlural()!,
+          const result = this._paginator().parseRequestResponse(
+            this.entityName(),
+            this._pluralEntityName()!,
             this.endpoint(),
             paramsObj,
             resp
@@ -450,13 +630,13 @@ export class SPPagedEntityLoader<
           })),
           updatePaginationData({
             total: total,
-            perPage: this.pageSize,
+            perPage: this.pageSize(),
             lastPage: lr.pageNumber,
             currentPage: lr.pageNumber,
           }),
           setPage(
             lr.pageNumber,
-            entities.map((e) => (e as any)[this.idKey])
+            entities.map((e) => (e as any)[this.idKey()])
           )
         );
       }),
@@ -470,5 +650,47 @@ export class SPPagedEntityLoader<
         );
       })
     );
+  }
+
+  private existsInCache(cacheKey: string): boolean {
+    return SPPagedEntityLoader._entitiesCache.has(cacheKey);
+  }
+
+  private getCacheKey(url: string, params?: HttpParams): string {
+    if (params) {
+      return `${url}?${params.toString()}`;
+    }
+    return url;
+  }
+
+  private getFromCache(cacheKey: string): any {
+    if (cacheKey && SPPagedEntityLoader._entitiesCache.has(cacheKey)) {
+      return SPPagedEntityLoader._entitiesCache.get(cacheKey)?.resp;
+    }
+    return [];
+  }
+
+  addToCache(cacheKey: string, resp: any) {
+    if (!SPPagedEntityLoader._entitiesCache.has(cacheKey)) {
+      SPPagedEntityLoader._entitiesCache.set(cacheKey, {
+        refCount: 0,
+        resp,
+      });
+    }
+    const cacheEntry = SPPagedEntityLoader._entitiesCache.get(cacheKey);
+    cacheEntry!.refCount += 1;
+    this.cacheKeys.add(cacheKey);
+  }
+
+  private removeFromCache() {
+    for (const cacheKey of this.cacheKeys) {
+      const cacheEntry = SPPagedEntityLoader._entitiesCache.get(cacheKey);
+      if (cacheEntry) {
+        cacheEntry!.refCount -= 1;
+        if (cacheEntry.refCount <= 0) {
+          SPPagedEntityLoader._entitiesCache.delete(cacheKey);
+        }
+      }
+    }
   }
 }
