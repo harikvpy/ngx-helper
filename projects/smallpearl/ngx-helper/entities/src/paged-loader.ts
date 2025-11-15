@@ -295,7 +295,7 @@ export abstract class SPPagedEntityLoader<
   );
 
   protected _httpReqContext = computed(() => {
-    let reqContext = this.httpReqContext;
+    let reqContext = this.httpReqContext();
     const context = new HttpContext();
     if (reqContext && Array.isArray(reqContext)) {
       if (reqContext.length == 2 && !Array.isArray(reqContext[0])) {
