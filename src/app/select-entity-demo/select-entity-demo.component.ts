@@ -133,7 +133,7 @@ const serveUserData = (
   pageSize: number,
   searchValue: string | undefined
 ) => {
-  pageIndex = pageIndex - 1;
+  pageIndex = pageIndex;
   console.log(
     `serveUserData - pageIndex: ${pageIndex}, pageSize: ${pageSize}, searchValue: ${searchValue}`
   );
@@ -257,6 +257,7 @@ class StaticUserDataPaginator implements SPEntityListPaginator {
                     <sp-mat-select-entity
                       [url]="remoteUsersFn"
                       entityName="user"
+                      [entities]="initialEntities"
                       [labelFn]="remoteUserLabelFn"
                       [pageSize]="20"
                       idKey="phone"
@@ -358,6 +359,7 @@ export class SelectEntityDemoComponent {
   userLabelFn = (u: User) => u.name.title + ' ' + u.name.first + ' ' + u.name.last;
   unitLabelFn = (u: Unit) => u.name;
   entities = USER_DATA;
+  initialEntities = [USER_DATA[0]];
   form!: FormGroup;
   @ViewChild(SPMatSelectEntityComponent)
   selectEntityCtrl!: SPMatSelectEntityComponent<User>;
@@ -374,7 +376,7 @@ export class SelectEntityDemoComponent {
   constructor(private fb: FormBuilder, private host: ElementRef) {
     this.form = this.fb.group({
       user: [undefined, Validators.required],
-      remoteUser1: [undefined],
+      remoteUser1: [USER_DATA[0].phone],
       remoteUser2: [undefined],
       remoteUser3: [undefined],
       unit: [undefined],

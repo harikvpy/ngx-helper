@@ -347,9 +347,10 @@ export abstract class SPPagedEntityLoader<
   startLoader() {
     // Recreate store with the correct idKey. We have to do this after
     // the idKey is available from the constructor argument.
+    const entities = this.store.query(getAllEntities());
     this.store = createStore(
       { name: Math.random().toString(36).slice(2) },
-      withEntities<TEntity, IdKey>({ idKey: this.idKey() as IdKey }),
+      withEntities<TEntity, IdKey>({ initialValue: entities, idKey: this.idKey() as IdKey }),
       withProps<StateProps>(DEFAULT_STATE_PROPS),
       withPagination({
         initialPage: 0,
@@ -379,6 +380,10 @@ export abstract class SPPagedEntityLoader<
     // is the only component using those cached pages, they will be cleared
     // from the cache.
     this.removeFromCache();
+  }
+
+  hasStarted(): boolean {
+    return this.sub$ !== undefined;
   }
 
   /**

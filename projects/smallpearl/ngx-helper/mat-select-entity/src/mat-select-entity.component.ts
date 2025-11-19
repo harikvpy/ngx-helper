@@ -265,7 +265,8 @@ class DefaultPaginator implements SPMatEntityListPaginator {
         The logic behind this behavior being that user searches for a matching
         item and when not finding one, would like to add a new one.
         -->
-        @if (inlineNew() && (filterStr.length > 0 || totalEntitiesAtRemote() === 0)) {
+        @if (inlineNew() && (filterStr.length > 0 || totalEntitiesAtRemote() ===
+        0)) {
         <mat-option
           class="add-item-option"
           value="0"
@@ -457,6 +458,11 @@ export class SPMatSelectEntityComponent<
   touched = false;
 
   selectValue!: string | number | string[] | number[];
+  // To store initial value when writeValue() is called before entities are
+  // loaded, either by entities() input or via paged loader. This is especially
+  // necessary when the elf store uses an idKey other than 'id'.
+  _initialValue: string | number | string[] | number[] | undefined = undefined;
+
   // For storing last select value, which we use to restore the select's value
   // to when New Item is selected. This ensures that when New Item is selected,
   // the select's value remains the same. If the newly created item is to be
@@ -512,20 +518,7 @@ export class SPMatSelectEntityComponent<
    */
 
   ngOnInit() {
-    // this.pagedEntityLoader = new SPPagedEntityLoader<TEntity, IdKey>(
-    //   this.entityName(),
-    //   this.url(),
-    //   this.http,
-    //   this.pageSize(),
-    //   this._paginator(),
-    //   this.searchParamName(),
-    //   this.idKey(),
-    //   this._pluralEntityName(),
-    //   undefined,
-    //   this.httpParams()
-    // );
     this.startLoader();
-
     // A rudimentary mechanism to detect which of the two observables
     // emitted the latest value. We reset this array to 'false' after
     // processing every combined emission.
@@ -582,6 +575,11 @@ export class SPMatSelectEntityComponent<
         })
       )
       .subscribe();
+
+    if (this._initialValue !== undefined) {
+      this.writeValue(this._initialValue);
+      this._initialValue = undefined;
+    }
   }
 
   ngOnDestroy(): void {
@@ -615,9 +613,7 @@ export class SPMatSelectEntityComponent<
       const firstSelected = Array.isArray(this.selectValue)
         ? this.selectValue[0]
         : this.selectValue;
-      const selectedEntity = this.getEntity(
-        firstSelected as TEntity[IdKey]
-      );
+      const selectedEntity = this.getEntity(firstSelected as TEntity[IdKey]);
       return selectedEntity ? this._entityLabelFn()(selectedEntity) : '';
     }
     return '';
@@ -634,6 +630,15 @@ export class SPMatSelectEntityComponent<
   }
 
   writeValue(entityId: string | number | string[] | number[]): void {
+
+    // If the component has not yet started (calling startLoader()), we store
+    // the initial value in _initialValue and return. The actual setting of
+    // the value will happen after startLoader() is called from ngOnInit().
+    if (!this.hasStarted()) {
+      this._initialValue = entityId;
+      return;
+    }
+
     const store = this.store;
     const entities = this.getEntities();
     if (Array.isArray(entityId)) {
@@ -798,9 +803,7 @@ export class SPMatSelectEntityComponent<
         this.selectValue = ev.value;
         this.onTouched();
         this.onChanged(ev.value);
-        this.selectionChange.emit(
-          this.store.query(getEntity(ev.value))
-        );
+        this.selectionChange.emit(this.store.query(getEntity(ev.value)));
       } else {
         // New Item activated, return value to previous value. We track
         // previous value via 'lastSelectValue' member which is updated
