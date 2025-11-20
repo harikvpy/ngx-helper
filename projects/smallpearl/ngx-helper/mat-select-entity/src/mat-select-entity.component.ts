@@ -35,6 +35,7 @@ import {
   MatFormFieldControl,
 } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import {
   MatSelect,
   MatSelectChange,
@@ -215,7 +216,7 @@ class DefaultPaginator implements SPMatEntityListPaginator {
           }
         </mat-select-trigger>
 
-        <mat-option>
+        <mat-option [disabled]="totalEntitiesCount() === 0">
           <ngx-mat-select-search
             class="flex-grow-1"
             [(ngModel)]="filterStr"
@@ -280,6 +281,13 @@ class DefaultPaginator implements SPMatEntityListPaginator {
                 })
           }}
         </mat-option>
+        } @if (loading()) {
+        <div class="loading-wrapper">
+          <mat-progress-spinner
+            diameter="24"
+            mode="indeterminate"
+          ></mat-progress-spinner>
+        </div>
         }
       </mat-select>
     </div>
@@ -294,6 +302,11 @@ class DefaultPaginator implements SPMatEntityListPaginator {
         opacity: 0.75;
         font-size: 0.8em;
       }
+      .loading-wrapper {
+        display: flex;
+        justify-content: center;
+        padding: 8px 0;
+      }
     `,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -305,6 +318,7 @@ class DefaultPaginator implements SPMatEntityListPaginator {
     MatSelectModule,
     MatButtonModule,
     MatIconModule,
+    MatProgressSpinnerModule,
     TranslocoModule,
     NgxMatSelectSearchModule,
     MatSelectInfiniteScrollDirective,
@@ -630,7 +644,6 @@ export class SPMatSelectEntityComponent<
   }
 
   writeValue(entityId: string | number | string[] | number[]): void {
-
     // If the component has not yet started (calling startLoader()), we store
     // the initial value in _initialValue and return. The actual setting of
     // the value will happen after startLoader() is called from ngOnInit().
