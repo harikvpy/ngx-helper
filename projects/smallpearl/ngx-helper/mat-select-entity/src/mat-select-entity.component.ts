@@ -266,8 +266,7 @@ class DefaultPaginator implements SPMatEntityListPaginator {
         The logic behind this behavior being that user searches for a matching
         item and when not finding one, would like to add a new one.
         -->
-        @if (inlineNew() && (filterStr.length > 0 || totalEntitiesAtRemote() ===
-        0)) {
+        @if (inlineNew() && loaded() && (filterStr.length > 0 || totalEntitiesAtRemote() === 0)) {
         <mat-option
           class="add-item-option"
           value="0"

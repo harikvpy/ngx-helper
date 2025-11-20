@@ -75,11 +75,13 @@ class LoadRequest {
 type StateProps = {
   allEntitiesLoaded: boolean;
   loading: boolean;
+  loaded: boolean
 };
 
 const DEFAULT_STATE_PROPS: StateProps = {
   allEntitiesLoaded: false,
   loading: false,
+  loaded: false
 }
 
 // Default paginator implementation. This can handle dynamic-rest and DRF
@@ -441,6 +443,14 @@ export abstract class SPPagedEntityLoader<
   }
 
   /**
+   * Boolean indicates whether the loader has completed at least one load
+   * operation.
+   */
+  loaded(): boolean {
+    return this.store.query((state) => state.loaded);
+  }
+
+  /**
    * Returns the endpoint URL if the loader was created with an endpoint.
    * If the loader was created with a loader function, an empty string is
    * returned.
@@ -644,6 +654,7 @@ export abstract class SPPagedEntityLoader<
             ...state,
             allEntitiesLoaded: !this.hasMore() && !this.searchParamValue,
             loading: false,
+            loaded: true
           }))
         );
       })
