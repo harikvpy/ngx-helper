@@ -485,15 +485,22 @@ export abstract class SPPagedEntityLoader<
    * infinite scroll scenarios where you want to load the pages sequentially.
    * @param forceRefresh
    */
-  loadNextPage(forceRefresh = false) {
-    const paginationData = this.store.query(getPaginationData());
-
+  loadNextPage(searchParamValue?: string) {
+    let forceRefresh = false;
+    if (searchParamValue !== this.searchParamValue) {
+      forceRefresh = true;
+      this.searchParamValue = searchParamValue;
+    }
     if (forceRefresh) {
       this.store.reset();
-    } else if (paginationData.currentPage >= this.totalPages()) {
+    } else if (
+      this.store.query(getPaginationData()).currentPage >= this.totalPages()
+    ) {
       return;
     }
 
+    const paginationData = this.store.query(getPaginationData());
+    // console.log(`Loading page - forceRefresh: ${forceRefresh}, currentPage: ${paginationData.currentPage}...`);
     this.loadRequest$.next(
       new LoadRequest(
         this.url(),
@@ -502,10 +509,6 @@ export abstract class SPPagedEntityLoader<
         false
       )
     );
-  }
-
-  setSearchParamValue(searchStr: string) {
-    this.searchParamValue = searchStr;
   }
 
   setEntities(entities: TEntity[]) {

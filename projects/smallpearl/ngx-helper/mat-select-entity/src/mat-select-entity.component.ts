@@ -579,10 +579,10 @@ export class SPMatSelectEntityComponent<
             if (this.allEntitiesLoaded()) {
               this.filterEntities(entities, filterStr);
             } else {
-              this.setSearchParamValue(filterStr);
-              // This will cause an emission from store$ observable as the
-              // 'forceRefresh=true' arg causes the store to be reset.
-              this.loadNextPage(true);
+              // If filterStr has changed and not all entities have been loaded
+              // store will be reset and entities reloaded from remote with
+              // the new filterStr as the search param.
+              this.loadNextPage(filterStr);
             }
           }
         })
