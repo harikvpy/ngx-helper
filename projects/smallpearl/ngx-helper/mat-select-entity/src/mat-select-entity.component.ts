@@ -582,7 +582,8 @@ export class SPMatSelectEntityComponent<
               // If filterStr has changed and not all entities have been loaded
               // store will be reset and entities reloaded from remote with
               // the new filterStr as the search param.
-              this.loadNextPage(filterStr);
+              this.setSearchParamValue(filterStr);
+              this.loadNextPage();
             }
           }
         })

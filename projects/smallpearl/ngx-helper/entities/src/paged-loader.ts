@@ -352,7 +352,10 @@ export abstract class SPPagedEntityLoader<
     const entities = this.store.query(getAllEntities());
     this.store = createStore(
       { name: Math.random().toString(36).slice(2) },
-      withEntities<TEntity, IdKey>({ initialValue: entities, idKey: this.idKey() as IdKey }),
+      withEntities<TEntity, IdKey>({
+        initialValue: entities,
+        idKey: this.idKey() as IdKey,
+      }),
       withProps<StateProps>(DEFAULT_STATE_PROPS),
       withPagination({
         initialPage: 0,
@@ -480,22 +483,15 @@ export abstract class SPPagedEntityLoader<
   }
 
   /**
-   * Loads the next page of entities from the remote. If forceRefresh is true,
-   * the internal store is reset before loading the next page. Use this for
-   * infinite scroll scenarios where you want to load the pages sequentially.
-   * @param forceRefresh
+   * Loads the next page of entities from the remote.
+   *
+   * @param searchParamValue Optional search parameter value. If specified
+   * and is different from the current search parameter value, the internal
+   * store is reset and entities are loaded from page 0 with the new search
+   * parameter value. Otherwise, the next page of entities is loaded.
    */
-  loadNextPage(searchParamValue?: string) {
-    let forceRefresh = false;
-    if (searchParamValue !== this.searchParamValue) {
-      forceRefresh = true;
-      this.searchParamValue = searchParamValue;
-    }
-    if (forceRefresh) {
-      this.store.reset();
-    } else if (
-      this.store.query(getPaginationData()).currentPage >= this.totalPages()
-    ) {
+  loadNextPage() {
+    if (this.store.query(getPaginationData()).currentPage >= this.totalPages() && this.loaded()) {
       return;
     }
 
@@ -509,6 +505,16 @@ export abstract class SPPagedEntityLoader<
         false
       )
     );
+  }
+
+  // Sets the search parameter value to be used in subsequent loads.
+  // If the search parameter value is different from the current value,
+  // the internal store is reset to clear any previously loaded entities.
+  setSearchParamValue(searchStr: string) {
+    if (searchStr !== this.searchParamValue) {
+      this.searchParamValue = searchStr;
+      this.store.reset();
+    }
   }
 
   setEntities(entities: TEntity[]) {
@@ -657,7 +663,7 @@ export abstract class SPPagedEntityLoader<
             ...state,
             allEntitiesLoaded: !this.hasMore() && !this.searchParamValue,
             loading: false,
-            loaded: true
+            loaded: true,
           }))
         );
       })

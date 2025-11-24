@@ -254,8 +254,8 @@ xdescribe('SPPagedEntityLoader', () => {
     httpSpy.calls.reset();
 
     // Test loading with search string
-    // pagedLoader.setSearchParamValue('Ma');
-    pagedLoader.loadNextPage('Ma');
+    pagedLoader.setSearchParamValue('Ma');
+    pagedLoader.loadNextPage();
     expect(httpSpy).toHaveBeenCalledTimes(1);
     expect(pagedLoader.loading()).toBeFalse();
     // Will be set only if there are no more entities to load AND no search
@@ -309,8 +309,8 @@ xdescribe('SPPagedEntityLoader', () => {
     expect(pagedLoader.totalEntitiesAtRemote()).toBe(USER_DATA.length);
 
     // Test loading with search string
-    // pagedLoader.setSearchParamValue('MA');
-    pagedLoader.loadNextPage('MA');
+    pagedLoader.setSearchParamValue('MA');
+    pagedLoader.loadNextPage();
     expect(pagedLoader.loading()).toBeFalse();
     // Will be set only if there are no more entities to load AND no search
     // string is set.
