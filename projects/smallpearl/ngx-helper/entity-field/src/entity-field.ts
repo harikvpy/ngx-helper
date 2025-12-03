@@ -3,8 +3,8 @@ import {
   spFormatDate,
   SPIntlDateFormat,
 } from '@smallpearl/ngx-helper/locale';
+import { Observable, of } from 'rxjs';
 import { SPEntityFieldConfig } from './provider';
-import { Observable } from 'rxjs';
 
 type FieldValueTypes = string | number | Date | boolean;
 
@@ -86,8 +86,18 @@ export class SPEntityField<TEntity extends { [P in IdKey]: PropertyKey }, IdKey 
   /**
    * @returns the label for the field.
    */
-  label() {
-    return this._fieldSpec.label ?? this._fieldSpec.name
+  label(): Observable<string> {
+    const label = this._fieldSpec.label;
+    if (label) {
+      if (label instanceof Observable) {
+        return label;
+      } else {
+        if (typeof label === 'string') {
+          return of(label);
+        }
+      }
+    }
+    return of(this._fieldSpec.name);
   }
 
   /**

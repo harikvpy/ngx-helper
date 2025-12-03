@@ -1,4 +1,4 @@
-import { CommonModule, UpperCasePipe } from '@angular/common';
+import { AsyncPipe, CommonModule, UpperCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, input, OnInit, TemplateRef } from '@angular/core';
 import { SP_ENTITY_FIELD_CONFIG, SPEntityField, SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { Observable, of } from 'rxjs';
@@ -47,7 +47,7 @@ import { Observable, of } from 'rxjs';
 // }
 
 @Component({
-    imports: [],
+    imports: [AsyncPipe],
     selector: 'sp-fields-renderer',
     template: `
     @if (isString()) {
@@ -58,7 +58,7 @@ import { Observable, of } from 'rxjs';
           <tbody>
             @for (field of fields(); track $index) {
             <tr>
-              <td [class]="field.class">{{ field.label() }}&colon;</td>
+              <td [class]="field.class">{{ field.label() | async }}&colon;</td>
               <td [class]="field.class">{{ field.value(entity()) }}</td>
             </tr>
             }
@@ -339,6 +339,9 @@ export class StationaryWithLineItemsComponent<TEntity extends { [P in IdKey]: Pr
 
   fieldLabel(field: SPEntityField<TEntity, IdKey>): Observable<string> {
     const label = field.label()
-    return label instanceof Observable ? label : of(label);
+    if (label) {
+      return label instanceof Observable ? label : of(label as string);
+    }
+    return of('');
   }
 }
