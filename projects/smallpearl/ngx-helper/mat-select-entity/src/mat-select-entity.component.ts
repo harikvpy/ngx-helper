@@ -280,7 +280,8 @@ class DefaultPaginator implements SPMatEntityListPaginator {
                 })
           }}
         </mat-option>
-        } @if (loading()) {
+        }
+        @if (loading$ | async) {
         <div class="loading-wrapper">
           <mat-progress-spinner
             diameter="24"

@@ -5,7 +5,7 @@ import {
   HttpParams,
 } from '@angular/common/http';
 import { computed, Directive, inject, input } from '@angular/core';
-import { createStore, setProps, withProps } from '@ngneat/elf';
+import { createStore, select, setProps, withProps } from '@ngneat/elf';
 import { getAllEntities, getEntitiesCount, getEntity, upsertEntities, withEntities } from '@ngneat/elf-entities';
 import { getPaginationData, setPage, skipWhilePageExists, updatePaginationData, withPagination } from '@ngneat/elf-pagination';
 import { SP_MAT_ENTITY_LIST_CONFIG, SPMatEntityListPaginator, SPPageParams } from '@smallpearl/ngx-helper/mat-entity-list';
@@ -446,6 +446,17 @@ export abstract class SPPagedEntityLoader<
   }
 
   /**
+   * Returns the loading state as an Observable that emits when the state changes.
+   * @returns
+   */
+  get loading$() {
+    return this.store.pipe(
+      select((state) => state.loading),
+      distinctUntilChanged()
+    );
+  }
+
+  /**
    * Boolean indicates whether the loader has completed at least one load
    * operation.
    */
@@ -491,7 +502,10 @@ export abstract class SPPagedEntityLoader<
    * parameter value. Otherwise, the next page of entities is loaded.
    */
   loadNextPage() {
-    if (this.store.query(getPaginationData()).currentPage >= this.totalPages() && this.loaded()) {
+    if (
+      this.store.query(getPaginationData()).currentPage >= this.totalPages() &&
+      this.loaded()
+    ) {
       return;
     }
 

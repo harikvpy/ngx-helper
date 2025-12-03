@@ -223,34 +223,34 @@ class StaticUserDataPaginator implements SPEntityListPaginator {
             <div class="fs-2">Select Entity Demo</div>
             <div class="">
               <form [formGroup]="form">
-              <div class="p-2">
-                <mat-form-field>
-                  <mat-label>User (Add User)</mat-label>
-                  <sp-mat-select-entity
-                    [url]="loadUsers"
-                    entityName="user"
-                    [labelFn]="userLabelFn"
-                    formControlName="user"
-                    (selectionChange)="onUserSelected($event)"
-                    (createNewItemSelected)="onCreateNewUser($event)"
-                    [inlineNew]="true"
-                  ></sp-mat-select-entity>
-                </mat-form-field>
-              </div>
+                <div class="p-2">
+                  <mat-form-field>
+                    <mat-label>User (Add User)</mat-label>
+                    <sp-mat-select-entity
+                      [url]="loadUsers"
+                      entityName="user"
+                      [labelFn]="userLabelFn"
+                      formControlName="user"
+                      (selectionChange)="onUserSelected($event)"
+                      (createNewItemSelected)="onCreateNewUser($event)"
+                      [inlineNew]="true"
+                    ></sp-mat-select-entity>
+                  </mat-form-field>
+                </div>
 
-              <div class="p-2">
-                <mat-form-field>
-                  <mat-label>Unit (Grouped)</mat-label>
-                  <sp-mat-select-entity
-                    [url]="loadUnits"
-                    entityName="unit"
-                    [labelFn]="unitLabelFn"
-                    [groupByFn]="groupByFn"
-                    formControlName="unit"
-                    (selectionChange)="onUnitSelected($event)"
-                  ></sp-mat-select-entity>
-                </mat-form-field>
-              </div>
+                <div class="p-2">
+                  <mat-form-field>
+                    <mat-label>Unit (Grouped)</mat-label>
+                    <sp-mat-select-entity
+                      [url]="loadUnits"
+                      entityName="unit"
+                      [labelFn]="unitLabelFn"
+                      [groupByFn]="groupByFn"
+                      formControlName="unit"
+                      (selectionChange)="onUnitSelected($event)"
+                    ></sp-mat-select-entity>
+                  </mat-form-field>
+                </div>
                 <div class="p-2">
                   <mat-form-field>
                     <mat-label>User (Local)</mat-label>
@@ -281,6 +281,21 @@ class StaticUserDataPaginator implements SPEntityListPaginator {
                     ></sp-mat-select-entity>
                   </mat-form-field>
                 </div>
+                <div class="p-2">
+                  <mat-form-field>
+                    <mat-label>Empty Response</mat-label>
+                    <sp-mat-select-entity
+                      [url]="emptyResponseFn"
+                      entityName="user"
+                      idKey="cell"
+                      [labelFn]="remoteUserLabelFn"
+                      formControlName="remoteUser2"
+                      [paginator]="remoteUserPaginator"
+                      (selectionChange)="onRemoteUserSelected2($event)"
+                    ></sp-mat-select-entity>
+                  </mat-form-field>
+                </div>
+
                 <!-- -->
 
                 <!-- <div class="p-2">
@@ -356,7 +371,8 @@ class StaticUserDataPaginator implements SPEntityListPaginator {
 export class SelectEntityDemoComponent {
   loadUsers = () => of(USER_DATA);
   loadUnits = () => of(UNITS);
-  userLabelFn = (u: User) => u.name.title + ' ' + u.name.first + ' ' + u.name.last;
+  userLabelFn = (u: User) =>
+    u.name.title + ' ' + u.name.first + ' ' + u.name.last;
   unitLabelFn = (u: Unit) => u.name;
   entities = USER_DATA;
   initialEntities = [USER_DATA[0]];
@@ -365,6 +381,11 @@ export class SelectEntityDemoComponent {
   selectEntityCtrl!: SPMatSelectEntityComponent<User>;
   remoteUsersFn = serveUserData;
   groupByFn = (unit: Unit) => unit.blockName;
+  emptyResponseFn = (
+    pageIndex: number,
+    pageSize: number,
+    searchValue: string | undefined
+  ) => of([]);
 
   pureRemoteUsersUrl = 'https://randomuser.me/api/?nat=us,dk,fr,gb';
   remoteUsersUrl = 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb';
