@@ -375,21 +375,19 @@ export class SPMatSelectEntityComponent<
   multiple = input<boolean>(false);
 
   /**
-   * The entity key name that is used to classify entities into groups.
+   * The entity key name that is used to classify entities into groups or
+   * a function that takes a TEntity and returns the group id (string).
    * Entities with the same key value will be grouped together. If this is
    * specified, grouping will be enabled.
    * @see groupByFn
    */
-  groupOptionsKey = input<string>();
+  groupOptionsKey = input<string | ((entity: TEntity) => string)>();
 
   /**
-   * A function that takes a TEntity and returns the group id (string)
-   * that the entity belongs to. If this is specified, grouping of entities
-   * in the select will be enabled. This takes precedence over
-   * `groupOptionsKey`.
-   * @see groupOptionsKey
+   * A function that a group id (string/number) and returns the label (string).
+   * Defaults to a function that returns the group id as string.
    */
-  groupByFn = input<(entity: TEntity) => string>();
+  groupLabelFn = input<(groupId: string|number) => string>((groupId) => groupId.toString());
 
   @Output() selectionChange = new EventEmitter<TEntity | TEntity[]>();
   @Output() createNewItemSelected = new EventEmitter<void>();
@@ -441,16 +439,7 @@ export class SPMatSelectEntityComponent<
   // Whether to group options. Grouping is enabled when either groupOptionsKey
   // or groupByFn is specified.
   protected _group = computed<boolean>(() => {
-    return !!this.groupOptionsKey() || !!this.groupByFn();
-  });
-
-  protected _groupEntitiesKey = computed<string>(() => {
-    const groupOptionsKey = this.groupOptionsKey();
-    return groupOptionsKey
-      ? groupOptionsKey
-      : this.entityName()
-      ? this._pluralEntityName()
-      : 'items';
+    return !!this.groupOptionsKey();
   });
 
   // For the global paginator. We'll abstract this into an independent
@@ -903,21 +892,31 @@ export class SPMatSelectEntityComponent<
 
   /**
    * Helper to arrange the given array of entities into groups based on the
-   * groupByFn or groupOptionsKey. groupByFn takes precedence over
-   * groupOptionsKey.
+   * value for `groupOptionsKey`.
    * @param entities
    * @returns EntityGroup<TEntity>[]
    */
   protected groupEntities(entities: TEntity[]): EntityGroup<TEntity>[] {
+    const groupOptionsKey = this.groupOptionsKey();
+
+    // Normalize the groupOptionsKey into a function that takes a TEntity
+    // and returns the group id (string).
     let groupByFn!: (entity: TEntity) => string;
-    if (this.groupByFn()) {
-      groupByFn = this.groupByFn()!;
-    } else if (this.groupOptionsKey()) {
+    if (typeof groupOptionsKey === 'string') {
       groupByFn = (entity: TEntity) => {
-        const key = this.groupOptionsKey()!;
-        return (entity as any)[key] ?? '???';
+        return (entity as any)[groupOptionsKey] ?? '???';
       };
+    } else if (typeof groupOptionsKey === 'function') {
+      groupByFn = groupOptionsKey;
     }
+    // if (this.groupByFn()) {
+    //   groupByFn = this.groupByFn()!;
+    // } else if (this.groupOptionsKey()) {
+    //   groupByFn = (entity: TEntity) => {
+    //     const key = this.groupOptionsKey()!;
+    //     return (entity as any)[key] ?? '???';
+    //   };
+    // }
 
     const groupedEntitiesMap = new Map<string | number, TEntity[]>();
     entities.forEach((entity) => {
@@ -930,7 +929,7 @@ export class SPMatSelectEntityComponent<
     let entityGroups: EntityGroup<TEntity>[] = [];
     groupedEntitiesMap.forEach((entities, groupId) => {
       entityGroups.push({
-        label: String(groupId),
+        label: this.groupLabelFn()(groupId),
         entities,
       });
     });

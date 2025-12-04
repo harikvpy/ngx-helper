@@ -766,7 +766,7 @@ describe('MatEntitySelectComponent (grouped entities)', () => {
     document.body.removeChild(fixture.nativeElement);
   });
 
-  it("should load options when 'groupOptionsKey' is set", async () => {
+  it("should load options when 'groupOptionsKey' is set to a string", async () => {
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
     fixture.componentRef.setInput('groupOptionsKey', 'role');
@@ -803,8 +803,8 @@ describe('MatEntitySelectComponent (grouped entities)', () => {
     sub$.unsubscribe();
   });
 
-  it("should load options when 'groupByFn' is set", async () => {
-    fixture.componentRef.setInput('groupByFn', (user: User) => user.role);
+  it("should load options when groupOptionsKey is set to a function", async () => {
+    fixture.componentRef.setInput('groupOptionsKey', (user: User) => user.role);
     const http = TestBed.inject(HttpClient);
     spyOn(http, 'get').and.returnValue(of(USER_DATA));
     await openMatSelect(fixture);
