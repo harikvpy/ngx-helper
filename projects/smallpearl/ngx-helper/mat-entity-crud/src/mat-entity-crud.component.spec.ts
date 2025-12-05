@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpParams, provideHttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpContextToken, HttpParams, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import {
   Component,
@@ -741,7 +741,66 @@ describe('SPMatEntityCrudComponent', () => {
     expect(res.cell).toEqual('888');
   });
 
-  it('should set custom HTTP request specifc context during CREATE', async () => {
+  it('should set common HTTP context for all crud operations', async () => {
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb'
+    );
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableCreate', true);
+    const CACHE_TOKEN = new HttpContextToken<boolean>(() => true);
+    componentRef.setInput('crudHttpReqContext', new HttpContext().set(CACHE_TOKEN, true));
+    const http = TestBed.inject(HttpClient);
+    let httpPOSTReqContextReceived = false;
+    spyOn(http, 'post').and.callFake(((
+      url: string,
+      data: any,
+      options: any
+    ) => {
+      const cache = options.context.get(CACHE_TOKEN) === true;
+      const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(
+        SP_MAT_ENTITY_CRUD_HTTP_CONTEXT
+      );
+      httpPOSTReqContextReceived =
+        !!cache && !!crudContextParams && crudContextParams.op == 'create';
+      // console.log(JSON.stringify(crudContextParams, null, 2));
+      return of({
+        ...USER_DATA[0],
+        cell: '83939830309303',
+      });
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+
+    let httpGETReqContextReceived = false;
+    spyOn(http, 'get').and.callFake(((url: string, options: any) => {
+      if (url.includes('/83939830309303/')) {
+        // refresh item
+        const cache = options.context.get(CACHE_TOKEN) === true;
+        const crudContextParams: SPMatEntityCrudHttpContext =
+          options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
+        httpGETReqContextReceived =
+          !!cache && !!crudContextParams && crudContextParams.op == 'retrieve';
+        return of({
+          ...USER_DATA[0],
+          cell: '888',
+        });
+      } else {
+        // initial get users request
+        return of(USER_DATA);
+      }
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+
+    // spyOn(http, 'get').and.returnValue(of(USER_DATA));
+    // componentRef.setInput('crudOpFn', crudOpFn);
+    componentRef.setInput('refreshAfterEdit', 'object');
+    fixture.autoDetectChanges();
+    // Mocking object CREATE by calling the bridge method directly
+    const res = await firstValueFrom(component.create({}));
+    expect(httpPOSTReqContextReceived).toBeTrue();
+    expect(httpGETReqContextReceived).toBeTrue();
+    expect(res.cell).toEqual('888');
+  });
+
+  it('should set crud specific HTTP context tokens', async () => {
     componentRef.setInput(
       'endpoint',
       'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb'
@@ -801,6 +860,72 @@ describe('SPMatEntityCrudComponent', () => {
     expect(httpGETReqContextReceived).toBeTrue();
     expect(res.cell).toEqual('888');
   });
+
+   it('should set crud specific HTTP context', async () => {
+     componentRef.setInput(
+       'endpoint',
+       'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb'
+     );
+     componentRef.setInput('idKey', 'cell');
+     componentRef.setInput('disableCreate', true);
+
+     const CACHE_TOKEN = new HttpContextToken<boolean>(() => true);
+
+     const httpContext = new HttpContext();
+     httpContext.set(CACHE_TOKEN, true);
+
+     componentRef.setInput('crudHttpReqContext', {
+       create: httpContext,
+       retrieve: httpContext,
+     });
+     const http = TestBed.inject(HttpClient);
+     let httpPOSTReqContextReceived = false;
+     spyOn(http, 'post').and.callFake(((
+       url: string,
+       data: any,
+       options: any
+     ) => {
+       const cache = options.context.get(CACHE_TOKEN) === true;
+       const crudContextParams: SPMatEntityCrudHttpContext =
+         options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
+       httpPOSTReqContextReceived =
+         !!cache && !!crudContextParams && crudContextParams.op == 'create';
+       // console.log(JSON.stringify(crudContextParams, null, 2));
+       return of({
+         ...USER_DATA[0],
+         cell: '83939830309303',
+       });
+     }) as any); // 'as any' to suppress TSC function prototype mismatch
+
+     let httpGETReqContextReceived = false;
+     spyOn(http, 'get').and.callFake(((url: string, options: any) => {
+       if (url.includes('/83939830309303/')) {
+         // refresh item
+         const cache = options.context.get(CACHE_TOKEN) === true;
+         const crudContextParams: SPMatEntityCrudHttpContext =
+           options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
+         httpGETReqContextReceived =
+           !!cache && !!crudContextParams && crudContextParams.op == 'retrieve';
+         return of({
+           ...USER_DATA[0],
+           cell: '888',
+         });
+       } else {
+         // initial get users request
+         return of(USER_DATA);
+       }
+     }) as any); // 'as any' to suppress TSC function prototype mismatch
+
+     // spyOn(http, 'get').and.returnValue(of(USER_DATA));
+     // componentRef.setInput('crudOpFn', crudOpFn);
+     componentRef.setInput('refreshAfterEdit', 'object');
+     fixture.autoDetectChanges();
+     // Mocking object CREATE by calling the bridge method directly
+     const res = await firstValueFrom(component.create({}));
+     expect(httpPOSTReqContextReceived).toBeTrue();
+     expect(httpGETReqContextReceived).toBeTrue();
+     expect(res.cell).toEqual('888');
+   });
 
   it("should refresh entity after UPDATE when refreshAfterEdit='object'", async () => {
     componentRef.setInput(

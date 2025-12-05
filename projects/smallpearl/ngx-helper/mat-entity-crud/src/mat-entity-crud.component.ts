@@ -379,23 +379,21 @@ export class SPMatEntityCrudComponent<
    */
   refreshAfterEdit = input<'none' | 'object' | 'all'>('none');
   /**
-   * HttpContext for crud requests - list, create, retrieve, update & delete.
-   * The value can be an object where the property names reflect the CRUD
-   * methods with each of these keys taking
-   * `[[HttpContextToken<any>, any]] | [HttpContextToken<any>, any]` as its
-   * value. This object has a special key 'crud', which if given a value for,
-   * would be used for all CRUD requests (CREATE|READ|UPDATE|DELETE).
+   * HttpContext for crud requests - `create`, `retrieve`, `update` & `delete`.
+   * Note that HttpContext for `list` operation should be set using the
+   * `httpReqContext` property inherited from SPMatEntityListComponent.
+   * The value of the property is an object where the key names reflect the CRUD
+   * operation with each of these keys expected to have a value of type
+   * `[[HttpContextToken<any>, any]] | [HttpContextToken<any>, any] | HttpContext`.
    *
-   * Alternatively the property can be set a
-   * `[[HttpContextToken<any>, any]] | [HttpContextToken<any>, any]` as its
-   * value, in which case the same context would be used for all HTTP requests.
+   * Alternatively the property value can be set to
+   * `[[HttpContextToken<any>, any]] | [HttpContextToken<any>, any] | HttpContext`,
+   * in which case the same context would be used for all HTTP requests.
    */
   crudHttpReqContext = input<
     | [[HttpContextToken<any>, any]]
     | [HttpContextToken<any>, any]
     | {
-        // list?: [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any];
-        // crud?: [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any]; // common context for all crud operations
         create?: [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any]; // CREATE
         retrieve?:
           | [[HttpContextToken<any>, any]]
@@ -1108,35 +1106,62 @@ export class SPMatEntityCrudComponent<
   }
 
   private getCrudReqHttpContext(op: CrudOp) {
+    /**
+     * Converts array of HttpContextToken key, value pairs to HttpContext
+     * object in argument 'context'.
+     * @param context HTTP context to which the key, value pairs are added
+     * @param reqContext HttpContextToken key, value pairs array
+     * @returns HttpContext object, with the key, value pairs added. This is
+     * the same object as the 'context' argument.
+     */
     const contextParamToHttpContext = (
       context: HttpContext,
-      reqContext: [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any]
+      reqContext: [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any] | HttpContext
     ) => {
-      if (reqContext.length == 2 && !Array.isArray(reqContext[0])) {
+      if (reqContext instanceof HttpContext) {
+        // reqContext is already an HttpContext object.
+        for (const k of reqContext.keys()) {
+          context.set(k, reqContext.get(k));
+        }
+      } else if (reqContext.length == 2 && !Array.isArray(reqContext[0])) {
         // one dimensional array of a key, value pair.
         context.set(reqContext[0], reqContext[1]);
       } else {
         reqContext.forEach(([k, v]) => context.set(k, v));
       }
+      return context;
     };
 
     let context = new HttpContext();
+    // HttpContext for crud operations are taken from either the global httpReqContext
+    // or from the crudHttpReqContext, with the latter taking precedence.
     const crudHttpReqContext = this.crudHttpReqContext()
       ? this.crudHttpReqContext()
       : this.httpReqContext();
     if (crudHttpReqContext) {
-      if (Array.isArray(crudHttpReqContext)) {
-        // Same HttpContext for all crud requests
-        contextParamToHttpContext(context, crudHttpReqContext);
-      } else if (
-        typeof crudHttpReqContext === 'object' &&
-        op &&
-        crudHttpReqContext[op]
-      ) {
-        contextParamToHttpContext(context, crudHttpReqContext[op]!);
+      if (crudHttpReqContext instanceof HttpContext) {
+        // crudHttpReqContext is an object of type HttpContext. Which means
+        // the same context is to be applied to all crud requests.
+        for (const k of crudHttpReqContext.keys()) {
+          context.set(k, crudHttpReqContext.get(k));
+        }
+      } else {
+        if (Array.isArray(crudHttpReqContext)) {
+          // Same HttpContext for all crud requests. Being an array, it must
+          // be an array of HttpContextToken key, value pairs.
+          contextParamToHttpContext(context, crudHttpReqContext);
+        } else if (
+          typeof crudHttpReqContext === 'object' && op &&
+          Object.keys(crudHttpReqContext).find((k) => k === op)
+        ) {
+          // HttpContext specific to this crud operation, 'create'|'retrieve'|'update'|'delete'
+          contextParamToHttpContext(context, crudHttpReqContext[op]!);
+        }
       }
     }
 
+    // Add standard SP_MAT_ENTITY_CRUD_HTTP_CONTEXT info which is set for all
+    // HTTP requests made by this component.
     context.set(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT, {
       entityName: this.entityName(),
       entityNamePlural: this._entityNamePlural(),
