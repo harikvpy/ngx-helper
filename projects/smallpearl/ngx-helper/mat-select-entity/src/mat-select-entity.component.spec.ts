@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import {
   HttpClient,
+  HttpContext,
+  HttpContextToken,
   HttpParams,
   provideHttpClient,
 } from '@angular/common/http';
@@ -238,6 +240,46 @@ describe('MatSelectEntityComponent (single selection)', () => {
     );
     expect(selectEntityContext).toBeTruthy();
     // expect(selectEntityContext.endpoint).toEqual('https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+  });
+
+  it('should support an array of HttpContextToken pairs for httpReqContext input', async () => {
+    const TEST_CONTEXT_TOKEN = new HttpContextToken<string>(() => 'default');
+    fixture.componentRef.setInput('httpReqContext', new HttpContext().set(TEST_CONTEXT_TOKEN, 'test-value'));
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(
+      By.directive(MatSelect)
+    ).componentInstance;
+    // Trap HttpClient.get() and return our custom data
+    const http = TestBed.inject(HttpClient);
+    let context!: any;
+    spyOn(http, 'get').and.callFake(((url: string, options: any) => {
+      context = options.context;
+      return of(USER_DATA);
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+    await openMatSelect(fixture);
+    expect(context).toBeTruthy();
+    expect(context.get(TEST_CONTEXT_TOKEN)).toEqual('test-value');
+  });
+
+  it('should support HttpContext object for httpReqContext input', async () => {
+    const TEST_CONTEXT_TOKEN = new HttpContextToken<string>(() => 'default');
+    fixture.componentRef.setInput('httpReqContext', [
+      [TEST_CONTEXT_TOKEN, 'test-value-2'],
+    ]);
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(
+      By.directive(MatSelect)
+    ).componentInstance;
+    // Trap HttpClient.get() and return our custom data
+    const http = TestBed.inject(HttpClient);
+    let context!: any;
+    spyOn(http, 'get').and.callFake(((url: string, options: any) => {
+      context = options.context;
+      return of(USER_DATA);
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+    await openMatSelect(fixture);
+    expect(context).toBeTruthy();
+    expect(context.get(TEST_CONTEXT_TOKEN)).toEqual('test-value-2');
   });
 
   it('should use the specified HttpParams to load remote data', async () => {
