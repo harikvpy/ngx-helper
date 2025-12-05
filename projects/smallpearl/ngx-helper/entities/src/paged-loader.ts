@@ -273,7 +273,7 @@ export abstract class SPPagedEntityLoader<
   pluralEntityName = input<string | undefined>(undefined); // defaults to pluralized entityName
 
   httpReqContext = input<
-    [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any] | undefined
+    [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any] | HttpContext | undefined
   >(undefined); // defaults to empty context
 
   // Parameters to be added to the HTTP request to retrieve data from
@@ -298,6 +298,11 @@ export abstract class SPPagedEntityLoader<
 
   protected _httpReqContext = computed(() => {
     let reqContext = this.httpReqContext();
+    if (reqContext instanceof HttpContext) {
+      return reqContext;
+    }
+
+    // Likely to be array of `(HttpContextToken, value)` pairs.
     const context = new HttpContext();
     if (reqContext && Array.isArray(reqContext)) {
       if (reqContext.length == 2 && !Array.isArray(reqContext[0])) {
