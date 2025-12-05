@@ -344,8 +344,12 @@ export class SPMatEntityListComponent<
   infiniteScrollThrottle = input<number>(400);
   infiniteScrollWindow = input<boolean>(false);
   /**
-   * Custom context to be set for HttpClient requests. In the client code
-   * specify this property by initializing a member variable as:
+   * Custom context to be set for HttpClient requests. Value for this attribute
+   * can be an array of HttpContextToken key, value pairs, or an instance of
+   * HttpContext.
+   *
+   * In the client code specify this property by initializing a member variable
+   *  as:
 
       ```
       Component({
@@ -358,8 +362,12 @@ export class SPMatEntityListComponent<
       })
       export class YourComponent {
         httpReqContext: [HttpContextToken<any>, any] = [
-          SIDELOAD_TO_COMPOSITE_PARAMS, 'customers'
+          MY_CONTEXT_TOKEN, 'customers'
         ];
+        // Or [httpReqContext]="httpReqContext2" will work too.
+        httpReqContext2: HttpContext = new HttpContext().set(
+          MY_CONTEXT_TOKEN, 'customers'
+        );
       }
       ```
    *
@@ -368,7 +376,7 @@ export class SPMatEntityListComponent<
    * initialize it appropriately.
    */
   httpReqContext = input<
-    [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any]
+    [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any] | HttpContext | undefined
   >();
   /* END CLIENT PROVIDED PARAMETERS */
 
@@ -381,6 +389,9 @@ export class SPMatEntityListComponent<
 
   _httpReqContext = computed(() => {
     let reqContext = this.httpReqContext();
+    if (reqContext instanceof HttpContext) {
+      return reqContext;
+    }
     const context = new HttpContext();
     if (reqContext && Array.isArray(reqContext)) {
       if (reqContext.length == 2 && !Array.isArray(reqContext[0])) {
