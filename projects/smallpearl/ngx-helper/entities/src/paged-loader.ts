@@ -298,20 +298,27 @@ export abstract class SPPagedEntityLoader<
 
   protected _httpReqContext = computed(() => {
     let reqContext = this.httpReqContext();
-    if (reqContext instanceof HttpContext) {
-      return reqContext;
-    }
-
-    // Likely to be array of `(HttpContextToken, value)` pairs.
     const context = new HttpContext();
-    if (reqContext && Array.isArray(reqContext)) {
-      if (reqContext.length == 2 && !Array.isArray(reqContext[0])) {
-        // one dimensional array of a key, value pair.
-        context.set(reqContext[0], reqContext[1]);
-      } else {
-        reqContext.forEach(([k, v]) => context.set(k, v));
+    if (reqContext instanceof HttpContext) {
+      // Copy existing context values
+      for (const key of reqContext.keys()) {
+        context.set(key, reqContext.get(key));
+      }
+    } else {
+      // Likely to be array of `(HttpContextToken, value)` pairs.
+      if (reqContext && Array.isArray(reqContext)) {
+        if (reqContext.length == 2 && !Array.isArray(reqContext[0])) {
+          // one dimensional array of a key, value pair.
+          context.set(reqContext[0], reqContext[1]);
+        } else {
+          reqContext.forEach(([k, v]) => context.set(k, v));
+        }
       }
     }
+
+    // Give subclasses a chance to add their own context tokens.
+    this.addAddlContextTokens(context);
+
     return context;
   });
 
@@ -546,6 +553,12 @@ export abstract class SPPagedEntityLoader<
 
   getEntity(id: TEntity[IdKey]): TEntity | undefined {
     return this.store.query(getEntity(id));
+  }
+
+  protected addAddlContextTokens(context: HttpContext): void {
+    // Add any additional context tokens required for this request.
+    // Note that context is a mutable object. Subclasses can override
+    // this method to add their own context tokens.
   }
 
   // Does the actual loading of entities from the remote or the loader

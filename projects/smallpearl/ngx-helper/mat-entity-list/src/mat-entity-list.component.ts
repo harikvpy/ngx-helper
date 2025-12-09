@@ -389,23 +389,31 @@ export class SPMatEntityListComponent<
 
   _httpReqContext = computed(() => {
     let reqContext = this.httpReqContext();
+    let context = new HttpContext();
     if (reqContext instanceof HttpContext) {
-      return reqContext;
-    }
-    const context = new HttpContext();
-    if (reqContext && Array.isArray(reqContext)) {
-      if (reqContext.length == 2 && !Array.isArray(reqContext[0])) {
-        // one dimensional array of a key, value pair.
-        context.set(reqContext[0], reqContext[1]);
-      } else {
-        reqContext.forEach(([k, v]) => context.set(k, v));
+      // Copy existing context values
+      for (const key of reqContext.keys()) {
+        context.set(key, reqContext.get(key));
+      }
+    } else {
+      if (reqContext && Array.isArray(reqContext)) {
+        if (reqContext.length == 2 && !Array.isArray(reqContext[0])) {
+          // one dimensional array of a key, value pair.
+          context.set(reqContext[0], reqContext[1]);
+        } else {
+          reqContext.forEach(([k, v]) => context.set(k, v));
+        }
       }
     }
-    context.set(SP_MAT_ENTITY_LIST_HTTP_CONTEXT, {
-      entityName: this.entityName(),
-      entityNamePlural: this._entityNamePlural(),
-      endpoint: this.endpoint(),
-    });
+
+    // Add mandatory SP_MAT_ENTITY_LIST_HTTP_CONTEXT context token
+    if (!context.has(SP_MAT_ENTITY_LIST_HTTP_CONTEXT)) {
+      context.set(SP_MAT_ENTITY_LIST_HTTP_CONTEXT, {
+        entityName: this.entityName(),
+        entityNamePlural: this._entityNamePlural(),
+        endpoint: this.endpoint(),
+      });
+    }
     return context;
   });
   deferViewInit = input<boolean>(false);
