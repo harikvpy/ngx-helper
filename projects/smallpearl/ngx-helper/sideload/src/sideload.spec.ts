@@ -477,7 +477,7 @@ const ARRAY_VALUE_RESPONSE = {
   }
 }
 
-fdescribe('sideloadToComposite', () => {
+describe('sideloadToComposite', () => {
   it('should merge sideload data into an array of composite objects (append)', () => {
     const customerPayments = sideloadToComposite(
       JSON.parse(JSON.stringify(MULTI_OBJECT_RESPONSE)),
