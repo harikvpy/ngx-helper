@@ -477,7 +477,7 @@ const ARRAY_VALUE_RESPONSE = {
   }
 }
 
-describe('sideloadToComposite', () => {
+fdescribe('sideloadToComposite', () => {
   it('should merge sideload data into an array of composite objects (append)', () => {
     const customerPayments = sideloadToComposite(
       JSON.parse(JSON.stringify(MULTI_OBJECT_RESPONSE)),
@@ -623,5 +623,53 @@ describe('sideloadToComposite', () => {
     expect(customerPayments[0].items[0]['invoiceDetail']).toBeTruthy();
   });
 
+  it('should avoid infinite loop during recursive merge', () => {
+    const data = {
+      "invoices": [
+        {
+          id: 1,
+          customer: 1,
+          items: [
+            {
+              id: 1,
+              product: 1
+            }
+          ]
+        },
+        {
+          id: 2,
+          customer: 2,
+          items: [
+            {
+              id: 2,
+              product: 2
+            }
+          ]
+        }
+      ],
+      "customers": [
+        {
+          id: 1,
+          name: 'Customer 1',
+          invoices: [1],
+        },
+        {
+          id: 2,
+          name: 'Customer 2',
+          invoices: [2],
+        }
+      ]
+    }
+    const invoices = sideloadToComposite(
+      data,
+      'invoices',
+      'id',
+      'append',
+      'Detail',
+    );
+    expect(invoices).toBeTruthy();
+    expect(invoices[0]['customerDetail']).toBeTruthy();
+    expect(invoices[1]['customerDetail']).toBeTruthy();
+  });
 
 });

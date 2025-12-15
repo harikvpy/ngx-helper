@@ -1,8 +1,9 @@
 import { plural, singular } from 'pluralize';
 
 /**
- * A function merge sideloaded content into the main object thereby returning
+ * A function to merge sideloaded content into the main object thereby returning
  * a composite object.
+ *
  * @param resp - the JSON response object, typically received from remote for
  * an HTTP request.
  * @param targetObjKey - the key name of the target object into which the
@@ -14,7 +15,7 @@ import { plural, singular } from 'pluralize';
  * element the sideload data element's key. This is useful when the the
  * target objet's property name that is to be merged with sideload data do not
  * match.
- * @returns
+ * @returns Object with sideloaded data merged into the target object.
  */
 export function sideloadToComposite(
   resp: any,
@@ -28,18 +29,13 @@ export function sideloadToComposite(
     return;
   }
 
-  const allRespKeys = Object.keys(resp);
+  const targetObjKeySingular = singular(targetObjKey);
+  const targetObjKeyPlural = plural(targetObjKey);
+
   const targetObjResponse = resp[targetObjKey];
   if (!targetObjResponse) {
     return;
   }
-
-  // all sideload keys, except the targetObjKey
-  allRespKeys.splice(
-    allRespKeys.findIndex((k) => k === targetObjKey),
-    1
-  );
-  const allRespKeysSingular = allRespKeys.map(k => singular(k));
 
   // Normalize single target object into an array to simplify handling
   let entities: Array<any> = Array.isArray(targetObjResponse)
@@ -118,7 +114,14 @@ export function sideloadToComposite(
     appendObjSuffix: string = 'Detail'
   ) => {
     for (const key in obj) {
-      if (!Object.prototype.hasOwnProperty.call(obj, key) || KEYS_TO_SKIP.has(key)) {
+      if (
+        // This check is needed to avoid infinite recursion, if one of the inner
+        // objects has a key matching the targetObjKey's singular or plural form.
+        key === targetObjKeySingular ||
+        key === targetObjKeyPlural ||
+        !Object.prototype.hasOwnProperty.call(obj, key) ||
+        KEYS_TO_SKIP.has(key)
+      ) {
         continue;
       }
       const value = obj[key];
