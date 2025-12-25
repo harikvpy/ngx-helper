@@ -206,6 +206,7 @@ class DefaultPaginator implements SPMatEntityListPaginator {
         [(ngModel)]="selectValue"
         msInfiniteScroll
         (infiniteScroll)="onInfiniteScroll()"
+        [disabled]="disabled || readonly()"
       >
         <mat-select-trigger>
           {{ selectTriggerValue }}
@@ -373,6 +374,9 @@ export class SPMatSelectEntityComponent<
   // Set to true to allow multiple option selection. The returned value
   // would be an array of entity ids.
   multiple = input<boolean>(false);
+
+  // Set to true to make the mat-select readonly
+  readonly = input<boolean>(false);
 
   /**
    * The entity key name that is used to classify entities into groups or

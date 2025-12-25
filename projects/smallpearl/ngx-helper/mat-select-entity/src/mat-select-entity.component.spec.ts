@@ -193,6 +193,13 @@ describe('MatSelectEntityComponent (single selection)', () => {
     fixture.componentRef.setInput('disabled', false);
     fixture.detectChanges();
     expect(matSel.disabled).toBeFalse();
+    // We can also set readonly to make the mat-select disabled
+    // This is because MatSelect does not have a native readonly property.
+    // So to achieve the same visual effect, we set disabled=true when
+    // readonly=true.
+    fixture.componentRef.setInput('readonly', true);
+    fixture.detectChanges();
+    expect(matSel.disabled).toBeTrue();
   });
 
   it('should display current value as the selection', async () => {

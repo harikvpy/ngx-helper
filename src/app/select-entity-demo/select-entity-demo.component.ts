@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { SPEntityListPaginator, SPPageParams } from '@smallpearl/ngx-helper/entities';
@@ -211,6 +212,7 @@ class StaticUserDataPaginator implements SPEntityListPaginator {
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    MatButtonModule,
     MatFormFieldModule,
     MatSelectModule,
     SPMatSelectEntityComponent,
@@ -245,7 +247,7 @@ class StaticUserDataPaginator implements SPEntityListPaginator {
                       [url]="loadUnits"
                       entityName="unit"
                       [labelFn]="unitLabelFn"
-                      [groupByFn]="groupByFn"
+                      [groupOptionsKey]="groupByFn"
                       formControlName="unit"
                       (selectionChange)="onUnitSelected($event)"
                     ></sp-mat-select-entity>
@@ -281,6 +283,24 @@ class StaticUserDataPaginator implements SPEntityListPaginator {
                     ></sp-mat-select-entity>
                   </mat-form-field>
                 </div>
+                <div class="p-2">
+                  <mat-form-field>
+                    <mat-label>Readonly User</mat-label>
+                    <sp-mat-select-entity
+                      [url]="remoteUsersFn"
+                      entityName="user"
+                      [entities]="initialEntities"
+                      [labelFn]="remoteUserLabelFn"
+                      [pageSize]="20"
+                      idKey="phone"
+                      formControlName="readOnlyUser"
+                      (selectionChange)="onreadOnlyUserSelected($event)"
+                      [paginator]="staticUserPaginator"
+                      [readonly]="true"
+                    ></sp-mat-select-entity>
+                  </mat-form-field>
+                </div>
+
                 <div class="p-2">
                   <mat-form-field>
                     <mat-label>Empty Response</mat-label>
@@ -322,6 +342,7 @@ class StaticUserDataPaginator implements SPEntityListPaginator {
               </div> -->
               </form>
             </div>
+            <button mat-raised-button (click)="onSubmit()">Submit</button>
           </div>
           <div class="select-entity-demo-row-2"></div>
           <div class="select-entity-demo-row-3"></div>
@@ -400,6 +421,7 @@ export class SelectEntityDemoComponent {
       remoteUser1: [USER_DATA[0].phone],
       remoteUser2: [undefined],
       remoteUser3: [undefined],
+      readOnlyUser: [this.initialEntities[0].phone],
       unit: [undefined],
     });
     this.form.valueChanges
@@ -443,6 +465,10 @@ export class SelectEntityDemoComponent {
     console.log(`onRemoteUserSelected3 - ev: ${JSON.stringify(ev)}`);
   }
 
+  onreadOnlyUserSelected(ev: any) {
+    console.log(`onreadOnlyUserSelected - ev: ${JSON.stringify(ev)}`);
+  }
+
   onCreateNewUser(ev: any) {
     console.log(`onCreateNewUser - ev: ${JSON.stringify(ev)}`);
   }
@@ -461,5 +487,9 @@ export class SelectEntityDemoComponent {
 
   onScrollUp() {
     console.log(`onScrollUp`);
+  }
+
+  onSubmit() {
+    console.log(`Form Submitted: ${JSON.stringify(this.form.value, null, 2)}`);
   }
 }
