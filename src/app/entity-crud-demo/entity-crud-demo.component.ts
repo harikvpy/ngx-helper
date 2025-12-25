@@ -20,12 +20,12 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { getEntitiesIds } from '@ngneat/elf-entities';
 import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { spFormatCurrency } from '@smallpearl/ngx-helper/locale';
-import { SPContextMenuItem } from '@smallpearl/ngx-helper/mat-context-menu';
 import {
   NewItemSubType,
   SPMatEntityCrudComponent,
   SPMatEntityCrudPreviewPaneComponent,
 } from '@smallpearl/ngx-helper/mat-entity-crud';
+import { MatEntityCrudItemAction } from 'dist/smallpearl/ngx-helper/mat-entity-crud/src/mat-entity-crud-item-action';
 import { of } from 'rxjs';
 import { MyPaginator } from '../entity-list-demo/paginater';
 import { User } from '../entity-list-demo/user';
@@ -54,7 +54,6 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
   selector: 'app-entity-crud-demo',
   template: `
     <ng-container *transloco="let t">
-
       <mat-tab-group style="width: 100%; height: 100%;">
         <mat-tab label="Simple">
           <sp-mat-entity-crud
@@ -221,10 +220,9 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
             itemLabel="Invoice"
             itemsLabel="Invoices"
             title="All Invoices"
-            (action)="onItemAction($event)"
             [crudOpFn]="crudOpFn"
             (selectEntity)="handleSelectEntity($event)"
-            [createEditFormTemplate]="createEdit"
+            [createEditFormTemplate]="invoiceAction"
             [previewTemplate]="userPreview4"
             [actionsTemplate]="actionButtons"
             [itemActions]="itemActions"
@@ -266,6 +264,10 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
                 [invoice]="data.entity"
               ></app-invoice-preview>
             </sp-mat-entity-crud-preview-pane>
+          </ng-template>
+
+          <ng-template #invoiceAction let-data>
+            <h1>Invoice Actions, params: {{ data.params }} </h1>
           </ng-template>
         </mat-tab>
 
@@ -315,9 +317,7 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
 export class EntityCrudDemoComponent
   implements OnInit, SPMatEntityCrudCanDeactivate
 {
-  userEndpoint = signal<string>(
-    'https://randomuser.me/api/?nat=us,dk,fr,gb'
-  );
+  userEndpoint = signal<string>('https://randomuser.me/api/?nat=us,dk,fr,gb');
   userColumns: SPEntityFieldSpec<User>[] = [
     { name: 'name', label: 'NAME', valueFn: (user: User) => user.name.first },
     { name: 'gender', label: 'GENDER' },
@@ -347,7 +347,7 @@ export class EntityCrudDemoComponent
     {
       name: 'customer',
       label: this.transloco.selectTranslate('customer'),
-      valueFn: (item: Invoice) => item.customerDetail.name
+      valueFn: (item: Invoice) => item.customerDetail.name,
     },
     {
       name: 'terms',
@@ -360,17 +360,32 @@ export class EntityCrudDemoComponent
       valueOptions: { alignment: 'end' },
     },
   ];
-  itemActions: SPContextMenuItem[] = [
+  itemActions: MatEntityCrudItemAction<Invoice>[] = [
     { label: 'INCOME', role: '' },
     { label: 'Edit', role: '_update_' },
     { label: 'Remove', role: '_delete_' },
-    { label: 'EXPENSE', role: '' },
-    { label: 'Bill Payment', role: 'billPayment' },
+    {
+      label: 'EXPENSE',
+      role: '',
+    },
+    {
+      label: 'Bill Payment',
+      role: 'billPayment',
+      action: (entity: Invoice) => {
+        this.spEntityCrudComponent4()!.showCreateEditView(entity, {
+          type: 'expense',
+          title: 'Expense'
+        });
+      },
+    },
     {
       label: 'Advance to Owner',
       role: 'advanceToOwner',
       disable: (item: Invoice) => {
         return item.customerDetail.name.startsWith('Peter');
+      },
+      action: (entity: Invoice) => {
+        alert('Advance to Owner action clicked for invoice #' + entity.id);
       },
     },
   ];
@@ -383,9 +398,7 @@ export class EntityCrudDemoComponent
   spEntityCrudComponent3 = viewChild('spEntityCrud3', {
     read: SPMatEntityCrudComponent,
   });
-  spEntityCrudComponent4 = viewChild('spEntityCrud4', {
-    read: SPMatEntityCrudComponent,
-  });
+  spEntityCrudComponent4 = viewChild<SPMatEntityCrudComponent<Invoice>>('spEntityCrud4');
 
   paginator = new MyPaginator();
   newSubTypes: NewItemSubType[] = [
@@ -475,10 +488,7 @@ export class EntityCrudDemoComponent
     return of(null);
   }
 
-  constructor(
-    private router: Router,
-    private route: ActivatedRoute,
-  ) {}
+  constructor(private router: Router, private route: ActivatedRoute) {}
 
   canDeactivate(): boolean {
     return !!this.spEntityCrudComponent1()?.canDeactivate();
