@@ -581,7 +581,9 @@ export class SPMatEntityCrudComponent<
     () => this.entityPaneActive() && this.entityPaneWidth() === 100
   );
 
-  defaultItemCrudActions = signal<MatEntityCrudItemAction<TEntity, IdKey>[]>([]);
+  defaultItemCrudActions = signal<MatEntityCrudItemAction<TEntity, IdKey>[]>(
+    []
+  );
   columnsWithAction = computed(() => {
     const cols = clone(this.columns());
     const actionDefined =
@@ -669,6 +671,19 @@ export class SPMatEntityCrudComponent<
 
   override refresh(force = false) {
     this.spEntitiesList()?.refresh(force);
+  }
+
+  //  BEGIN SPMatEntityCrudComponentBase METHODS //
+  getEntityName(): string {
+    return this.entityName()
+  }
+
+  getEntityNamePlural(): string {
+    return this._entityNamePlural();
+  }
+
+  getIdKey() {
+    return this.idKey();
   }
 
   closeCreateEdit(cancelled: boolean) {
@@ -764,6 +779,26 @@ export class SPMatEntityCrudComponent<
       })
     );
   }
+
+  loadEntity(
+    id: TEntity[IdKey],
+    params: string | HttpParams
+  ): Observable<TEntity> {
+    const crudOpFn = this.crudOpFn();
+    if (crudOpFn) {
+      return crudOpFn('get', id, undefined, this) as Observable<TEntity>;
+    } else {
+      const httpParams =
+        params instanceof HttpParams
+          ? params
+          : new HttpParams({ fromString: params });
+      return this.http.get<TEntity>(this.getEntityUrl(id), {
+        context: this.getCrudReqHttpContext('retrieve'),
+        params: httpParams,
+      });
+    }
+  }
+  // END SPMatEntityCrudComponentBase METHODS //
 
   /**
    * Thunk these methods to the internal <sp-mat-entity-list> component.
@@ -905,25 +940,28 @@ export class SPMatEntityCrudComponent<
       verb,
       httpRequestParameters.params || new HttpParams(),
       httpRequestParameters.body
-    ).pipe(
-      tap((response) => {
-        const successMessage = actionItem?.successMessage ||
-          this.transloco.translate('spMatEntityCrud.done');
-        this.snackBar.open(successMessage || "Done");
-      }),
-      catchError((error) => {
-        /**
-         * If an errorMessage is specified in the actionItem, display it.
-         * Otherwise rethrow the error so that it can be handled by the
-         * global error handler.
-         */
-        if (actionItem?.errorMessage) {
-          this.snackBar.open(actionItem.errorMessage);
-          return EMPTY;
-        }
-        return throwError(() => error);
-      })
-    ).subscribe();
+    )
+      .pipe(
+        tap((response) => {
+          const successMessage =
+            actionItem?.successMessage ||
+            this.transloco.translate('spMatEntityCrud.done');
+          this.snackBar.open(successMessage || 'Done');
+        }),
+        catchError((error) => {
+          /**
+           * If an errorMessage is specified in the actionItem, display it.
+           * Otherwise rethrow the error so that it can be handled by the
+           * global error handler.
+           */
+          if (actionItem?.errorMessage) {
+            this.snackBar.open(actionItem.errorMessage);
+            return EMPTY;
+          }
+          return throwError(() => error);
+        })
+      )
+      .subscribe();
   }
 
   onCreate(event: Event) {
@@ -1116,7 +1154,10 @@ export class SPMatEntityCrudComponent<
      */
     const contextParamToHttpContext = (
       context: HttpContext,
-      reqContext: [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any] | HttpContext
+      reqContext:
+        | [[HttpContextToken<any>, any]]
+        | [HttpContextToken<any>, any]
+        | HttpContext
     ) => {
       if (reqContext instanceof HttpContext) {
         // reqContext is already an HttpContext object.
@@ -1151,7 +1192,8 @@ export class SPMatEntityCrudComponent<
           // be an array of HttpContextToken key, value pairs.
           contextParamToHttpContext(context, crudHttpReqContext);
         } else if (
-          typeof crudHttpReqContext === 'object' && op &&
+          typeof crudHttpReqContext === 'object' &&
+          op &&
           Object.keys(crudHttpReqContext).find((k) => k === op)
         ) {
           // HttpContext specific to this crud operation, 'create'|'retrieve'|'update'|'delete'
@@ -1187,25 +1229,27 @@ export class SPMatEntityCrudComponent<
         ? this.itemActions()
         : this.defaultItemCrudActions();
     let actionsCopy: MatEntityCrudItemAction<TEntity, IdKey>[] = clone(actions);
-    actionsCopy.forEach((action: MatEntityCrudItemAction<TEntity, IdKey>, index: number) => {
-      // localize default action item labels (Update & Delete)
-      // Client specified action labels are to be localized by the client
-      // before supplying them to the component.
-      if (action.label.startsWith('spMatEntityCrud.')) {
-        action.label = this.transloco.translate(action.label);
+    actionsCopy.forEach(
+      (action: MatEntityCrudItemAction<TEntity, IdKey>, index: number) => {
+        // localize default action item labels (Update & Delete)
+        // Client specified action labels are to be localized by the client
+        // before supplying them to the component.
+        if (action.label.startsWith('spMatEntityCrud.')) {
+          action.label = this.transloco.translate(action.label);
+        }
+        const orgDisable = actions[index]?.disable;
+        action.disable = (entity: TEntity) => {
+          if (orgDisable) {
+            return orgDisable(entity);
+          }
+          const allowItemActionFn = this.allowEntityActionFn();
+          if (allowItemActionFn) {
+            return !allowItemActionFn(entity, action.role ?? action.label);
+          }
+          return false;
+        };
       }
-      const orgDisable = actions[index]?.disable;
-      action.disable = (entity: TEntity) => {
-        if (orgDisable) {
-          return orgDisable(entity);
-        }
-        const allowItemActionFn = this.allowEntityActionFn();
-        if (allowItemActionFn) {
-          return !allowItemActionFn(entity, action.role ?? action.label);
-        }
-        return false;
-      };
-    });
+    );
     // If the item actions are disabled, disable all actions. Event user
     // defined actions.
     if (this.disableItemActions()) {

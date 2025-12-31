@@ -1,9 +1,11 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { ChangeDetectorRef, Component, computed, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { TranslocoService } from '@jsverse/transloco';
 import { setServerErrorsAsFormErrors } from '@smallpearl/ngx-helper/forms';
-import { Subscription } from 'rxjs';
-import { getEntityCrudConfig } from './default-config';
+import { map, Observable, Subscription } from 'rxjs';
+// import { getEntityCrudConfig } from './default-config';
+import { sideloadToComposite } from '@smallpearl/ngx-helper/sideload';
 import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
 
 /**
@@ -48,20 +50,36 @@ import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
  *    ```
  *
  * 3. If you form's value requires manipulation before being sent to the
- *    server, override getFormValue() method and do it there before returning
+ *    server, override `getFormValue()` method and do it there before returning
  *    the modified values.
  *
  * 4. Wire up the form in the template as:
  *
  *    ```
+ *    @if (loadEntity$ | async) {
  *    <form [formGroup]='form'.. (ngSubmit)="onSubmit()">
  *      <button type="submit">Submit</button>
  *    </form>
+ *    } @else {
+ *     <div>Loading...</div>
+ *    }
  *    ```
+ *    Here `loadEntity$` is an Observable<boolean> that upon emission of `true`
+ *    indicates that the entity has been loaded from server (in case of edit)
+ *    and the form is ready to be displayed. Note that if the full entity was
+ *    passed in the `entity` input property, then no server load is necessary
+ *    and the form will be created immediately.
+ *
+ * 5. If the entity shape required by the form requires additional parameters
+ *    to be loaded from server, initialize `entity` property with it's id.
+ *    Then override the `getLoadEntityParams()` method to return the additional
+ *    load parameters. The parameters returned by this method will be
+ *    passed to the `loadEntity()` method of the bridge interface.
  */
 @Component({
-    selector: '_#_sp-mat-entity-crud-form-base_#_', template: ``,
-    standalone: false
+  selector: '_#_sp-mat-entity-crud-form-base_#_',
+  template: ``,
+  standalone: false,
 })
 export abstract class SPMatEntityCrudFormBase<
   TFormGroup extends AbstractControl,
@@ -69,10 +87,12 @@ export abstract class SPMatEntityCrudFormBase<
   IdKey extends string = 'id'
 > implements OnInit, OnDestroy
 {
-  _form = signal<TFormGroup|undefined>(undefined);
-  entity = input.required<TEntity>();
+  _form = signal<TFormGroup | undefined>(undefined);
+  entity = input.required<TEntity|TEntity[IdKey]>();
   bridge = input.required<SPMatEntityCrudCreateEditBridge>();
   params = input<any>();
+  loadEntity$!: Observable<boolean>;
+  _entity = signal<TEntity | undefined>(undefined);
   sub$ = new Subscription();
   // Force typecast to TFormGroup so that we can use it in the template
   // without having to use the non-nullable operator ! with every reference
@@ -80,10 +100,10 @@ export abstract class SPMatEntityCrudFormBase<
   // method after the form is created. And if form() is not set, then there
   // will be errors while loading the form in the template.
   form = computed(() => this._form() as TFormGroup);
-  crudConfig = getEntityCrudConfig();
+  // crudConfig = getEntityCrudConfig();
   transloco = inject(TranslocoService);
-
   cdr = inject(ChangeDetectorRef);
+  http = inject(HttpClient);
 
   canCancelEdit = () => {
     return this._canCancelEdit();
@@ -100,21 +120,64 @@ export abstract class SPMatEntityCrudFormBase<
   }
 
   ngOnInit() {
-    this._form.set(this.createForm(this.entity()));
-    this.bridge()?.registerCanCancelEditCallback(this.canCancelEdit);
+    this.loadEntity$ = (
+      typeof this.entity() === 'object' || this.entity() === undefined
+        ? new Observable<TEntity | undefined>((subscriber) => {
+            subscriber.next(this.entity() as TEntity | undefined);
+            subscriber.complete();
+          })
+        : this.bridge()?.loadEntity(
+            this.entity() as any,
+            this.getLoadEntityParams()
+          )
+    ).pipe(
+      map((resp) => {
+        const compositeEntity = this.getEntityFromLoadResponse(resp);
+        this._entity.set(compositeEntity);
+        this._form.set(this.createForm(compositeEntity));
+        this.bridge()?.registerCanCancelEditCallback(this.canCancelEdit);
+        return true;
+      })
+    );
   }
 
   ngOnDestroy() {
     this.sub$.unsubscribe();
   }
 
-  // get form(): TFormGroup|undefined {
-  //   return this._form();
-  // }
+  /**
+   * Additional parameters for loading the entity, in case this.entity() value
+   * is of type TEntity[IdKey].
+   * @returns
+   */
+  getLoadEntityParams(): string | HttpParams {
+    return '';
+  }
 
-  // set form(f: TFormGroup) {
-  //   this._form.set(f);
-  // }
+  /**
+   * Return the TEntity object from the response returned by the
+   * loadEntity() method of the bridge. Typically entity load return the actual
+   * entity object itself. In some cases, where response is sideloaded, the
+   * default implementation here uses the `sideloadToComposite()` utility to
+   * extract the entity from the response after merging (inplace) the
+   * sideloaded data into a composite.
+   *
+   * If you have a different response shape, override this method to
+   * extract the TEntity object from the response.
+   * @param resp
+   * @returns
+   */
+  getEntityFromLoadResponse(resp: any): TEntity | undefined {
+    if (!resp) {
+      return undefined;
+    }
+    const sideloaded = sideloadToComposite(
+      resp,
+      this.bridge().getEntityName(),
+      this.bridge().getIdKey()
+    );
+    return sideloaded;
+  }
 
   /**
    * Create the TFormGroup FormGroup class that will be used for the reactive
@@ -138,7 +201,7 @@ export abstract class SPMatEntityCrudFormBase<
    * @returns
    */
   getFormValue() {
-    const form = this.form()
+    const form = this.form();
     return form ? form.value : undefined;
   }
 
@@ -150,9 +213,32 @@ export abstract class SPMatEntityCrudFormBase<
     this.sub$.add(
       obs
         ?.pipe(
-          setServerErrorsAsFormErrors(this._form() as unknown as UntypedFormGroup, this.cdr)
+          setServerErrorsAsFormErrors(
+            this._form() as unknown as UntypedFormGroup,
+            this.cdr
+          )
         )
         .subscribe()
     );
   }
+
+  // create(values: any): Observable<TEntity> {
+  //   const bridge = this.bridge();
+  //   if (bridge) {
+  //     return bridge.create(values);
+  //   }
+  //   return this.http
+  //     .post<TEntity>('', values)
+  //     .pipe(map((resp) => this.getEntityFromLoadResponse(resp) as TEntity));
+  // }
+
+  // update(id: any, values: any): Observable<TEntity> {
+  //   const bridge = this.bridge();
+  //   if (bridge) {
+  //     return bridge.update(id, values);
+  //   }
+  //   return this.http
+  //     .patch<TEntity>(`/${String(id)}`, values)
+  //     .pipe(map((resp) => this.getEntityFromLoadResponse(resp) as TEntity));
+  // }
 }

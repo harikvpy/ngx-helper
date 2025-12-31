@@ -383,7 +383,7 @@ export class SPMatEntityListComponent<
   // *** INTERNAL *** //
   _entityNamePlural = computed(() =>
     this.entityNamePlural()
-      ? this.entityNamePlural()
+      ? this.entityNamePlural() as string
       : plural(this.entityName())
   );
 

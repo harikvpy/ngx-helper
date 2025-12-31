@@ -12,9 +12,17 @@ export const ITEM_ACTION_DELETE = '_delete_';
  * the create/edit operation.
  */
 export interface SPMatEntityCrudComponentBase<
-    TEntity extends { [P in IdKey]: PropertyKey },
-    IdKey extends string = 'id'
+  TEntity extends { [P in IdKey]: PropertyKey },
+  IdKey extends string = 'id'
 > {
+  /**
+   * Wrappers around entityName & entityNamePlural properties.
+   */
+  getEntityName(): string;
+  getEntityNamePlural(): string;
+  getIdKey(): string;
+  getEntityUrl(id: TEntity[IdKey]|undefined): string;
+
   /**
    * FormViewHostComponent will call this to close the Create/Edit pane.
    * SPMatEntityCrudComponentBase implementor will destroy the client form
@@ -67,6 +75,15 @@ export interface SPMatEntityCrudComponentBase<
    * REST's GET request.
    */
   update: (id: any, entityValue: any) => Observable<any>;
+
+  /**
+   * Load the entity with the given id from server.
+   * @param id The id of the entity to load.
+   * @param params Additional parameters for loading the entity.
+   * @returns An observable of the loaded entity.
+   */
+  loadEntity: (id: any, params: string | HttpParams) => Observable<TEntity>;
+
   /**
    * Close the preview pane.
    * @returns
@@ -101,7 +118,7 @@ export interface SPMatEntityCrudComponentBase<
    *
    * @param id The id of the entity to remove.
    * @returns None
-  **/
+   **/
   removeEntity(id: TEntity[IdKey]): void;
 
   /**

@@ -24,6 +24,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatButton, MatButtonModule } from '@angular/material/button';
+import { MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenu, MatMenuItem } from '@angular/material/menu';
@@ -40,6 +41,7 @@ import {
 } from '@smallpearl/ngx-helper/mat-entity-list';
 import { getTranslocoModule } from '@smallpearl/ngx-helper/src/transloco-testing.module';
 import { firstValueFrom, of, tap } from 'rxjs';
+import { SPMatEntityCrudFormBase } from './mat-entity-crud-form-base';
 import { MatEntityCrudItemAction } from './mat-entity-crud-item-action';
 import {
   NewItemSubType,
@@ -125,6 +127,14 @@ const USER_COLUMNS: SPEntityFieldSpec<User, 'cell'>[] = [
   // { name: 'action', label: 'ACTION' },
 ];
 
+
+type UserForm = FormGroup<{
+  first: FormControl<string>;
+  last: FormControl<string>;
+  gender: FormControl<string>;
+  cell: FormControl<string>;
+}>;
+
 type UserEntityCrudComponent = SPMatEntityCrudComponent<User, 'cell'>;
 
 @Component({
@@ -137,11 +147,13 @@ type UserEntityCrudComponent = SPMatEntityCrudComponent<User, 'cell'>;
     MatButtonModule,
     MatSelectModule,
   ],
-  selector: 'create-edit-user-demo',
+  selector: 'create-edit-user-form',
   template: `
+    @if (loadEntity$ | async) {
+      <h1>ENTITY LOADED!</h1>
     <form
-      [formGroup]="form"
-      (ngSubmit)="onNgSubmit()"
+      [formGroup]="form()"
+      (ngSubmit)="onSubmit()"
       class="d-flex flex-column align-items-start"
       errorTailor
     >
@@ -172,7 +184,7 @@ type UserEntityCrudComponent = SPMatEntityCrudComponent<User, 'cell'>;
           type="button"
           color="secondary"
           mat-raised-button
-          (click)="form.reset()"
+          (click)="form().reset()"
         >
           Reset
         </button>
@@ -180,44 +192,28 @@ type UserEntityCrudComponent = SPMatEntityCrudComponent<User, 'cell'>;
           type="submit"
           color="primary"
           mat-raised-button
-          [disabled]="form.invalid"
+          [disabled]="form().invalid"
         >
           Save
         </button>
       </div>
     </form>
+    } @else {
+    <div>Loading...</div>
+    }
   `,
 })
-export class CreateEditUserComponent implements OnInit {
-  form!: FormGroup<{
-    first: FormControl<string>;
-    last: FormControl<string>;
-    gender: FormControl<string>;
-    cell: FormControl<string>;
-  }>;
-  bridge = input<SPMatEntityCrudCreateEditBridge>();
-  entity = input<User>();
-  creating = computed(() => !this.entity() || !this.entity()?.cell);
+export class CreateEditUserComponent
+  extends SPMatEntityCrudFormBase<UserForm, User, 'cell'>
+  implements OnInit
+{
+  creating = computed(() => !this.entity() || !(this.entity() as User)?.cell);
 
-  canCancelEdit = () => {
-    return this._canCancelEdit();
-  };
-
-  _canCancelEdit() {
-    if (this.form.touched) {
-      return window.confirm('Lose Changes?');
-    }
-    return true;
+  constructor() {
+    super();
   }
 
-  constructor() {}
-
-  ngOnInit(): void {
-    this.form = this.createForm(this.entity());
-    this.bridge()?.registerCanCancelEditCallback(this.canCancelEdit);
-  }
-
-  createForm(entity?: User) {
+  createForm(entity?: User): UserForm {
     return new FormGroup({
       first: new FormControl(entity ? entity.name.first : '', {
         nonNullable: true,
@@ -235,16 +231,17 @@ export class CreateEditUserComponent implements OnInit {
         nonNullable: true,
         validators: [Validators.required, Validators.minLength(8)],
       }),
-    });
+    }) as UserForm;
   }
 
-  onNgSubmit() {
-    const value = this.form.value;
-    const bridge = this.bridge();
-    const obs = this.creating()
-      ? bridge?.create(value)
-      : bridge?.update(this.entity()?.cell, value);
-    obs?.pipe().subscribe();
+  override getFormValue() {
+    const formValue: any = this.form().value;
+    formValue['name'] = {
+      title: '',
+      first: formValue.first,
+      last: formValue.last,
+    };
+    return formValue;
   }
 }
 
@@ -290,10 +287,10 @@ export class CreateEditUserComponent implements OnInit {
     </div>
 
     <ng-template #createEdit let-data>
-      <create-edit-user-demo
+      <create-edit-user-form
         [bridge]="data.bridge"
         [entity]="data.entity"
-      ></create-edit-user-demo>
+      ></create-edit-user-form>
     </ng-template>
 
     <ng-template #userPreview let-data>
@@ -1217,7 +1214,7 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     // form control's value directly.
     // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
     // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
-    (createEditHost.componentInstance as CreateEditUserComponent).form.controls[
+    (createEditHost.componentInstance as CreateEditUserComponent).form().controls[
       'gender'
     ].setValue('female');
     testComponentFixture.detectChanges();
@@ -1272,7 +1269,7 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     // form control's value directly.
     // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
     // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
-    (createEditHost.componentInstance as CreateEditUserComponent).form.controls[
+    (createEditHost.componentInstance as CreateEditUserComponent).form().controls[
       'gender'
     ].setValue('female');
     testComponentFixture.detectChanges();
@@ -1286,7 +1283,7 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     // requirements. This error should look like {requiredLength: 8, actualLength: 4}
     const cellErrors = (
       createEditHost.componentInstance as CreateEditUserComponent
-    ).form.controls['cell'].errors;
+    ).form().controls['cell'].errors;
     expect(cellErrors).toEqual({
       minlength: { requiredLength: 8, actualLength: 4 },
     });
@@ -1331,7 +1328,7 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     );
     matButton.nativeElement.click();
     testComponentFixture.detectChanges();
-    tick();
+    tick(100);
     const createEditHost = testComponentFixture.debugElement.query(
       By.directive(CreateEditUserComponent)
     );
@@ -1348,7 +1345,7 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     // form control's value directly.
     // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
     // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
-    (createEditHost.componentInstance as CreateEditUserComponent).form.controls[
+    (createEditHost.componentInstance as CreateEditUserComponent).form().controls[
       'gender'
     ].setValue('female');
     testComponentFixture.detectChanges();
@@ -1439,3 +1436,22 @@ describe('SPMatEntityCrudComponent client configurable behavior', () => {
     expect(editFormComponent).toBeTruthy();
   }));
 });
+
+@Component({
+  selector: 'sp-mat-entity-crud-test-host',
+  template: `
+    <button name="new_user"></button>
+    <create-edit-user-form>
+      [entity]="1"
+      [bridge]="undefined"
+    </create-edit-user-form>
+  `,
+  imports: [
+    CommonModule,
+    MatDialogModule,
+    CreateEditUserComponent,
+  ],
+})
+class SPMatEntityCrudFormTestComponent {
+
+}

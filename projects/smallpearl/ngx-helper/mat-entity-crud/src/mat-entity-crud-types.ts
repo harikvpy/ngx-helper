@@ -1,4 +1,4 @@
-import { HttpContextToken } from "@angular/common/http";
+import { HttpContextToken, HttpParams } from "@angular/common/http";
 import { SPContextMenuItem } from "@smallpearl/ngx-helper/mat-context-menu";
 import { Observable } from "rxjs";
 
@@ -44,6 +44,18 @@ export interface SPMatEntityCrudConfig {
  */
 export interface SPMatEntityCrudCreateEditBridge {
   /**
+   * Returns the entity name as provided to the host SPMatEntityCrudComponent.
+   * @returns The entity name string.
+   */
+  getEntityName(): string;
+
+  /**
+   * Returns the entity id key as provided to the host SPMatEntityCrudComponent.
+   * @returns The entity id key string.
+   */
+  getIdKey(): string;
+
+  /**
    * Close the edit/update form pane. This WON'T call the 'cancelEditCallback'
    * even if one is registered.
    */
@@ -78,6 +90,16 @@ export interface SPMatEntityCrudCreateEditBridge {
    * view while the async function to update the object remains active.
    */
   update: (id: any, entityValue: any) => Observable<any>;
+
+  /**
+   * Load the entity with the given id from server.
+   * @param id The id of the entity to load.
+   * @param params Additional parameters for loading the entity. This will
+   * be passed to the underlying data service's 'get' method. This can be a
+   * query parameters string or HttpParams object.
+   * @returns Observable of the loaded entity.
+   */
+  loadEntity: (id: any, params: string|HttpParams) => Observable<any>;
 }
 
 /**
