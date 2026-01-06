@@ -247,13 +247,13 @@ export abstract class SPMatEntityCrudFormBase<
    * @returns
    */
   getEntityFromLoadResponse(resp: any): TEntity | undefined {
-    if (!resp) {
+    if (!resp || typeof resp !== 'object') {
       return undefined;
     }
     const entityName = this.entityName();
-    if (Object.hasOwn(resp, this.getIdKey())) {
+    if (resp.hasOwnProperty(this.getIdKey())) {
       return resp as TEntity;
-    } else if (entityName && Object.hasOwn(resp, entityName)) {
+    } else if (entityName && resp.hasOwnProperty(entityName)) {
       // const sideloadDataMap = this.sideloadDataMap();
       return sideloadToComposite(
         resp,
