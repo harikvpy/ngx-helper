@@ -40,6 +40,7 @@ import { AngularSplitModule } from 'angular-split';
 import { clone, startCase } from 'lodash';
 import { plural } from 'pluralize';
 import { catchError, EMPTY, firstValueFrom, map, Observable, of, Subscription, switchMap, tap, throwError } from 'rxjs';
+import { convertHttpContextInputToHttpContext } from './context-param-to-http-context';
 import { getEntityCrudConfig } from './default-config';
 import { FormViewHostComponent } from './form-view-host.component';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
@@ -1144,34 +1145,6 @@ export class SPMatEntityCrudComponent<
   }
 
   private getCrudReqHttpContext(op: CrudOp) {
-    /**
-     * Converts array of HttpContextToken key, value pairs to HttpContext
-     * object in argument 'context'.
-     * @param context HTTP context to which the key, value pairs are added
-     * @param reqContext HttpContextToken key, value pairs array
-     * @returns HttpContext object, with the key, value pairs added. This is
-     * the same object as the 'context' argument.
-     */
-    const contextParamToHttpContext = (
-      context: HttpContext,
-      reqContext:
-        | [[HttpContextToken<any>, any]]
-        | [HttpContextToken<any>, any]
-        | HttpContext
-    ) => {
-      if (reqContext instanceof HttpContext) {
-        // reqContext is already an HttpContext object.
-        for (const k of reqContext.keys()) {
-          context.set(k, reqContext.get(k));
-        }
-      } else if (reqContext.length == 2 && !Array.isArray(reqContext[0])) {
-        // one dimensional array of a key, value pair.
-        context.set(reqContext[0], reqContext[1]);
-      } else {
-        reqContext.forEach(([k, v]) => context.set(k, v));
-      }
-      return context;
-    };
 
     let context = new HttpContext();
     // HttpContext for crud operations are taken from either the global httpReqContext
@@ -1190,14 +1163,17 @@ export class SPMatEntityCrudComponent<
         if (Array.isArray(crudHttpReqContext)) {
           // Same HttpContext for all crud requests. Being an array, it must
           // be an array of HttpContextToken key, value pairs.
-          contextParamToHttpContext(context, crudHttpReqContext);
+          convertHttpContextInputToHttpContext(context, crudHttpReqContext);
         } else if (
           typeof crudHttpReqContext === 'object' &&
           op &&
           Object.keys(crudHttpReqContext).find((k) => k === op)
         ) {
           // HttpContext specific to this crud operation, 'create'|'retrieve'|'update'|'delete'
-          contextParamToHttpContext(context, crudHttpReqContext[op]!);
+          convertHttpContextInputToHttpContext(
+            context,
+            crudHttpReqContext[op]!
+          );
         }
       }
     }

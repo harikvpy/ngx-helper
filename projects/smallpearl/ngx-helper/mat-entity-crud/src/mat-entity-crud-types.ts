@@ -34,9 +34,9 @@ export interface SPMatEntityCrudConfig {
  * This is the interface through which the client provided CRUD form component
  * interacts with the 'host' SPMatEntityCrudComponent. When the form wants to
  * submit an entity to the server (for create or update), it should call the
- * one of the create or update methods. The interface also other methods for
- * the form component to interact with SPMatEntityCrudComponent such as
- * refresh its entities list, close the form pane, etc.
+ * one of the create or update methods. The interface also provides other
+ * methods for the form component to interact with SPMatEntityCrudComponent
+ * such as refresh its entities list, close the form pane, etc.
  *
  * The interface name has a 'Bridge' as the interface acts as a bridge between
  * the client provided form handler component and the host
@@ -54,6 +54,13 @@ export interface SPMatEntityCrudCreateEditBridge {
    * @returns The entity id key string.
    */
   getIdKey(): string;
+
+  /**
+   * Get Entity url
+   * @param cancel
+   * @returns
+   */
+  getEntityUrl(entityId: any): string;
 
   /**
    * Close the edit/update form pane. This WON'T call the 'cancelEditCallback'

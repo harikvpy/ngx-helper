@@ -20,9 +20,17 @@ export interface SPMatEntityCrudComponentBase<
    */
   getEntityName(): string;
   getEntityNamePlural(): string;
+  /**
+   * Wrapper around idKey property.
+   */
   getIdKey(): string;
+  /**
+   * This method should return the entity URL for the given entity id.
+   * The entity URL should include any additional query parameters that were
+   * passed to the SPMatEntityCrudComponentBase component's `url` property.
+   * @param id
+   */
   getEntityUrl(id: TEntity[IdKey]|undefined): string;
-
   /**
    * FormViewHostComponent will call this to close the Create/Edit pane.
    * SPMatEntityCrudComponentBase implementor will destroy the client form
@@ -75,7 +83,6 @@ export interface SPMatEntityCrudComponentBase<
    * REST's GET request.
    */
   update: (id: any, entityValue: any) => Observable<any>;
-
   /**
    * Load the entity with the given id from server.
    * @param id The id of the entity to load.
@@ -83,7 +90,6 @@ export interface SPMatEntityCrudComponentBase<
    * @returns An observable of the loaded entity.
    */
   loadEntity: (id: any, params: string | HttpParams) => Observable<TEntity>;
-
   /**
    * Close the preview pane.
    * @returns
@@ -95,7 +101,6 @@ export interface SPMatEntityCrudComponentBase<
    * @returns
    */
   getItemActions(entity?: TEntity): SPContextMenuItem[];
-
   /**
    * Returns the class to be used for the preview pane content. This interface
    * is provided to allow the PreviewPaneComponent to access the client
@@ -110,7 +115,6 @@ export interface SPMatEntityCrudComponentBase<
   getItemLabel(): string | Observable<string>;
 
   getItemLabelPlural(): string | Observable<string>;
-
   /*
    * Remove the entity with the given id from the list of entities.
    * This is typically called by the client when it peforms the delete
@@ -120,7 +124,6 @@ export interface SPMatEntityCrudComponentBase<
    * @returns None
    **/
   removeEntity(id: TEntity[IdKey]): void;
-
   /**
    * Update the entity with the given id in the list of entities.
    * This is typically called by the client when it has performed an update
@@ -131,7 +134,6 @@ export interface SPMatEntityCrudComponentBase<
    * @param data The updated entity.
    */
   updateEntity(id: TEntity[IdKey], data: TEntity): void;
-
   /**
    * Perform a custom action on the entity endpoint. The action is specified
    * by the verb argument, which will be used to derive the final URL. This

@@ -1,11 +1,12 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { ChangeDetectorRef, Component, computed, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { TranslocoService } from '@jsverse/transloco';
 import { setServerErrorsAsFormErrors } from '@smallpearl/ngx-helper/forms';
-import { map, Observable, Subscription } from 'rxjs';
+import { map, Observable, of, Subscription, tap } from 'rxjs';
 // import { getEntityCrudConfig } from './default-config';
 import { sideloadToComposite } from '@smallpearl/ngx-helper/sideload';
+import { convertHttpContextInputToHttpContext, HttpContextInput } from './context-param-to-http-context';
 import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
 
 /**
@@ -19,11 +20,39 @@ import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
  * checking form.touched), then a 'Lose Changes' prompt is displayed allowing
  * the user to cancel the closure.
  *
- * The @Component is fake just to keep the VSCode angular linter quiet.
+ * The `@Component` decorator is fake to keep the VSCode angular linter quiet.
  *
- * To use this class:-
+ * This class can be used in two modes:
  *
- * 1. Declare a FormGroup<> type as
+ *  I. SPMatEntityCrudComponent mode
+ *     This mode relies on a bridge interface that implements the
+ *     SPMatEntityCrudCreateEditBridge interface to perform the entity
+ *     load/create/update operations. This is the intended mode when the
+ *     component is used as a part of the SPMatEntityCrudComponent to
+ *     create/update an entity. This mode requires the following properties
+ *     to be set:
+ *       - entity: TEntity | TEntity[IdKey] | undefined (for create)
+ *       - bridge: SPMatEntityCrudCreateEditBridge
+ *
+ *  II. Standalone mode
+ *     This mode does not rely on the bridge interface and the component
+ *     itself performs the entity load/create/update operations.
+ *     This mode requires the following properties to be set:
+ *      - entity: TEntity | TEntity[IdKey] | undefined (for create)
+ *      - baseUrl: string - Base URL for CRUD operations. This URL does not
+ *        include the entity id. The entity id will be appended to this URL
+ *        for entity load and update operations. For create operation, this
+ *        URL is used as is.
+ *      - entityName: string - Name of the entity, used to parse sideloaded
+ *        entity responses.
+ *      - httpReqContext?: HttpContextInput - Optional HTTP context to be
+ *        passed to the HTTP requests. For instance, if your app has a HTTP
+ *        interceptor that adds authentication tokens to the requests based
+ *        on a HttpContextToken, then you can pass that token here.
+ *
+ * I. SPMatEntityCrudComponent mode:
+ *
+ *  1. Declare a FormGroup<> type as
  *
  *      ```
  *      type MyForm = FormGroup<{
@@ -33,48 +62,73 @@ import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
  *      }>;
  *      ```
  *
- * 2. Derive your form's component class from this and implement the
+ *  2. Derive your form's component class from this and implement the
  *    createForm() method returing the FormGroup<> instance that matches
  *    the FormGroup concrete type above.
  *
- *    ```
- *    class MyFormComponent extends SPMatEntityCrudFormBase<MyForm, MyEntity> {
- *      constructor() {
- *        super()
+ *      ```
+ *      class MyFormComponent extends SPMatEntityCrudFormBase<MyForm, MyEntity> {
+ *        constructor() {
+ *          super()
+ *        }
+ *        createForm() {
+ *          return new FormGroup([...])
+ *        }
  *      }
+ *      ```
  *
- *      createForm() {
- *        return new FormGroup([...])
- *      }
- *    }
- *    ```
- *
- * 3. If you form's value requires manipulation before being sent to the
+ *  3. If your form's value requires manipulation before being sent to the
  *    server, override `getFormValue()` method and do it there before returning
  *    the modified values.
  *
- * 4. Wire up the form in the template as:
+ *  4. Wire up the form in the template as below
  *
- *    ```
- *    @if (loadEntity$ | async) {
- *    <form [formGroup]='form'.. (ngSubmit)="onSubmit()">
- *      <button type="submit">Submit</button>
- *    </form>
- *    } @else {
- *     <div>Loading...</div>
- *    }
- *    ```
- *    Here `loadEntity$` is an Observable<boolean> that upon emission of `true`
- *    indicates that the entity has been loaded from server (in case of edit)
- *    and the form is ready to be displayed. Note that if the full entity was
- *    passed in the `entity` input property, then no server load is necessary
- *    and the form will be created immediately.
+ *      ```html
+ *      @if (loadEntity$ | async) {
+ *      <form [formGroup]='form'.. (ngSubmit)="onSubmit()">
+ *        <button type="submit">Submit</button>
+ *      </form>
+ *      } @else {
+ *        <div>Loading...</div>
+ *      }
+ *      ```
  *
- * 5. If the entity shape required by the form requires additional parameters
- *    to be loaded from server, initialize `entity` property with it's id.
- *    Then override the `getLoadEntityParams()` method to return the additional
- *    load parameters. The parameters returned by this method will be
- *    passed to the `loadEntity()` method of the bridge interface.
+ *     Here `loadEntity$` is an Observable<boolean> that upon emission of `true`
+ *     indicates that the entity has been loaded from server (in case of edit)
+ *     and the form is ready to be displayed. Note that if the full entity was
+ *     passed in the `entity` input property, then no server load is necessary
+ *     and the form will be created immediately.
+ *
+ *  5. In the parent component that hosts the SPMatEntityCrudComponent, set
+ *     the `entity` and `bridge` input properties of this component to
+ *     appropriate values. For instance, if your form component has the
+ *     selector `app-my-entity-form`, then the parent component's template
+ *     will have:
+ *
+ *    ```html
+ *   <sp-mat-entity-crud
+ *    ...
+ *    createEditFormTemplate="entityFormTemplate"
+ *   ></sp-mat-entity-crud>
+ *   <ng-template #entityFormTemplate let-data="data">
+ *    <app-my-entity-form
+ *      [entity]="data.entity"
+ *      [bridge]="data.bridge"
+ *    ></app-my-entity-form>
+ *   </ng-template>
+ *  ```
+ *
+ *  II. Standalone mode
+ *
+ * 1..4. Same as above, except set the required `bridge` input to `undefined`.
+ * 5. Initialize the component's inputs `baseUrl` and `entityName` with the
+ *    appropriate values. If you would like to pass additional HTTP context to
+ *    the HTTP requests, then set the `httpReqContext` input as well.
+ *    If the entity uses an id key other than 'id', then set the `idKey` input
+ *    to the appropriate id key name.
+ * 6. If you want to retrieve the created/updated entity after the create/update
+ *    operation, override the `onPostCreate()` and/or `onPostUpdate()` methods
+ *    respectively.
  */
 @Component({
   selector: '_#_sp-mat-entity-crud-form-base_#_',
@@ -87,20 +141,36 @@ export abstract class SPMatEntityCrudFormBase<
   IdKey extends string = 'id'
 > implements OnInit, OnDestroy
 {
-  _form = signal<TFormGroup | undefined>(undefined);
-  entity = input.required<TEntity|TEntity[IdKey]>();
+  entity = input.required<TEntity | TEntity[IdKey]>();
   bridge = input.required<SPMatEntityCrudCreateEditBridge>();
   params = input<any>();
+
+  // --- BEGIN inputs used when `bridge` input is undefined
+  // Entity name, which is used to parse sideloaded entity responses
+  entityName = input<string>();
+  // Base CRUD URL, which is the GET-list-of-entities/POST-to-create
+  // URL. Update URL will be derived from this ias `baseUrl()/${TEntity[IdKey]}`
+  baseUrl = input<string>();
+  // Additional request context to be passed to the request
+  httpReqContext = input<HttpContextInput | undefined>();
+  // ID key, defaults to 'id'
+  idKey = input<string>('id');
+  // -- END inputs used when `bridge` input is undefined
+
+  // IMPLEMENTATION
   loadEntity$!: Observable<boolean>;
   _entity = signal<TEntity | undefined>(undefined);
   sub$ = new Subscription();
+
+  // Store for internal form signal. form() is computed from this.
+  _form = signal<TFormGroup | undefined>(undefined);
   // Force typecast to TFormGroup so that we can use it in the template
   // without having to use the non-nullable operator ! with every reference
   // of form(). In any case the form() signal is always set in ngOnInit()
   // method after the form is created. And if form() is not set, then there
   // will be errors while loading the form in the template.
   form = computed(() => this._form() as TFormGroup);
-  // crudConfig = getEntityCrudConfig();
+
   transloco = inject(TranslocoService);
   cdr = inject(ChangeDetectorRef);
   http = inject(HttpClient);
@@ -120,22 +190,29 @@ export abstract class SPMatEntityCrudFormBase<
   }
 
   ngOnInit() {
+    // validate inputs. Either bridge or (baseUrl and entityName) must be
+    // defined.
+    if (!this.bridge() && (!this.baseUrl() || !this.entityName())) {
+      throw new Error(
+        'SPMatEntityCrudFormBase: baseUrl and entityName inputs must be defined in standalone mode.'
+      );
+    }
     this.loadEntity$ = (
       typeof this.entity() === 'object' || this.entity() === undefined
         ? new Observable<TEntity | undefined>((subscriber) => {
             subscriber.next(this.entity() as TEntity | undefined);
             subscriber.complete();
           })
-        : this.bridge()?.loadEntity(
-            this.entity() as any,
-            this.getLoadEntityParams()
-          )
+        : this.load(this.entity() as any)
     ).pipe(
       map((resp) => {
         const compositeEntity = this.getEntityFromLoadResponse(resp);
         this._entity.set(compositeEntity);
         this._form.set(this.createForm(compositeEntity));
-        this.bridge()?.registerCanCancelEditCallback(this.canCancelEdit);
+        const bridge = this.bridge();
+        if (bridge && bridge.registerCanCancelEditCallback) {
+          bridge.registerCanCancelEditCallback(this.canCancelEdit);
+        }
         return true;
       })
     );
@@ -156,14 +233,16 @@ export abstract class SPMatEntityCrudFormBase<
 
   /**
    * Return the TEntity object from the response returned by the
-   * loadEntity() method of the bridge. Typically entity load return the actual
+   * load() method. Typically entity load returns the actual
    * entity object itself. In some cases, where response is sideloaded, the
    * default implementation here uses the `sideloadToComposite()` utility to
    * extract the entity from the response after merging (inplace) the
    * sideloaded data into a composite.
    *
-   * If you have a different response shape, override this method to
-   * extract the TEntity object from the response.
+   * If you have a different response shape, or if your sideloaded object
+   * response requires custom custom `sideloadDataMap`, override this method
+   * and implement your custom logic to extract the TEntity object from the
+   * response.
    * @param resp
    * @returns
    */
@@ -171,12 +250,18 @@ export abstract class SPMatEntityCrudFormBase<
     if (!resp) {
       return undefined;
     }
-    const sideloaded = sideloadToComposite(
-      resp,
-      this.bridge().getEntityName(),
-      this.bridge().getIdKey()
-    );
-    return sideloaded;
+    const entityName = this.entityName();
+    if (Object.hasOwn(resp, this.getIdKey())) {
+      return resp as TEntity;
+    } else if (entityName && Object.hasOwn(resp, entityName)) {
+      // const sideloadDataMap = this.sideloadDataMap();
+      return sideloadToComposite(
+        resp,
+        this.entityName()!,
+        this.getIdKey()
+      ) as TEntity;
+    }
+    return undefined;
   }
 
   /**
@@ -192,7 +277,11 @@ export abstract class SPMatEntityCrudFormBase<
    * extract the entity's id for UPDATE operation.
    */
   getIdKey() {
-    return 'id';
+    const bridge = this.bridge();
+    if (bridge) {
+      return bridge.getIdKey();
+    }
+    return this.idKey();
   }
 
   /**
@@ -207,12 +296,13 @@ export abstract class SPMatEntityCrudFormBase<
 
   onSubmit() {
     const value = this.getFormValue();
-    const obs = !this.entity()
-      ? this.bridge()?.create(value)
-      : this.bridge()?.update((this.entity() as any)[this.getIdKey()], value);
+    const obs = !this._entity()
+      ? this.create(value)
+      : this.update((this._entity() as any)[this.getIdKey()], value);
     this.sub$.add(
       obs
         ?.pipe(
+          tap(entity => this._entity() ? this.onPostUpdate(entity) : this.onPostCreate(entity)),
           setServerErrorsAsFormErrors(
             this._form() as unknown as UntypedFormGroup,
             this.cdr
@@ -222,23 +312,131 @@ export abstract class SPMatEntityCrudFormBase<
     );
   }
 
-  // create(values: any): Observable<TEntity> {
-  //   const bridge = this.bridge();
-  //   if (bridge) {
-  //     return bridge.create(values);
-  //   }
-  //   return this.http
-  //     .post<TEntity>('', values)
-  //     .pipe(map((resp) => this.getEntityFromLoadResponse(resp) as TEntity));
-  // }
+  onPostCreate(entity: TEntity) {
+    /* empty */
+  }
 
-  // update(id: any, values: any): Observable<TEntity> {
-  //   const bridge = this.bridge();
-  //   if (bridge) {
-  //     return bridge.update(id, values);
-  //   }
-  //   return this.http
-  //     .patch<TEntity>(`/${String(id)}`, values)
-  //     .pipe(map((resp) => this.getEntityFromLoadResponse(resp) as TEntity));
-  // }
+  onPostUpdate(entity: TEntity) {
+    /* empty */
+  }
+
+  /**
+   * Loads the entity if `this.entity()` is of type TEntity[IdKey]. If `bridge`
+   * input is defined, then it's `loadEntity()` method is used to load the
+   * entity. Otherwise, then this method attempts to load the entity using
+   * HTTP GET from the URL derived from `baseUrl` input.
+   * @param entityId
+   * @param params
+   * @returns
+   */
+  load(entityId: any): Observable<TEntity> {
+    const bridge = this.bridge();
+    const params = this.getLoadEntityParams();
+    if (bridge) {
+      return bridge.loadEntity(entityId, params);
+    }
+
+    // Try to load using baseUrl.
+    if (!this.baseUrl()) {
+      console.warn(
+        `SPMatEntityCrudFormBase.load: No bridge defined, baseUrl input is undefined. Returning undefined.`
+      );
+      return new Observable<TEntity>((subscriber) => {
+        subscriber.next(undefined as unknown as TEntity);
+        subscriber.complete();
+      });
+    }
+
+    let context = new HttpContext();
+    if (this.httpReqContext()) {
+      context = convertHttpContextInputToHttpContext(
+        context,
+        this.httpReqContext()!
+      );
+    }
+    const url = this.getEntityUrl(entityId);
+    return this.http
+      .get<TEntity>(this.getEntityUrl(entityId), {
+        params:
+          typeof params === 'string'
+            ? new HttpParams({ fromString: params })
+            : params,
+        context: context,
+      })
+      .pipe(map((resp) => this.getEntityFromLoadResponse(resp) as TEntity));
+  }
+
+  /**
+   * Create a new entity using the bridge if defined, otherwise using HTTP
+   * POST to the `baseUrl`.
+   * @param values
+   * @returns
+   */
+  protected create(values: any): Observable<TEntity> {
+    const bridge = this.bridge();
+    if (bridge) {
+      return bridge.create(values);
+    }
+    const url = this.baseUrl();
+    if (!url) {
+      console.warn(
+        'SPMatEntityCrudFormBase.create: Cannot create entity as neither bridge nor baseUrl inputs are provided.'
+      );
+      return of(undefined as unknown as TEntity)
+    }
+    const httpReqContext = this.httpReqContext();
+    let context = new HttpContext();
+    if (httpReqContext) {
+      context = convertHttpContextInputToHttpContext(
+        context,
+        httpReqContext
+      );
+    }
+    return this.http
+      .post<TEntity>(url, values, { context: context })
+      .pipe(map((resp) => this.getEntityFromLoadResponse(resp) as TEntity));
+  }
+
+  /**
+   * Update an existing entity using the bridge if defined, otherwise using HTTP
+   * PATCH to the URL derived from `baseUrl` and the entity id.
+   * @param id
+   * @param values
+   * @returns
+   */
+  protected update(id: any, values: any): Observable<TEntity> {
+    const bridge = this.bridge();
+    if (bridge) {
+      return bridge.update(id, values);
+    }
+    const url = this.baseUrl();
+    if (!url) {
+      console.warn(
+        'SPMatEntityCrudFormBase.update: Cannot update entity as neither bridge nor baseUrl inputs are provided.'
+      );
+      return of(undefined as unknown as TEntity);
+    }
+
+    return this.http
+      .patch<TEntity>(this.getEntityUrl(id), values)
+      .pipe(map((resp) => this.getEntityFromLoadResponse(resp) as TEntity));
+  }
+
+  protected getEntityUrl(entityId: any): string {
+    const bridge = this.bridge();
+    if (bridge) {
+      return bridge.getEntityUrl(entityId);
+    }
+    const baseUrl = this.baseUrl();
+    if (baseUrl) {
+      const urlParts = baseUrl.split('?');
+      return `${urlParts[0]}${String(entityId)}/${
+        urlParts[1] ? '?' + urlParts[1] : ''
+      }`;
+    }
+    console.warn(
+      'SPMatEntityCrudFormBase.getEntityUrl: Cannot determine entity URL as neither baseUrl nor bridge inputs are provided.'
+    );
+    return '';
+  }
 }
