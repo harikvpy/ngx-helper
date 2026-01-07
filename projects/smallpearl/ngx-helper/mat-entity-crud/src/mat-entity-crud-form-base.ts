@@ -177,11 +177,6 @@ export abstract class SPMatEntityCrudFormBase<
   cdr = inject(ChangeDetectorRef);
   http = inject(HttpClient);
 
-  // This is really not necessary. We can check for this.bridge() directly.
-  mode = computed<'standalone' | 'bridge'>(() => {
-    return this.bridge() ? 'bridge' : 'standalone';
-  });
-
   canCancelEdit = () => {
     return this._canCancelEdit();
   };
@@ -199,10 +194,7 @@ export abstract class SPMatEntityCrudFormBase<
   ngOnInit() {
     // Validate inputs. Either bridge or (baseUrl and entityName) must be
     // defined.
-    if (
-      this.mode() === 'standalone' &&
-      (!this.getBaseUrl() || !this.getEntityName())
-    ) {
+    if (!this.bridge() && (!this.getBaseUrl() || !this.getEntityName())) {
       throw new Error(
         'SPMatEntityCrudFormBase: baseUrl and entityName inputs must be defined in standalone mode.'
       );
