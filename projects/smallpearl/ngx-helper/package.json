@@ -6,7 +6,7 @@
       "path": "src/assets/i18n/"
     }
   ],
-  "version": "0.33.29",
+  "version": "0.33.30",
   "peerDependencies": {
     "@angular/common": "^19.1.0",
     "@angular/core": "^19.1.0",
