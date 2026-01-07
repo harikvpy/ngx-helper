@@ -3,7 +3,7 @@ import { ChangeDetectorRef, Component, computed, inject, input, OnDestroy, OnIni
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { TranslocoService } from '@jsverse/transloco';
 import { setServerErrorsAsFormErrors } from '@smallpearl/ngx-helper/forms';
-import { map, Observable, of, Subscription, tap } from 'rxjs';
+import { map, Observable, Subscription, tap } from 'rxjs';
 // import { getEntityCrudConfig } from './default-config';
 import { sideloadToComposite } from '@smallpearl/ngx-helper/sideload';
 import { convertHttpContextInputToHttpContext, HttpContextInput } from './convert-context-input-to-http-context';
@@ -141,11 +141,13 @@ export abstract class SPMatEntityCrudFormBase<
   IdKey extends string = 'id'
 > implements OnInit, OnDestroy
 {
-  entity = input.required<TEntity | TEntity[IdKey]>();
-  bridge = input.required<SPMatEntityCrudCreateEditBridge>();
+  // bridge mode inputs
+  entity = input<TEntity | TEntity[IdKey]>();
+  bridge = input<SPMatEntityCrudCreateEditBridge | undefined>();
   params = input<any>();
+  // END bridge mode inputs
 
-  // --- BEGIN inputs used when `bridge` input is undefined
+  // standalone mode inputs
   // Entity name, which is used to parse sideloaded entity responses
   entityName = input<string>();
   // Base CRUD URL, which is the GET-list-of-entities/POST-to-create
@@ -155,7 +157,7 @@ export abstract class SPMatEntityCrudFormBase<
   httpReqContext = input<HttpContextInput | undefined>();
   // ID key, defaults to 'id'
   idKey = input<string>('id');
-  // -- END inputs used when `bridge` input is undefined
+  // END standalone mode inputs
 
   // IMPLEMENTATION
   loadEntity$!: Observable<boolean>;
@@ -175,6 +177,11 @@ export abstract class SPMatEntityCrudFormBase<
   cdr = inject(ChangeDetectorRef);
   http = inject(HttpClient);
 
+  // This is really not necessary. We can check for this.bridge() directly.
+  mode = computed<'standalone' | 'bridge'>(() => {
+    return this.bridge() ? 'bridge' : 'standalone';
+  });
+
   canCancelEdit = () => {
     return this._canCancelEdit();
   };
@@ -190,9 +197,12 @@ export abstract class SPMatEntityCrudFormBase<
   }
 
   ngOnInit() {
-    // validate inputs. Either bridge or (baseUrl and entityName) must be
+    // Validate inputs. Either bridge or (baseUrl and entityName) must be
     // defined.
-    if (!this.bridge() && (!this.baseUrl() || !this.entityName())) {
+    if (
+      this.mode() === 'standalone' &&
+      (!this.getBaseUrl() || !this.getEntityName())
+    ) {
       throw new Error(
         'SPMatEntityCrudFormBase: baseUrl and entityName inputs must be defined in standalone mode.'
       );
@@ -250,16 +260,12 @@ export abstract class SPMatEntityCrudFormBase<
     if (!resp || typeof resp !== 'object') {
       return undefined;
     }
-    const entityName = this.entityName();
+    const entityName = this.getEntityName();
     if (resp.hasOwnProperty(this.getIdKey())) {
       return resp as TEntity;
     } else if (entityName && resp.hasOwnProperty(entityName)) {
       // const sideloadDataMap = this.sideloadDataMap();
-      return sideloadToComposite(
-        resp,
-        this.entityName()!,
-        this.getIdKey()
-      ) as TEntity;
+      return sideloadToComposite(resp, entityName, this.getIdKey()) as TEntity;
     }
     return undefined;
   }
@@ -302,7 +308,11 @@ export abstract class SPMatEntityCrudFormBase<
     this.sub$.add(
       obs
         ?.pipe(
-          tap(entity => this._entity() ? this.onPostUpdate(entity) : this.onPostCreate(entity)),
+          tap((entity) =>
+            this._entity()
+              ? this.onPostUpdate(entity)
+              : this.onPostCreate(entity)
+          ),
           setServerErrorsAsFormErrors(
             this._form() as unknown as UntypedFormGroup,
             this.cdr
@@ -337,15 +347,6 @@ export abstract class SPMatEntityCrudFormBase<
     }
 
     // Try to load using baseUrl.
-    if (!this.baseUrl()) {
-      console.warn(
-        `SPMatEntityCrudFormBase.load: No bridge defined, baseUrl input is undefined. Returning undefined.`
-      );
-      return new Observable<TEntity>((subscriber) => {
-        subscriber.next(undefined as unknown as TEntity);
-        subscriber.complete();
-      });
-    }
     const url = this.getEntityUrl(entityId);
     return this.http
       .get<TEntity>(this.getEntityUrl(entityId), {
@@ -369,15 +370,10 @@ export abstract class SPMatEntityCrudFormBase<
     if (bridge) {
       return bridge.create(values);
     }
-    const url = this.baseUrl();
-    if (!url) {
-      console.warn(
-        'SPMatEntityCrudFormBase.create: Cannot create entity as neither bridge nor baseUrl inputs are provided.'
-      );
-      return of(undefined as unknown as TEntity)
-    }
     return this.http
-      .post<TEntity>(url, values, { context: this.getRequestContext() })
+      .post<TEntity>(this.getBaseUrl()!, values, {
+        context: this.getRequestContext(),
+      })
       .pipe(map((resp) => this.getEntityFromLoadResponse(resp) as TEntity));
   }
 
@@ -393,14 +389,6 @@ export abstract class SPMatEntityCrudFormBase<
     if (bridge) {
       return bridge.update(id, values);
     }
-    const url = this.baseUrl();
-    if (!url) {
-      console.warn(
-        'SPMatEntityCrudFormBase.update: Cannot update entity as neither bridge nor baseUrl inputs are provided.'
-      );
-      return of(undefined as unknown as TEntity);
-    }
-
     return this.http
       .patch<TEntity>(this.getEntityUrl(id), values, {
         context: this.getRequestContext(),
@@ -408,12 +396,43 @@ export abstract class SPMatEntityCrudFormBase<
       .pipe(map((resp) => this.getEntityFromLoadResponse(resp) as TEntity));
   }
 
+  /**
+   * Wrapper around entityName input to get the entity name. If `bridge` input
+   * is defined, then its `getEntityName()` method is used. This allows
+   * derived classes to override this method to provide custom logic to
+   * determine the entity name.
+   * @returns
+   */
+  protected getEntityName(): string | undefined {
+    const bridge = this.bridge();
+    if (bridge) {
+      return bridge.getEntityName();
+    }
+    return this.entityName();
+  }
+
+  /**
+   * Returns the baseUrl. Derived classes can override this to provide custom
+   * logic to determine the baseUrl.
+   * @returns
+   */
+  protected getBaseUrl(): string | undefined {
+    return this.baseUrl();
+  }
+
+  /**
+   * Returns the entity URL for the given entity id. If `bridge` input is
+   * defined, then its `getEntityUrl()` method is used. Otherwise, the URL is
+   * derived from `baseUrl` input.
+   * @param entityId
+   * @returns
+   */
   protected getEntityUrl(entityId: any): string {
     const bridge = this.bridge();
     if (bridge) {
       return bridge.getEntityUrl(entityId);
     }
-    const baseUrl = this.baseUrl();
+    const baseUrl = this.getBaseUrl();
     if (baseUrl) {
       const urlParts = baseUrl.split('?');
       return `${urlParts[0]}${String(entityId)}/${
@@ -430,10 +449,7 @@ export abstract class SPMatEntityCrudFormBase<
     let context = new HttpContext();
     const httpReqContext = this.httpReqContext();
     if (httpReqContext) {
-      context = convertHttpContextInputToHttpContext(
-        context,
-        httpReqContext
-      );
+      context = convertHttpContextInputToHttpContext(context, httpReqContext);
     }
     return context;
   }
