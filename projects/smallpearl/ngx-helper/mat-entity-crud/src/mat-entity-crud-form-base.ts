@@ -6,7 +6,7 @@ import { setServerErrorsAsFormErrors } from '@smallpearl/ngx-helper/forms';
 import { map, Observable, of, Subscription, tap } from 'rxjs';
 // import { getEntityCrudConfig } from './default-config';
 import { sideloadToComposite } from '@smallpearl/ngx-helper/sideload';
-import { convertHttpContextInputToHttpContext, HttpContextInput } from './context-param-to-http-context';
+import { convertHttpContextInputToHttpContext, HttpContextInput } from './convert-context-input-to-http-context';
 import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
 
 /**
@@ -346,14 +346,6 @@ export abstract class SPMatEntityCrudFormBase<
         subscriber.complete();
       });
     }
-
-    let context = new HttpContext();
-    if (this.httpReqContext()) {
-      context = convertHttpContextInputToHttpContext(
-        context,
-        this.httpReqContext()!
-      );
-    }
     const url = this.getEntityUrl(entityId);
     return this.http
       .get<TEntity>(this.getEntityUrl(entityId), {
@@ -361,7 +353,7 @@ export abstract class SPMatEntityCrudFormBase<
           typeof params === 'string'
             ? new HttpParams({ fromString: params })
             : params,
-        context: context,
+        context: this.getRequestContext(),
       })
       .pipe(map((resp) => this.getEntityFromLoadResponse(resp) as TEntity));
   }
@@ -384,16 +376,8 @@ export abstract class SPMatEntityCrudFormBase<
       );
       return of(undefined as unknown as TEntity)
     }
-    const httpReqContext = this.httpReqContext();
-    let context = new HttpContext();
-    if (httpReqContext) {
-      context = convertHttpContextInputToHttpContext(
-        context,
-        httpReqContext
-      );
-    }
     return this.http
-      .post<TEntity>(url, values, { context: context })
+      .post<TEntity>(url, values, { context: this.getRequestContext() })
       .pipe(map((resp) => this.getEntityFromLoadResponse(resp) as TEntity));
   }
 
@@ -418,7 +402,9 @@ export abstract class SPMatEntityCrudFormBase<
     }
 
     return this.http
-      .patch<TEntity>(this.getEntityUrl(id), values)
+      .patch<TEntity>(this.getEntityUrl(id), values, {
+        context: this.getRequestContext(),
+      })
       .pipe(map((resp) => this.getEntityFromLoadResponse(resp) as TEntity));
   }
 
@@ -438,5 +424,17 @@ export abstract class SPMatEntityCrudFormBase<
       'SPMatEntityCrudFormBase.getEntityUrl: Cannot determine entity URL as neither baseUrl nor bridge inputs are provided.'
     );
     return '';
+  }
+
+  protected getRequestContext(): HttpContext {
+    let context = new HttpContext();
+    const httpReqContext = this.httpReqContext();
+    if (httpReqContext) {
+      context = convertHttpContextInputToHttpContext(
+        context,
+        httpReqContext
+      );
+    }
+    return context;
   }
 }

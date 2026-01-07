@@ -40,7 +40,7 @@ import { AngularSplitModule } from 'angular-split';
 import { clone, startCase } from 'lodash';
 import { plural } from 'pluralize';
 import { catchError, EMPTY, firstValueFrom, map, Observable, of, Subscription, switchMap, tap, throwError } from 'rxjs';
-import { convertHttpContextInputToHttpContext } from './context-param-to-http-context';
+import { convertHttpContextInputToHttpContext } from './convert-context-input-to-http-context';
 import { getEntityCrudConfig } from './default-config';
 import { FormViewHostComponent } from './form-view-host.component';
 import { SPMatEntityCrudComponentBase } from './mat-entity-crud-internal-types';
