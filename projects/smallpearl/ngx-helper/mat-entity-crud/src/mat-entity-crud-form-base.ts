@@ -161,6 +161,10 @@ export abstract class SPMatEntityCrudFormBase<
 
   // IMPLEMENTATION
   loadEntity$!: Observable<boolean>;
+  // This will hold the raw response returned by load() method
+  loadResponse = signal<any>(undefined);
+  // This will hold the loaded entity after it's extracted from the
+  // load response.
   _entity = signal<TEntity | undefined>(undefined);
   sub$ = new Subscription();
 
@@ -208,6 +212,7 @@ export abstract class SPMatEntityCrudFormBase<
         : this.load(this.entity() as any)
     ).pipe(
       map((resp) => {
+        this.loadResponse.set(resp);
         const compositeEntity = this.getEntityFromLoadResponse(resp);
         this._entity.set(compositeEntity);
         this._form.set(this.createForm(compositeEntity));
