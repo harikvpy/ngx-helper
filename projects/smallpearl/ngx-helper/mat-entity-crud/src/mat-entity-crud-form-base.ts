@@ -214,11 +214,9 @@ export abstract class SPMatEntityCrudFormBase<
           })
         : this.load(this.entity() as any)
     ).pipe(
-      map((resp) => {
-        this.loadResponse.set(resp);
-        const compositeEntity = this.getEntityFromLoadResponse(resp);
-        this._entity.set(compositeEntity);
-        this._form.set(this.createForm(compositeEntity));
+      map((entity) => {
+        this._entity.set(entity);
+        this._form.set(this.createForm(entity));
         const bridge = this.bridge();
         if (bridge && bridge.registerCanCancelEditCallback) {
           bridge.registerCanCancelEditCallback(this.canCancelEdit);
@@ -358,7 +356,10 @@ export abstract class SPMatEntityCrudFormBase<
             : params,
         context: this.getRequestContext(),
       })
-      .pipe(map((resp) => this.getEntityFromLoadResponse(resp) as TEntity));
+      .pipe(map((resp) => {
+        this.loadResponse.set(resp);
+        return this.getEntityFromLoadResponse(resp) as TEntity
+      }));
   }
 
   /**
