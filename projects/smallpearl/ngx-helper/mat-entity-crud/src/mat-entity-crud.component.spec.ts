@@ -179,10 +179,10 @@ type UserEntityCrudComponent = SPMatEntityCrudComponent<User, 'cell'>;
 
       <div class="mt-2 d-flex gap-2">
         <button
-          type="reset"
+          type="button"
           color="secondary"
           mat-raised-button
-          (click)="form().reset()"
+          (click)="onReset()"
         >
           Reset
         </button>
@@ -1840,6 +1840,60 @@ describe('SPMatEntityCrudFormBase standalone mode tests', () => {
       },
     });
     expect(postUpdateSpy).toHaveBeenCalledOnceWith(PATCHED_USER);
+  }));
+
+  it('should reset the form when reset button is clicked', fakeAsync(() => {
+    const JOHN_SMITH: User = {
+      name: { title: 'mr', first: 'John', last: 'Smith' },
+      gender: 'female',
+      cell: '93039309',
+    };
+    const EXISTING_USER: User = JSON.parse(JSON.stringify(JOHN_SMITH));
+
+    fixture.componentRef.setInput('entity', EXISTING_USER.cell);
+    fixture.componentRef.setInput('bridge', undefined);
+    fixture.componentRef.setInput('entityName', 'user');
+    fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
+    fixture.componentRef.setInput('idKey', 'cell');
+    const http = TestBed.inject(HttpClient);
+    // Mock the GET request to return JOHN_SMITH copy
+    const getSpy = spyOn(http, 'get').and.callFake(
+      (url: string, options: any) => {
+        expect(url).toEqual('http://randomuser.me/api/93039309/');
+        return of(EXISTING_USER) as any;
+      }
+    );
+
+    fixture.autoDetectChanges();
+    tick(); // trigger loadEntity$
+    expect(getSpy).toHaveBeenCalled();
+    const inputs = fixture.debugElement.nativeElement.querySelectorAll('input');
+    expect(inputs[0].value).toEqual(JOHN_SMITH.name.first);
+    expect(inputs[1].value).toEqual(JOHN_SMITH.name.last);
+    expect(inputs[2].value).toEqual(JOHN_SMITH.cell);
+
+    // Change first and last name
+    inputs[0].value = JOHN_SMITH.name.first + 'Edited';
+    inputs[1].value = JOHN_SMITH.name.last + 'Edited';
+    inputs[2].value = JOHN_SMITH.cell + '3';
+    inputs.forEach((input: HTMLInputElement) => {
+      input.dispatchEvent(new Event('input'));
+    });
+    fixture.detectChanges();
+    tick();
+    expect(component.form().valid).toBeTrue();
+    const resetButton = fixture.debugElement.nativeElement.querySelector(
+      "button[type='button']"
+    );
+    expect(resetButton).toBeTruthy();
+    resetButton.click();
+    fixture.detectChanges();
+    tick();
+
+    // Reset should revert values back to the original values
+    expect(inputs[0].value).toEqual(JOHN_SMITH.name.first);
+    expect(inputs[1].value).toEqual(JOHN_SMITH.name.last);
+    expect(inputs[2].value).toEqual(JOHN_SMITH.cell);
   }));
 
 });
