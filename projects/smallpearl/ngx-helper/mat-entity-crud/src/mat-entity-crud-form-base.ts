@@ -283,7 +283,7 @@ export abstract class SPMatEntityCrudFormBase<
   getIdKey() {
     const bridge = this.bridge();
     const idKey = this.idKey();
-    return idKey ? idKey : (bridge ? bridge.getIdKey() : 'id');
+    return idKey ? idKey : bridge ? bridge.getIdKey() : 'id';
   }
 
   /**
@@ -311,7 +311,7 @@ export abstract class SPMatEntityCrudFormBase<
             }
             this._entity()
               ? this.onPostUpdate(entity)
-              : this.onPostCreate(entity)
+              : this.onPostCreate(entity);
           }),
           setServerErrorsAsFormErrors(
             this._form() as unknown as UntypedFormGroup,
@@ -345,7 +345,16 @@ export abstract class SPMatEntityCrudFormBase<
     if (!this.getStandaloneMode()) {
       return bridge!.loadEntity(entityId, params);
     }
+    return this.loadEntity(entityId, params);
+  }
 
+  /**
+   * Loads the entity using HTTP GET from the URL derived from `baseUrl` input.
+   */
+  protected loadEntity(
+    entityId: any,
+    params: string | HttpParams
+  ): Observable<TEntity> {
     // Try to load using baseUrl.
     const url = this.getEntityUrl(entityId);
     return this.http
@@ -356,10 +365,12 @@ export abstract class SPMatEntityCrudFormBase<
             : params,
         context: this.getRequestContext(),
       })
-      .pipe(map((resp) => {
-        this.loadResponse.set(resp);
-        return this.getEntityFromLoadResponse(resp) as TEntity
-      }));
+      .pipe(
+        map((resp) => {
+          this.loadResponse.set(resp);
+          return this.getEntityFromLoadResponse(resp) as TEntity;
+        })
+      );
   }
 
   /**
@@ -373,6 +384,10 @@ export abstract class SPMatEntityCrudFormBase<
     if (!this.getStandaloneMode()) {
       return bridge!.create(values);
     }
+    return this.createEntity(values);
+  }
+
+  protected createEntity(values: any): Observable<TEntity> {
     return this.http
       .post<TEntity>(this.getBaseUrl()!, values, {
         context: this.getRequestContext(),
@@ -392,6 +407,10 @@ export abstract class SPMatEntityCrudFormBase<
     if (!this.getStandaloneMode()) {
       return bridge!.update(id, values);
     }
+    return this.updateEntity(id, values);
+  }
+
+  protected updateEntity(id: any, values: any): Observable<TEntity> {
     return this.http
       .patch<TEntity>(this.getEntityUrl(id), values, {
         context: this.getRequestContext(),
@@ -407,7 +426,7 @@ export abstract class SPMatEntityCrudFormBase<
    * @returns
    */
   protected getStandaloneMode(): boolean {
-    return !!this.getBaseUrl() && !!this.getEntityName();
+    return !this.bridge() && !!this.getBaseUrl() && !!this.getEntityName();
   }
 
   /**
