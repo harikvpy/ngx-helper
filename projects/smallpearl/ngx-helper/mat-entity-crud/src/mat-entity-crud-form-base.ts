@@ -341,22 +341,19 @@ export abstract class SPMatEntityCrudFormBase<
    */
   load(entityId: any): Observable<TEntity> {
     const bridge = this.bridge();
-    const params = this.getLoadEntityParams();
     if (!this.getStandaloneMode()) {
-      return bridge!.loadEntity(entityId, params);
+      return bridge!.loadEntity(entityId, this.getLoadEntityParams());
     }
-    return this.loadEntity(entityId, params);
+    return this.loadEntity(entityId);
   }
 
   /**
    * Loads the entity using HTTP GET from the URL derived from `baseUrl` input.
    */
-  protected loadEntity(
-    entityId: any,
-    params: string | HttpParams
-  ): Observable<TEntity> {
+  protected loadEntity(entityId: any): Observable<TEntity> {
     // Try to load using baseUrl.
     const url = this.getEntityUrl(entityId);
+    const params = this.getLoadEntityParams();
     return this.http
       .get<TEntity>(this.getEntityUrl(entityId), {
         params:
