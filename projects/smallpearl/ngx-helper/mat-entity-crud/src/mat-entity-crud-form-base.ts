@@ -36,7 +36,10 @@ import { SPMatEntityCrudCreateEditBridge } from './mat-entity-crud-types';
  *
  *  II. Standalone mode
  *     This mode does not rely on the bridge interface and the component
- *     itself performs the entity load/create/update operations.
+ *     itself performs the entity load/create/update operations. However, if
+ *     the `bridge` input is set, then it will be used to close the create/edit
+ *     form pane when create/update is successful.
+ *
  *     This mode requires the following properties to be set:
  *      - entity: TEntity | TEntity[IdKey] | undefined (for create)
  *      - baseUrl: string - Base URL for CRUD operations. This URL does not
@@ -281,10 +284,8 @@ export abstract class SPMatEntityCrudFormBase<
    */
   getIdKey() {
     const bridge = this.bridge();
-    if (bridge) {
-      return bridge.getIdKey();
-    }
-    return this.idKey();
+    const idKey = this.idKey();
+    return idKey ? idKey : (bridge ? bridge.getIdKey() : 'id');
   }
 
   /**
@@ -305,11 +306,15 @@ export abstract class SPMatEntityCrudFormBase<
     this.sub$.add(
       obs
         ?.pipe(
-          tap((entity) =>
+          tap((entity) => {
+            const bridge = this.bridge();
+            if (bridge) {
+              bridge.close(false);
+            }
             this._entity()
               ? this.onPostUpdate(entity)
               : this.onPostCreate(entity)
-          ),
+          }),
           setServerErrorsAsFormErrors(
             this._form() as unknown as UntypedFormGroup,
             this.cdr
@@ -339,8 +344,8 @@ export abstract class SPMatEntityCrudFormBase<
   load(entityId: any): Observable<TEntity> {
     const bridge = this.bridge();
     const params = this.getLoadEntityParams();
-    if (bridge) {
-      return bridge.loadEntity(entityId, params);
+    if (!this.getStandaloneMode()) {
+      return bridge!.loadEntity(entityId, params);
     }
 
     // Try to load using baseUrl.
@@ -364,8 +369,8 @@ export abstract class SPMatEntityCrudFormBase<
    */
   protected create(values: any): Observable<TEntity> {
     const bridge = this.bridge();
-    if (bridge) {
-      return bridge.create(values);
+    if (!this.getStandaloneMode()) {
+      return bridge!.create(values);
     }
     return this.http
       .post<TEntity>(this.getBaseUrl()!, values, {
@@ -383,14 +388,25 @@ export abstract class SPMatEntityCrudFormBase<
    */
   protected update(id: any, values: any): Observable<TEntity> {
     const bridge = this.bridge();
-    if (bridge) {
-      return bridge.update(id, values);
+    if (!this.getStandaloneMode()) {
+      return bridge!.update(id, values);
     }
     return this.http
       .patch<TEntity>(this.getEntityUrl(id), values, {
         context: this.getRequestContext(),
       })
       .pipe(map((resp) => this.getEntityFromLoadResponse(resp) as TEntity));
+  }
+
+  /**
+   * Override to get the standalone mode indicator. Standalone mode is
+   * when both `baseUrl` and `entityName` inputs are defined. This is indication
+   * that the component should perform the CRUD operations itself instead
+   * of relying on the `bridge` input.
+   * @returns
+   */
+  protected getStandaloneMode(): boolean {
+    return !!this.getBaseUrl() && !!this.getEntityName();
   }
 
   /**
@@ -401,11 +417,12 @@ export abstract class SPMatEntityCrudFormBase<
    * @returns
    */
   protected getEntityName(): string | undefined {
-    const bridge = this.bridge();
-    if (bridge) {
-      return bridge.getEntityName();
+    const entityName = this.entityName();
+    if (entityName) {
+      return entityName;
     }
-    return this.entityName();
+    const bridge = this.bridge();
+    return bridge ? bridge.getEntityName() : undefined;
   }
 
   /**
@@ -426,8 +443,8 @@ export abstract class SPMatEntityCrudFormBase<
    */
   protected getEntityUrl(entityId: any): string {
     const bridge = this.bridge();
-    if (bridge) {
-      return bridge.getEntityUrl(entityId);
+    if (!this.getStandaloneMode()) {
+      return bridge!.getEntityUrl(entityId);
     }
     const baseUrl = this.getBaseUrl();
     if (baseUrl) {
