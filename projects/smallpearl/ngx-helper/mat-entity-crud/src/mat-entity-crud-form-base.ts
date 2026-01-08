@@ -1,6 +1,6 @@
 import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { ChangeDetectorRef, Component, computed, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
-import { AbstractControl, UntypedFormGroup } from '@angular/forms';
+import { AbstractControl, FormArray, FormGroup, UntypedFormGroup } from '@angular/forms';
 import { TranslocoService } from '@jsverse/transloco';
 import { setServerErrorsAsFormErrors } from '@smallpearl/ngx-helper/forms';
 import { map, Observable, Subscription, tap } from 'rxjs';
@@ -320,6 +320,29 @@ export abstract class SPMatEntityCrudFormBase<
         )
         .subscribe()
     );
+  }
+
+  /**
+   * Reset the form to its initial state. This is a generic implementation
+   * that recursively resets all FormGroup and FormArray controls.
+   */
+  onReset() {
+    function resetForm(form: FormGroup) {
+      form.reset();
+      const controls = form.controls;
+      for (const name in controls) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const control: AbstractControl = (controls as any)[name];
+        if (control instanceof FormArray) {
+          const formArray = control as FormArray;
+          for (let i = 0; i < formArray.length; i++) {
+            const formArrayElem = formArray.at(i) as FormGroup;
+            resetForm(formArrayElem);
+          }
+        }
+      }
+    }
+    resetForm(this.form() as unknown as FormGroup);
   }
 
   onPostCreate(entity: TEntity) {
