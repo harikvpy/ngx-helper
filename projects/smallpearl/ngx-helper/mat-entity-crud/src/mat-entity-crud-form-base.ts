@@ -206,14 +206,8 @@ export abstract class SPMatEntityCrudFormBase<
         'SPMatEntityCrudFormBase: baseUrl and entityName inputs must be defined in standalone mode.'
       );
     }
-    this.loadEntity$ = (
-      typeof this.entity() === 'object' || this.entity() === undefined
-        ? new Observable<TEntity | undefined>((subscriber) => {
-            subscriber.next(this.entity() as TEntity | undefined);
-            subscriber.complete();
-          })
-        : this.load(this.entity() as any)
-    ).pipe(
+    this.loadEntity$ = this.load(this.entity() as any)
+    .pipe(
       map((entity) => {
         this._entity.set(entity);
         this._form.set(this.createForm(entity));
@@ -284,6 +278,10 @@ export abstract class SPMatEntityCrudFormBase<
     const bridge = this.bridge();
     const idKey = this.idKey();
     return idKey ? idKey : bridge ? bridge.getIdKey() : 'id';
+  }
+
+  getBusyWheelName() {
+    return '';
   }
 
   /**
@@ -358,16 +356,22 @@ export abstract class SPMatEntityCrudFormBase<
    * input is defined, then it's `loadEntity()` method is used to load the
    * entity. Otherwise, then this method attempts to load the entity using
    * HTTP GET from the URL derived from `baseUrl` input.
-   * @param entityId
-   * @param params
+   * @param entity Can be full entity or just the entity id.
    * @returns
    */
-  load(entityId: any): Observable<TEntity> {
+  load(entity: any): Observable<TEntity> {
+    if (typeof entity === 'object' || entity === undefined) {
+      return new Observable<TEntity>((subscriber) => {
+        subscriber.next(entity as TEntity);
+        subscriber.complete();
+      });
+    }
+    // entity is of type TEntity[IdKey]. Load it using bridge or HTTP GET.
     const bridge = this.bridge();
     if (!this.getStandaloneMode()) {
-      return bridge!.loadEntity(entityId, this.getLoadEntityParams());
+      return bridge!.loadEntity(entity, this.getLoadEntityParams());
     }
-    return this.loadEntity(entityId);
+    return this.loadEntity(entity);
   }
 
   /**
