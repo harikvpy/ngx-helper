@@ -372,7 +372,7 @@ export abstract class SPMatEntityCrudFormBase<
    * @returns
    */
   load(entityOrId: any): Observable<TEntity> {
-    if (entityOrId === undefined || !this.loadEntityRequired(entityOrId)) {
+    if (!entityOrId || !this.loadEntityRequired(entityOrId)) {
       return new Observable<TEntity>((subscriber) => {
         subscriber.next(entityOrId as TEntity);
         subscriber.complete();
