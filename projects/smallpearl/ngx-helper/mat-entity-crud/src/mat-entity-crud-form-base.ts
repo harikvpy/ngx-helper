@@ -381,9 +381,14 @@ export abstract class SPMatEntityCrudFormBase<
     // entity is of type TEntity[IdKey]. Load it using bridge or HTTP GET.
     const bridge = this.bridge();
     if (!this.getStandaloneMode()) {
-      return bridge!.loadEntity(entity, this.getLoadEntityParams());
+      return bridge!.loadEntity(
+        typeof entity === 'object' ? entity[this.getIdKey()] : entity,
+        this.getLoadEntityParams()
+      );
     }
-    return this.loadEntity(entity);
+    return this.loadEntity(
+      typeof entity === 'object' ? entity[this.getIdKey()] : entity
+    );
   }
 
   /**
