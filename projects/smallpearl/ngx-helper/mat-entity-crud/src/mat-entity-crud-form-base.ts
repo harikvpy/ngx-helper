@@ -234,6 +234,18 @@ export abstract class SPMatEntityCrudFormBase<
   }
 
   /**
+   * Returns true if the entity needs to be loaded from server. The default
+   * implementation returns true if the `entity` parameter is not an object,
+   * indicating that it's of type 'TEntity[IdKey]' or is undefined. Derived
+   * classes can override this method to provide custom logic.
+   * @param entity
+   * @returns Whether the entity needs to be loaded from server.
+   */
+  loadEntityRequired(entity: any) {
+    return entity && typeof entity !== 'object';
+  }
+
+  /**
    * Return the TEntity object from the response returned by the
    * load() method. Typically entity load returns the actual
    * entity object itself. In some cases, where response is sideloaded, the
@@ -360,7 +372,7 @@ export abstract class SPMatEntityCrudFormBase<
    * @returns
    */
   load(entity: any): Observable<TEntity> {
-    if (typeof entity === 'object' || entity === undefined) {
+    if (entity === undefined || !this.loadEntityRequired(entity)) {
       return new Observable<TEntity>((subscriber) => {
         subscriber.next(entity as TEntity);
         subscriber.complete();

@@ -1632,6 +1632,47 @@ describe('SPMatEntityCrudFormBase standalone mode tests', () => {
     });
   }));
 
+  it('should load entity based on loadEntityRequired returns value', fakeAsync(() => {
+    const JOHN_SMITH: User = {
+      name: { title: 'mr', first: 'John', last: 'Smith' },
+      gender: 'female',
+      cell: '93039309',
+    };
+    const EXISTING_USER: User = JSON.parse(JSON.stringify(JOHN_SMITH));
+
+    fixture.componentRef.setInput('entity', EXISTING_USER);
+    fixture.componentRef.setInput('bridge', undefined);
+    fixture.componentRef.setInput('entityName', 'user');
+    fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
+    fixture.componentRef.setInput('idKey', 'cell');
+
+    const http = TestBed.inject(HttpClient);
+    // Mock the GET request to return JOHN_SMITH copy
+    const getSpy = spyOn(http, 'get').and.callFake(
+      (url: string, options: any) => {
+        return of(EXISTING_USER) as any;
+      }
+    );
+    fixture.autoDetectChanges();
+    tick(); // trigger loadEntity$
+    expect(getSpy).toHaveBeenCalledTimes(0);
+
+    // Now set loadEntityRequired to return true so that we can force
+    // loading the entity on init even though the entity input is
+    // already set to a full object.
+    fixture = TestBed.createComponent(CreateEditUserComponent);
+    component = fixture.componentInstance;
+    spyOn(component, 'loadEntityRequired').and.returnValue(true);
+    fixture.componentRef.setInput('entity', EXISTING_USER); // still the User object
+    fixture.componentRef.setInput('bridge', undefined);
+    fixture.componentRef.setInput('entityName', 'user');
+    fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
+    fixture.componentRef.setInput('idKey', 'cell');
+    fixture.autoDetectChanges();
+    tick(); // trigger loadEntity$
+    expect(getSpy).toHaveBeenCalledTimes(1);
+  }));
+
   it('should set httpReqContext input in HTTP requests', fakeAsync(() => {
     const JOHN_SMITH: User = {
       name: { title: 'mr', first: 'John', last: 'Smith' },
