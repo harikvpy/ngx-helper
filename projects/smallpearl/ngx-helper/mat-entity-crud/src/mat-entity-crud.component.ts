@@ -676,7 +676,7 @@ export class SPMatEntityCrudComponent<
 
   //  BEGIN SPMatEntityCrudComponentBase METHODS //
   getEntityName(): string {
-    return this.entityName()
+    return this.entityName();
   }
 
   getEntityNamePlural(): string {
@@ -793,10 +793,21 @@ export class SPMatEntityCrudComponent<
         params instanceof HttpParams
           ? params
           : new HttpParams({ fromString: params });
-      return this.http.get<TEntity>(this.getEntityUrl(id), {
-        context: this.getCrudReqHttpContext('retrieve'),
-        params: httpParams,
-      });
+      return this.http
+        .get<TEntity>(this.getEntityUrl(id), {
+          context: this.getCrudReqHttpContext('retrieve'),
+          params: httpParams,
+        })
+        .pipe(
+          map((entity) =>
+            this.getCrudOpResponseParser()(
+              this.entityName(),
+              this.idKey(),
+              'retrieve',
+              entity
+            )
+          )
+        );
     }
   }
   // END SPMatEntityCrudComponentBase METHODS //
@@ -1145,7 +1156,6 @@ export class SPMatEntityCrudComponent<
   }
 
   private getCrudReqHttpContext(op: CrudOp) {
-
     let context = new HttpContext();
     // HttpContext for crud operations are taken from either the global httpReqContext
     // or from the crudHttpReqContext, with the latter taking precedence.

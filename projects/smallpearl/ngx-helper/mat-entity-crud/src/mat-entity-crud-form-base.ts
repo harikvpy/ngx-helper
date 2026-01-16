@@ -238,11 +238,11 @@ export abstract class SPMatEntityCrudFormBase<
    * implementation returns true if the `entity` parameter is not an object,
    * indicating that it's of type 'TEntity[IdKey]' or is undefined. Derived
    * classes can override this method to provide custom logic.
-   * @param entity
+   * @param entityOrId
    * @returns Whether the entity needs to be loaded from server.
    */
-  loadEntityRequired(entity: any) {
-    return entity && typeof entity !== 'object';
+  loadEntityRequired(entityOrId: TEntity | TEntity[IdKey] | undefined) {
+    return entityOrId && typeof entityOrId !== 'object';
   }
 
   /**
@@ -368,13 +368,13 @@ export abstract class SPMatEntityCrudFormBase<
    * input is defined, then it's `loadEntity()` method is used to load the
    * entity. Otherwise, then this method attempts to load the entity using
    * HTTP GET from the URL derived from `baseUrl` input.
-   * @param entity Can be full entity or just the entity id.
+   * @param entityOrId Can be full entity or just the entity id.
    * @returns
    */
-  load(entity: any): Observable<TEntity> {
-    if (entity === undefined || !this.loadEntityRequired(entity)) {
+  load(entityOrId: any): Observable<TEntity> {
+    if (entityOrId === undefined || !this.loadEntityRequired(entityOrId)) {
       return new Observable<TEntity>((subscriber) => {
-        subscriber.next(entity as TEntity);
+        subscriber.next(entityOrId as TEntity);
         subscriber.complete();
       });
     }
@@ -382,12 +382,12 @@ export abstract class SPMatEntityCrudFormBase<
     const bridge = this.bridge();
     if (!this.getStandaloneMode()) {
       return bridge!.loadEntity(
-        typeof entity === 'object' ? entity[this.getIdKey()] : entity,
+        typeof entityOrId === 'object' ? entityOrId[this.getIdKey()] : entityOrId,
         this.getLoadEntityParams()
       );
     }
     return this.loadEntity(
-      typeof entity === 'object' ? entity[this.getIdKey()] : entity
+      typeof entityOrId === 'object' ? entityOrId[this.getIdKey()] : entityOrId
     );
   }
 
