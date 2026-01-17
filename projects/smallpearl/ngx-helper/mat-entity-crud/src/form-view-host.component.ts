@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-import { HttpParams } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -138,6 +137,7 @@ export class FormViewHostComponent<
   constructor() {
     this.config = getEntityCrudConfig();
   }
+  // loadEntity: (id: any, params: string | HttpParams) => Observable<any>;
 
   ngOnInit() {}
 
@@ -208,13 +208,6 @@ export class FormViewHostComponent<
     return crudComponent
       ?.update(id, entityValue)
       .pipe(tap(() => this.close(false)));
-  }
-
-  loadEntity(
-    id: string | number,
-    params: string | HttpParams
-  ): Observable<TEntity> {
-    return this.entityCrudComponentBase().loadEntity(id, params);
   }
   // END SPMatEntityCrudCreateEditBridge METHODS //
 

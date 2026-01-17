@@ -780,36 +780,6 @@ export class SPMatEntityCrudComponent<
       })
     );
   }
-
-  loadEntity(
-    id: TEntity[IdKey],
-    params: string | HttpParams
-  ): Observable<TEntity> {
-    const crudOpFn = this.crudOpFn();
-    if (crudOpFn) {
-      return crudOpFn('get', id, undefined, this) as Observable<TEntity>;
-    } else {
-      const httpParams =
-        params instanceof HttpParams
-          ? params
-          : new HttpParams({ fromString: params });
-      return this.http
-        .get<TEntity>(this.getEntityUrl(id), {
-          context: this.getCrudReqHttpContext('retrieve'),
-          params: httpParams,
-        })
-        .pipe(
-          map((entity) =>
-            this.getCrudOpResponseParser()(
-              this.entityName(),
-              this.idKey(),
-              'retrieve',
-              entity
-            )
-          )
-        );
-    }
-  }
   // END SPMatEntityCrudComponentBase METHODS //
 
   /**

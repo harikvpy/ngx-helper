@@ -84,13 +84,6 @@ export interface SPMatEntityCrudComponentBase<
    */
   update: (id: any, entityValue: any) => Observable<any>;
   /**
-   * Load the entity with the given id from server.
-   * @param id The id of the entity to load.
-   * @param params Additional parameters for loading the entity.
-   * @returns An observable of the loaded entity.
-   */
-  loadEntity: (id: any, params: string | HttpParams) => Observable<TEntity>;
-  /**
    * Close the preview pane.
    * @returns
    */

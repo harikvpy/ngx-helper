@@ -378,14 +378,6 @@ export abstract class SPMatEntityCrudFormBase<
         subscriber.complete();
       });
     }
-    // entity is of type TEntity[IdKey]. Load it using bridge or HTTP GET.
-    const bridge = this.bridge();
-    if (!this.getStandaloneMode()) {
-      return bridge!.loadEntity(
-        typeof entityOrId === 'object' ? entityOrId[this.getIdKey()] : entityOrId,
-        this.getLoadEntityParams()
-      );
-    }
     return this.loadEntity(
       typeof entityOrId === 'object' ? entityOrId[this.getIdKey()] : entityOrId
     );
