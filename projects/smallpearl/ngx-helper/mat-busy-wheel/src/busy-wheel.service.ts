@@ -1,6 +1,7 @@
 import { ComponentRef, Injectable } from '@angular/core';
 import { SPMatBusyWheelComponent } from './busy-wheel.component';
-import { SPMatHostBusyWheelDirective } from './host-busy-wheel.directive';
+import { SPMatHostBusyWheelDirectiveBase } from './host-busy-wheel-directive-base';
+// import { SPMatHostBusyWheelDirective } from './host-busy-wheel.directive';
 
 const BACKDROP_DIV_ID = 'id_busy-wheel-backdrop';
 const BUSY_WHEEL_DIV_ID = 'id_busy-wheel';
@@ -79,19 +80,21 @@ const VIEWPORT_BUSY_WHEEL_FRAGMENT_TEMPLATE = `
 
 interface StyleInfo {
   style: string;
-  value:string|number;
-};
+  value: string | number;
+}
 
 interface WheelData {
   component: ComponentRef<SPMatBusyWheelComponent>;
-  oldStyles: Array<{style: string, value:string|number}>;
+  oldStyles: Array<{ style: string; value: string | number }>;
 }
 
 @Injectable({ providedIn: 'root' })
 export class BusyWheelService {
-
-  private defaultBusyWheelDir!: SPMatHostBusyWheelDirective;
-  private namedBusyWheelDirs = new Map<string, Array<SPMatHostBusyWheelDirective>>();
+  private defaultBusyWheelDir!: SPMatHostBusyWheelDirectiveBase;
+  private namedBusyWheelDirs = new Map<
+    string,
+    Array<SPMatHostBusyWheelDirectiveBase>
+  >();
   private wheelComponents = new Map<string, WheelData>();
 
   static s_instance: BusyWheelService;
@@ -108,43 +111,58 @@ export class BusyWheelService {
   show(id?: string) {
     if (id) {
       const idParts = id.split(',');
-      idParts.forEach(id => {
+      idParts.forEach((id) => {
         const trimmedId = id.trim();
         const busyWheelDirs = this.namedBusyWheelDirs.get(trimmedId);
         if (busyWheelDirs) {
-          const containers = Array.isArray(busyWheelDirs) ? busyWheelDirs : [busyWheelDirs];
+          const containers = Array.isArray(busyWheelDirs)
+            ? busyWheelDirs
+            : [busyWheelDirs];
           containers.forEach((busyWheelDir, index) => {
             const wheelId = `${trimmedId}_${index}`;
             //console.log(`showing busy-wheel: ${wheelId} for busyWheel: ${busyWheelDir.hostBusyWheel}`);
-            const busyWheelComponentRef = busyWheelDir.viewContainerRef.createComponent<SPMatBusyWheelComponent>(SPMatBusyWheelComponent);
+            const busyWheelComponentRef = busyWheelDir
+              .getViewContainerRef()
+              .createComponent<SPMatBusyWheelComponent>(
+                SPMatBusyWheelComponent,
+              );
             busyWheelComponentRef.setInput('wheelId', wheelId);
             // Append the component as a child of the element with hostBusyWheel directive.
-            busyWheelDir.renderer2.appendChild(
-              busyWheelDir.viewContainerRef.element.nativeElement,
-              busyWheelComponentRef.injector.get(SPMatBusyWheelComponent).elRef.nativeElement
-            );
+            busyWheelDir
+              .getRenderer2()
+              .appendChild(
+                busyWheelDir.getViewContainerRef().element.nativeElement,
+                busyWheelComponentRef.injector.get(SPMatBusyWheelComponent)
+                  .elRef.nativeElement,
+              );
             // Save the position explicit css style of the element if one was set
             let oldStyles = new Array<StyleInfo>();
-            if (busyWheelDir.viewContainerRef.element.nativeElement.style.position) {
+            if (
+              busyWheelDir.getViewContainerRef().element.nativeElement.style
+                .position
+            ) {
               oldStyles.push({
                 style: 'position',
-                value: busyWheelDir.viewContainerRef.element.nativeElement.style.position
+                value:
+                  busyWheelDir.getViewContainerRef().element.nativeElement.style
+                    .position,
               });
             }
             // Set the element's child controls's poisitioning to 'relative'
-            busyWheelDir.viewContainerRef.element.nativeElement.style.position = 'relative';
+            busyWheelDir.getViewContainerRef().element.nativeElement.style.position =
+              'relative';
             this.wheelComponents.set(wheelId, {
               component: busyWheelComponentRef,
-              oldStyles: []
+              oldStyles: [],
             });
           });
         }
-      })
+      });
     } else {
       // viewport global busy-wheel
       const busyWheel = this.createViewportBusyWheel(
         'busy-wheel-container',
-        undefined
+        undefined,
       );
       const backdrop = this.createBackdrop();
       backdrop.firstChild?.appendChild(busyWheel);
@@ -162,11 +180,13 @@ export class BusyWheelService {
   hide(id?: string) {
     if (id) {
       const idParts = id.split(',');
-      idParts.forEach(id => {
+      idParts.forEach((id) => {
         const trimmedId = id.trim();
         const busyWheelDirs = this.namedBusyWheelDirs.get(trimmedId);
         if (busyWheelDirs) {
-          const containers = Array.isArray(busyWheelDirs) ? busyWheelDirs : [busyWheelDirs];
+          const containers = Array.isArray(busyWheelDirs)
+            ? busyWheelDirs
+            : [busyWheelDirs];
           containers.forEach((busyWheelDir, index) => {
             const wheelId = `${trimmedId}_${index}`;
             const wheelData = this.wheelComponents.get(wheelId);
@@ -176,9 +196,14 @@ export class BusyWheelService {
               this.wheelComponents.delete(wheelId);
               if (wheelData?.oldStyles && wheelData.oldStyles.length) {
                 // Remove position: relative style that we added
-                (busyWheelDir.viewContainerRef.element.nativeElement as HTMLElement).style.position = '';
-                wheelData.oldStyles.forEach(style => {
-                  busyWheelDir.viewContainerRef.element.nativeElement.style[style.style] = style.value;
+                (
+                  busyWheelDir.getViewContainerRef().element
+                    .nativeElement as HTMLElement
+                ).style.position = '';
+                wheelData.oldStyles.forEach((style) => {
+                  busyWheelDir.getViewContainerRef().element.nativeElement.style[
+                    style.style
+                  ] = style.value;
                 });
               }
             }
@@ -193,8 +218,8 @@ export class BusyWheelService {
     }
   }
 
-  registerBusyWheelHost(busyWheelDir: SPMatHostBusyWheelDirective) {
-    const id = busyWheelDir.spHostBusyWheel();
+  registerBusyWheelHost(busyWheelDir: SPMatHostBusyWheelDirectiveBase) {
+    const id = busyWheelDir.getBusyWheelId();
     if (!id) {
       if (!this.defaultBusyWheelDir) {
         if (!this.defaultBusyWheelDir) {
@@ -211,8 +236,8 @@ export class BusyWheelService {
     }
   }
 
-  deregisterBusyWheelHost(busyWheelDir: SPMatHostBusyWheelDirective) {
-    const busyWheelId = busyWheelDir.spHostBusyWheel()
+  deregisterBusyWheelHost(busyWheelDir: SPMatHostBusyWheelDirectiveBase) {
+    const busyWheelId = busyWheelDir.getBusyWheelId();
     if (!busyWheelId) {
       (this.defaultBusyWheelDir as any) = undefined;
     } else {
@@ -251,7 +276,10 @@ export class BusyWheelService {
    * @param id
    * @returns
    */
-  private createViewportBusyWheel(containerClass: string, id: string|undefined): DocumentFragment {
+  private createViewportBusyWheel(
+    containerClass: string,
+    id: string | undefined,
+  ): DocumentFragment {
     let wheelId = BUSY_WHEEL_DIV_ID;
     if (id) {
       wheelId += `_${id}`;
@@ -262,7 +290,7 @@ export class BusyWheelService {
       template
         .replace('{wheelId}', wheelId)
         .replace('{containerClass}', containerClass),
-      'text/html'
+      'text/html',
     );
     const fragment = document.createDocumentFragment();
     fragment.appendChild(doc.documentElement);
@@ -303,7 +331,7 @@ export class BusyWheelService {
 
     // remove the style
     const busyWheelStyle = document.head.querySelector(
-      `style#${VIEWPORT_BUSY_WHEEL_STYLE_ID}`
+      `style#${VIEWPORT_BUSY_WHEEL_STYLE_ID}`,
     );
     if (busyWheelStyle) {
       busyWheelStyle.remove();
@@ -311,12 +339,16 @@ export class BusyWheelService {
   }
 }
 
-export function registerBusyWheelHost(busyWheelDir: SPMatHostBusyWheelDirective) {
+export function registerBusyWheelHost(
+  busyWheelDir: SPMatHostBusyWheelDirectiveBase,
+) {
   const instance = BusyWheelService.getInstance();
   instance.registerBusyWheelHost(busyWheelDir);
 }
 
-export function deregisterBusyWheelHost(busyWheelDir: SPMatHostBusyWheelDirective) {
+export function deregisterBusyWheelHost(
+  busyWheelDir: SPMatHostBusyWheelDirectiveBase,
+) {
   const instance = BusyWheelService.getInstance();
   instance.deregisterBusyWheelHost(busyWheelDir);
 }

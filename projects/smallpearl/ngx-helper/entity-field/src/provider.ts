@@ -1,8 +1,10 @@
 import { InjectionToken } from '@angular/core';
-import { SPEntityFieldSpec } from './entity-field';
+import { SPEntityFieldSpec } from './entity-field-spec';
 
-
-export type FIELD_VALUE_FN = (entity: any, fieldName: string) => string|number|Date|boolean;
+export type FIELD_VALUE_FN = (
+  entity: any,
+  fieldName: string,
+) => string | number | Date | boolean;
 
 /**
  * Global config for SPEntityField component.
@@ -29,5 +31,5 @@ export interface SPEntityFieldConfig {
 }
 
 export const SP_ENTITY_FIELD_CONFIG = new InjectionToken<SPEntityFieldConfig>(
-  'SPEntityFieldConfig'
+  'SPEntityFieldConfig',
 );

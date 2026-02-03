@@ -1,5 +1,16 @@
-import { Directive, input, Input, OnDestroy, OnInit, Renderer2, ViewContainerRef } from '@angular/core';
-import { deregisterBusyWheelHost, registerBusyWheelHost } from './busy-wheel.service';
+import {
+  Directive,
+  input,
+  OnDestroy,
+  OnInit,
+  Renderer2,
+  ViewContainerRef,
+} from '@angular/core';
+import {
+  deregisterBusyWheelHost,
+  registerBusyWheelHost,
+} from './busy-wheel.service';
+import { SPMatHostBusyWheelDirectiveBase } from './host-busy-wheel-directive-base';
 
 /**
  * Use this directive with a unique value assigned to it to display a busy
@@ -28,14 +39,18 @@ import { deregisterBusyWheelHost, registerBusyWheelHost } from './busy-wheel.ser
   selector: '[spHostBusyWheel]',
   standalone: true,
 })
-export class SPMatHostBusyWheelDirective implements OnInit, OnDestroy {
-
-  spHostBusyWheel = input<string>()
+export class SPMatHostBusyWheelDirective
+  extends SPMatHostBusyWheelDirectiveBase
+  implements OnInit, OnDestroy
+{
+  spHostBusyWheel = input<string>();
 
   constructor(
     public viewContainerRef: ViewContainerRef,
     public renderer2: Renderer2,
-  ) {}
+  ) {
+    super();
+  }
 
   ngOnInit(): void {
     registerBusyWheelHost(this);
@@ -43,5 +58,17 @@ export class SPMatHostBusyWheelDirective implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     deregisterBusyWheelHost(this);
+  }
+
+  getBusyWheelId(): string | undefined {
+    return this.spHostBusyWheel();
+  }
+
+  getViewContainerRef(): ViewContainerRef {
+    return this.viewContainerRef;
+  }
+
+  getRenderer2(): Renderer2 {
+    return this.renderer2;
   }
 }
