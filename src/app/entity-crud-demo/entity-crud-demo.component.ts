@@ -21,11 +21,11 @@ import { getEntitiesIds } from '@ngneat/elf-entities';
 import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
 import { spFormatCurrency } from '@smallpearl/ngx-helper/locale';
 import {
+  MatEntityCrudItemAction,
   NewItemSubType,
   SPMatEntityCrudComponent,
   SPMatEntityCrudPreviewPaneComponent,
 } from '@smallpearl/ngx-helper/mat-entity-crud';
-import { MatEntityCrudItemAction } from 'dist/smallpearl/ngx-helper/mat-entity-crud/src/mat-entity-crud-item-action';
 import { of } from 'rxjs';
 import { MyPaginator } from '../entity-list-demo/paginater';
 import { User } from '../entity-list-demo/user';
@@ -267,7 +267,7 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
           </ng-template>
 
           <ng-template #invoiceAction let-data>
-            <h1>Invoice Actions, params: {{ data.params }} </h1>
+            <h1>Invoice Actions, params: {{ data.params }}</h1>
           </ng-template>
         </mat-tab>
 
@@ -299,18 +299,18 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
     </ng-template>
   `,
   styles: `
-  .header {
-    display: flex;
-    flex-direction: row;
-  }
-  .spacer {
-    flex-grow: 1;
-  }
-  .action-buttons {
-    display: flex;
-    flex-direction: row;
-    gap: 0.2em;
-  }
+    .header {
+      display: flex;
+      flex-direction: row;
+    }
+    .spacer {
+      flex-grow: 1;
+    }
+    .action-buttons {
+      display: flex;
+      flex-direction: row;
+      gap: 0.2em;
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -374,7 +374,7 @@ export class EntityCrudDemoComponent
       action: (entity: Invoice) => {
         this.spEntityCrudComponent4()!.showCreateEditView(entity, {
           type: 'expense',
-          title: 'Expense'
+          title: 'Expense',
         });
       },
     },
@@ -398,7 +398,8 @@ export class EntityCrudDemoComponent
   spEntityCrudComponent3 = viewChild('spEntityCrud3', {
     read: SPMatEntityCrudComponent,
   });
-  spEntityCrudComponent4 = viewChild<SPMatEntityCrudComponent<Invoice>>('spEntityCrud4');
+  spEntityCrudComponent4 =
+    viewChild<SPMatEntityCrudComponent<Invoice>>('spEntityCrud4');
 
   paginator = new MyPaginator();
   newSubTypes: NewItemSubType[] = [
@@ -444,7 +445,7 @@ export class EntityCrudDemoComponent
   crudOpFn(
     op: string,
     entityValue: any,
-    crudComponent: SPMatEntityCrudComponent<Invoice, 'id'>
+    crudComponent: SPMatEntityCrudComponent<Invoice, 'id'>,
   ) {
     if (op === 'create') {
       return of({
@@ -488,7 +489,10 @@ export class EntityCrudDemoComponent
     return of(null);
   }
 
-  constructor(private router: Router, private route: ActivatedRoute) {}
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+  ) {}
 
   canDeactivate(): boolean {
     return !!this.spEntityCrudComponent1()?.canDeactivate();
