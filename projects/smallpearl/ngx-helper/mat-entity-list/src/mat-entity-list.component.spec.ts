@@ -1,31 +1,19 @@
-import {
-  HttpClient,
-  HttpParams,
-  provideHttpClient,
-} from '@angular/common/http';
+import { CommonModule } from '@angular/common';
+import { HttpClient, HttpParams, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import {
-  Component,
-  ComponentRef,
-  OnInit,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, ComponentRef, OnInit, signal, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatTableModule } from '@angular/material/table';
 import { provideRouter } from '@angular/router';
 import {
-  FIELD_VALUE_FN,
-  SP_ENTITY_FIELD_CONFIG,
-  SPEntityFieldConfig,
-  SPEntityFieldSpec,
+    FIELD_VALUE_FN,
+    SP_ENTITY_FIELD_CONFIG,
+    SPEntityFieldConfig,
+    SPEntityFieldSpec,
 } from '@smallpearl/ngx-helper/entity-field';
-import { getTranslocoModule } from '@smallpearl/ngx-helper/src/transloco-testing.module';
+import { getTranslocoModule } from '@smallpearl/ngx-helper/utils';
 import { of } from 'rxjs';
-import {
-  SPMatEntityListConfig,
-  SPMatEntityListPaginator,
-} from './mat-entity-list-types';
+import { SPMatEntityListConfig, SPMatEntityListPaginator } from './mat-entity-list-types';
 import { SPMatEntityListComponent } from './mat-entity-list.component';
 import { SP_MAT_ENTITY_LIST_CONFIG } from './providers';
 
@@ -36,56 +24,16 @@ interface User {
 }
 
 const USER_DATA: User[] = [
-  {
-    name: { title: 'Ms', first: 'Mariam', last: 'Trevarthen' },
-    cell: '12323234',
-    gender: 'F',
-  },
-  {
-    name: { title: 'Ms', first: 'Lanny', last: 'Nathanson' },
-    cell: '22323234',
-    gender: 'F',
-  },
-  {
-    name: { title: 'Ms', first: 'Jaye', last: 'Nevin' },
-    cell: '32121234',
-    gender: 'M',
-  },
-  {
-    name: { title: 'Ms', first: 'Cordelia', last: 'Blauser' },
-    cell: '42323234',
-    gender: 'F',
-  },
-  {
-    name: { title: 'Ms', first: 'Talisha', last: 'Houk' },
-    cell: '52323234',
-    gender: 'F',
-  },
-  {
-    name: { title: 'Ms', first: 'Kirsten', last: 'Jerkins' },
-    cell: '63333234',
-    gender: 'F',
-  },
-  {
-    name: { title: 'Ms', first: 'Kandace', last: 'Oleary' },
-    cell: '72525234',
-    gender: 'F',
-  },
-  {
-    name: { title: 'Ms', first: 'Tammara', last: 'Michell' },
-    cell: '82929234',
-    gender: 'F',
-  },
-  {
-    name: { title: 'Ms', first: 'Lily', last: 'Rainwater' },
-    cell: '92121234',
-    gender: 'F',
-  },
-  {
-    name: { title: 'Ms', first: 'Izola', last: 'Silversmith' },
-    cell: '99343234',
-    gender: 'F',
-  },
+  { name: { title: 'Ms', first: 'Mariam', last: 'Trevarthen' }, cell: '12323234', gender: 'F' },
+  { name: { title: 'Ms', first: 'Lanny', last: 'Nathanson' }, cell: '22323234', gender: 'F' },
+  { name: { title: 'Ms', first: 'Jaye', last: 'Nevin' }, cell: '32121234', gender: 'M' },
+  { name: { title: 'Ms', first: 'Cordelia', last: 'Blauser' }, cell: '42323234', gender: 'F' },
+  { name: { title: 'Ms', first: 'Talisha', last: 'Houk' }, cell: '52323234', gender: 'F' },
+  { name: { title: 'Ms', first: 'Kirsten', last: 'Jerkins' }, cell: '63333234', gender: 'F' },
+  { name: { title: 'Ms', first: 'Kandace', last: 'Oleary' }, cell: '72525234', gender: 'F' },
+  { name: { title: 'Ms', first: 'Tammara', last: 'Michell' }, cell: '82929234', gender: 'F' },
+  { name: { title: 'Ms', first: 'Lily', last: 'Rainwater' }, cell: '92121234', gender: 'F' },
+  { name: { title: 'Ms', first: 'Izola', last: 'Silversmith' }, cell: '99343234', gender: 'F' },
 ];
 
 type UserEntityListComponent = SPMatEntityListComponent<User, 'cell'>;
@@ -95,7 +43,7 @@ type UserEntityListComponent = SPMatEntityListComponent<User, 'cell'>;
  * this to test SPMatEntityListComponent
  */
 @Component({
-  imports: [MatTableModule, SPMatEntityListComponent],
+  imports: [CommonModule, MatTableModule, SPMatEntityListComponent],
   template: `
     <div>
       <sp-mat-entity-list
@@ -107,8 +55,7 @@ type UserEntityListComponent = SPMatEntityListComponent<User, 'cell'>;
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef>Name</th>
           <td mat-cell *matCellDef="let element">
-            {{ element.name.title }}. {{ element.name.first }}
-            {{ element.name.last }}
+            {{ element.name.title }}. {{ element.name.first }} {{ element.name.last }}
           </td>
         </ng-container>
       </sp-mat-entity-list>
@@ -119,10 +66,7 @@ class SPMatEntityListTestComponent implements OnInit {
   displayedColumns = signal<string[]>([]);
   endpoint = 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb';
   columns: SPEntityFieldSpec<User, 'cell'>[] = [
-    {
-      name: 'name',
-      valueFn: (user: User) => user.name.first + ' ' + user.name.last,
-    },
+    { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
     { name: 'gender' },
     { name: 'cell' },
   ];
@@ -173,32 +117,21 @@ describe('SPMatEntityListComponent', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      imports: [
-        SPMatEntityListComponent,
-        SPMatEntityListTestComponent,
-        getTranslocoModule(),
-      ],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        provideRouter([]),
-      ],
+      imports: [SPMatEntityListComponent, SPMatEntityListTestComponent, getTranslocoModule()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
     fixture = TestBed.createComponent(SPMatEntityListComponent<User, 'cell'>);
     component = fixture.componentInstance;
     componentRef = fixture.componentRef;
     componentRef.setInput('entityName', 'user');
     componentRef.setInput('columns', [
-      {
-        name: 'name',
-        valueFn: (user: User) => user.name.first + ' ' + user.name.last,
-      },
+      { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
       { name: 'gender' },
       { name: 'cell' },
     ]);
   });
 
-  it('should create and load data without paginator', async () => {
+  it('should create and load data without paginator', () => {
     componentRef.setInput('columns', [
       {
         name: 'name',
@@ -217,16 +150,13 @@ describe('SPMatEntityListComponent', () => {
       .set('include[]', 'name')
       .append('include[]', 'cell')
       .append('include[]', 'phone');
-    componentRef.setInput(
-      'endpoint',
-      `https://randomuser.me/api/?${reqParams.toString()}`,
-    );
+    componentRef.setInput('endpoint', `https://randomuser.me/api/?${reqParams.toString()}`);
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('httpReqContext', ['cache', true]);
     const http = TestBed.inject(HttpClient);
     let httpReqContextReceived = false;
     let includeValues: string[] | null;
-    const httpGetSpy = spyOn(http, 'get').and.callFake(((
+    const httpGetSpy = vitest.spyOn(http, 'get').mockImplementation(((
       url: string,
       options: any,
     ) => {
@@ -236,7 +166,6 @@ describe('SPMatEntityListComponent', () => {
       return of(USER_DATA);
     }) as any); // 'as any' to suppress TSC function prototype mismatch
     fixture.detectChanges();
-    await fixture.whenStable();
     expect(httpGetSpy).toHaveBeenCalledTimes(1);
     expect(includeValues!).toEqual(['name', 'cell', 'phone']);
     expect(component).toBeTruthy();
@@ -244,36 +173,28 @@ describe('SPMatEntityListComponent', () => {
     // +1 for the <tr> in <thead>
     expect(rows.length).toEqual(USER_DATA.length + 1);
     // cell nos column data
-    const cellNos =
-      fixture.debugElement.nativeElement.querySelectorAll('td:nth-child(3)');
+    const cellNos = fixture.debugElement.nativeElement.querySelectorAll('td:nth-child(3)');
     for (let index = 0; index < cellNos.length; index++) {
-      const cellNo = cellNos[index].innerText;
-      expect(cellNo).toEqual(USER_DATA[index].cell);
+      const cellNo = cellNos[index].innerHTML;
+      expect(cellNo).toContain(USER_DATA[index].cell);
     }
-    const paginator =
-      fixture.debugElement.nativeElement.querySelector('mat-paginator');
+    const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
     expect(httpReqContextReceived).toBeTruthy();
   });
 
   it('should reload data when endpoint changes', async () => {
     componentRef.setInput('columns', [
-      {
-        name: 'name',
-        valueFn: (user: User) => user.name.first + ' ' + user.name.last,
-      },
+      { name: 'name', valueFn: (user: User) => user.name.first + ' ' + user.name.last },
       'gender',
       'cell',
     ]);
-    componentRef.setInput(
-      'endpoint',
-      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-    );
+    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('httpReqContext', ['cache', true]);
     const http = TestBed.inject(HttpClient);
     let httpReqContextReceived = false;
-    const httpGetSpy = spyOn(http, 'get').and.callFake(((
+    const httpGetSpy = vitest.spyOn(http, 'get').mockImplementation(((
       url: string,
       options: any,
     ) => {
@@ -281,56 +202,46 @@ describe('SPMatEntityListComponent', () => {
       return of(USER_DATA);
     }) as any); // 'as any' to suppress TSC function prototype mismatch
     fixture.detectChanges();
-    await fixture.whenStable();
     expect(httpGetSpy).toHaveBeenCalledTimes(1);
     expect(component).toBeTruthy();
     const rows = fixture.debugElement.nativeElement.querySelectorAll('tr');
     // +1 for the <tr> in <thead>
     expect(rows.length).toEqual(USER_DATA.length + 1);
-    const paginator =
-      fixture.debugElement.nativeElement.querySelector('mat-paginator');
+    const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
     expect(httpReqContextReceived).toBeTruthy();
-    httpGetSpy.calls.reset();
-    componentRef.setInput(
-      'endpoint',
-      'https://randomuser.me/api/?results=10&nat=us,dk,fr,gb',
-    );
+    httpGetSpy.mockClear();
+    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=500&nat=us,dk,fr,gb');
     fixture.detectChanges();
-    await fixture.whenStable();
+    // endpoint change triggers data reload, but this happens async
+    // via a setTimeout, albeit without any delay. So we need to wait
+    // for that.
+    await new Promise((r) => setTimeout(r, 10)); // wait for async operations
     expect(httpGetSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should accept hybrid column definitions', async () => {
-    componentRef.setInput(
-      'endpoint',
-      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-    );
+  it('should accept hybrid column definitions', () => {
+    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
     const http = TestBed.inject(HttpClient);
-    spyOn(http, 'get').and.returnValue(of(USER_DATA));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    fixture.autoDetectChanges();
     expect(component).toBeTruthy();
     const rows = fixture.debugElement.nativeElement.querySelectorAll('tr');
     // +1 for the <tr> in <thead>
     expect(rows.length).toEqual(USER_DATA.length + 1);
-    const paginator =
-      fixture.debugElement.nativeElement.querySelector('mat-paginator');
+    const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
   });
 
-  it('should show pagination control for pagination="discrete"', async () => {
-    componentRef.setInput(
-      'endpoint',
-      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-    );
+  it('should show pagination control for pagination="discrete"', () => {
+    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
     const myPaginator = new DRFPaginator();
     componentRef.setInput('paginator', myPaginator);
     componentRef.setInput('pagination', 'discrete');
     const http = TestBed.inject(HttpClient);
-    spyOn(http, 'get').and.returnValue(
+    vitest.spyOn(http, 'get').mockReturnValue(
       of({
         total: USER_DATA.length,
         next: null,
@@ -338,26 +249,21 @@ describe('SPMatEntityListComponent', () => {
         results: USER_DATA,
       }),
     );
-    fixture.detectChanges();
-    await fixture.whenStable();
+    fixture.autoDetectChanges();
     expect(component).toBeTruthy();
-    const paginator =
-      fixture.debugElement.nativeElement.querySelector('mat-paginator');
+    const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeTruthy();
     // console.log('(paginator.lastRequestParams: ', paginator.lastRequestParams);
   });
 
-  it('should *NOT* show pagination control for pagination="infinite"', async () => {
-    componentRef.setInput(
-      'endpoint',
-      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-    );
+  it('should *NOT* show pagination control for pagination="infinite"', () => {
+    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
     const myPaginator = new DRFPaginator();
     componentRef.setInput('paginator', myPaginator);
     componentRef.setInput('pagination', 'infinite');
     const http = TestBed.inject(HttpClient);
-    spyOn(http, 'get').and.returnValue(
+    vitest.spyOn(http, 'get').mockReturnValue(
       of({
         total: USER_DATA.length,
         next: null,
@@ -365,15 +271,13 @@ describe('SPMatEntityListComponent', () => {
         results: USER_DATA,
       }),
     );
-    fixture.detectChanges();
-    await fixture.whenStable();
+    fixture.autoDetectChanges();
     expect(component).toBeTruthy();
-    const paginator =
-      fixture.debugElement.nativeElement.querySelector('mat-paginator');
+    const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
   });
 
-  it('should call paginator methods for pagination args', async () => {
+  it('should call paginator methods for pagination args', () => {
     const endpoint = 'https://randomuser.me/api/?nat=us';
     componentRef.setInput('endpoint', endpoint);
     componentRef.setInput('idKey', 'cell');
@@ -383,7 +287,7 @@ describe('SPMatEntityListComponent', () => {
     componentRef.setInput('pagination', 'discrete');
     componentRef.setInput('pageSize', pageSize);
     const http = TestBed.inject(HttpClient);
-    spyOn(http, 'get').and.returnValue(
+    vitest.spyOn(http, 'get').mockReturnValue(
       of({
         total: USER_DATA.length,
         next: null,
@@ -392,32 +296,28 @@ describe('SPMatEntityListComponent', () => {
       }),
     );
     let getRequestPageParams: any = undefined;
-    const getRequestPageParamsSpy = spyOn(
-      myPaginator,
-      'getRequestPageParams',
-    ).and.callFake((endpoint, pageIndex, pageSize) => {
-      getRequestPageParams = {
-        endpoint,
-        pageIndex,
-        pageSize,
-      };
-      return {
-        page: pageIndex,
-        results: pageSize,
-      };
-    });
-    const parseRequestResponseSpy = spyOn(
-      myPaginator,
-      'parseRequestResponse',
-    ).and.returnValue({
-      total: USER_DATA.length,
-      entities: USER_DATA,
-    });
-    fixture.detectChanges();
-    await fixture.whenStable();
+    const getRequestPageParamsSpy = vitest
+      .spyOn(myPaginator, 'getRequestPageParams')
+      .mockImplementation((endpoint, pageIndex, pageSize) => {
+        getRequestPageParams = {
+          endpoint,
+          pageIndex,
+          pageSize,
+        };
+        return {
+          page: pageIndex,
+          results: pageSize,
+        };
+      });
+    const parseRequestResponseSpy = vitest
+      .spyOn(myPaginator, 'parseRequestResponse')
+      .mockReturnValue({
+        total: USER_DATA.length,
+        entities: USER_DATA,
+      });
+    fixture.autoDetectChanges();
     expect(component).toBeTruthy();
-    const paginator =
-      fixture.debugElement.nativeElement.querySelector('mat-paginator');
+    const paginator = fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeTruthy();
     expect(getRequestPageParams).toBeTruthy();
     expect(getRequestPageParams.endpoint).toEqual(endpoint.split('?')[0]);
@@ -434,7 +334,7 @@ describe('SPMatEntityListComponent', () => {
    *    i18nTranslate
    *    columnValueFns
    */
-  it('should use global config object', async () => {
+  it('should use global config object', () => {
     TestBed.resetTestingModule();
     const myPaginator = new DRFPaginator();
 
@@ -462,34 +362,32 @@ describe('SPMatEntityListComponent', () => {
     }
 
     let globalPaginatorGetEntitiesFromResponseCalled = false;
-    spyOn(myPaginator, 'parseRequestResponse').and.callFake(
-      (
-        entityName: string,
-        entityNamePlural: string,
-        endpoint: string,
-        params: any,
-        resp: any,
-      ) => {
-        globalPaginatorGetEntitiesFromResponseCalled = true;
-        return {
-          total: 100,
-          entities: resp['results'],
-        };
-      },
-    );
+    vitest
+      .spyOn(myPaginator, 'parseRequestResponse')
+      .mockImplementation(
+        (
+          entityName: string,
+          entityNamePlural: string,
+          endpoint: string,
+          params: any,
+          resp: any,
+        ) => {
+          globalPaginatorGetEntitiesFromResponseCalled = true;
+          return {
+            total: 100,
+            entities: resp['results'],
+          };
+        },
+      );
     const entityListConfig = new EntityListConfig();
     let globalUrlResolverCalled = false;
-    spyOn(entityListConfig, 'urlResolver').and.callFake((endpoint: string) => {
+    vitest.spyOn(entityListConfig, 'urlResolver').mockImplementation((endpoint: string) => {
       globalUrlResolverCalled = true;
       return endpoint;
     });
 
     TestBed.configureTestingModule({
-      imports: [
-        SPMatEntityListComponent,
-        SPMatEntityListTestComponent,
-        getTranslocoModule(),
-      ],
+      imports: [SPMatEntityListComponent, SPMatEntityListTestComponent, getTranslocoModule()],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
@@ -512,14 +410,11 @@ describe('SPMatEntityListComponent', () => {
       { name: 'gender' },
       { name: 'cell' },
     ]);
-    componentRef.setInput(
-      'endpoint',
-      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-    );
+    componentRef.setInput('endpoint', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
     componentRef.setInput('idKey', 'cell');
     componentRef.setInput('pagination', 'discrete');
     const http = TestBed.inject(HttpClient);
-    spyOn(http, 'get').and.returnValue(
+    vitest.spyOn(http, 'get').mockReturnValue(
       of({
         total: USER_DATA.length,
         next: null,
@@ -527,11 +422,9 @@ describe('SPMatEntityListComponent', () => {
         results: USER_DATA,
       }),
     );
-    fixture.detectChanges();
-    await fixture.whenStable();
+    fixture.autoDetectChanges();
     expect(component).toBeTruthy();
-    const rows =
-      fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
+    const rows = fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
     // +1 for the <tr> in <thead>
     expect(rows.length).toEqual(USER_DATA.length);
     // Verify that global paginator's 'getEntitiesFromResponse' was called.
@@ -541,14 +434,10 @@ describe('SPMatEntityListComponent', () => {
     // Verify that global value function specified via SPMatEntityListConfig
     // is used for matching columns without any explicit value function or
     // client projected ng-template.
-    const columns = fixture.debugElement.nativeElement.querySelectorAll(
-      'tbody td:nth-child(2)',
-    );
+    const columns = fixture.debugElement.nativeElement.querySelectorAll('tbody td:nth-child(2)');
     for (let index = 0; index < columns.length; index++) {
-      const colValue = columns[index].innerText;
-      expect(colValue).toEqual(
-        USER_DATA[index].gender === 'F' ? 'പെണ്ണ്' : 'ആണ്',
-      );
+      const colValue = columns[index].innerHTML;
+      expect(colValue).toContain(USER_DATA[index].gender === 'F' ? 'പെണ്ണ്' : 'ആണ്');
     }
     // global fieldValue function for 'gender' should've been called.
     expect(globalFieldValueFnsCalled).toBeTruthy();

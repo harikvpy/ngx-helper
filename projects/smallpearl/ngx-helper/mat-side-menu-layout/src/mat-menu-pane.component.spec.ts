@@ -31,8 +31,8 @@ describe('MatMenuPaneComponent', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
+      providers: [provideRouter([])],
       imports: [
-        provideRouter([]),
         MatSidenavModule,
         MatToolbarModule,
         MatIconModule,

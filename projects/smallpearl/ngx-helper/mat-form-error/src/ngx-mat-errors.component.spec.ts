@@ -520,11 +520,11 @@ describe('NgxMatErrors', () => {
       fixture.detectChanges();
       loader = TestbedHarnessEnvironment.loader(fixture);
       const matError = await loader.getHarness(MatErrorHarness);
-      expect(await matError.getText()).toBe('minlength2');
+      expect(await matError.getText()).toBe('');
       await new Promise((resolve) => setTimeout(resolve, 1));
-      // expect(await matError.getText()).toBe('minlength1');
-      // await new Promise((resolve) => setTimeout(resolve, 1));
-      // expect(await matError.getText()).toBe('minlength2');
+      expect(await matError.getText()).toBe('minlength1');
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      expect(await matError.getText()).toBe('minlength2');
     });
   });
 

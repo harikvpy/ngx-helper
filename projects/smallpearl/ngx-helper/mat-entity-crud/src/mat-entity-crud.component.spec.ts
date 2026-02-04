@@ -1,4 +1,4 @@
-import { AsyncPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import {
   HttpClient,
   HttpContext,
@@ -34,9 +34,11 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { getEntitiesCount } from '@ngneat/elf-entities';
 import { SPEntityFieldSpec } from '@smallpearl/ngx-helper/entity-field';
-import { SPMatEntityListPaginator } from '@smallpearl/ngx-helper/mat-entity-list';
-import { SPMatEntityListComponent } from '@smallpearl/ngx-helper/mat-entity-list/src/mat-entity-list.component';
-import { getTranslocoModule } from '@smallpearl/ngx-helper/src/transloco-testing.module';
+import {
+  SPMatEntityListComponent,
+  SPMatEntityListPaginator,
+} from '@smallpearl/ngx-helper/mat-entity-list';
+import { getTranslocoModule } from '@smallpearl/ngx-helper/utils';
 import { firstValueFrom, of, tap } from 'rxjs';
 import { SPMatEntityCrudFormBase } from './mat-entity-crud-form-base';
 import { MatEntityCrudItemAction } from './mat-entity-crud-item-action';
@@ -48,42 +50,6 @@ import {
 } from './mat-entity-crud-types';
 import { SPMatEntityCrudComponent } from './mat-entity-crud.component';
 import { SPMatEntityCrudPreviewPaneComponent } from './preview-pane.component';
-
-/**
- * 2026/02/04
- * This is a test component that extends SPMatEntityListComponent to help
- * get around the error
- *
- *  TypeError: Class extends value undefined is not a constructor or null
- *
- * seen while executing these tests. According to my research, primarily on
- * Gemini API and Grok AI, this is due to the Karma + Jasmine the test bundling
- * order is different from what is enforced by the builder. This independent
- * evaluation of file dependencies sometimes causes this problem. Event when
- * circular depenendencies have been ruled out (in our case).
- *
- * Referring to the offending class, SPMatEntityListComponent, which I narrowed
- * down by eliminating spec files and portions therein, explicitly in the spec
- * file, as done here, seems to resolve the issue.
- *
- * This solution was not suggested by any of the research sources, but I
- * discovered it while experimenting with various fixes.
- *
- * I suppose referring to the class early & explicitly in the spec file,
- * causes the Karma bundler to record a reference to the class to be imported,
- * thereby not making it walk down the inheritance tree to find the class
- * definition later, at which stage something may be going wrong.
- *
- * Anyway, suffice to say, this seems to have resolved the issue.
- */
-@Component({
-  selector: 'test',
-  template: '<p>Test</p>',
-})
-export class MyTestComponent<
-  TEntity extends { [P in IdKey]: PropertyKey },
-  IdKey extends string = 'id',
-> extends SPMatEntityListComponent<TEntity, IdKey> {}
 
 interface User {
   name: { title: string; first: string; last: string };
@@ -171,7 +137,7 @@ type UserEntityCrudComponent = SPMatEntityCrudComponent<User, 'cell'>;
 
 @Component({
   imports: [
-    AsyncPipe,
+    CommonModule,
     FormsModule,
     ReactiveFormsModule,
     MatFormFieldModule,
@@ -279,6 +245,7 @@ export class CreateEditUserComponent extends SPMatEntityCrudFormBase<
  */
 @Component({
   imports: [
+    CommonModule,
     MatTableModule,
     SPMatEntityCrudComponent,
     CreateEditUserComponent,
@@ -389,1613 +356,1614 @@ class DRFPaginator implements SPMatEntityListPaginator {
 }
 
 describe('SPMatEntityCrudComponent', () => {
-  it('should create', () => {
-    expect(true).toBeTruthy();
+  let fixture!: ComponentFixture<UserEntityCrudComponent>;
+  let component!: UserEntityCrudComponent;
+  let componentRef!: ComponentRef<UserEntityCrudComponent>;
+
+  async function createCrudComponent() {
+    TestBed.configureTestingModule({
+      imports: [
+        SPMatEntityListComponent,
+        SPMatEntityCrudTestComponent,
+        getTranslocoModule(),
+      ],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { params: { id: '100' } },
+          },
+        },
+      ],
+    });
+    fixture = TestBed.createComponent(SPMatEntityCrudComponent<User, 'cell'>);
+    component = fixture.componentInstance;
+    componentRef = fixture.componentRef;
+    componentRef.setInput('entityName', 'user');
+    componentRef.setInput('itemLabel', 'User');
+    componentRef.setInput('itemLabelPlural', 'Users');
+    componentRef.setInput('columns', USER_COLUMNS);
+  }
+
+  beforeEach(async () => {
+    await createCrudComponent();
   });
 
-  describe(' (properties)', () => {
-    let fixture!: ComponentFixture<UserEntityCrudComponent>;
-    let component!: UserEntityCrudComponent;
-    let componentRef!: ComponentRef<UserEntityCrudComponent>;
+  const autoDetectChanges = async () => {
+    fixture.autoDetectChanges();
+    await new Promise((res) => setTimeout(res, 120)); // wait for the async data to be loaded
+  };
 
-    async function createCrudComponent() {
-      TestBed.configureTestingModule({
-        imports: [
-          SPMatEntityListComponent,
-          SPMatEntityCrudTestComponent,
-          getTranslocoModule(),
-        ],
-        providers: [
-          provideHttpClient(),
-          provideHttpClientTesting(),
-          {
-            provide: ActivatedRoute,
-            useValue: {
-              snapshot: { params: { id: '100' } },
-            },
+  it('should create', () => {
+    // await createCrudComponent();
+    componentRef.setInput('columns', [
+      {
+        name: 'name',
+        valueFn: (user: User) => user.name.first + ' ' + user.name.last,
+      },
+      'gender',
+      'cell',
+    ]);
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
+    );
+    componentRef.setInput('idKey', 'cell');
+    const http = TestBed.inject(HttpClient);
+    componentRef.setInput('httpReqContext', ['cache', true]);
+    let httpReqContextReceived = false;
+    vitest.spyOn(http, 'get').mockImplementation(((
+      url: string,
+      options: any,
+    ) => {
+      httpReqContextReceived = options.context.get('cache') === true;
+      return of(USER_DATA);
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+    fixture.autoDetectChanges();
+    expect(component).toBeTruthy();
+    const rows =
+      fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
+    // +1 for the <tr> in <thead>
+    expect(rows.length).toEqual(USER_DATA.length);
+    const paginator =
+      fixture.debugElement.nativeElement.querySelector('mat-paginator');
+    expect(paginator).toBeFalsy();
+    expect(httpReqContextReceived).toBeTruthy();
+    const columns = rows[0].querySelectorAll('td');
+    // +1 for action column
+    expect(columns.length).toEqual(USER_COLUMNS.length + 1);
+    // check _endpointSansParams() returns URL without the QP
+    expect(component._endpointSansParams()).toEqual(
+      'https://randomuser.me/api/',
+    );
+    expect(component.getEntityUrl(USER_DATA[0].cell)).toEqual(
+      `https://randomuser.me/api/${USER_DATA[0].cell}/?results=100&nat=us,dk,fr,gb`,
+    );
+  });
+
+  it('should derive itemLabel[Plural] from entityName', async () => {
+    componentRef.setInput('entityName', 'userProfile');
+    componentRef.setInput('itemLabel', undefined);
+    componentRef.setInput('itemLabelPlural', undefined);
+    fixture.detectChanges();
+    expect(component._entityNamePlural()).toEqual('userProfiles');
+    // userProfile converted to Title Case using lodash.startCase.
+    const itemLabel = await firstValueFrom(component._itemLabel());
+    expect(itemLabel).toEqual('User Profile');
+    // Default pluralization using 'pluralize' library
+    const itemLabelPlural = await firstValueFrom(component._itemLabelPlural());
+    expect(itemLabelPlural).toEqual('User Profiles');
+  });
+
+  it('should accept hybrid column definitions', async () => {
+    // await createCrudComponent();
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
+    );
+    componentRef.setInput('idKey', 'cell');
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    fixture.autoDetectChanges();
+    // tick(100);
+    await new Promise((res) => setTimeout(res, 120)); // wait for the async data to be loaded
+    expect(component).toBeTruthy();
+    const rows = fixture.debugElement.nativeElement.querySelectorAll('tr');
+    // +1 for the <tr> in <thead>
+    expect(rows.length).toEqual(USER_DATA.length + 1);
+    const paginator =
+      fixture.debugElement.nativeElement.querySelector('mat-paginator');
+    expect(paginator).toBeFalsy();
+  });
+
+  it('should disable all action items if disableItemActions=true', async () => {
+    // await createCrudComponent();
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
+    );
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableItemActions', true);
+    componentRef.setInput('itemActions', [
+      { label: 'Edit', role: '_update_' },
+      { label: 'Delete', role: '_delete_' },
+    ]);
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    fixture.autoDetectChanges();
+    // tick(100);
+    await new Promise((res) => setTimeout(res, 120)); // wait for the async data to be loaded
+    expect(component).toBeTruthy();
+    const rows =
+      fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
+    // +1 for the <tr> in <thead>
+    expect(rows.length).toEqual(USER_DATA.length);
+    const paginator =
+      fixture.debugElement.nativeElement.querySelector('mat-paginator');
+    expect(paginator).toBeFalsy();
+    const columns = rows[0].querySelectorAll('td');
+    // columns should equal number columns as set in [columns] property value
+    expect(columns.length).toEqual(USER_COLUMNS.length + 1);
+    // get the action button in the last column
+    const actionBtn = columns[columns.length - 1].querySelector('button');
+    expect(actionBtn).toBeTruthy();
+    actionBtn.click();
+    fixture.detectChanges();
+    // tick(100);
+    const matMenu = fixture.debugElement.query(By.directive(MatMenu));
+    expect(matMenu).toBeTruthy();
+    // mat-menu-item buttons are dynamically crated in the document root
+    // and not under <mat-menu> element
+    const menuItems = document.querySelectorAll(
+      'button[mat-menu-item][disabled="true"]',
+    );
+    // one for "Update" and one for "Delete"
+    expect(menuItems.length).toEqual(2);
+  });
+
+  it('should invoke custom action handlers', () => {
+    // await createCrudComponent();
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
+    );
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableItemActions', false);
+
+    let customAction2Called = false;
+    let customAction3Called = false;
+    const ITEM_ACTIONS = [
+      {
+        label: 'Custom Action 1',
+        role: 'custom_action_1/',
+        httpRequestParameters: {
+          method: 'POST',
+          urlPath: 'custom_action_1',
+          params: new HttpParams().set('verbose', 'true'),
+          body: {
+            info: 'some data',
           },
-        ],
-      });
-      fixture = TestBed.createComponent(SPMatEntityCrudComponent<User, 'cell'>);
-      component = fixture.componentInstance;
-      componentRef = fixture.componentRef;
-      componentRef.setInput('entityName', 'user');
-      componentRef.setInput('itemLabel', 'User');
-      componentRef.setInput('itemLabelPlural', 'Users');
-      componentRef.setInput('columns', USER_COLUMNS);
-    }
-
-    beforeEach(async () => {
-      await createCrudComponent();
-    });
-
-    const autoDetectChanges = async () => {
-      fixture.autoDetectChanges();
-      await new Promise((res) => setTimeout(res, 120)); // wait for the async data to be loaded
-    };
-
-    it('should create', async () => {
-      // await createCrudComponent();
-      componentRef.setInput('columns', [
-        {
-          name: 'name',
-          valueFn: (user: User) => user.name.first + ' ' + user.name.last,
         },
-        'gender',
-        'cell',
-      ]);
-      componentRef.setInput(
-        'endpoint',
-        'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-      );
-      componentRef.setInput('idKey', 'cell');
-      const http = TestBed.inject(HttpClient);
-      componentRef.setInput('httpReqContext', ['cache', true]);
-      let httpReqContextReceived = false;
-      spyOn(http, 'get').and.callFake(((url: string, options: any) => {
-        httpReqContextReceived = options.context.get('cache') === true;
-        return of(USER_DATA);
-      }) as any); // 'as any' to suppress TSC function prototype mismatch
-      fixture.detectChanges();
-      await new Promise((res) => setTimeout(res, 120)); // wait for the async data to be loaded
-      expect(component).toBeTruthy();
-      const rows =
-        fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
-      // +1 for the <tr> in <thead>
-      expect(rows.length).toEqual(USER_DATA.length);
-      const paginator =
-        fixture.debugElement.nativeElement.querySelector('mat-paginator');
-      expect(paginator).toBeFalsy();
-      expect(httpReqContextReceived).toBeTruthy();
-      const columns = rows[0].querySelectorAll('td');
-      // +1 for action column
-      expect(columns.length).toEqual(USER_COLUMNS.length + 1);
-      // check _endpointSansParams() returns URL without the QP
-      expect(component._endpointSansParams()).toEqual(
-        'https://randomuser.me/api/',
-      );
-      expect(component.getEntityUrl(USER_DATA[0].cell)).toEqual(
-        `https://randomuser.me/api/${USER_DATA[0].cell}/?results=100&nat=us,dk,fr,gb`,
-      );
-    });
+      },
+      {
+        label: 'Custom Action 2',
+        role: 'custom_action_2',
+        action: (entity: User) => {
+          customAction2Called = true;
+        },
+      },
+      {
+        label: 'Custom Action 3',
+        role: 'custom_action_3',
+        httpRequestParameters: {
+          method: 'POST',
+          urlPath: 'custom_action_3/',
+          params: new HttpParams().set('verbose', 'true'),
+          body: {
+            info: 'some data',
+          },
+        },
+        action: (entity: User) => {
+          customAction3Called = true;
+        },
+      },
+    ];
+    componentRef.setInput('itemActions', ITEM_ACTIONS);
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    fixture.autoDetectChanges();
+    // tick(100);
+    expect(component).toBeTruthy();
+    const rows =
+      fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
+    // +1 for the <tr> in <thead>
+    expect(rows.length).toEqual(USER_DATA.length);
+    const columns = rows[0].querySelectorAll('td');
+    // columns should equal number columns as set in [columns] property value
+    expect(columns.length).toEqual(USER_COLUMNS.length + 1);
+    // get the action button in the last column
+    const actionBtn = columns[columns.length - 1].querySelector('button');
+    expect(actionBtn).toBeTruthy();
 
-    it('should derive itemLabel[Plural] from entityName', async () => {
-      componentRef.setInput('entityName', 'userProfile');
-      componentRef.setInput('itemLabel', undefined);
-      componentRef.setInput('itemLabelPlural', undefined);
-      fixture.detectChanges();
-      expect(component._entityNamePlural()).toEqual('userProfiles');
-      // userProfile converted to Title Case using lodash.startCase.
-      const itemLabel = await firstValueFrom(component._itemLabel());
-      expect(itemLabel).toEqual('User Profile');
-      // Default pluralization using 'pluralize' library
-      const itemLabelPlural = await firstValueFrom(
-        component._itemLabelPlural(),
-      );
-      expect(itemLabelPlural).toEqual('User Profiles');
-    });
-
-    it('should accept hybrid column definitions', async () => {
-      // await createCrudComponent();
-      componentRef.setInput(
-        'endpoint',
-        'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-      );
-      componentRef.setInput('idKey', 'cell');
-      const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(of(USER_DATA));
-      fixture.detectChanges();
-      await new Promise((res) => setTimeout(res, 120)); // wait for the async data to be loaded
-      expect(component).toBeTruthy();
-      const rows = fixture.debugElement.nativeElement.querySelectorAll('tr');
-      // +1 for the <tr> in <thead>
-      expect(rows.length).toEqual(USER_DATA.length + 1);
-      const paginator =
-        fixture.debugElement.nativeElement.querySelector('mat-paginator');
-      expect(paginator).toBeFalsy();
-    });
-
-    it('should disable all action items if disableItemActions=true', async () => {
-      // await createCrudComponent();
-      componentRef.setInput(
-        'endpoint',
-        'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-      );
-      componentRef.setInput('idKey', 'cell');
-      componentRef.setInput('disableItemActions', true);
-      componentRef.setInput('itemActions', [
-        { label: 'Edit', role: '_update_' },
-        { label: 'Delete', role: '_delete_' },
-      ]);
-      const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(of(USER_DATA));
-      fixture.autoDetectChanges();
-      await new Promise((r) => setTimeout(r, 100));
-      expect(component).toBeTruthy();
-      const rows =
-        fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
-      // +1 for the <tr> in <thead>
-      expect(rows.length).toEqual(USER_DATA.length);
-      const paginator =
-        fixture.debugElement.nativeElement.querySelector('mat-paginator');
-      expect(paginator).toBeFalsy();
-      const columns = rows[0].querySelectorAll('td');
-      // columns should equal number columns as set in [columns] property value
-      expect(columns.length).toEqual(USER_COLUMNS.length + 1);
-      // get the action button in the last column
-      const actionBtn = columns[columns.length - 1].querySelector('button');
-      expect(actionBtn).toBeTruthy();
+    // click action button 1
+    {
       actionBtn.click();
       fixture.detectChanges();
-      await new Promise((r) => setTimeout(r, 100));
       const matMenu = fixture.debugElement.query(By.directive(MatMenu));
       expect(matMenu).toBeTruthy();
-      // mat-menu-item buttons are dynamically crated in the document root
-      // and not under <mat-menu> element
-      const menuItems = document.querySelectorAll(
-        'button[mat-menu-item][disabled="true"]',
-      );
-      // one for "Update" and one for "Delete"
-      expect(menuItems.length).toEqual(2);
-    });
-
-    it('should invoke custom action handlers', async () => {
-      // await createCrudComponent();
-      componentRef.setInput(
-        'endpoint',
-        'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-      );
-      componentRef.setInput('idKey', 'cell');
-      componentRef.setInput('disableItemActions', false);
-
-      let customAction2Called = false;
-      let customAction3Called = false;
-      const ITEM_ACTIONS = [
-        {
-          label: 'Custom Action 1',
-          role: 'custom_action_1/',
-          httpRequestParameters: {
-            method: 'POST',
-            urlPath: 'custom_action_1',
-            params: new HttpParams().set('verbose', 'true'),
-            body: {
-              info: 'some data',
-            },
-          },
-        },
-        {
-          label: 'Custom Action 2',
-          role: 'custom_action_2',
-          action: (entity: User) => {
-            customAction2Called = true;
-          },
-        },
-        {
-          label: 'Custom Action 3',
-          role: 'custom_action_3',
-          httpRequestParameters: {
-            method: 'POST',
-            urlPath: 'custom_action_3/',
-            params: new HttpParams().set('verbose', 'true'),
-            body: {
-              info: 'some data',
-            },
-          },
-          action: (entity: User) => {
-            customAction3Called = true;
-          },
-        },
-      ];
-      componentRef.setInput('itemActions', ITEM_ACTIONS);
-      const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(of(USER_DATA));
-      fixture.autoDetectChanges();
-      await new Promise((r) => setTimeout(r, 100));
-      expect(component).toBeTruthy();
-      const rows =
-        fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
-      // +1 for the <tr> in <thead>
-      expect(rows.length).toEqual(USER_DATA.length);
-      const columns = rows[0].querySelectorAll('td');
-      // columns should equal number columns as set in [columns] property value
-      expect(columns.length).toEqual(USER_COLUMNS.length + 1);
-      // get the action button in the last column
-      const actionBtn = columns[columns.length - 1].querySelector('button');
-      expect(actionBtn).toBeTruthy();
-
-      // click action button 1
-      {
-        actionBtn.click();
-        fixture.detectChanges();
-        const matMenu = fixture.debugElement.query(By.directive(MatMenu));
-        expect(matMenu).toBeTruthy();
-        const matMenuItems = fixture.debugElement.queryAll(
-          By.directive(MatMenuItem),
-        );
-        expect(matMenuItems.length).toEqual(ITEM_ACTIONS.length);
-
-        // Custom Action 1
-        expect(
-          (matMenuItems[0].nativeElement as HTMLElement).innerText,
-        ).toEqual('Custom Action 1');
-
-        // Validate HTTP POST call for custom action 1
-        spyOn(http, 'post').and.callFake(((
-          url: string,
-          data: any,
-          options: any,
-        ) => {
-          expect(url).toContain('custom_action_1/');
-          const parts = url.split('?');
-          expect(parts[0].endsWith('custom_action_1/')).toBeTruthy();
-          expect(data).toEqual({ info: 'some data' });
-          expect(options.params.get('verbose')).toEqual('true');
-          return of({});
-        }) as any); // 'as any' to suppress TSC function prototype mismatch
-
-        matMenuItems[0].nativeElement.click();
-        fixture.detectChanges();
-        expect(http.post).toHaveBeenCalled();
-      }
-
-      // Click action button 2
-      {
-        actionBtn.click();
-        fixture.detectChanges();
-        const matMenu = fixture.debugElement.query(By.directive(MatMenu));
-        expect(matMenu).toBeTruthy();
-        const matMenuItems = fixture.debugElement.queryAll(
-          By.directive(MatMenuItem),
-        );
-        expect(matMenuItems.length).toEqual(ITEM_ACTIONS.length);
-
-        expect(
-          (matMenuItems[1].nativeElement as HTMLElement).innerText,
-        ).toEqual('Custom Action 2');
-        matMenuItems[1].nativeElement.click();
-        fixture.detectChanges();
-        expect(customAction2Called).toBeTruthy();
-      }
-
-      // Verify that action handler is preferred over HTTP request for Custom Action 3
-      // even though `httpParameters` is specified.
-      {
-        actionBtn.click();
-        fixture.detectChanges();
-        const matMenu = fixture.debugElement.query(By.directive(MatMenu));
-        expect(matMenu).toBeTruthy();
-        const matMenuItems = fixture.debugElement.queryAll(
-          By.directive(MatMenuItem),
-        );
-        expect(matMenuItems.length).toEqual(ITEM_ACTIONS.length);
-
-        expect(
-          (matMenuItems[2].nativeElement as HTMLElement).innerText,
-        ).toEqual('Custom Action 3');
-        matMenuItems[2].nativeElement.click();
-        fixture.detectChanges();
-        expect(customAction3Called).toBeTruthy();
-      }
-    });
-
-    it('should not display "New Item" button disableCreate = true', async () => {
-      // await createCrudComponent();
-      componentRef.setInput(
-        'endpoint',
-        'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-      );
-      componentRef.setInput('idKey', 'cell');
-      componentRef.setInput('disableCreate', true);
-      const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(of(USER_DATA));
-      fixture.autoDetectChanges();
-      const matButton = fixture.debugElement.query(By.directive(MatButton));
-      expect(matButton).toBeFalsy();
-    });
-
-    it("should refresh entity after CREATE when refreshAfterEdit='object'", async () => {
-      componentRef.setInput(
-        'endpoint',
-        'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-      );
-      componentRef.setInput('idKey', 'cell');
-      componentRef.setInput('disableCreate', true);
-      componentRef.setInput('crudHttpReqContext', ['cache', true]);
-      const http = TestBed.inject(HttpClient);
-      let httpPOSTReqContextReceived = false;
-      spyOn(http, 'post').and.callFake(((
-        url: string,
-        data: any,
-        options: any,
-      ) => {
-        const cache = options.context.get('cache') === true;
-        const crudContextParams: SPMatEntityCrudHttpContext =
-          options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
-        httpPOSTReqContextReceived =
-          !!cache && !!crudContextParams && crudContextParams.op == 'create';
-        // console.log(JSON.stringify(crudContextParams, null, 2));
-        return of({
-          ...USER_DATA[0],
-          cell: '83939830309303',
-        });
-      }) as any); // 'as any' to suppress TSC function prototype mismatch
-
-      let httpGETReqContextReceived = false;
-      spyOn(http, 'get').and.callFake(((url: string, options: any) => {
-        if (url.includes('/83939830309303/')) {
-          // refresh item
-          const cache = options.context.get('cache') === true;
-          const crudContextParams: SPMatEntityCrudHttpContext =
-            options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
-          httpGETReqContextReceived =
-            !!cache &&
-            !!crudContextParams &&
-            crudContextParams.op == 'retrieve';
-          return of({
-            ...USER_DATA[0],
-            cell: '888',
-          });
-        } else {
-          // initial get users request
-          return of(USER_DATA);
-        }
-      }) as any); // 'as any' to suppress TSC function prototype mismatch
-
-      // spyOn(http, 'get').and.returnValue(of(USER_DATA));
-      // componentRef.setInput('crudOpFn', crudOpFn);
-      componentRef.setInput('refreshAfterEdit', 'object');
-      fixture.autoDetectChanges();
-      // Mocking object CREATE by calling the bridge method directly
-      const res = await firstValueFrom(component.create({}));
-      expect(httpPOSTReqContextReceived).toBeTruthy();
-      expect(httpGETReqContextReceived).toBeTruthy();
-      expect(res.cell).toEqual('888');
-    });
-
-    it('should set common HTTP context for all crud operations', async () => {
-      componentRef.setInput(
-        'endpoint',
-        'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-      );
-      componentRef.setInput('idKey', 'cell');
-      componentRef.setInput('disableCreate', true);
-      const CACHE_TOKEN = new HttpContextToken<boolean>(() => true);
-      componentRef.setInput(
-        'crudHttpReqContext',
-        new HttpContext().set(CACHE_TOKEN, true),
-      );
-      const http = TestBed.inject(HttpClient);
-      let httpPOSTReqContextReceived = false;
-      spyOn(http, 'post').and.callFake(((
-        url: string,
-        data: any,
-        options: any,
-      ) => {
-        const cache = options.context.get(CACHE_TOKEN) === true;
-        const crudContextParams: SPMatEntityCrudHttpContext =
-          options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
-        httpPOSTReqContextReceived =
-          !!cache && !!crudContextParams && crudContextParams.op == 'create';
-        // console.log(JSON.stringify(crudContextParams, null, 2));
-        return of({
-          ...USER_DATA[0],
-          cell: '83939830309303',
-        });
-      }) as any); // 'as any' to suppress TSC function prototype mismatch
-
-      let httpGETReqContextReceived = false;
-      spyOn(http, 'get').and.callFake(((url: string, options: any) => {
-        if (url.includes('/83939830309303/')) {
-          // refresh item
-          const cache = options.context.get(CACHE_TOKEN) === true;
-          const crudContextParams: SPMatEntityCrudHttpContext =
-            options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
-          httpGETReqContextReceived =
-            !!cache &&
-            !!crudContextParams &&
-            crudContextParams.op == 'retrieve';
-          return of({
-            ...USER_DATA[0],
-            cell: '888',
-          });
-        } else {
-          // initial get users request
-          return of(USER_DATA);
-        }
-      }) as any); // 'as any' to suppress TSC function prototype mismatch
-
-      // spyOn(http, 'get').and.returnValue(of(USER_DATA));
-      // componentRef.setInput('crudOpFn', crudOpFn);
-      componentRef.setInput('refreshAfterEdit', 'object');
-      fixture.autoDetectChanges();
-      // Mocking object CREATE by calling the bridge method directly
-      const res = await firstValueFrom(component.create({}));
-      expect(httpPOSTReqContextReceived).toBeTruthy();
-      expect(httpGETReqContextReceived).toBeTruthy();
-      expect(res.cell).toEqual('888');
-    });
-
-    it('should set crud specific HTTP context tokens', async () => {
-      componentRef.setInput(
-        'endpoint',
-        'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-      );
-      componentRef.setInput('idKey', 'cell');
-      componentRef.setInput('disableCreate', true);
-      componentRef.setInput('crudHttpReqContext', {
-        create: ['cache', true],
-        retrieve: ['cache', true],
-      });
-      const http = TestBed.inject(HttpClient);
-      let httpPOSTReqContextReceived = false;
-      spyOn(http, 'post').and.callFake(((
-        url: string,
-        data: any,
-        options: any,
-      ) => {
-        const cache = options.context.get('cache') === true;
-        const crudContextParams: SPMatEntityCrudHttpContext =
-          options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
-        httpPOSTReqContextReceived =
-          !!cache && !!crudContextParams && crudContextParams.op == 'create';
-        // console.log(JSON.stringify(crudContextParams, null, 2));
-        return of({
-          ...USER_DATA[0],
-          cell: '83939830309303',
-        });
-      }) as any); // 'as any' to suppress TSC function prototype mismatch
-
-      let httpGETReqContextReceived = false;
-      spyOn(http, 'get').and.callFake(((url: string, options: any) => {
-        if (url.includes('/83939830309303/')) {
-          // refresh item
-          const cache = options.context.get('cache') === true;
-          const crudContextParams: SPMatEntityCrudHttpContext =
-            options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
-          httpGETReqContextReceived =
-            !!cache &&
-            !!crudContextParams &&
-            crudContextParams.op == 'retrieve';
-          return of({
-            ...USER_DATA[0],
-            cell: '888',
-          });
-        } else {
-          // initial get users request
-          return of(USER_DATA);
-        }
-      }) as any); // 'as any' to suppress TSC function prototype mismatch
-
-      // spyOn(http, 'get').and.returnValue(of(USER_DATA));
-      // componentRef.setInput('crudOpFn', crudOpFn);
-      componentRef.setInput('refreshAfterEdit', 'object');
-      fixture.autoDetectChanges();
-      // Mocking object CREATE by calling the bridge method directly
-      const res = await firstValueFrom(component.create({}));
-      expect(httpPOSTReqContextReceived).toBeTruthy();
-      expect(httpGETReqContextReceived).toBeTruthy();
-      expect(res.cell).toEqual('888');
-    });
-
-    it('should set crud specific HTTP context', async () => {
-      componentRef.setInput(
-        'endpoint',
-        'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-      );
-      componentRef.setInput('idKey', 'cell');
-      componentRef.setInput('disableCreate', true);
-
-      const CACHE_TOKEN = new HttpContextToken<boolean>(() => true);
-
-      const httpContext = new HttpContext();
-      httpContext.set(CACHE_TOKEN, true);
-
-      componentRef.setInput('crudHttpReqContext', {
-        create: httpContext,
-        retrieve: httpContext,
-      });
-      const http = TestBed.inject(HttpClient);
-      let httpPOSTReqContextReceived = false;
-      spyOn(http, 'post').and.callFake(((
-        url: string,
-        data: any,
-        options: any,
-      ) => {
-        const cache = options.context.get(CACHE_TOKEN) === true;
-        const crudContextParams: SPMatEntityCrudHttpContext =
-          options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
-        httpPOSTReqContextReceived =
-          !!cache && !!crudContextParams && crudContextParams.op == 'create';
-        // console.log(JSON.stringify(crudContextParams, null, 2));
-        return of({
-          ...USER_DATA[0],
-          cell: '83939830309303',
-        });
-      }) as any); // 'as any' to suppress TSC function prototype mismatch
-
-      let httpGETReqContextReceived = false;
-      spyOn(http, 'get').and.callFake(((url: string, options: any) => {
-        if (url.includes('/83939830309303/')) {
-          // refresh item
-          const cache = options.context.get(CACHE_TOKEN) === true;
-          const crudContextParams: SPMatEntityCrudHttpContext =
-            options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
-          httpGETReqContextReceived =
-            !!cache &&
-            !!crudContextParams &&
-            crudContextParams.op == 'retrieve';
-          return of({
-            ...USER_DATA[0],
-            cell: '888',
-          });
-        } else {
-          // initial get users request
-          return of(USER_DATA);
-        }
-      }) as any); // 'as any' to suppress TSC function prototype mismatch
-
-      // spyOn(http, 'get').and.returnValue(of(USER_DATA));
-      // componentRef.setInput('crudOpFn', crudOpFn);
-      componentRef.setInput('refreshAfterEdit', 'object');
-      fixture.autoDetectChanges();
-      // Mocking object CREATE by calling the bridge method directly
-      const res = await firstValueFrom(component.create({}));
-      expect(httpPOSTReqContextReceived).toBeTruthy();
-      expect(httpGETReqContextReceived).toBeTruthy();
-      expect(res.cell).toEqual('888');
-    });
-
-    it("should refresh entity after UPDATE when refreshAfterEdit='object'", async () => {
-      componentRef.setInput(
-        'endpoint',
-        'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-      );
-      componentRef.setInput('idKey', 'cell');
-      componentRef.setInput('disableCreate', true);
-      componentRef.setInput('crudHttpReqContext', ['cache', true]);
-      const http = TestBed.inject(HttpClient);
-      let httpGETReqContextReceived = false;
-      spyOn(http, 'get').and.callFake(((url: string, options: any) => {
-        if (url.includes('/83939830309303/')) {
-          // refresh item
-          const cache = options.context.get('cache') === true;
-          const crudContextParams: SPMatEntityCrudHttpContext =
-            options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
-          httpGETReqContextReceived =
-            !!cache &&
-            !!crudContextParams &&
-            crudContextParams.op == 'retrieve';
-          return of({
-            ...USER_DATA[0],
-            cell: '888',
-          });
-        } else {
-          // initial get users request
-          return of(USER_DATA);
-        }
-      }) as any); // 'as any' to suppress TSC function prototype mismatch
-      let httpPATCHReqContextReceived = false;
-      spyOn(http, 'patch').and.callFake(((
-        url: string,
-        data: any,
-        options: any,
-      ) => {
-        const cache = options.context.get('cache') === true;
-        const crudContextParams: SPMatEntityCrudHttpContext =
-          options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
-        httpPATCHReqContextReceived =
-          !!cache && !!crudContextParams && crudContextParams.op === 'update';
-        return of({
-          ...USER_DATA[0],
-          cell: '83939830309303',
-        });
-      }) as any); // 'as any' to suppress TSC function prototype mismatch
-      componentRef.setInput('refreshAfterEdit', 'object');
-      fixture.autoDetectChanges();
-      // Mocking object UPDATE by calling the bridge method directly
-      await firstValueFrom(
-        component.update(USER_DATA[0]['cell'], { gender: 'M' }),
-      );
-      expect(httpPATCHReqContextReceived).toBeTruthy();
-      expect(httpGETReqContextReceived).toBeTruthy();
-    });
-
-    it("should refresh all entities after CREATE when refreshAfterEdit='all'", async () => {
-      componentRef.setInput(
-        'endpoint',
-        'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-      );
-      componentRef.setInput('idKey', 'cell');
-      componentRef.setInput('disableCreate', true);
-      const http = TestBed.inject(HttpClient);
-      const getSpy = spyOn(http, 'get').and.returnValue(of(USER_DATA));
-      const patchSpy = spyOn(http, 'patch').and.returnValue(of(USER_DATA[0]));
-      // componentRef.setInput('crudOpFn', crudOpFn);
-      componentRef.setInput('refreshAfterEdit', 'all');
-      fixture.autoDetectChanges();
-      await new Promise((r) => setTimeout(r));
-      expect(getSpy).toHaveBeenCalledTimes(1);
-      // Mocking object UPDATE by calling the bridge method directly
-      // This should result in another call to load all entities as we have
-      // set refreshAfterEdit='all'
-      await firstValueFrom(
-        component.update(USER_DATA[0]['cell'], { gender: 'M' }),
-      );
-      await new Promise((r) => setTimeout(r));
-      expect(getSpy).toHaveBeenCalledTimes(2);
-    });
-
-    it("should call crudResponseParser after CREATE/UPDATE when refreshAfterEdit='object'", async () => {
-      componentRef.setInput(
-        'endpoint',
-        'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-      );
-      let crudOpCalled = 0;
-      const crudOpFn = (
-        op: string,
-        id: any,
-        entityValue: any,
-        entityCrudComponent: SPMatEntityCrudCreateEditBridge,
-      ) => {
-        crudOpCalled++;
-        return of({
-          ...USER_DATA[0],
-          cell: '83939830309303',
-        }); // Fake data
-      };
-      componentRef.setInput('idKey', 'cell');
-      componentRef.setInput('disableCreate', true);
-      let crudResponseParserCalled = 0;
-      const crudResponseParserFn = (
-        entityName: string,
-        idKey: string,
-        method: 'create' | 'retrieve' | 'update' | 'delete',
-        resp: any,
-      ) => {
-        crudResponseParserCalled++;
-        return {
-          ...USER_DATA[0],
-          cell: '888', // deliberately return a different value for testing
-        };
-      };
-      componentRef.setInput('crudResponseParser', crudResponseParserFn);
-      const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(of(USER_DATA));
-      componentRef.setInput('crudOpFn', crudOpFn);
-      componentRef.setInput('refreshAfterEdit', 'object');
-      fixture.autoDetectChanges();
-      // Mocking object CREATE by calling the bridge method directly
-      const res = await firstValueFrom(component.create({}));
-      // Once for 'create' and another for 'get' (because refreshAfterEdit='object')
-      expect(crudOpCalled).toEqual(2);
-      expect(res.cell).toEqual('888'); // --> diff from crudOpFn() reply
-      // Once for parsing the 'CREATE' response and the next for parsing
-      // refreshAfterEdit='object' response.
-      expect(crudResponseParserCalled).toEqual(2);
-    });
-  });
-
-  describe(' (client configurable behavior)', () => {
-    let testComponent!: SPMatEntityCrudTestComponent;
-    let testComponentFixture!: ComponentFixture<SPMatEntityCrudTestComponent>;
-    let testComponentRef!: ComponentRef<SPMatEntityCrudTestComponent>;
-    let fixture!: ComponentFixture<UserEntityCrudComponent>;
-    let component!: UserEntityCrudComponent;
-    let componentRef!: ComponentRef<UserEntityCrudComponent>;
-
-    beforeEach(async () => {
-      TestBed.configureTestingModule({
-        imports: [SPMatEntityCrudTestComponent, getTranslocoModule()],
-        providers: [
-          provideHttpClient(),
-          provideHttpClientTesting(),
-          {
-            provide: ActivatedRoute,
-            useValue: {
-              snapshot: { params: { id: '100' } },
-            },
-          },
-        ],
-      });
-      testComponentFixture = TestBed.createComponent(
-        SPMatEntityCrudTestComponent,
-      );
-      testComponent = testComponentFixture.componentInstance;
-      testComponentRef = testComponentFixture.componentRef;
-      component = testComponent.spEntityCrudComponent()!;
-      const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(of(USER_DATA));
-      testComponentFixture.autoDetectChanges();
-      await new Promise((r) => setTimeout(r, 100));
-    });
-
-    it('should take matColumnDef from projected content', async () => {
-      const rows =
-        testComponentFixture.debugElement.nativeElement.querySelectorAll('tr');
-      // +1 for the <tr> in <thead>
-      expect(rows.length).toEqual(USER_DATA.length + 1);
-      const paginator =
-        testComponentFixture.debugElement.nativeElement.querySelector(
-          'mat-paginator',
-        );
-      expect(paginator).toBeFalsy();
-      const theadRows: Element[] =
-        testComponentFixture.debugElement.nativeElement.querySelectorAll(
-          'thead tr th',
-        );
-      // +1 for 'action' column
-      expect(theadRows.length).toEqual(USER_COLUMNS.length + 1);
-      const nameRow = theadRows[0];
-      // Column title set from content project <ng-container matColumnDef..>
-      expect(nameRow.textContent).toEqual('FULL NAME');
-      const wrapperDiv =
-        testComponentFixture.debugElement.nativeElement.querySelector(
-          'div.my-list-pane-wrapper-class',
-        );
-      expect(wrapperDiv).toBeTruthy();
-    });
-
-    it('should show preview pane when a row is clicked', async () => {
-      expect(component).toBeTruthy();
-      let createEditActivatedEvents: Array<{
-        activated: boolean;
-        cancelled: boolean | undefined;
-        mode: 'edit' | 'preview';
-      }> = [];
-      const sub = component.entityViewPaneActivated
-        .asObservable()
-        .pipe(
-          tap((event) => {
-            createEditActivatedEvents.push(event);
-          }),
-        )
-        .subscribe();
-      const rows: HTMLElement[] =
-        testComponentFixture.debugElement.nativeElement.querySelectorAll(
-          'tbody tr',
-        );
-      expect(rows.length).toEqual(USER_DATA.length);
-      rows[0].click(); // click the first row
-      testComponentFixture.detectChanges();
-      await new Promise((r) => setTimeout(r));
-      const previewPane =
-        testComponentFixture.debugElement.nativeElement.querySelector(
-          'sp-mat-entity-crud-preview-pane',
-        );
-      expect(previewPane).toBeTruthy();
-      // preview pane wrapper class shpould be set to 'my-preview-pane-wrapper-class'
-      expect(
-        testComponentFixture.debugElement.nativeElement.querySelector(
-          'div.my-preview-pane-wrapper-class',
-        ),
-      ).toBeTruthy();
-      // Preview pane should contain a <div class="my-preview-pane-content-class"> which is
-      // where the client content is projected.
-      expect(
-        previewPane.querySelector('div.my-preview-pane-content-class'),
-      ).toBeTruthy();
-      // preview Pane should have the full name of the clicked user
-      const h1 = previewPane.querySelector('h1');
-      expect(h1).toBeTruthy();
-      expect(h1.textContent).toEqual(
-        USER_DATA[0].name.first + ' ' + USER_DATA[0].name.last,
-      );
-
-      const button = previewPane.querySelector('button[aria-label="Close"]');
-      if (button) {
-        button.click();
-      }
-      testComponentFixture.autoDetectChanges();
-      await new Promise((r) => setTimeout(r));
-      // Test that createEditActivatedEvent was received with the correct args
-      expect(createEditActivatedEvents.length).toEqual(2);
-      expect(createEditActivatedEvents[0].activated).toBeTruthy();
-      expect(createEditActivatedEvents[0].mode).toEqual('preview');
-      expect(createEditActivatedEvents[0].cancelled).toEqual(undefined);
-      expect(createEditActivatedEvents[1].activated).toBeFalsy();
-      expect(createEditActivatedEvents[1].mode).toEqual('preview');
-      expect(createEditActivatedEvents[1].cancelled).toEqual(undefined);
-
-      sub.unsubscribe();
-    });
-
-    it('should show the create form when New button is selected', async () => {
-      const http = TestBed.inject(HttpClient);
-      const JOHN_SMITH: User = {
-        name: { title: 'mr', first: 'John', last: 'Smith' },
-        gender: 'female',
-        cell: '93039309',
-      };
-      spyOn(http, 'post').and.returnValue(of(JOHN_SMITH));
-      const spEntityCrudComp = testComponent.spEntityCrudComponent();
-      let spEntityCrudCompSpy = undefined;
-      if (spEntityCrudComp) {
-        spEntityCrudCompSpy = spyOn(
-          spEntityCrudComp,
-          'create',
-        ).and.callThrough();
-      }
-      const matButton = testComponentFixture.debugElement.query(
-        By.directive(MatButton),
-      );
-      matButton.nativeElement.click();
-      testComponentFixture.detectChanges();
-      await new Promise((r) => setTimeout(r));
-      const createEditHost = testComponentFixture.debugElement.query(
-        By.directive(CreateEditUserComponent),
-      );
-      expect(createEditHost).toBeTruthy();
-      const inputs =
-        testComponentFixture.debugElement.nativeElement.querySelectorAll(
-          'input',
-        );
-      inputs[0].value = JOHN_SMITH.name.first;
-      inputs[1].value = JOHN_SMITH.name.last;
-      inputs[2].value = JOHN_SMITH.cell;
-      inputs.forEach((input: HTMLInputElement) => {
-        input.dispatchEvent(new Event('input'));
-      });
-      // I can't simulate MatSelect selection this way. So setting the gender
-      // form control's value directly.
-      // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
-      // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
-      (createEditHost.componentInstance as CreateEditUserComponent)
-        .form()
-        .controls['gender'].setValue('female');
-      testComponentFixture.detectChanges();
-      const submitButton =
-        testComponentFixture.debugElement.nativeElement.querySelector(
-          "button[type='submit']",
-        );
-      submitButton.click();
-      testComponentFixture.detectChanges();
-      // verify that create method has been called.
-      expect(spEntityCrudCompSpy).toHaveBeenCalled();
-      if (spEntityCrudComp) {
-        const newCount = spEntityCrudComp
-          .spEntitiesList()
-          ?.store.query(getEntitiesCount());
-        expect(newCount).toEqual(USER_DATA.length + 1);
-      }
-    });
-
-    it('should set form control errors when form control validation fails', async () => {
-      const http = TestBed.inject(HttpClient);
-      const JOHN_SMITH: User = {
-        name: { title: 'mr', first: 'John', last: 'Smith' },
-        gender: 'female',
-        cell: '93039309',
-      };
-      spyOn(http, 'post').and.returnValue(of(JOHN_SMITH));
-      const spEntityCrudComp = testComponent.spEntityCrudComponent();
-      let spEntityCrudCompSpy = undefined;
-      if (spEntityCrudComp) {
-        spEntityCrudCompSpy = spyOn(
-          spEntityCrudComp,
-          'create',
-        ).and.callThrough();
-      }
-      const matButton = testComponentFixture.debugElement.query(
-        By.directive(MatButton),
-      );
-      matButton.nativeElement.click();
-      testComponentFixture.detectChanges();
-      await new Promise((r) => setTimeout(r));
-      const createEditHost = testComponentFixture.debugElement.query(
-        By.directive(CreateEditUserComponent),
-      );
-      expect(createEditHost).toBeTruthy();
-      const inputs =
-        testComponentFixture.debugElement.nativeElement.querySelectorAll(
-          'input',
-        );
-      inputs[0].value = JOHN_SMITH.name.first;
-      inputs[1].value = JOHN_SMITH.name.last;
-      inputs[2].value = JOHN_SMITH.cell.slice(0, 4);
-      inputs.forEach((input: HTMLInputElement) => {
-        input.dispatchEvent(new Event('input'));
-      });
-      // I can't simulate MatSelect selection this way. So setting the gender
-      // form control's value directly.
-      // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
-      // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
-      (createEditHost.componentInstance as CreateEditUserComponent)
-        .form()
-        .controls['gender'].setValue('female');
-      testComponentFixture.detectChanges();
-      const submitButton =
-        testComponentFixture.debugElement.nativeElement.querySelector(
-          "button[type='submit']",
-        );
-      submitButton.click();
-      testComponentFixture.detectChanges();
-      // verify that cell field has errors for not meeting the Validators.minLength
-      // requirements. This error should look like {requiredLength: 8, actualLength: 4}
-      const cellErrors = (
-        createEditHost.componentInstance as CreateEditUserComponent
-      ).form().controls['cell'].errors;
-      expect(cellErrors).toEqual({
-        minlength: { requiredLength: 8, actualLength: 4 },
-      });
-      // verify that create method has been called.
-      expect(spEntityCrudCompSpy).toHaveBeenCalledTimes(0);
-      if (spEntityCrudComp) {
-        const newCount = spEntityCrudComp
-          .spEntitiesList()
-          ?.store.query(getEntitiesCount());
-        expect(newCount).toEqual(USER_DATA.length);
-      }
-    });
-
-    it('should close the form when Bridge.close() is called', async () => {
-      const http = TestBed.inject(HttpClient);
-      const JOHN_SMITH: User = {
-        name: { title: 'mr', first: 'John', last: 'Smith' },
-        gender: 'female',
-        cell: '93039309',
-      };
-      spyOn(http, 'post').and.returnValue(of(JOHN_SMITH));
-      const spEntityCrudComp = testComponent.spEntityCrudComponent();
-      let spEntityCrudCompSpy = undefined;
-      if (spEntityCrudComp) {
-        spEntityCrudCompSpy = spyOn(
-          spEntityCrudComp,
-          'create',
-        ).and.callThrough();
-      }
-      let createEditActivatedEvents: Array<{
-        activated: boolean;
-        cancelled: boolean | undefined;
-        mode: 'edit' | 'preview';
-      }> = [];
-      const sub = spEntityCrudComp?.entityViewPaneActivated
-        .asObservable()
-        .pipe(
-          tap((event) => {
-            createEditActivatedEvents.push(event);
-          }),
-        )
-        .subscribe();
-      const matButton = testComponentFixture.debugElement.query(
-        By.directive(MatButton),
-      );
-      matButton.nativeElement.click();
-      testComponentFixture.detectChanges();
-      await new Promise((r) => setTimeout(r, 100));
-      const createEditHost = testComponentFixture.debugElement.query(
-        By.directive(CreateEditUserComponent),
-      );
-      expect(createEditHost).toBeTruthy();
-      const inputs =
-        testComponentFixture.debugElement.nativeElement.querySelectorAll(
-          'input',
-        );
-      inputs[0].value = JOHN_SMITH.name.first;
-      inputs[1].value = JOHN_SMITH.name.last;
-      inputs[2].value = JOHN_SMITH.cell;
-      inputs.forEach((input: HTMLInputElement) => {
-        input.dispatchEvent(new Event('input'));
-      });
-      // I can't simulate MatSelect selection this way. So setting the gender
-      // form control's value directly.
-      // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
-      // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
-      (createEditHost.componentInstance as CreateEditUserComponent)
-        .form()
-        .controls['gender'].setValue('female');
-      testComponentFixture.detectChanges();
-      (createEditHost.componentInstance as CreateEditUserComponent)
-        .bridge()
-        ?.close(false);
-      // const submitButton = testComponentFixture.debugElement.nativeElement.querySelector("button[type='submit']");
-      // submitButton.click();
-      // testComponentFixture.detectChanges();
-      // verify that create method has been called.
-      expect(spEntityCrudCompSpy).toHaveBeenCalledTimes(0);
-      if (spEntityCrudComp) {
-        const newCount = spEntityCrudComp
-          .spEntitiesList()
-          ?.store.query(getEntitiesCount());
-        expect(newCount).toEqual(USER_DATA.length);
-      }
-      // CreateEditHost component should 've been destroyed
-      const createEditHostAfter = testComponentFixture.debugElement.query(
-        By.directive(CreateEditUserComponent),
-      );
-      expect(createEditHostAfter).toBeFalsy();
-      // Test that createEditActivatedEvent was received with the correct args
-      expect(createEditActivatedEvents.length).toEqual(2);
-      expect(createEditActivatedEvents[0].activated).toBeTruthy();
-      expect(createEditActivatedEvents[0].mode).toEqual('edit');
-      expect(createEditActivatedEvents[0].cancelled).toEqual(undefined);
-      expect(createEditActivatedEvents[1].activated).toBeFalsy();
-      expect(createEditActivatedEvents[1].mode).toEqual('edit');
-      expect(createEditActivatedEvents[1].cancelled).toBeFalsy();
-      sub?.unsubscribe();
-    });
-
-    it('should show the new subtypes when New button is selected', async () => {
-      const http = TestBed.inject(HttpClient);
-      const JOHN_SMITH: User = {
-        name: { title: 'mr', first: 'John', last: 'Smith' },
-        gender: 'female',
-        cell: '93039309',
-      };
-      spyOn(http, 'post').and.returnValue(of(JOHN_SMITH));
-      testComponentFixture.componentRef.setInput('newSubTypes', [
-        { role: 'car', label: 'Car' },
-        { role: 'bike', label: 'Bike' },
-      ]);
-      testComponentFixture.detectChanges();
-      const spEntityCrudComp = testComponent.spEntityCrudComponent();
-      let spEntityCrudCompSpy = undefined;
-      if (spEntityCrudComp) {
-        spEntityCrudCompSpy = spyOn(
-          spEntityCrudComp,
-          'create',
-        ).and.callThrough();
-      }
-      const matButton = testComponentFixture.debugElement.query(
-        By.directive(MatButton),
-      );
-      matButton.nativeElement.click();
-      testComponentFixture.detectChanges();
-      const matMenu = testComponentFixture.debugElement.query(
-        By.directive(MatMenu),
-      );
-      expect(matMenu).toBeTruthy();
-      const matMenuItems = testComponentFixture.debugElement.queryAll(
+      const matMenuItems = fixture.debugElement.queryAll(
         By.directive(MatMenuItem),
       );
-      expect(matMenuItems.length).toEqual(2);
-      expect((matMenuItems[0].nativeElement as HTMLElement).innerText).toEqual(
-        'Car',
-      );
-      expect((matMenuItems[1].nativeElement as HTMLElement).innerText).toEqual(
-        'Bike',
-      );
-      (matMenuItems[0].nativeElement as HTMLElement).click();
-      expect(testComponent.lastAction.role).toEqual('car');
-      (matMenuItems[1].nativeElement as HTMLElement).click();
-      expect(testComponent.lastAction.role).toEqual('bike');
-    });
+      expect(matMenuItems.length).toEqual(ITEM_ACTIONS.length);
 
-    it('should show the edit form when Edit context menu item is selected', async () => {
-      let editFormComponent = testComponentFixture.debugElement.query(
-        By.directive(CreateEditUserComponent),
+      // Custom Action 1
+      expect(
+        (matMenuItems[0].nativeElement as HTMLElement).innerHTML,
+      ).toContain('Custom Action 1');
+
+      // Validate HTTP POST call for custom action 1
+      vitest.spyOn(http, 'post').mockImplementation(((
+        url: string,
+        data: any,
+        options: any,
+      ) => {
+        expect(url).toContain('custom_action_1/');
+        const parts = url.split('?');
+        expect(parts[0].endsWith('custom_action_1/')).toBeTruthy();
+        expect(data).toEqual({ info: 'some data' });
+        expect(options.params.get('verbose')).toEqual('true');
+        return of({});
+      }) as any); // 'as any' to suppress TSC function prototype mismatch
+
+      matMenuItems[0].nativeElement.click();
+      fixture.detectChanges();
+      expect(http.post).toHaveBeenCalled();
+    }
+
+    // Click action button 2
+    {
+      actionBtn.click();
+      fixture.detectChanges();
+      const matMenu = fixture.debugElement.query(By.directive(MatMenu));
+      expect(matMenu).toBeTruthy();
+      const matMenuItems = fixture.debugElement.queryAll(
+        By.directive(MatMenuItem),
       );
-      expect(editFormComponent).toBeFalsy();
-      // simulate item action by calling the mat-context-menu method directly
-      component.onItemAction('_update_', USER_DATA[0]);
-      await new Promise((r) => setTimeout(r));
-      editFormComponent = testComponentFixture.debugElement.query(
-        By.directive(CreateEditUserComponent),
+      expect(matMenuItems.length).toEqual(ITEM_ACTIONS.length);
+
+      expect(
+        (matMenuItems[1].nativeElement as HTMLElement).innerHTML,
+      ).toContain('Custom Action 2');
+      matMenuItems[1].nativeElement.click();
+      fixture.detectChanges();
+      expect(customAction2Called).toBeTruthy();
+    }
+
+    // Verify that action handler is preferred over HTTP request for Custom Action 3
+    // even though `httpParameters` is specified.
+    {
+      actionBtn.click();
+      fixture.detectChanges();
+      const matMenu = fixture.debugElement.query(By.directive(MatMenu));
+      expect(matMenu).toBeTruthy();
+      const matMenuItems = fixture.debugElement.queryAll(
+        By.directive(MatMenuItem),
       );
-      expect(editFormComponent).toBeTruthy();
+      expect(matMenuItems.length).toEqual(ITEM_ACTIONS.length);
+
+      expect(
+        (matMenuItems[2].nativeElement as HTMLElement).innerHTML,
+      ).toContain('Custom Action 3');
+      matMenuItems[2].nativeElement.click();
+      fixture.detectChanges();
+      expect(customAction3Called).toBeTruthy();
+    }
+  });
+
+  it('should not display "New Item" button disableCreate = true', async () => {
+    // await createCrudComponent();
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
+    );
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableCreate', true);
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    fixture.autoDetectChanges();
+    const matButton = fixture.debugElement.query(By.directive(MatButton));
+    expect(matButton).toBeFalsy();
+  });
+
+  it("should refresh entity after CREATE when refreshAfterEdit='object'", async () => {
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
+    );
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableCreate', true);
+    componentRef.setInput('crudHttpReqContext', ['cache', true]);
+    const http = TestBed.inject(HttpClient);
+    let httpPOSTReqContextReceived = false;
+    vitest.spyOn(http, 'post').mockImplementation(((
+      url: string,
+      data: any,
+      options: any,
+    ) => {
+      const cache = options.context.get('cache') === true;
+      const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(
+        SP_MAT_ENTITY_CRUD_HTTP_CONTEXT,
+      );
+      httpPOSTReqContextReceived =
+        !!cache && !!crudContextParams && crudContextParams.op == 'create';
+      // console.log(JSON.stringify(crudContextParams, null, 2));
+      return of({
+        ...USER_DATA[0],
+        cell: '83939830309303',
+      });
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+
+    let httpGETReqContextReceived = false;
+    vitest.spyOn(http, 'get').mockImplementation(((
+      url: string,
+      options: any,
+    ) => {
+      if (url.includes('/83939830309303/')) {
+        // refresh item
+        const cache = options.context.get('cache') === true;
+        const crudContextParams: SPMatEntityCrudHttpContext =
+          options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
+        httpGETReqContextReceived =
+          !!cache && !!crudContextParams && crudContextParams.op == 'retrieve';
+        return of({
+          ...USER_DATA[0],
+          cell: '888',
+        });
+      } else {
+        // initial get users request
+        return of(USER_DATA);
+      }
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+
+    // vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    // componentRef.setInput('crudOpFn', crudOpFn);
+    componentRef.setInput('refreshAfterEdit', 'object');
+    fixture.autoDetectChanges();
+    // Mocking object CREATE by calling the bridge method directly
+    const res = await firstValueFrom(component.create({}));
+    expect(httpPOSTReqContextReceived).toBeTruthy();
+    expect(httpGETReqContextReceived).toBeTruthy();
+    expect(res.cell).toEqual('888');
+  });
+
+  it('should set common HTTP context for all crud operations', async () => {
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
+    );
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableCreate', true);
+    const CACHE_TOKEN = new HttpContextToken<boolean>(() => true);
+    componentRef.setInput(
+      'crudHttpReqContext',
+      new HttpContext().set(CACHE_TOKEN, true),
+    );
+    const http = TestBed.inject(HttpClient);
+    let httpPOSTReqContextReceived = false;
+    vitest.spyOn(http, 'post').mockImplementation(((
+      url: string,
+      data: any,
+      options: any,
+    ) => {
+      const cache = options.context.get(CACHE_TOKEN) === true;
+      const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(
+        SP_MAT_ENTITY_CRUD_HTTP_CONTEXT,
+      );
+      httpPOSTReqContextReceived =
+        !!cache && !!crudContextParams && crudContextParams.op == 'create';
+      // console.log(JSON.stringify(crudContextParams, null, 2));
+      return of({
+        ...USER_DATA[0],
+        cell: '83939830309303',
+      });
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+
+    let httpGETReqContextReceived = false;
+    vitest.spyOn(http, 'get').mockImplementation(((
+      url: string,
+      options: any,
+    ) => {
+      if (url.includes('/83939830309303/')) {
+        // refresh item
+        const cache = options.context.get(CACHE_TOKEN) === true;
+        const crudContextParams: SPMatEntityCrudHttpContext =
+          options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
+        httpGETReqContextReceived =
+          !!cache && !!crudContextParams && crudContextParams.op == 'retrieve';
+        return of({
+          ...USER_DATA[0],
+          cell: '888',
+        });
+      } else {
+        // initial get users request
+        return of(USER_DATA);
+      }
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+
+    // vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    // componentRef.setInput('crudOpFn', crudOpFn);
+    componentRef.setInput('refreshAfterEdit', 'object');
+    fixture.autoDetectChanges();
+    // Mocking object CREATE by calling the bridge method directly
+    const res = await firstValueFrom(component.create({}));
+    expect(httpPOSTReqContextReceived).toBeTruthy();
+    expect(httpGETReqContextReceived).toBeTruthy();
+    expect(res.cell).toEqual('888');
+  });
+
+  it('should set crud specific HTTP context tokens', async () => {
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
+    );
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableCreate', true);
+    componentRef.setInput('crudHttpReqContext', {
+      create: ['cache', true],
+      retrieve: ['cache', true],
+    });
+    const http = TestBed.inject(HttpClient);
+    let httpPOSTReqContextReceived = false;
+    vitest.spyOn(http, 'post').mockImplementation(((
+      url: string,
+      data: any,
+      options: any,
+    ) => {
+      const cache = options.context.get('cache') === true;
+      const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(
+        SP_MAT_ENTITY_CRUD_HTTP_CONTEXT,
+      );
+      httpPOSTReqContextReceived =
+        !!cache && !!crudContextParams && crudContextParams.op == 'create';
+      // console.log(JSON.stringify(crudContextParams, null, 2));
+      return of({
+        ...USER_DATA[0],
+        cell: '83939830309303',
+      });
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+
+    let httpGETReqContextReceived = false;
+    vitest.spyOn(http, 'get').mockImplementation(((
+      url: string,
+      options: any,
+    ) => {
+      if (url.includes('/83939830309303/')) {
+        // refresh item
+        const cache = options.context.get('cache') === true;
+        const crudContextParams: SPMatEntityCrudHttpContext =
+          options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
+        httpGETReqContextReceived =
+          !!cache && !!crudContextParams && crudContextParams.op == 'retrieve';
+        return of({
+          ...USER_DATA[0],
+          cell: '888',
+        });
+      } else {
+        // initial get users request
+        return of(USER_DATA);
+      }
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+
+    // vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    // componentRef.setInput('crudOpFn', crudOpFn);
+    componentRef.setInput('refreshAfterEdit', 'object');
+    fixture.autoDetectChanges();
+    // Mocking object CREATE by calling the bridge method directly
+    const res = await firstValueFrom(component.create({}));
+    expect(httpPOSTReqContextReceived).toBeTruthy();
+    expect(httpGETReqContextReceived).toBeTruthy();
+    expect(res.cell).toEqual('888');
+  });
+
+  it('should set crud specific HTTP context', async () => {
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
+    );
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableCreate', true);
+
+    const CACHE_TOKEN = new HttpContextToken<boolean>(() => true);
+
+    const httpContext = new HttpContext();
+    httpContext.set(CACHE_TOKEN, true);
+
+    componentRef.setInput('crudHttpReqContext', {
+      create: httpContext,
+      retrieve: httpContext,
+    });
+    const http = TestBed.inject(HttpClient);
+    let httpPOSTReqContextReceived = false;
+    vitest.spyOn(http, 'post').mockImplementation(((
+      url: string,
+      data: any,
+      options: any,
+    ) => {
+      const cache = options.context.get(CACHE_TOKEN) === true;
+      const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(
+        SP_MAT_ENTITY_CRUD_HTTP_CONTEXT,
+      );
+      httpPOSTReqContextReceived =
+        !!cache && !!crudContextParams && crudContextParams.op == 'create';
+      // console.log(JSON.stringify(crudContextParams, null, 2));
+      return of({
+        ...USER_DATA[0],
+        cell: '83939830309303',
+      });
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+
+    let httpGETReqContextReceived = false;
+    vitest.spyOn(http, 'get').mockImplementation(((
+      url: string,
+      options: any,
+    ) => {
+      if (url.includes('/83939830309303/')) {
+        // refresh item
+        const cache = options.context.get(CACHE_TOKEN) === true;
+        const crudContextParams: SPMatEntityCrudHttpContext =
+          options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
+        httpGETReqContextReceived =
+          !!cache && !!crudContextParams && crudContextParams.op == 'retrieve';
+        return of({
+          ...USER_DATA[0],
+          cell: '888',
+        });
+      } else {
+        // initial get users request
+        return of(USER_DATA);
+      }
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+
+    // vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    // componentRef.setInput('crudOpFn', crudOpFn);
+    componentRef.setInput('refreshAfterEdit', 'object');
+    fixture.autoDetectChanges();
+    // Mocking object CREATE by calling the bridge method directly
+    const res = await firstValueFrom(component.create({}));
+    expect(httpPOSTReqContextReceived).toBeTruthy();
+    expect(httpGETReqContextReceived).toBeTruthy();
+    expect(res.cell).toEqual('888');
+  });
+
+  it("should refresh entity after UPDATE when refreshAfterEdit='object'", async () => {
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
+    );
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableCreate', true);
+    componentRef.setInput('crudHttpReqContext', ['cache', true]);
+    const http = TestBed.inject(HttpClient);
+    let httpGETReqContextReceived = false;
+    vitest.spyOn(http, 'get').mockImplementation(((
+      url: string,
+      options: any,
+    ) => {
+      if (url.includes('/83939830309303/')) {
+        // refresh item
+        const cache = options.context.get('cache') === true;
+        const crudContextParams: SPMatEntityCrudHttpContext =
+          options.context.get(SP_MAT_ENTITY_CRUD_HTTP_CONTEXT);
+        httpGETReqContextReceived =
+          !!cache && !!crudContextParams && crudContextParams.op == 'retrieve';
+        return of({
+          ...USER_DATA[0],
+          cell: '888',
+        });
+      } else {
+        // initial get users request
+        return of(USER_DATA);
+      }
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+    let httpPATCHReqContextReceived = false;
+    vitest.spyOn(http, 'patch').mockImplementation(((
+      url: string,
+      data: any,
+      options: any,
+    ) => {
+      const cache = options.context.get('cache') === true;
+      const crudContextParams: SPMatEntityCrudHttpContext = options.context.get(
+        SP_MAT_ENTITY_CRUD_HTTP_CONTEXT,
+      );
+      httpPATCHReqContextReceived =
+        !!cache && !!crudContextParams && crudContextParams.op === 'update';
+      return of({
+        ...USER_DATA[0],
+        cell: '83939830309303',
+      });
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+    componentRef.setInput('refreshAfterEdit', 'object');
+    fixture.autoDetectChanges();
+    // Mocking object UPDATE by calling the bridge method directly
+    await firstValueFrom(
+      component.update(USER_DATA[0]['cell'], { gender: 'M' }),
+    );
+    expect(httpPATCHReqContextReceived).toBeTruthy();
+    expect(httpGETReqContextReceived).toBeTruthy();
+  });
+
+  it("should refresh all entities after CREATE when refreshAfterEdit='all'", async () => {
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
+    );
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableCreate', true);
+    const http = TestBed.inject(HttpClient);
+    const getSpy = vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    const patchSpy = vitest
+      .spyOn(http, 'patch')
+      .mockReturnValue(of(USER_DATA[0]));
+    // componentRef.setInput('crudOpFn', crudOpFn);
+    componentRef.setInput('refreshAfterEdit', 'all');
+    fixture.autoDetectChanges();
+    // tick();
+    expect(getSpy).toHaveBeenCalledTimes(1);
+    // Mocking object UPDATE by calling the bridge method directly
+    // This should result in another call to load all entities as we have
+    // set refreshAfterEdit='all'
+    firstValueFrom(component.update(USER_DATA[0]['cell'], { gender: 'M' }));
+    // tick();
+    expect(getSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("should call crudResponseParser after CREATE/UPDATE when refreshAfterEdit='object'", async () => {
+    componentRef.setInput(
+      'endpoint',
+      'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
+    );
+    let crudOpCalled = 0;
+    const crudOpFn = (
+      op: string,
+      id: any,
+      entityValue: any,
+      entityCrudComponent: SPMatEntityCrudCreateEditBridge,
+    ) => {
+      crudOpCalled++;
+      return of({
+        ...USER_DATA[0],
+        cell: '83939830309303',
+      }); // Fake data
+    };
+    componentRef.setInput('idKey', 'cell');
+    componentRef.setInput('disableCreate', true);
+    let crudResponseParserCalled = 0;
+    const crudResponseParserFn = (
+      entityName: string,
+      idKey: string,
+      method: 'create' | 'retrieve' | 'update' | 'delete',
+      resp: any,
+    ) => {
+      crudResponseParserCalled++;
+      return {
+        ...USER_DATA[0],
+        cell: '888', // deliberately return a different value for testing
+      };
+    };
+    componentRef.setInput('crudResponseParser', crudResponseParserFn);
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    componentRef.setInput('crudOpFn', crudOpFn);
+    componentRef.setInput('refreshAfterEdit', 'object');
+    fixture.autoDetectChanges();
+    // Mocking object CREATE by calling the bridge method directly
+    const res = await firstValueFrom(component.create({}));
+    // Once for 'create' and another for 'get' (because refreshAfterEdit='object')
+    expect(crudOpCalled).toEqual(2);
+    expect(res.cell).toEqual('888'); // --> diff from crudOpFn() reply
+    // Once for parsing the 'CREATE' response and the next for parsing
+    // refreshAfterEdit='object' response.
+    expect(crudResponseParserCalled).toEqual(2);
+  });
+});
+
+describe('SPMatEntityCrudComponent client configurable behavior', () => {
+  let testComponent!: SPMatEntityCrudTestComponent;
+  let testComponentFixture!: ComponentFixture<SPMatEntityCrudTestComponent>;
+  let testComponentRef!: ComponentRef<SPMatEntityCrudTestComponent>;
+  let fixture!: ComponentFixture<UserEntityCrudComponent>;
+  let component!: UserEntityCrudComponent;
+  let componentRef!: ComponentRef<UserEntityCrudComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [SPMatEntityCrudTestComponent, getTranslocoModule()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { params: { id: '100' } },
+          },
+        },
+      ],
+    }).compileComponents();
+    testComponentFixture = TestBed.createComponent(
+      SPMatEntityCrudTestComponent,
+    );
+    testComponent = testComponentFixture.componentInstance;
+    testComponentRef = testComponentFixture.componentRef;
+    component = testComponent.spEntityCrudComponent()!;
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    testComponentFixture.autoDetectChanges();
+  });
+
+  it('should take matColumnDef from projected content', () => {
+    const rows =
+      testComponentFixture.debugElement.nativeElement.querySelectorAll('tr');
+    // +1 for the <tr> in <thead>
+    expect(rows.length).toEqual(USER_DATA.length + 1);
+    const paginator =
+      testComponentFixture.debugElement.nativeElement.querySelector(
+        'mat-paginator',
+      );
+    expect(paginator).toBeFalsy();
+    const theadRows: Element[] =
+      testComponentFixture.debugElement.nativeElement.querySelectorAll(
+        'thead tr th',
+      );
+    // +1 for 'action' column
+    expect(theadRows.length).toEqual(USER_COLUMNS.length + 1);
+    const nameRow = theadRows[0];
+    // Column title set from content project <ng-container matColumnDef..>
+    expect(nameRow.textContent).toEqual('FULL NAME');
+    const wrapperDiv =
+      testComponentFixture.debugElement.nativeElement.querySelector(
+        'div.my-list-pane-wrapper-class',
+      );
+    expect(wrapperDiv).toBeTruthy();
+  });
+
+  it('should show preview pane when a row is clicked', async () => {
+    expect(component).toBeTruthy();
+    let createEditActivatedEvents: Array<{
+      activated: boolean;
+      cancelled: boolean | undefined;
+      mode: 'edit' | 'preview';
+    }> = [];
+    const sub = component.entityViewPaneActivated
+      .asObservable()
+      .pipe(
+        tap((event) => {
+          createEditActivatedEvents.push(event);
+        }),
+      )
+      .subscribe();
+    const rows: HTMLElement[] =
+      testComponentFixture.debugElement.nativeElement.querySelectorAll(
+        'tbody tr',
+      );
+    expect(rows.length).toEqual(USER_DATA.length);
+    rows[0].click(); // click the first row
+    testComponentFixture.detectChanges();
+    await new Promise((res) => setTimeout(res, 50)); // wait for the async data to be loaded
+    // tick();
+    const previewPane =
+      testComponentFixture.debugElement.nativeElement.querySelector(
+        'sp-mat-entity-crud-preview-pane',
+      );
+    expect(previewPane).toBeTruthy();
+    // preview pane wrapper class shpould be set to 'my-preview-pane-wrapper-class'
+    expect(
+      testComponentFixture.debugElement.nativeElement.querySelector(
+        'div.my-preview-pane-wrapper-class',
+      ),
+    ).toBeTruthy();
+    // Preview pane should contain a <div class="my-preview-pane-content-class"> which is
+    // where the client content is projected.
+    expect(
+      previewPane.querySelector('div.my-preview-pane-content-class'),
+    ).toBeTruthy();
+    // preview Pane should have the full name of the clicked user
+    const h1 = previewPane.querySelector('h1');
+    expect(h1).toBeTruthy();
+    expect(h1.textContent).toEqual(
+      USER_DATA[0].name.first + ' ' + USER_DATA[0].name.last,
+    );
+
+    const button = previewPane.querySelector('button[aria-label="Close"]');
+    if (button) {
+      button.click();
+    }
+    testComponentFixture.autoDetectChanges();
+    // tick();
+    // Test that createEditActivatedEvent was received with the correct args
+    expect(createEditActivatedEvents.length).toEqual(2);
+    expect(createEditActivatedEvents[0].activated).toBeTruthy();
+    expect(createEditActivatedEvents[0].mode).toEqual('preview');
+    expect(createEditActivatedEvents[0].cancelled).toEqual(undefined);
+    expect(createEditActivatedEvents[1].activated).toBeFalsy();
+    expect(createEditActivatedEvents[1].mode).toEqual('preview');
+    expect(createEditActivatedEvents[1].cancelled).toEqual(undefined);
+
+    sub.unsubscribe();
+  });
+
+  it('should show the create form when New button is selected', async () => {
+    const http = TestBed.inject(HttpClient);
+    const JOHN_SMITH: User = {
+      name: { title: 'mr', first: 'John', last: 'Smith' },
+      gender: 'female',
+      cell: '93039309',
+    };
+    vitest.spyOn(http, 'post').mockReturnValue(of(JOHN_SMITH));
+    const spEntityCrudComp = testComponent.spEntityCrudComponent();
+    let spEntityCrudCompSpy = undefined;
+    if (spEntityCrudComp) {
+      spEntityCrudCompSpy = vitest.spyOn(spEntityCrudComp, 'create');
+    }
+    const matButton = testComponentFixture.debugElement.query(
+      By.directive(MatButton),
+    );
+    matButton.nativeElement.click();
+    testComponentFixture.detectChanges();
+    // tick();
+    const createEditHost = testComponentFixture.debugElement.query(
+      By.directive(CreateEditUserComponent),
+    );
+    expect(createEditHost).toBeTruthy();
+    const inputs =
+      testComponentFixture.debugElement.nativeElement.querySelectorAll('input');
+    inputs[0].value = JOHN_SMITH.name.first;
+    inputs[1].value = JOHN_SMITH.name.last;
+    inputs[2].value = JOHN_SMITH.cell;
+    inputs.forEach((input: HTMLInputElement) => {
+      input.dispatchEvent(new Event('input'));
+    });
+    // I can't simulate MatSelect selection this way. So setting the gender
+    // form control's value directly.
+    // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
+    // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
+    (createEditHost.componentInstance as CreateEditUserComponent)
+      .form()
+      .controls['gender'].setValue('female');
+    testComponentFixture.detectChanges();
+    const submitButton =
+      testComponentFixture.debugElement.nativeElement.querySelector(
+        "button[type='submit']",
+      );
+    submitButton.click();
+    testComponentFixture.detectChanges();
+    await new Promise((res) => setTimeout(res, 50)); // wait for the async data to be loaded
+    // verify that create method has been called.
+    expect(spEntityCrudCompSpy).toHaveBeenCalled();
+    if (spEntityCrudComp) {
+      const newCount = spEntityCrudComp
+        .spEntitiesList()
+        ?.store.query(getEntitiesCount());
+      expect(newCount).toEqual(USER_DATA.length + 1);
+    }
+  });
+
+  it('should set form control errors when form control validation fails', () => {
+    const http = TestBed.inject(HttpClient);
+    const JOHN_SMITH: User = {
+      name: { title: 'mr', first: 'John', last: 'Smith' },
+      gender: 'female',
+      cell: '93039309',
+    };
+    vitest.spyOn(http, 'post').mockReturnValue(of(JOHN_SMITH));
+    const spEntityCrudComp = testComponent.spEntityCrudComponent();
+    let spEntityCrudCompSpy = undefined;
+    if (spEntityCrudComp) {
+      spEntityCrudCompSpy = vitest
+        .spyOn(spEntityCrudComp, 'create')
+        .mockImplementation(function (...args) {
+          return spEntityCrudComp.create.call(spEntityCrudComp, ...args); // Call the original implementation
+        });
+      // spEntityCrudCompSpy = vitest.spyOn(spEntityCrudComp, 'create').and.callThrough();
+    }
+    const matButton = testComponentFixture.debugElement.query(
+      By.directive(MatButton),
+    );
+    matButton.nativeElement.click();
+    testComponentFixture.detectChanges();
+    // tick();
+    const createEditHost = testComponentFixture.debugElement.query(
+      By.directive(CreateEditUserComponent),
+    );
+    expect(createEditHost).toBeTruthy();
+    const inputs =
+      testComponentFixture.debugElement.nativeElement.querySelectorAll('input');
+    inputs[0].value = JOHN_SMITH.name.first;
+    inputs[1].value = JOHN_SMITH.name.last;
+    inputs[2].value = JOHN_SMITH.cell.slice(0, 4);
+    inputs.forEach((input: HTMLInputElement) => {
+      input.dispatchEvent(new Event('input'));
+    });
+    // I can't simulate MatSelect selection this way. So setting the gender
+    // form control's value directly.
+    // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
+    // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
+    (createEditHost.componentInstance as CreateEditUserComponent)
+      .form()
+      .controls['gender'].setValue('female');
+    testComponentFixture.detectChanges();
+    const submitButton =
+      testComponentFixture.debugElement.nativeElement.querySelector(
+        "button[type='submit']",
+      );
+    submitButton.click();
+    testComponentFixture.detectChanges();
+    // verify that cell field has errors for not meeting the Validators.minLength
+    // requirements. This error should look like {requiredLength: 8, actualLength: 4}
+    const cellErrors = (
+      createEditHost.componentInstance as CreateEditUserComponent
+    ).form().controls['cell'].errors;
+    expect(cellErrors).toEqual({
+      minlength: { requiredLength: 8, actualLength: 4 },
+    });
+    // verify that create method has been called.
+    expect(spEntityCrudCompSpy).toHaveBeenCalledTimes(0);
+    if (spEntityCrudComp) {
+      const newCount = spEntityCrudComp
+        .spEntitiesList()
+        ?.store.query(getEntitiesCount());
+      expect(newCount).toEqual(USER_DATA.length);
+    }
+  });
+
+  it('should close the form when Bridge.close() is called', () => {
+    const http = TestBed.inject(HttpClient);
+    const JOHN_SMITH: User = {
+      name: { title: 'mr', first: 'John', last: 'Smith' },
+      gender: 'female',
+      cell: '93039309',
+    };
+    vitest.spyOn(http, 'post').mockReturnValue(of(JOHN_SMITH));
+    const spEntityCrudComp = testComponent.spEntityCrudComponent();
+    let spEntityCrudCompSpy = undefined;
+    if (spEntityCrudComp) {
+      spEntityCrudCompSpy = vitest
+        .spyOn(spEntityCrudComp, 'create')
+        .mockImplementation(function (...args) {
+          return spEntityCrudComp.create.call(spEntityCrudComp, ...args); // Call the original implementation
+        });
+      // spEntityCrudCompSpy = vitest.spyOn(spEntityCrudComp, 'create').and.callThrough();
+    }
+    let createEditActivatedEvents: Array<{
+      activated: boolean;
+      cancelled: boolean | undefined;
+      mode: 'edit' | 'preview';
+    }> = [];
+    const sub = spEntityCrudComp?.entityViewPaneActivated
+      .asObservable()
+      .pipe(
+        tap((event) => {
+          createEditActivatedEvents.push(event);
+        }),
+      )
+      .subscribe();
+    const matButton = testComponentFixture.debugElement.query(
+      By.directive(MatButton),
+    );
+    matButton.nativeElement.click();
+    testComponentFixture.detectChanges();
+    // tick(100);
+    const createEditHost = testComponentFixture.debugElement.query(
+      By.directive(CreateEditUserComponent),
+    );
+    expect(createEditHost).toBeTruthy();
+    const inputs =
+      testComponentFixture.debugElement.nativeElement.querySelectorAll('input');
+    inputs[0].value = JOHN_SMITH.name.first;
+    inputs[1].value = JOHN_SMITH.name.last;
+    inputs[2].value = JOHN_SMITH.cell;
+    inputs.forEach((input: HTMLInputElement) => {
+      input.dispatchEvent(new Event('input'));
+    });
+    // I can't simulate MatSelect selection this way. So setting the gender
+    // form control's value directly.
+    // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
+    // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
+    (createEditHost.componentInstance as CreateEditUserComponent)
+      .form()
+      .controls['gender'].setValue('female');
+    testComponentFixture.detectChanges();
+    (createEditHost.componentInstance as CreateEditUserComponent)
+      .bridge()
+      ?.close(false);
+    // const submitButton = testComponentFixture.debugElement.nativeElement.querySelector("button[type='submit']");
+    // submitButton.click();
+    // testComponentFixture.detectChanges();
+    // verify that create method has been called.
+    expect(spEntityCrudCompSpy).toHaveBeenCalledTimes(0);
+    if (spEntityCrudComp) {
+      const newCount = spEntityCrudComp
+        .spEntitiesList()
+        ?.store.query(getEntitiesCount());
+      expect(newCount).toEqual(USER_DATA.length);
+    }
+    // CreateEditHost component should 've been destroyed
+    const createEditHostAfter = testComponentFixture.debugElement.query(
+      By.directive(CreateEditUserComponent),
+    );
+    expect(createEditHostAfter).toBeFalsy();
+    // Test that createEditActivatedEvent was received with the correct args
+    expect(createEditActivatedEvents.length).toEqual(2);
+    expect(createEditActivatedEvents[0].activated).toBeTruthy();
+    expect(createEditActivatedEvents[0].mode).toEqual('edit');
+    expect(createEditActivatedEvents[0].cancelled).toEqual(undefined);
+    expect(createEditActivatedEvents[1].activated).toBeFalsy();
+    expect(createEditActivatedEvents[1].mode).toEqual('edit');
+    expect(createEditActivatedEvents[1].cancelled).toBeFalsy();
+    sub?.unsubscribe();
+  });
+
+  it('should show the new subtypes when New button is selected', async () => {
+    const http = TestBed.inject(HttpClient);
+    const JOHN_SMITH: User = {
+      name: { title: 'mr', first: 'John', last: 'Smith' },
+      gender: 'female',
+      cell: '93039309',
+    };
+    vitest.spyOn(http, 'post').mockReturnValue(of(JOHN_SMITH));
+    testComponentFixture.componentRef.setInput('newSubTypes', [
+      { role: 'car', label: 'Car' },
+      { role: 'bike', label: 'Bike' },
+    ]);
+    testComponentFixture.detectChanges();
+    const spEntityCrudComp = testComponent.spEntityCrudComponent();
+    let spEntityCrudCompSpy = undefined;
+    if (spEntityCrudComp) {
+      spEntityCrudCompSpy = vitest
+        .spyOn(spEntityCrudComp, 'create')
+        .mockImplementation(function (...args) {
+          return spEntityCrudComp.create.call(spEntityCrudComp, ...args); // Call the original implementation
+        });
+      // spEntityCrudCompSpy = vitest.spyOn(spEntityCrudComp, 'create').and.callThrough();
+    }
+    const matButton = testComponentFixture.debugElement.query(
+      By.directive(MatButton),
+    );
+    matButton.nativeElement.click();
+    testComponentFixture.detectChanges();
+    const matMenu = testComponentFixture.debugElement.query(
+      By.directive(MatMenu),
+    );
+    expect(matMenu).toBeTruthy();
+    const matMenuItems = testComponentFixture.debugElement.queryAll(
+      By.directive(MatMenuItem),
+    );
+    expect(matMenuItems.length).toEqual(2);
+    expect((matMenuItems[0].nativeElement as HTMLElement).innerHTML).toContain(
+      'Car',
+    );
+    expect((matMenuItems[1].nativeElement as HTMLElement).innerHTML).toContain(
+      'Bike',
+    );
+    (matMenuItems[0].nativeElement as HTMLElement).click();
+    expect(testComponent.lastAction.role).toEqual('car');
+    (matMenuItems[1].nativeElement as HTMLElement).click();
+    expect(testComponent.lastAction.role).toEqual('bike');
+  });
+
+  it('should show the edit form when Edit context menu item is selected', () => {
+    let editFormComponent = testComponentFixture.debugElement.query(
+      By.directive(CreateEditUserComponent),
+    );
+    expect(editFormComponent).toBeFalsy();
+    // simulate item action by calling the mat-context-menu method directly
+    component.onItemAction('_update_', USER_DATA[0]);
+    // tick();
+    editFormComponent = testComponentFixture.debugElement.query(
+      By.directive(CreateEditUserComponent),
+    );
+    expect(editFormComponent).toBeTruthy();
+  });
+});
+
+/**
+ * Tests that the CreateEditUserComponent works in standalone mode. That is
+ * without the bridge property set to SPMatentityCrudComponent, which
+ * implements SPMatEntityCrudCreateEditBridge.
+ *
+ * To test this we create the CreateEditUserComponent directly in the test bed.
+ * with the baseUrl, entityName and httpReqContext(optional) inputs set.
+ * Then we can trigger a form submission and verify that the HTTP request is
+ * made correctly.
+ */
+describe('SPMatEntityCrudFormBase standalone mode tests', () => {
+  let fixture!: ComponentFixture<CreateEditUserComponent>;
+  let component!: CreateEditUserComponent;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [CreateEditUserComponent, getTranslocoModule()],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+    fixture = TestBed.createComponent(CreateEditUserComponent);
+    component = fixture.componentInstance;
+  });
+
+  it('should validate baseUrl and entityName inputs are defined', () => {
+    fixture.componentRef.setInput('entity', undefined);
+    fixture.componentRef.setInput('bridge', undefined);
+    fixture.componentRef.setInput('entityName', undefined);
+    fixture.componentRef.setInput('baseUrl', undefined);
+    expect(() => {
+      fixture.detectChanges();
+    }).toThrowError(
+      'SPMatEntityCrudFormBase: baseUrl and entityName inputs must be defined in standalone mode.',
+    );
+  });
+
+  it('should validate baseUrl input is defined', () => {
+    fixture.componentRef.setInput('entity', undefined);
+    fixture.componentRef.setInput('bridge', undefined);
+    fixture.componentRef.setInput('entityName', 'user');
+    fixture.componentRef.setInput('baseUrl', undefined);
+    expect(() => {
+      fixture.detectChanges();
+    }).toThrowError(
+      'SPMatEntityCrudFormBase: baseUrl and entityName inputs must be defined in standalone mode.',
+    );
+  });
+
+  it('should validate entityName input is defined', () => {
+    fixture.componentRef.setInput('entity', undefined);
+    fixture.componentRef.setInput('bridge', undefined);
+    fixture.componentRef.setInput('entityName', undefined);
+    fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
+    expect(() => {
+      fixture.detectChanges();
+    }).toThrowError(
+      'SPMatEntityCrudFormBase: baseUrl and entityName inputs must be defined in standalone mode.',
+    );
+  });
+
+  it('should create a user', () => {
+    fixture.componentRef.setInput('entity', undefined);
+    fixture.componentRef.setInput('bridge', undefined);
+    fixture.componentRef.setInput('entityName', 'user');
+    fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
+    fixture.componentRef.setInput('idKey', 'cell');
+    const http = TestBed.inject(HttpClient);
+    const JOHN_SMITH: User = {
+      name: { title: 'mr', first: 'John', last: 'Smith' },
+      gender: 'female',
+      cell: '93039309',
+    };
+    const postSpy = vitest
+      .spyOn(http, 'post')
+      .mockImplementation((url: string, data: any, options: any) => {
+        expect(url).toEqual('http://randomuser.me/api/');
+        expect(data).toEqual({
+          first: JOHN_SMITH.name.first,
+          last: JOHN_SMITH.name.last,
+          gender: 'female',
+          cell: '93039309',
+          name: {
+            title: '',
+            first: JOHN_SMITH.name.first,
+            last: JOHN_SMITH.name.last,
+          },
+        });
+        return of(JOHN_SMITH) as any;
+      });
+    fixture.autoDetectChanges();
+    // vitest.spyOn(http, 'post').mockReturnValue(of(JOHN_SMITH));
+    const matButton = fixture.debugElement.query(By.directive(MatButton));
+    matButton.nativeElement.click();
+    fixture.detectChanges();
+    // tick();
+    const inputs = fixture.debugElement.nativeElement.querySelectorAll('input');
+    inputs[0].value = JOHN_SMITH.name.first;
+    inputs[1].value = JOHN_SMITH.name.last;
+    inputs[2].value = JOHN_SMITH.cell;
+    inputs.forEach((input: HTMLInputElement) => {
+      input.dispatchEvent(new Event('input'));
+    });
+    // I can't simulate MatSelect selection this way. So setting the gender
+    // form control's value directly.
+    // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
+    // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
+    component.form().controls['gender'].setValue('female');
+    fixture.detectChanges();
+    // tick();
+    expect(component.form().valid).toBeTruthy();
+    const submitButton = fixture.debugElement.nativeElement.querySelector(
+      "button[type='submit']",
+    );
+    expect(submitButton).toBeTruthy();
+    submitButton.click();
+    fixture.detectChanges();
+    // tick();
+    expect(postSpy).toHaveBeenCalled();
+  });
+
+  it('should update a user', () => {
+    const JOHN_SMITH: User = {
+      name: { title: 'mr', first: 'John', last: 'Smith' },
+      gender: 'female',
+      cell: '93039309',
+    };
+    const EXISTING_USER: User = JSON.parse(JSON.stringify(JOHN_SMITH));
+
+    fixture.componentRef.setInput('entity', EXISTING_USER.cell);
+    fixture.componentRef.setInput('bridge', undefined);
+    fixture.componentRef.setInput('entityName', 'user');
+    fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
+    fixture.componentRef.setInput('idKey', 'cell');
+    const http = TestBed.inject(HttpClient);
+    // Mock the GET request to return JOHN_SMITH copy
+    const getSpy = vitest
+      .spyOn(http, 'get')
+      .mockImplementation((url: string, options: any) => {
+        expect(url).toEqual('http://randomuser.me/api/93039309/');
+        return of(EXISTING_USER) as any;
+      });
+
+    fixture.autoDetectChanges();
+    // tick(); // trigger loadEntity$
+    expect(getSpy).toHaveBeenCalled();
+    const inputs = fixture.debugElement.nativeElement.querySelectorAll('input');
+    expect(inputs[0].value).toEqual(JOHN_SMITH.name.first);
+    expect(inputs[1].value).toEqual(JOHN_SMITH.name.last);
+    expect(inputs[2].value).toEqual(JOHN_SMITH.cell);
+
+    // Change first and last name
+    inputs[0].value = JOHN_SMITH.name.first + 'Edited';
+    inputs[1].value = JOHN_SMITH.name.last + 'Edited';
+    inputs.forEach((input: HTMLInputElement) => {
+      input.dispatchEvent(new Event('input'));
+    });
+    fixture.detectChanges();
+    // tick();
+    expect(component.form().valid).toBeTruthy();
+
+    let patchData: any = null;
+    const patchSpy = vitest
+      .spyOn(http, 'patch')
+      .mockImplementation((url: string, data: any, options: any) => {
+        expect(url).toEqual('http://randomuser.me/api/93039309/');
+        patchData = data;
+        return of({
+          ...EXISTING_USER,
+          name: {
+            title: '',
+            first: EXISTING_USER.name.first + 'Edited',
+            last: EXISTING_USER.name.last + 'Edited',
+          },
+        }) as any;
+      });
+    const submitButton = fixture.debugElement.nativeElement.querySelector(
+      "button[type='submit']",
+    );
+    expect(submitButton).toBeTruthy();
+    submitButton.click();
+    fixture.detectChanges();
+    // tick();
+    expect(patchSpy).toHaveBeenCalled();
+    // Verify that patch request data is correct
+    expect(patchData).toEqual({
+      first: EXISTING_USER.name.first + 'Edited',
+      last: EXISTING_USER.name.last + 'Edited',
+      gender: 'female',
+      cell: '93039309',
+      name: {
+        title: '',
+        first: EXISTING_USER.name.first + 'Edited',
+        last: EXISTING_USER.name.last + 'Edited',
+      },
     });
   });
 
-  //  * Tests that the CreateEditUserComponent works in standalone mode. That is
-  //  * without the bridge property set to SPMatentityCrudComponent, which
-  //  * implements SPMatEntityCrudCreateEditBridge.
-  //  *
-  //  * To test this we create the CreateEditUserComponent directly in the test bed.
-  //  * with the baseUrl, entityName and httpReqContext(optional) inputs set.
-  //  * Then we can trigger a form submission and verify that the HTTP request is
-  //  * made correctly.
-  describe(' (standalone mode tests)', () => {
-    let fixture!: ComponentFixture<CreateEditUserComponent>;
-    let component!: CreateEditUserComponent;
+  it('should load entity based on loadEntityRequired returns value', () => {
+    const JOHN_SMITH: User = {
+      name: { title: 'mr', first: 'John', last: 'Smith' },
+      gender: 'female',
+      cell: '93039309',
+    };
+    const EXISTING_USER: User = JSON.parse(JSON.stringify(JOHN_SMITH));
 
-    beforeEach(async () => {
-      TestBed.configureTestingModule({
-        imports: [CreateEditUserComponent, getTranslocoModule()],
-        providers: [provideHttpClient(), provideHttpClientTesting()],
+    fixture.componentRef.setInput('entity', EXISTING_USER);
+    fixture.componentRef.setInput('bridge', undefined);
+    fixture.componentRef.setInput('entityName', 'user');
+    fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
+    fixture.componentRef.setInput('idKey', 'cell');
+
+    const http = TestBed.inject(HttpClient);
+    // Mock the GET request to return JOHN_SMITH copy
+    const getSpy = vitest
+      .spyOn(http, 'get')
+      .mockImplementation((url: string, options: any) => {
+        return of(EXISTING_USER) as any;
       });
-      fixture = TestBed.createComponent(CreateEditUserComponent);
-      component = fixture.componentInstance;
-    });
+    fixture.autoDetectChanges();
+    // tick(); // trigger loadEntity$
+    expect(getSpy).toHaveBeenCalledTimes(0);
 
-    it('should validate baseUrl and entityName inputs are defined', () => {
-      fixture.componentRef.setInput('entity', undefined);
-      fixture.componentRef.setInput('bridge', undefined);
-      fixture.componentRef.setInput('entityName', undefined);
-      fixture.componentRef.setInput('baseUrl', undefined);
-      expect(() => {
-        fixture.detectChanges();
-      }).toThrowError(
-        'SPMatEntityCrudFormBase: baseUrl and entityName inputs must be defined in standalone mode.',
-      );
-    });
+    // Now set loadEntityRequired to return true so that we can force
+    // loading the entity on init even though the entity input is
+    // already set to a full object.
+    fixture = TestBed.createComponent(CreateEditUserComponent);
+    component = fixture.componentInstance;
+    vitest.spyOn(component, 'loadEntityRequired').mockReturnValue(true);
+    fixture.componentRef.setInput('entity', EXISTING_USER); // still the User object
+    fixture.componentRef.setInput('bridge', undefined);
+    fixture.componentRef.setInput('entityName', 'user');
+    fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
+    fixture.componentRef.setInput('idKey', 'cell');
+    fixture.autoDetectChanges();
+    // tick(); // trigger loadEntity$
+    expect(getSpy).toHaveBeenCalledTimes(1);
+  });
 
-    it('should validate baseUrl input is defined', () => {
-      fixture.componentRef.setInput('entity', undefined);
-      fixture.componentRef.setInput('bridge', undefined);
-      fixture.componentRef.setInput('entityName', 'user');
-      fixture.componentRef.setInput('baseUrl', undefined);
-      expect(() => {
-        fixture.detectChanges();
-      }).toThrowError(
-        'SPMatEntityCrudFormBase: baseUrl and entityName inputs must be defined in standalone mode.',
-      );
-    });
+  it('should set httpReqContext input in HTTP requests', () => {
+    const JOHN_SMITH: User = {
+      name: { title: 'mr', first: 'John', last: 'Smith' },
+      gender: 'female',
+      cell: '93039309',
+    };
 
-    it('should validate entityName input is defined', () => {
-      fixture.componentRef.setInput('entity', undefined);
-      fixture.componentRef.setInput('bridge', undefined);
-      fixture.componentRef.setInput('entityName', undefined);
-      fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
-      expect(() => {
-        fixture.detectChanges();
-      }).toThrowError(
-        'SPMatEntityCrudFormBase: baseUrl and entityName inputs must be defined in standalone mode.',
-      );
-    });
+    const CACHE_TOKEN = new HttpContextToken<boolean>(() => true);
 
-    it('should create a user', async () => {
-      fixture.componentRef.setInput('entity', undefined);
-      fixture.componentRef.setInput('bridge', undefined);
-      fixture.componentRef.setInput('entityName', 'user');
-      fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
-      fixture.componentRef.setInput('idKey', 'cell');
-      const http = TestBed.inject(HttpClient);
-      const JOHN_SMITH: User = {
-        name: { title: 'mr', first: 'John', last: 'Smith' },
-        gender: 'female',
-        cell: '93039309',
-      };
-      const postSpy = spyOn(http, 'post').and.callFake(
-        (url: string, data: any, options: any) => {
-          expect(url).toEqual('http://randomuser.me/api/');
-          expect(data).toEqual({
-            first: JOHN_SMITH.name.first,
-            last: JOHN_SMITH.name.last,
-            gender: 'female',
-            cell: '93039309',
-            name: {
-              title: '',
-              first: JOHN_SMITH.name.first,
-              last: JOHN_SMITH.name.last,
-            },
-          });
-          return of(JOHN_SMITH) as any;
-        },
-      );
-      fixture.autoDetectChanges();
-      // spyOn(http, 'post').and.returnValue(of(JOHN_SMITH));
-      const matButton = fixture.debugElement.query(By.directive(MatButton));
-      matButton.nativeElement.click();
-      fixture.detectChanges();
-      await new Promise((r) => setTimeout(r));
-      const inputs =
-        fixture.debugElement.nativeElement.querySelectorAll('input');
-      inputs[0].value = JOHN_SMITH.name.first;
-      inputs[1].value = JOHN_SMITH.name.last;
-      inputs[2].value = JOHN_SMITH.cell;
-      inputs.forEach((input: HTMLInputElement) => {
-        input.dispatchEvent(new Event('input'));
-      });
-      // I can't simulate MatSelect selection this way. So setting the gender
-      // form control's value directly.
-      // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
-      // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
-      component.form().controls['gender'].setValue('female');
-      fixture.detectChanges();
-      await new Promise((r) => setTimeout(r));
-      expect(component.form().valid).toBeTruthy();
-      const submitButton = fixture.debugElement.nativeElement.querySelector(
-        "button[type='submit']",
-      );
-      expect(submitButton).toBeTruthy();
-      submitButton.click();
-      fixture.detectChanges();
-      await new Promise((r) => setTimeout(r));
-      expect(postSpy).toHaveBeenCalled();
-    });
+    const httpReqContext = new HttpContext();
+    httpReqContext.set(CACHE_TOKEN, true);
 
-    it('should update a user', async () => {
-      const JOHN_SMITH: User = {
-        name: { title: 'mr', first: 'John', last: 'Smith' },
-        gender: 'female',
-        cell: '93039309',
-      };
-      const EXISTING_USER: User = JSON.parse(JSON.stringify(JOHN_SMITH));
-
-      fixture.componentRef.setInput('entity', EXISTING_USER.cell);
-      fixture.componentRef.setInput('bridge', undefined);
-      fixture.componentRef.setInput('entityName', 'user');
-      fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
-      fixture.componentRef.setInput('idKey', 'cell');
-      const http = TestBed.inject(HttpClient);
-      // Mock the GET request to return JOHN_SMITH copy
-      const getSpy = spyOn(http, 'get').and.callFake(
-        (url: string, options: any) => {
-          expect(url).toEqual('http://randomuser.me/api/93039309/');
-          return of(EXISTING_USER) as any;
-        },
-      );
-
-      fixture.autoDetectChanges();
-      await new Promise((r) => setTimeout(r)); // trigger loadEntity$
-      expect(getSpy).toHaveBeenCalled();
-      const inputs =
-        fixture.debugElement.nativeElement.querySelectorAll('input');
-      expect(inputs[0].value).toEqual(JOHN_SMITH.name.first);
-      expect(inputs[1].value).toEqual(JOHN_SMITH.name.last);
-      expect(inputs[2].value).toEqual(JOHN_SMITH.cell);
-
-      // Change first and last name
-      inputs[0].value = JOHN_SMITH.name.first + 'Edited';
-      inputs[1].value = JOHN_SMITH.name.last + 'Edited';
-      inputs.forEach((input: HTMLInputElement) => {
-        input.dispatchEvent(new Event('input'));
-      });
-      fixture.detectChanges();
-      await new Promise((r) => setTimeout(r));
-      expect(component.form().valid).toBeTruthy();
-
-      let patchData: any = null;
-      const patchSpy = spyOn(http, 'patch').and.callFake(
-        (url: string, data: any, options: any) => {
-          expect(url).toEqual('http://randomuser.me/api/93039309/');
-          patchData = data;
-          return of({
-            ...EXISTING_USER,
-            name: {
-              title: '',
-              first: EXISTING_USER.name.first + 'Edited',
-              last: EXISTING_USER.name.last + 'Edited',
-            },
-          }) as any;
-        },
-      );
-      const submitButton = fixture.debugElement.nativeElement.querySelector(
-        "button[type='submit']",
-      );
-      expect(submitButton).toBeTruthy();
-      submitButton.click();
-      fixture.detectChanges();
-      await new Promise((r) => setTimeout(r));
-      expect(patchSpy).toHaveBeenCalled();
-      // Verify that patch request data is correct
-      expect(patchData).toEqual({
-        first: EXISTING_USER.name.first + 'Edited',
-        last: EXISTING_USER.name.last + 'Edited',
-        gender: 'female',
-        cell: '93039309',
-        name: {
-          title: '',
-          first: EXISTING_USER.name.first + 'Edited',
-          last: EXISTING_USER.name.last + 'Edited',
-        },
-      });
-    });
-
-    it('should load entity based on loadEntityRequired returns value', async () => {
-      const JOHN_SMITH: User = {
-        name: { title: 'mr', first: 'John', last: 'Smith' },
-        gender: 'female',
-        cell: '93039309',
-      };
-      const EXISTING_USER: User = JSON.parse(JSON.stringify(JOHN_SMITH));
-
-      fixture.componentRef.setInput('entity', EXISTING_USER);
-      fixture.componentRef.setInput('bridge', undefined);
-      fixture.componentRef.setInput('entityName', 'user');
-      fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
-      fixture.componentRef.setInput('idKey', 'cell');
-
-      const http = TestBed.inject(HttpClient);
-      // Mock the GET request to return JOHN_SMITH copy
-      const getSpy = spyOn(http, 'get').and.callFake(
-        (url: string, options: any) => {
-          return of(EXISTING_USER) as any;
-        },
-      );
-      fixture.autoDetectChanges();
-      await new Promise((r) => setTimeout(r)); // trigger loadEntity$
-      expect(getSpy).toHaveBeenCalledTimes(0);
-
-      // Now set loadEntityRequired to return true so that we can force
-      // loading the entity on init even though the entity input is
-      // already set to a full object.
-      fixture = TestBed.createComponent(CreateEditUserComponent);
-      component = fixture.componentInstance;
-      spyOn(component, 'loadEntityRequired').and.returnValue(true);
-      fixture.componentRef.setInput('entity', EXISTING_USER); // still the User object
-      fixture.componentRef.setInput('bridge', undefined);
-      fixture.componentRef.setInput('entityName', 'user');
-      fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
-      fixture.componentRef.setInput('idKey', 'cell');
-      fixture.autoDetectChanges();
-      await new Promise((r) => setTimeout(r)); // trigger loadEntity$
-      expect(getSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('should set httpReqContext input in HTTP requests', async () => {
-      const JOHN_SMITH: User = {
-        name: { title: 'mr', first: 'John', last: 'Smith' },
-        gender: 'female',
-        cell: '93039309',
-      };
-
-      const CACHE_TOKEN = new HttpContextToken<boolean>(() => true);
-
-      const httpReqContext = new HttpContext();
-      httpReqContext.set(CACHE_TOKEN, true);
-
-      fixture.componentRef.setInput('entity', undefined);
-      fixture.componentRef.setInput('bridge', undefined);
-      fixture.componentRef.setInput('entityName', 'user');
-      fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
-      fixture.componentRef.setInput('idKey', 'cell');
-      fixture.componentRef.setInput('httpReqContext', httpReqContext);
-      const http = TestBed.inject(HttpClient);
-      let httpPOSTReqContextReceived = false;
-      const postSpy = spyOn(http, 'post').and.callFake(
-        (url: string, data: any, params: any) => {
-          const cache = params.context.get(CACHE_TOKEN) === true;
-          httpPOSTReqContextReceived = cache;
-          return of({
-            name: { title: 'mr', first: 'John', last: 'Smith' },
-            gender: 'female',
-            cell: '93039309',
-          }) as any;
-        },
-      );
-      fixture.autoDetectChanges();
-      // spyOn(http, 'post').and.returnValue(of(JOHN_SMITH));
-      const matButton = fixture.debugElement.query(By.directive(MatButton));
-      matButton.nativeElement.click();
-      fixture.detectChanges();
-      await new Promise((r) => setTimeout(r));
-      const inputs =
-        fixture.debugElement.nativeElement.querySelectorAll('input');
-      inputs[0].value = JOHN_SMITH.name.first;
-      inputs[1].value = JOHN_SMITH.name.last;
-      inputs[2].value = JOHN_SMITH.cell;
-      inputs.forEach((input: HTMLInputElement) => {
-        input.dispatchEvent(new Event('input'));
-      });
-      // I can't simulate MatSelect selection this way. So setting the gender
-      // form control's value directly.
-      // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
-      // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
-      component.form().controls['gender'].setValue('female');
-      fixture.detectChanges();
-      await new Promise((r) => setTimeout(r));
-      expect(component.form().valid).toBeTruthy();
-      const submitButton = fixture.debugElement.nativeElement.querySelector(
-        "button[type='submit']",
-      );
-      expect(submitButton).toBeTruthy();
-      submitButton.click();
-      fixture.detectChanges();
-      await new Promise((r) => setTimeout(r));
-      expect(postSpy).toHaveBeenCalled();
-      expect(httpPOSTReqContextReceived).toBeTruthy();
-    });
-
-    it('should convert sideloaded CREATE entity response into entity object', async () => {
-      const JOHN_SMITH: User = {
-        name: { title: 'mr', first: 'John', last: 'Smith' },
-        gender: 'female',
-        cell: '93039309',
-      };
-
-      const CACHE_TOKEN = new HttpContextToken<boolean>(() => true);
-
-      const httpReqContext = new HttpContext();
-      httpReqContext.set(CACHE_TOKEN, true);
-
-      fixture.componentRef.setInput('entity', undefined);
-      fixture.componentRef.setInput('bridge', undefined);
-      fixture.componentRef.setInput('entityName', 'user');
-      fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
-      fixture.componentRef.setInput('idKey', 'cell');
-      fixture.componentRef.setInput('httpReqContext', httpReqContext);
-      const http = TestBed.inject(HttpClient);
-      let httpPOSTReqContextReceived = false;
-      const CREATE_RESPONSE = {
-        user: {
+    fixture.componentRef.setInput('entity', undefined);
+    fixture.componentRef.setInput('bridge', undefined);
+    fixture.componentRef.setInput('entityName', 'user');
+    fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
+    fixture.componentRef.setInput('idKey', 'cell');
+    fixture.componentRef.setInput('httpReqContext', httpReqContext);
+    const http = TestBed.inject(HttpClient);
+    let httpPOSTReqContextReceived = false;
+    const postSpy = vitest
+      .spyOn(http, 'post')
+      .mockImplementation((url: string, data: any, params: any) => {
+        const cache = params.context.get(CACHE_TOKEN) === true;
+        httpPOSTReqContextReceived = cache;
+        return of({
           name: { title: 'mr', first: 'John', last: 'Smith' },
           gender: 'female',
           cell: '93039309',
-        },
-      };
-      const postSpy = spyOn(http, 'post').and.callFake(
-        (url: string, data: any, params: any) => {
-          const cache = params.context.get(CACHE_TOKEN) === true;
-          httpPOSTReqContextReceived = cache;
-          return of(CREATE_RESPONSE) as any;
-        },
-      );
-      const postCreateSpy = spyOn(component, 'onPostCreate').and.callThrough();
-      fixture.autoDetectChanges();
-      // spyOn(http, 'post').and.returnValue(of(JOHN_SMITH));
-      const matButton = fixture.debugElement.query(By.directive(MatButton));
-      matButton.nativeElement.click();
-      fixture.detectChanges();
-      await new Promise((r) => setTimeout(r));
-      const inputs =
-        fixture.debugElement.nativeElement.querySelectorAll('input');
-      inputs[0].value = JOHN_SMITH.name.first;
-      inputs[1].value = JOHN_SMITH.name.last;
-      inputs[2].value = JOHN_SMITH.cell;
-      inputs.forEach((input: HTMLInputElement) => {
-        input.dispatchEvent(new Event('input'));
+        }) as any;
       });
-      // I can't simulate MatSelect selection this way. So setting the gender
-      // form control's value directly.
-      // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
-      // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
-      component.form().controls['gender'].setValue('female');
-      fixture.detectChanges();
-      await new Promise((r) => setTimeout(r));
-      expect(component.form().valid).toBeTruthy();
-      const submitButton = fixture.debugElement.nativeElement.querySelector(
-        "button[type='submit']",
-      );
-      expect(submitButton).toBeTruthy();
-      submitButton.click();
-      fixture.detectChanges();
-      await new Promise((r) => setTimeout(r));
-      expect(postSpy).toHaveBeenCalled();
-      expect(httpPOSTReqContextReceived).toBeTruthy();
-      expect(postCreateSpy).toHaveBeenCalledOnceWith(CREATE_RESPONSE.user);
+    fixture.autoDetectChanges();
+    // vitest.spyOn(http, 'post').mockReturnValue(of(JOHN_SMITH));
+    const matButton = fixture.debugElement.query(By.directive(MatButton));
+    matButton.nativeElement.click();
+    fixture.detectChanges();
+    // tick();
+    const inputs = fixture.debugElement.nativeElement.querySelectorAll('input');
+    inputs[0].value = JOHN_SMITH.name.first;
+    inputs[1].value = JOHN_SMITH.name.last;
+    inputs[2].value = JOHN_SMITH.cell;
+    inputs.forEach((input: HTMLInputElement) => {
+      input.dispatchEvent(new Event('input'));
     });
+    // I can't simulate MatSelect selection this way. So setting the gender
+    // form control's value directly.
+    // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
+    // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
+    component.form().controls['gender'].setValue('female');
+    fixture.detectChanges();
+    // tick();
+    expect(component.form().valid).toBeTruthy();
+    const submitButton = fixture.debugElement.nativeElement.querySelector(
+      "button[type='submit']",
+    );
+    expect(submitButton).toBeTruthy();
+    submitButton.click();
+    fixture.detectChanges();
+    // tick();
+    expect(postSpy).toHaveBeenCalled();
+    expect(httpPOSTReqContextReceived).toBeTruthy();
+  });
 
-    it('should convert sideloaded UPDATE entity response into entity object', async () => {
-      const JOHN_SMITH: User = {
+  it('should convert sideloaded CREATE entity response into entity object', () => {
+    const JOHN_SMITH: User = {
+      name: { title: 'mr', first: 'John', last: 'Smith' },
+      gender: 'female',
+      cell: '93039309',
+    };
+
+    const CACHE_TOKEN = new HttpContextToken<boolean>(() => true);
+
+    const httpReqContext = new HttpContext();
+    httpReqContext.set(CACHE_TOKEN, true);
+
+    fixture.componentRef.setInput('entity', undefined);
+    fixture.componentRef.setInput('bridge', undefined);
+    fixture.componentRef.setInput('entityName', 'user');
+    fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
+    fixture.componentRef.setInput('idKey', 'cell');
+    fixture.componentRef.setInput('httpReqContext', httpReqContext);
+    const http = TestBed.inject(HttpClient);
+    let httpPOSTReqContextReceived = false;
+    const CREATE_RESPONSE = {
+      user: {
         name: { title: 'mr', first: 'John', last: 'Smith' },
         gender: 'female',
         cell: '93039309',
-      };
-      const EXISTING_USER: User = JSON.parse(JSON.stringify(JOHN_SMITH));
-
-      fixture.componentRef.setInput('entity', EXISTING_USER.cell);
-      fixture.componentRef.setInput('bridge', undefined);
-      fixture.componentRef.setInput('entityName', 'user');
-      fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
-      fixture.componentRef.setInput('idKey', 'cell');
-      const http = TestBed.inject(HttpClient);
-      // Mock the GET request to return JOHN_SMITH copy
-      const getSpy = spyOn(http, 'get').and.callFake(
-        (url: string, options: any) => {
-          expect(url).toEqual('http://randomuser.me/api/93039309/');
-          return of({ user: EXISTING_USER }) as any;
-        },
-      );
-
-      fixture.autoDetectChanges();
-      await new Promise((r) => setTimeout(r)); // trigger loadEntity$
-      expect(getSpy).toHaveBeenCalled();
-      const inputs =
-        fixture.debugElement.nativeElement.querySelectorAll('input');
-      expect(inputs[0].value).toEqual(JOHN_SMITH.name.first);
-      expect(inputs[1].value).toEqual(JOHN_SMITH.name.last);
-      expect(inputs[2].value).toEqual(JOHN_SMITH.cell);
-
-      // Change first and last name
-      inputs[0].value = JOHN_SMITH.name.first + 'Edited';
-      inputs[1].value = JOHN_SMITH.name.last + 'Edited';
-      inputs.forEach((input: HTMLInputElement) => {
-        input.dispatchEvent(new Event('input'));
+      },
+    };
+    const postSpy = vitest
+      .spyOn(http, 'post')
+      .mockImplementation((url: string, data: any, params: any) => {
+        const cache = params.context.get(CACHE_TOKEN) === true;
+        httpPOSTReqContextReceived = cache;
+        return of(CREATE_RESPONSE) as any;
       });
-      fixture.detectChanges();
-      await new Promise((r) => setTimeout(r));
-      expect(component.form().valid).toBeTruthy();
+    const postCreateSpy = vitest.spyOn(component, 'onPostCreate');
+    // const postCreateSpy = vitest.spyOn(component, 'onPostCreate').and.callThrough();
+    fixture.autoDetectChanges();
+    // vitest.spyOn(http, 'post').mockReturnValue(of(JOHN_SMITH));
+    const matButton = fixture.debugElement.query(By.directive(MatButton));
+    matButton.nativeElement.click();
+    fixture.detectChanges();
+    // tick();
+    const inputs = fixture.debugElement.nativeElement.querySelectorAll('input');
+    inputs[0].value = JOHN_SMITH.name.first;
+    inputs[1].value = JOHN_SMITH.name.last;
+    inputs[2].value = JOHN_SMITH.cell;
+    inputs.forEach((input: HTMLInputElement) => {
+      input.dispatchEvent(new Event('input'));
+    });
+    // I can't simulate MatSelect selection this way. So setting the gender
+    // form control's value directly.
+    // const select = testComponentFixture.debugElement.query(By.directive(MatSelect));
+    // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
+    component.form().controls['gender'].setValue('female');
+    fixture.detectChanges();
+    // tick();
+    expect(component.form().valid).toBeTruthy();
+    const submitButton = fixture.debugElement.nativeElement.querySelector(
+      "button[type='submit']",
+    );
+    expect(submitButton).toBeTruthy();
+    submitButton.click();
+    fixture.detectChanges();
+    // tick();
+    expect(postSpy).toHaveBeenCalled();
+    expect(httpPOSTReqContextReceived).toBeTruthy();
+    expect(postCreateSpy).toHaveBeenCalledExactlyOnceWith(CREATE_RESPONSE.user);
+  });
 
-      const postUpdateSpy = spyOn(component, 'onPostUpdate').and.callThrough();
-      const PATCHED_USER = JSON.parse(JSON.stringify(JOHN_SMITH));
-      PATCHED_USER.name.first = JOHN_SMITH.name.first + 'Edited';
-      PATCHED_USER.name.last = JOHN_SMITH.name.last + 'Edited';
-      let patchData: any = null;
-      const patchSpy = spyOn(http, 'patch').and.callFake(
-        (url: string, data: any, options: any) => {
-          expect(url).toEqual('http://randomuser.me/api/93039309/');
-          patchData = data;
-          return of({
-            user: PATCHED_USER,
-          }) as any;
-        },
-      );
-      const submitButton = fixture.debugElement.nativeElement.querySelector(
-        "button[type='submit']",
-      );
-      expect(submitButton).toBeTruthy();
-      submitButton.click();
-      fixture.detectChanges();
-      await new Promise((r) => setTimeout(r));
-      expect(patchSpy).toHaveBeenCalled();
-      // Verify that patch request data is correct
-      expect(patchData).toEqual({
+  it('should convert sideloaded UPDATE entity response into entity object', () => {
+    const JOHN_SMITH: User = {
+      name: { title: 'mr', first: 'John', last: 'Smith' },
+      gender: 'female',
+      cell: '93039309',
+    };
+    const EXISTING_USER: User = JSON.parse(JSON.stringify(JOHN_SMITH));
+
+    fixture.componentRef.setInput('entity', EXISTING_USER.cell);
+    fixture.componentRef.setInput('bridge', undefined);
+    fixture.componentRef.setInput('entityName', 'user');
+    fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
+    fixture.componentRef.setInput('idKey', 'cell');
+    const http = TestBed.inject(HttpClient);
+    // Mock the GET request to return JOHN_SMITH copy
+    const getSpy = vitest
+      .spyOn(http, 'get')
+      .mockImplementation((url: string, options: any) => {
+        expect(url).toEqual('http://randomuser.me/api/93039309/');
+        return of({ user: EXISTING_USER }) as any;
+      });
+
+    fixture.autoDetectChanges();
+    // tick(); // trigger loadEntity$
+    expect(getSpy).toHaveBeenCalled();
+    const inputs = fixture.debugElement.nativeElement.querySelectorAll('input');
+    expect(inputs[0].value).toEqual(JOHN_SMITH.name.first);
+    expect(inputs[1].value).toEqual(JOHN_SMITH.name.last);
+    expect(inputs[2].value).toEqual(JOHN_SMITH.cell);
+
+    // Change first and last name
+    inputs[0].value = JOHN_SMITH.name.first + 'Edited';
+    inputs[1].value = JOHN_SMITH.name.last + 'Edited';
+    inputs.forEach((input: HTMLInputElement) => {
+      input.dispatchEvent(new Event('input'));
+    });
+    fixture.detectChanges();
+    // tick();
+    expect(component.form().valid).toBeTruthy();
+    const postUpdateSpy = vitest.spyOn(component, 'onPostUpdate');
+    // const postUpdateSpy = vitest.spyOn(component, 'onPostUpdate').and.callThrough();
+    const PATCHED_USER = JSON.parse(JSON.stringify(JOHN_SMITH));
+    PATCHED_USER.name.first = JOHN_SMITH.name.first + 'Edited';
+    PATCHED_USER.name.last = JOHN_SMITH.name.last + 'Edited';
+    let patchData: any = null;
+    const patchSpy = vitest
+      .spyOn(http, 'patch')
+      .mockImplementation((url: string, data: any, options: any) => {
+        expect(url).toEqual('http://randomuser.me/api/93039309/');
+        patchData = data;
+        return of({
+          user: PATCHED_USER,
+        }) as any;
+      });
+    const submitButton = fixture.debugElement.nativeElement.querySelector(
+      "button[type='submit']",
+    );
+    expect(submitButton).toBeTruthy();
+    submitButton.click();
+    fixture.detectChanges();
+    // tick();
+    expect(patchSpy).toHaveBeenCalled();
+    // Verify that patch request data is correct
+    expect(patchData).toEqual({
+      first: EXISTING_USER.name.first + 'Edited',
+      last: EXISTING_USER.name.last + 'Edited',
+      gender: 'female',
+      cell: '93039309',
+      name: {
+        title: '',
         first: EXISTING_USER.name.first + 'Edited',
         last: EXISTING_USER.name.last + 'Edited',
-        gender: 'female',
-        cell: '93039309',
-        name: {
-          title: '',
-          first: EXISTING_USER.name.first + 'Edited',
-          last: EXISTING_USER.name.last + 'Edited',
-        },
-      });
-      expect(postUpdateSpy).toHaveBeenCalledOnceWith(PATCHED_USER);
+      },
     });
+    expect(postUpdateSpy).toHaveBeenCalledExactlyOnceWith(PATCHED_USER);
+    // expect(postUpdateSpy).toHaveBeenCalledOnceWith(PATCHED_USER);
+  });
 
-    it('should reset the form when reset button is clicked', async () => {
-      const JOHN_SMITH: User = {
-        name: { title: 'mr', first: 'John', last: 'Smith' },
-        gender: 'female',
-        cell: '93039309',
-      };
-      const EXISTING_USER: User = JSON.parse(JSON.stringify(JOHN_SMITH));
+  it('should reset the form when reset button is clicked', () => {
+    const JOHN_SMITH: User = {
+      name: { title: 'mr', first: 'John', last: 'Smith' },
+      gender: 'female',
+      cell: '93039309',
+    };
+    const EXISTING_USER: User = JSON.parse(JSON.stringify(JOHN_SMITH));
 
-      fixture.componentRef.setInput('entity', EXISTING_USER.cell);
-      fixture.componentRef.setInput('bridge', undefined);
-      fixture.componentRef.setInput('entityName', 'user');
-      fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
-      fixture.componentRef.setInput('idKey', 'cell');
-      const http = TestBed.inject(HttpClient);
-      // Mock the GET request to return JOHN_SMITH copy
-      const getSpy = spyOn(http, 'get').and.callFake(
-        (url: string, options: any) => {
-          expect(url).toEqual('http://randomuser.me/api/93039309/');
-          return of(EXISTING_USER) as any;
-        },
-      );
-
-      fixture.autoDetectChanges();
-      await new Promise((r) => setTimeout(r)); // trigger loadEntity$
-      expect(getSpy).toHaveBeenCalled();
-      const inputs =
-        fixture.debugElement.nativeElement.querySelectorAll('input');
-      expect(inputs[0].value).toEqual(JOHN_SMITH.name.first);
-      expect(inputs[1].value).toEqual(JOHN_SMITH.name.last);
-      expect(inputs[2].value).toEqual(JOHN_SMITH.cell);
-
-      // Change first and last name
-      inputs[0].value = JOHN_SMITH.name.first + 'Edited';
-      inputs[1].value = JOHN_SMITH.name.last + 'Edited';
-      inputs[2].value = JOHN_SMITH.cell + '3';
-      inputs.forEach((input: HTMLInputElement) => {
-        input.dispatchEvent(new Event('input'));
+    fixture.componentRef.setInput('entity', EXISTING_USER.cell);
+    fixture.componentRef.setInput('bridge', undefined);
+    fixture.componentRef.setInput('entityName', 'user');
+    fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
+    fixture.componentRef.setInput('idKey', 'cell');
+    const http = TestBed.inject(HttpClient);
+    // Mock the GET request to return JOHN_SMITH copy
+    const getSpy = vitest
+      .spyOn(http, 'get')
+      .mockImplementation((url: string, options: any) => {
+        expect(url).toEqual('http://randomuser.me/api/93039309/');
+        return of(EXISTING_USER) as any;
       });
-      fixture.detectChanges();
-      await new Promise((r) => setTimeout(r));
-      expect(component.form().valid).toBeTruthy();
-      const resetButton = fixture.debugElement.nativeElement.querySelector(
-        "button[type='button']",
-      );
-      expect(resetButton).toBeTruthy();
-      resetButton.click();
-      fixture.detectChanges();
-      await new Promise((r) => setTimeout(r));
 
-      // Reset should revert values back to the original values
-      expect(inputs[0].value).toEqual(JOHN_SMITH.name.first);
-      expect(inputs[1].value).toEqual(JOHN_SMITH.name.last);
-      expect(inputs[2].value).toEqual(JOHN_SMITH.cell);
+    fixture.autoDetectChanges();
+    // tick(); // trigger loadEntity$
+    expect(getSpy).toHaveBeenCalled();
+    const inputs = fixture.debugElement.nativeElement.querySelectorAll('input');
+    expect(inputs[0].value).toEqual(JOHN_SMITH.name.first);
+    expect(inputs[1].value).toEqual(JOHN_SMITH.name.last);
+    expect(inputs[2].value).toEqual(JOHN_SMITH.cell);
+
+    // Change first and last name
+    inputs[0].value = JOHN_SMITH.name.first + 'Edited';
+    inputs[1].value = JOHN_SMITH.name.last + 'Edited';
+    inputs[2].value = JOHN_SMITH.cell + '3';
+    inputs.forEach((input: HTMLInputElement) => {
+      input.dispatchEvent(new Event('input'));
     });
+    fixture.detectChanges();
+    // tick();
+    expect(component.form().valid).toBeTruthy();
+    const resetButton = fixture.debugElement.nativeElement.querySelector(
+      "button[type='button']",
+    );
+    expect(resetButton).toBeTruthy();
+    resetButton.click();
+    fixture.detectChanges();
+    // tick();
+    // Reset should revert values back to the original values
+    expect(inputs[0].value).toEqual(JOHN_SMITH.name.first);
+    expect(inputs[1].value).toEqual(JOHN_SMITH.name.last);
+    expect(inputs[2].value).toEqual(JOHN_SMITH.cell);
   });
 });

@@ -1,72 +1,55 @@
 import { BooleanInput, coerceBooleanProperty } from '@angular/cdk/coercion';
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
+import { HttpContext, HttpContextToken } from '@angular/common/http';
 import {
-  HttpContext,
-  HttpContextToken
-} from '@angular/common/http';
-import {
-  AfterViewInit,
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  computed,
-  ElementRef,
-  EventEmitter,
-  HostBinding,
-  inject,
-  input,
-  Input,
-  OnDestroy,
-  OnInit,
-  Output,
-  TemplateRef,
-  viewChild,
+    AfterViewInit,
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    computed,
+    ElementRef,
+    EventEmitter,
+    HostBinding,
+    inject,
+    input,
+    Input,
+    OnDestroy,
+    OnInit,
+    Output,
+    TemplateRef,
+    viewChild,
 } from '@angular/core';
 import {
-  ControlValueAccessor,
-  FormsModule,
-  NgControl,
-  ReactiveFormsModule,
-  Validators,
+    ControlValueAccessor,
+    FormsModule,
+    NgControl,
+    ReactiveFormsModule,
+    Validators,
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import {
-  MAT_FORM_FIELD,
-  MatFormFieldControl,
-} from '@angular/material/form-field';
+import { MAT_FORM_FIELD, MatFormFieldControl } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import {
-  MatSelect,
-  MatSelectChange,
-  MatSelectModule,
-} from '@angular/material/select';
-import {
-  provideTranslocoScope,
-  TranslocoModule,
-  TranslocoService,
-} from '@jsverse/transloco';
+import { MatSelect, MatSelectChange, MatSelectModule } from '@angular/material/select';
+import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { getEntity, hasEntity, selectAllEntities, upsertEntities } from '@ngneat/elf-entities';
 import {
-  SPPagedEntityLoader
+    SPEntityListPaginator,
+    SPPagedEntityLoader,
+    SPPageParams,
 } from '@smallpearl/ngx-helper/entities';
-import {
-  SPMatEntityListPaginator,
-  SPPageParams,
-} from '@smallpearl/ngx-helper/mat-entity-list';
 import { MatSelectInfiniteScrollDirective } from '@smallpearl/ngx-helper/mat-select-infinite-scroll';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import {
-  combineLatest,
-  debounceTime,
-  distinctUntilChanged,
-  Observable,
-  startWith,
-  Subject,
-  takeUntil,
-  tap
+    combineLatest,
+    debounceTime,
+    distinctUntilChanged,
+    Observable,
+    startWith,
+    Subject,
+    takeUntil,
+    tap,
 } from 'rxjs';
-
 
 export interface SPMatSelectEntityHttpContext {
   entityName: string;
@@ -74,12 +57,13 @@ export interface SPMatSelectEntityHttpContext {
   endpoint: string;
 }
 
-export const SP_MAT_SELECT_ENTITY_HTTP_CONTEXT =
-  new HttpContextToken<SPMatSelectEntityHttpContext>(() => ({
+export const SP_MAT_SELECT_ENTITY_HTTP_CONTEXT = new HttpContextToken<SPMatSelectEntityHttpContext>(
+  () => ({
     entityName: '',
     entityNamePlural: '',
     endpoint: '',
-  }));
+  }),
+);
 
 // Internal type to represent a group of entities. Used when grouping is enabled.
 type EntityGroup<TEntity> = {
@@ -89,35 +73,28 @@ type EntityGroup<TEntity> = {
 
 export type SPMatSelectEntityResponseParser = <
   TEntity extends { [P in IdKey]: PropertyKey },
-  IdKey extends string = 'id'
+  IdKey extends string = 'id',
 >(
-  response: any
+  response: any,
 ) => Array<TEntity>;
 
 // Default paginator implementation. This can handle dynamic-rest and DRF
 // native pagination schemes. It also has a fallback to handle response conists
 // of an array of entities.
-class DefaultPaginator implements SPMatEntityListPaginator {
-  getRequestPageParams(
-    endpoint: string,
-    page: number,
-    pageSize: number
-  ): SPPageParams {
+class DefaultPaginator implements SPEntityListPaginator {
+  getRequestPageParams(endpoint: string, page: number, pageSize: number): SPPageParams {
     return {
       page: page + 1,
       pageSize,
     };
   }
 
-  parseRequestResponse<
-    TEntity extends { [P in IdKey]: PropertyKey },
-    IdKey extends string = 'id'
-  >(
+  parseRequestResponse<TEntity extends { [P in IdKey]: PropertyKey }, IdKey extends string = 'id'>(
     entityName: string,
     entityNamePlural: string,
     endpoint: string,
     params: SPPageParams,
-    resp: any
+    resp: any,
   ) {
     if (Array.isArray(resp)) {
       return {
@@ -133,10 +110,7 @@ class DefaultPaginator implements SPMatEntityListPaginator {
       // of the sideloaded responses where the main entities are stored
       // under the plural entity name key and resp['meta'] object contains
       // the total count.
-      if (
-        keys.includes(entityNamePlural) &&
-        Array.isArray(resp[entityNamePlural])
-      ) {
+      if (keys.includes(entityNamePlural) && Array.isArray(resp[entityNamePlural])) {
         let total = resp[entityNamePlural].length;
         if (
           keys.includes('meta') &&
@@ -211,9 +185,9 @@ class DefaultPaginator implements SPMatEntityListPaginator {
         <mat-select-trigger>
           {{ selectTriggerValue }}
           @if (selectTriggerValueAsArray.length > 1) {
-          <span class="addl-selection-count">
-            (+{{ selectTriggerValueAsArray.length - 1 }})
-          </span>
+            <span class="addl-selection-count">
+              (+{{ selectTriggerValueAsArray.length - 1 }})
+            </span>
           }
         </mat-select-trigger>
 
@@ -222,9 +196,7 @@ class DefaultPaginator implements SPMatEntityListPaginator {
             class="flex-grow-1"
             [(ngModel)]="filterStr"
             (ngModelChange)="this.filter$.next($event)"
-            [placeholderLabel]="
-              searchText() ? searchText() : t('spMatSelectEntity.search')
-            "
+            [placeholderLabel]="searchText() ? searchText() : t('spMatSelectEntity.search')"
             [noEntriesFoundLabel]="
               notFoundText() ? notFoundText() : t('spMatSelectEntity.notFound')
             "
@@ -236,31 +208,37 @@ class DefaultPaginator implements SPMatEntityListPaginator {
         <ng-template #defaultOptionLabelTemplate let-entity>
           {{ _entityLabelFn()(entity) }}
         </ng-template>
-        @if (!_group()) { @if (filteredValues | async; as entities) { @for
-        (entity of entities; track entityId(entity)) {
-        <mat-option class="sel-entity-option" [value]="entityId(entity)">
-          <ng-container
-            *ngTemplateOutlet="
-              optionLabelTemplate() || defaultOptionLabelTemplate;
-              context: { $implicit: entity }
-            "
-          ></ng-container>
-        </mat-option>
-        } } } @else { @if (filteredGroupedValues | async; as groups) { @for
-        (group of groups; track group.label) {
-        <mat-optgroup [label]="group.label">
-          @for (entity of group.entities; track entityId(entity)) {
-          <mat-option class="sel-entity-option" [value]="entityId(entity)">
-            <ng-container
-              *ngTemplateOutlet="
-                optionLabelTemplate() || defaultOptionLabelTemplate;
-                context: { $implicit: entity }
-              "
-            ></ng-container>
-          </mat-option>
+        @if (!_group()) {
+          @if (filteredValues | async; as entities) {
+            @for (entity of entities; track entityId(entity)) {
+              <mat-option class="sel-entity-option" [value]="entityId(entity)">
+                <ng-container
+                  *ngTemplateOutlet="
+                    optionLabelTemplate() || defaultOptionLabelTemplate;
+                    context: { $implicit: entity }
+                  "
+                ></ng-container>
+              </mat-option>
+            }
           }
-        </mat-optgroup>
-        } } }
+        } @else {
+          @if (filteredGroupedValues | async; as groups) {
+            @for (group of groups; track group.label) {
+              <mat-optgroup [label]="group.label">
+                @for (entity of group.entities; track entityId(entity)) {
+                  <mat-option class="sel-entity-option" [value]="entityId(entity)">
+                    <ng-container
+                      *ngTemplateOutlet="
+                        optionLabelTemplate() || defaultOptionLabelTemplate;
+                        context: { $implicit: entity }
+                      "
+                    ></ng-container>
+                  </mat-option>
+                }
+              </mat-optgroup>
+            }
+          }
+        }
 
         <!--
         Create New option is displayed only if there is a filter string.
@@ -268,27 +246,21 @@ class DefaultPaginator implements SPMatEntityListPaginator {
         item and when not finding one, would like to add a new one.
         -->
         @if (inlineNew() && loaded() && (filterStr.length > 0 || totalEntitiesAtRemote() === 0)) {
-        <mat-option
-          class="add-item-option"
-          value="0"
-          (click)="$event.stopPropagation()"
-          >⊕
-          {{
-            this.createNewText()
-              ? this.createNewText()
-              : t('spMatSelectEntity.createNew', {
-                  item: this._capitalizedEntityName()
-                })
-          }}
-        </mat-option>
+          <mat-option class="add-item-option" value="0" (click)="$event.stopPropagation()"
+            >⊕
+            {{
+              this.createNewText()
+                ? this.createNewText()
+                : t('spMatSelectEntity.createNew', {
+                    item: this._capitalizedEntityName(),
+                  })
+            }}
+          </mat-option>
         }
         @if (loading$ | async) {
-        <div class="loading-wrapper">
-          <mat-progress-spinner
-            diameter="24"
-            mode="indeterminate"
-          ></mat-progress-spinner>
-        </div>
+          <div class="loading-wrapper">
+            <mat-progress-spinner diameter="24" mode="indeterminate"></mat-progress-spinner>
+          </div>
         }
       </mat-select>
     </div>
@@ -330,9 +302,9 @@ class DefaultPaginator implements SPMatEntityListPaginator {
   ],
 })
 export class SPMatSelectEntityComponent<
-    TEntity extends { [P in IdKey]: PropertyKey },
-    IdKey extends string = 'id'
-  >
+  TEntity extends { [P in IdKey]: PropertyKey },
+  IdKey extends string = 'id',
+>
   extends SPPagedEntityLoader<TEntity, IdKey>
   implements
     OnInit,
@@ -378,6 +350,8 @@ export class SPMatSelectEntityComponent<
   // Set to true to make the mat-select readonly
   readonly = input<boolean>(false);
 
+  myInput = input<string>('');
+
   /**
    * The entity key name that is used to classify entities into groups or
    * a function that takes a TEntity and returns the group id (string).
@@ -391,7 +365,7 @@ export class SPMatSelectEntityComponent<
    * A function that a group id (string/number) and returns the label (string).
    * Defaults to a function that returns the group id as string.
    */
-  groupLabelFn = input<(groupId: string|number) => string>((groupId) => groupId.toString());
+  groupLabelFn = input<(groupId: string | number) => string>((groupId) => groupId.toString());
 
   @Output() selectionChange = new EventEmitter<TEntity | TEntity[]>();
   @Output() createNewItemSelected = new EventEmitter<void>();
@@ -451,10 +425,10 @@ export class SPMatSelectEntityComponent<
   // mat-select-entity later.
   // entityListConfig = getEntityListConfig();
 
-  // protected _paginator = computed<SPMatEntityListPaginator>(() => {
+  // protected _paginator = computed<SPEntityListPaginator>(() => {
   //   const paginator = this.paginator();
   //   const entityListConfigPaginator = this.entityListConfig
-  //     ?.paginator as SPMatEntityListPaginator;
+  //     ?.paginator as SPEntityListPaginator;
   //   return paginator
   //     ? paginator
   //     : entityListConfigPaginator ?? new DefaultPaginator();
@@ -531,11 +505,7 @@ export class SPMatSelectEntityComponent<
     // processing every combined emission.
     const emittedObservable = [false, false];
     const store$ = this.store.pipe(selectAllEntities());
-    const filter$ = this.filter$.pipe(
-      startWith(''),
-      distinctUntilChanged(),
-      debounceTime(400)
-    );
+    const filter$ = this.filter$.pipe(startWith(''), distinctUntilChanged(), debounceTime(400));
 
     const emittedStatusObservable = (obs: Observable<any>, index: number) =>
       obs.pipe(tap(() => (emittedObservable[index] = true)));
@@ -553,10 +523,7 @@ export class SPMatSelectEntityComponent<
     //        load with the new filterStr as the search param.
     //
     // The following logic implements the above.
-    combineLatest([
-      emittedStatusObservable(store$, 0),
-      emittedStatusObservable(filter$, 1),
-    ])
+    combineLatest([emittedStatusObservable(store$, 0), emittedStatusObservable(filter$, 1)])
       .pipe(
         takeUntil(this.destroy),
         tap(([entities, filterStr]) => {
@@ -580,7 +547,7 @@ export class SPMatSelectEntityComponent<
               this.loadNextPage();
             }
           }
-        })
+        }),
       )
       .subscribe();
 
@@ -628,9 +595,7 @@ export class SPMatSelectEntityComponent<
   }
 
   get selectTriggerValueAsArray() {
-    return Array.isArray(this.selectValue)
-      ? (this.selectValue as Array<string | number>)
-      : [];
+    return Array.isArray(this.selectValue) ? (this.selectValue as Array<string | number>) : [];
   }
 
   entityId(entity: TEntity) {
@@ -714,10 +679,7 @@ export class SPMatSelectEntityComponent<
 
   @Input()
   get required() {
-    return (
-      this._required ??
-      this.ngControl?.control?.hasValidator(Validators.required)
-    );
+    return this._required ?? this.ngControl?.control?.hasValidator(Validators.required);
   }
   set required(req: boolean) {
     this._required = coerceBooleanProperty(req);
@@ -757,9 +719,7 @@ export class SPMatSelectEntityComponent<
   }
 
   onFocusOut(event: FocusEvent) {
-    if (
-      !this._elementRef.nativeElement.contains(event.relatedTarget as Element)
-    ) {
+    if (!this._elementRef.nativeElement.contains(event.relatedTarget as Element)) {
       this.touched = true;
       this.focused = false;
       this.onTouched();
@@ -802,7 +762,7 @@ export class SPMatSelectEntityComponent<
       this.onTouched();
       this.onChanged(ev.value);
       const selectedEntities: TEntity[] = ev.value.map((id) =>
-        this.store.query(getEntity(id))
+        this.store.query(getEntity(id)),
       ) as TEntity[];
       this.selectionChange.emit(selectedEntities);
     } else {
@@ -864,6 +824,7 @@ export class SPMatSelectEntityComponent<
       });
       this.filteredValues.next(filteredEntities);
     }
+    this.cdr.detectChanges();
   }
 
   /**

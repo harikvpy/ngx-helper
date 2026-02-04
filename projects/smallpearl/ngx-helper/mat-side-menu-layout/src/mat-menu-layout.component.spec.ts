@@ -8,6 +8,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { By } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
 import { SPMatMenuLayoutComponent } from './mat-menu-layout.component';
 import { SPMatMenuListItemComponent } from './mat-menu-list-item.component';
 import { SPMatMenuPaneComponent } from './mat-menu-pane.component';
@@ -32,6 +33,7 @@ describe('SPMatMenuLayoutComponent', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
+      providers: [provideRouter([])],
       imports: [
         MatSidenavModule,
         MatToolbarModule,
@@ -74,7 +76,7 @@ describe('SPMatMenuLayoutComponent', () => {
       (
         fixture.debugElement.query(By.css('.branding-text'))
           .nativeElement as HTMLElement
-      ).innerText,
+      ).innerHTML,
     ).toContain('SMALLPEARL');
     expect(
       fixture.debugElement.query(By.directive(SPMatMenuPaneComponent)),

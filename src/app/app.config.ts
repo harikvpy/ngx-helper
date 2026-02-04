@@ -1,4 +1,8 @@
-import { ApplicationConfig, isDevMode, provideZoneChangeDetection } from '@angular/core';
+import {
+  ApplicationConfig,
+  isDevMode,
+  provideZoneChangeDetection,
+} from '@angular/core';
 import { provideRouter } from '@angular/router';
 
 import {
@@ -8,7 +12,6 @@ import {
 } from '@angular/common/http';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideTransloco, TranslocoService } from '@jsverse/transloco';
 import { FORM_ERRORS, provideErrorTailorConfig } from '@ngneat/error-tailor';
 import {
@@ -17,21 +20,24 @@ import {
 } from '@smallpearl/ngx-helper/entity-field';
 import { SP_MAT_ENTITY_CRUD_CONFIG } from '@smallpearl/ngx-helper/mat-entity-crud';
 import {
+  SP_MAT_ENTITY_LIST_CONFIG,
+  SPMatEntityListConfig,
+} from '@smallpearl/ngx-helper/mat-entity-list';
+import {
   QQMAT_TELEPHONE_INPUT_CONFIG_PROVIDER,
   QQMatTelephoneInputConfig,
 } from '@smallpearl/ngx-helper/mat-tel-input';
 import { Observable, of } from 'rxjs';
 import { routes } from './app.routes';
 import { MatErrorTailorControlErrorComponent } from './components/mat-error-tailor-control-error/mat-error-tailor-control-error.component';
-import { TranslocoHttpLoader } from './transloco-loader';
-import { SP_MAT_ENTITY_LIST_CONFIG, SPMatEntityListConfig } from '@smallpearl/ngx-helper/mat-entity-list';
 import { MyPaginator } from './entity-list-demo/paginater';
+import { TranslocoHttpLoader } from './transloco-loader';
 
 const WebTelInputConfig: QQMatTelephoneInputConfig = {
   // To cache last value from our API request so that we don't have to
   // repeatedly call the geoip API during the same session.
   getCountryCode: (
-    http: HttpClient
+    http: HttpClient,
   ): Observable<{
     ip: string;
     countryCode: string;
@@ -54,20 +60,22 @@ class EntityListConfig implements SPMatEntityListConfig {
 
   paginator = new MyPaginator();
   defaultPageSize = 50;
-  columnLabelFn = (entityName: string, columnName: string): string | Observable<string> => {
+  columnLabelFn = (
+    entityName: string,
+    columnName: string,
+  ): string | Observable<string> => {
     return this.transloco.selectTranslate(columnName);
   };
-};
+}
 
-const en = {}
-const de = {}
-const zhHant = {}
+const en = {};
+const de = {};
+const zhHant = {};
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideAnimationsAsync(),
     provideHttpClient(withInterceptorsFromDi()),
     provideTransloco({
       config: {
@@ -149,6 +157,6 @@ export const appConfig: ApplicationConfig = {
       provide: SP_MAT_ENTITY_LIST_CONFIG,
       useClass: EntityListConfig,
       deps: [TranslocoService],
-    }
+    },
   ],
 };

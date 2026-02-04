@@ -6,11 +6,11 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatInputHarness } from '@angular/material/input/testing';
 import { By } from '@angular/platform-browser';
 import {
-  defaultImports,
-  defaultProviders,
+    defaultImports,
+    defaultProviders,
 } from './ngx-mat-errors.component.spec';
 
-xdescribe('NgxErrorList', () => {
+describe.skip('NgxErrorList', () => {
   let loader: HarnessLoader;
 
   beforeEach(() => {

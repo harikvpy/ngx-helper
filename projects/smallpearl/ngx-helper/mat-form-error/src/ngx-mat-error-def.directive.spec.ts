@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
-  FormControl,
-  FormGroup,
-  FormsModule,
-  ReactiveFormsModule,
+    FormControl,
+    FormGroup,
+    FormsModule,
+    ReactiveFormsModule,
 } from '@angular/forms';
 import { NgxMatErrorDef } from './ngx-mat-error-def.directive';
 
-xdescribe('NgxMatErrorDef', () => {
+describe.skip('NgxMatErrorDef', () => {
   describe('withControl', () => {
     @Component({
       template: `<form [formGroup]="fg">
@@ -30,7 +30,7 @@ xdescribe('NgxMatErrorDef', () => {
 
     it('should get the control when withControl is string', () => {
       const fixture = TestBed.createComponent(
-        NgxMatErrorsWithErrorDefWithControlOfString
+        NgxMatErrorsWithErrorDefWithControlOfString,
       );
       fixture.detectChanges();
       const { fg, ngxMatErrorDef } = fixture.componentInstance;
@@ -57,7 +57,7 @@ xdescribe('NgxMatErrorDef', () => {
 
     it('should get the control when withControl is NgModel', () => {
       const fixture = TestBed.createComponent(
-        NgxMatErrorsWithErrorDefWithControlOfNgModel
+        NgxMatErrorsWithErrorDefWithControlOfNgModel,
       );
       fixture.detectChanges();
       expect(fixture.componentInstance.ngxMatErrorDef.control).toBeDefined();

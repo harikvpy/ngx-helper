@@ -1,7 +1,7 @@
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { getTranslocoModule } from '@smallpearl/ngx-helper/src/transloco-testing.module';
+import { getTranslocoModule } from '@smallpearl/ngx-helper/utils';
 import { of } from 'rxjs';
 import { SPEntityLoaderFn, SPPagedEntityLoader } from './paged-loader';
 import { SPEntityListPaginator, SPPageParams } from './paginator';
@@ -207,7 +207,7 @@ class MyPaginator implements SPEntityListPaginator {
   }
 }
 
-xdescribe('SPPagedEntityLoader', () => {
+describe.skip('SPPagedEntityLoader', () => {
   let http: HttpClient;
 
   beforeEach(async () => {
@@ -234,8 +234,9 @@ xdescribe('SPPagedEntityLoader', () => {
     pagedLoader.startLoader();
 
     let searchStr = '';
-    const httpSpy = spyOn(http, 'get').and.callFake(
-      (url: string, options: any) => {
+    const httpSpy = vitest
+      .spyOn(http, 'get')
+      .mockImplementation((url: string, options: any) => {
         const params = options?.params;
         console.log(
           `HTTP GET called with URL: ${url} and params:`,
@@ -247,8 +248,7 @@ xdescribe('SPPagedEntityLoader', () => {
           parseInt(params?.get('results') || '50', 10),
           searchStr,
         ) as any;
-      },
-    );
+      });
 
     expect((pagedLoader as any).sub$).toBeDefined();
     pagedLoader.loadNextPage();
@@ -256,7 +256,7 @@ xdescribe('SPPagedEntityLoader', () => {
     expect(pagedLoader.loading()).toBeFalsy();
     expect(pagedLoader.allEntitiesLoaded()).toBeTruthy();
     expect(pagedLoader.totalEntitiesAtRemote()).toBe(USER_DATA.length);
-    httpSpy.calls.reset();
+    httpSpy.mockClear;
 
     // Test loading with search string
     pagedLoader.setSearchParamValue('Ma');

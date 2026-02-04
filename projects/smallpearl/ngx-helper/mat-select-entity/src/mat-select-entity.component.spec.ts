@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import {
   HttpClient,
   HttpContext,
@@ -6,27 +7,40 @@ import {
   provideHttpClient,
 } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { Component, DebugElement, OnInit } from '@angular/core';
+import { Component, DebugElement, OnInit, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import {
-  FormControl,
-  FormGroup,
-  FormsModule,
-  ReactiveFormsModule,
-} from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatOptgroup, MatOption } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelect } from '@angular/material/select';
 import { By } from '@angular/platform-browser';
-import { SPEntityListPaginator } from '@smallpearl/ngx-helper/entities';
-import { SPPageParams } from '@smallpearl/ngx-helper/mat-entity-list';
-import { getTranslocoModule } from '@smallpearl/ngx-helper/src/transloco-testing.module';
+import { createComponentFactory, Spectator } from '@ngneat/spectator/vitest';
+import { SPEntityListPaginator, SPPageParams } from '@smallpearl/ngx-helper/entities';
+import { MatSelectSearchComponent } from 'ngx-mat-select-search';
 import { Observable, of, tap } from 'rxjs';
 import {
   SP_MAT_SELECT_ENTITY_HTTP_CONTEXT,
   SPMatSelectEntityComponent,
   SPMatSelectEntityHttpContext,
 } from './mat-select-entity.component';
+
+import { TranslocoTestingModule, TranslocoTestingOptions } from '@jsverse/transloco';
+
+const en = {};
+const de = {};
+const zhHant = {};
+
+export function getTranslocoModule(langs?: any, options: TranslocoTestingOptions = {}) {
+  return TranslocoTestingModule.forRoot({
+    langs: langs ?? { en, de, zhHant },
+    translocoConfig: {
+      availableLangs: ['en', 'de', 'zhHant'],
+      defaultLang: 'en',
+    },
+    preloadLangs: true,
+    ...options,
+  });
+}
 
 /**
  */
@@ -61,11 +75,7 @@ class UserDataResponsePaginator implements SPEntityListPaginator {
    * - page: page number (starting from 1)
    * - results: number of results per page
    */
-  getRequestPageParams(
-    endpoint: string,
-    pageIndex: number,
-    pageSize: number,
-  ): SPPageParams {
+  getRequestPageParams(endpoint: string, pageIndex: number, pageSize: number): SPPageParams {
     return {
       page: pageIndex + 1,
       results: pageSize,
@@ -84,10 +94,7 @@ class UserDataResponsePaginator implements SPEntityListPaginator {
    *   }
    * }
    */
-  parseRequestResponse<
-    TEntity extends { [P in IdKey]: PropertyKey },
-    IdKey extends string = 'id',
-  >(
+  parseRequestResponse<TEntity extends { [P in IdKey]: PropertyKey }, IdKey extends string = 'id'>(
     entityName: string,
     entityNamePlural: string,
     endpoint: string,
@@ -134,11 +141,424 @@ async function openMatSelect(
 }
 
 @Component({
-  imports: [
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    SPMatSelectEntityComponent,
-  ],
+  selector: 'test-mat-select-entity',
+  imports: [CommonModule, SPMatSelectEntityComponent],
+  providers: [],
+  template: `
+    <sp-mat-select-entity
+      [url]="url"
+      [labelFn]="labelFn"
+      [entityName]="entityName"
+    ></sp-mat-select-entity>
+  `,
+})
+export class TestMatSelectEntityComponent {
+  url = 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb';
+  labelFn = (user: User) => user.name;
+  entityName = 'user';
+  spMatSelect = viewChild(SPMatSelectEntityComponent<User>);
+}
+
+describe('TestMatSelectEntityComponent', () => {
+  let spectator: Spectator<TestMatSelectEntityComponent>;
+  const createComponent = createComponentFactory({
+    component: TestMatSelectEntityComponent,
+    imports: [getTranslocoModule()],
+    providers: [provideHttpClientTesting()],
+  });
+  let component!: SPMatSelectEntityComponent<User>;
+
+  beforeEach(async () => {
+    spectator = createComponent();
+    spectator.detectChanges();
+    component = spectator.component.spMatSelect()!;
+  });
+
+  it('should create', () => {
+    expect(spectator).toBeTruthy();
+    expect(component).toBeTruthy();
+  });
+});
+
+describe('MatSelectEntityComponent (single selection)', () => {
+  let component!: SelectEntityComponent;
+  let fixture!: ComponentFixture<SelectEntityComponent>;
+  let matSel!: MatSelect;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [FormsModule, getTranslocoModule(), SPMatSelectEntityComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+    fixture = TestBed.createComponent(SPMatSelectEntityComponent<User>);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('entityName', 'user');
+    fixture.componentRef.setInput('url', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    fixture.componentRef.setInput('labelFn', (user: User) => user.name);
+    fixture.componentRef.setInput('paginator', new UserDataResponsePaginator());
+    await fixture.whenStable();
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    if (fixture && fixture?.nativeElement) {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
+  it('should create', async () => {
+    fixture.detectChanges();
+    matSel = fixture.debugElement.query(By.directive(MatSelect)).componentInstance;
+    expect(component).toBeTruthy();
+  });
+
+  it('should show the initial values as options', async () => {
+    fixture.detectChanges();
+    fixture.componentRef.setInput('myInput', 'testing 123');
+    fixture.detectChanges();
+    console.log(
+      `fixture.debugElement: ${fixture.debugElement}, fixture.url: ${fixture.componentInstance.url()}`,
+    );
+    matSel = fixture.debugElement.query(By.directive(MatSelect)).componentInstance;
+    const DATA: User[] = JSON.parse(JSON.stringify(USER_DATA));
+    fixture.componentRef.setInput('entities', DATA);
+    fixture.detectChanges();
+    // Wait 400 milliseconds, which is the debounceTimeout
+    // for the ngx-mat-select-search filter string
+    await new Promise((r) => setTimeout(r, DEBOUNCE_TIMEOUT));
+    // There should be USER_DATA.length+1 <mat-option /> elements
+    // The +1 is the <mat-option /> for ngx-mat-select-search.
+    expect(matSel.options.length).toEqual(1 + DATA.length);
+    fixture.componentRef.setInput('disabled', true);
+    fixture.detectChanges();
+    expect(matSel.disabled).toBeTruthy();
+    fixture.componentRef.setInput('disabled', false);
+    fixture.detectChanges();
+    expect(matSel.disabled).toBeFalsy();
+    // We can also set readonly to make the mat-select disabled
+    // This is because MatSelect does not have a native readonly property.
+    // So to achieve the same visual effect, we set disabled=true when
+    // readonly=true.
+    fixture.componentRef.setInput('readonly', true);
+    fixture.detectChanges();
+    expect(matSel.disabled).toBeTruthy();
+  });
+
+  it('should display current value as the selection', async () => {
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(By.directive(MatSelect)).componentInstance;
+    const DATA: User[] = JSON.parse(JSON.stringify(USER_DATA)).splice(0, USER_DATA.length / 2);
+    fixture.componentRef.setInput('entities', DATA);
+    component.writeValue(DATA[0].id);
+    fixture.detectChanges();
+    // Wait 400 milliseconds, which is the debounceTimeout
+    // for the ngx-mat-select-search filter string
+    await new Promise((r) => setTimeout(r, DEBOUNCE_TIMEOUT));
+    // There should be USER_DATA.length+1 <mat-option /> elements
+    // The +1 is the <mat-option /> for ngx-mat-select-search.
+    expect(matSel.options.length).toEqual(1 + DATA.length);
+    expect((matSel.selected as MatOption).value).toEqual(DATA[0].id);
+  });
+
+  it('should load data from remote', async () => {
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(By.directive(MatSelect)).componentInstance;
+    // Trap HttpClient.get() and return our custom data
+    const http = TestBed.inject(HttpClient);
+    let context!: any;
+    vitest.spyOn(http, 'get').mockImplementation(((url: string, options: any) => {
+      context = options.context;
+      return of(USER_DATA);
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+    await openMatSelect(fixture);
+    // There should be USER_DATA.length+1 <mat-option /> elements
+    // The +1 is the <mat-option /> for ngx-mat-select-search.
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
+    // expect((component as any).loaded).toBeTruthy();
+    // verify that HttpRequest context has SP_MAT_SELECT_ENTITY_HTTP_CONTEXT
+    expect(context).toBeTruthy();
+    const selectEntityContext: SPMatSelectEntityHttpContext = context.get(
+      SP_MAT_SELECT_ENTITY_HTTP_CONTEXT,
+    );
+    expect(selectEntityContext).toBeTruthy();
+    // expect(selectEntityContext.endpoint).toEqual('https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+  });
+
+  it('should support an array of HttpContextToken pairs for httpReqContext input', async () => {
+    const TEST_CONTEXT_TOKEN = new HttpContextToken<string>(() => 'default');
+    fixture.componentRef.setInput(
+      'httpReqContext',
+      new HttpContext().set(TEST_CONTEXT_TOKEN, 'test-value'),
+    );
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(By.directive(MatSelect)).componentInstance;
+    // Trap HttpClient.get() and return our custom data
+    const http = TestBed.inject(HttpClient);
+    let context!: any;
+    vitest.spyOn(http, 'get').mockImplementation(((url: string, options: any) => {
+      context = options.context;
+      return of(USER_DATA);
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+    await openMatSelect(fixture);
+    expect(context).toBeTruthy();
+    expect(context.get(TEST_CONTEXT_TOKEN)).toEqual('test-value');
+  });
+
+  it('should support HttpContext object for httpReqContext input', async () => {
+    const TEST_CONTEXT_TOKEN = new HttpContextToken<string>(() => 'default');
+    fixture.componentRef.setInput('httpReqContext', [[TEST_CONTEXT_TOKEN, 'test-value-2']]);
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(By.directive(MatSelect)).componentInstance;
+    // Trap HttpClient.get() and return our custom data
+    const http = TestBed.inject(HttpClient);
+    let context!: any;
+    vitest.spyOn(http, 'get').mockImplementation(((url: string, options: any) => {
+      context = options.context;
+      return of(USER_DATA);
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+    await openMatSelect(fixture);
+    expect(context).toBeTruthy();
+    expect(context.get(TEST_CONTEXT_TOKEN)).toEqual('test-value-2');
+  });
+
+  it('should use the specified HttpParams to load remote data', async () => {
+    // Trap HttpClient.get() to save the HttpParams to a local variable
+    // and return our custom data. We'll examine this HttpParams to check
+    // if the parameters that we gave to the component were indeed used
+    // to retrieve the remote data.
+    const http = TestBed.inject(HttpClient);
+    let componentsHttpParams!: string;
+    vitest.spyOn(http, 'get').mockImplementation((url: string, p1: any): Observable<any> => {
+      componentsHttpParams = p1.params.toString();
+      return of(USER_DATA);
+    });
+    let params = new HttpParams();
+    params = params.set('Authorization', 'abcdefg');
+    fixture.componentRef.setInput('httpParams', params);
+
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(By.directive(MatSelect)).componentInstance;
+
+    await openMatSelect(fixture);
+    // There should be USER_DATA.length+1 <mat-option /> elements
+    // The +1 is the <mat-option /> for ngx-mat-select-search.
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
+    expect(componentsHttpParams).toBeTruthy();
+    const receivedParams = new HttpParams({ fromString: componentsHttpParams });
+    expect(receivedParams.get('Authorization')).toEqual('abcdefg');
+  });
+
+  it('should filter names based on user input', async () => {
+    const DATA: User[] = JSON.parse(JSON.stringify(USER_DATA)).splice(0, USER_DATA.length / 2);
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(By.directive(MatSelect)).componentInstance;
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockImplementation(((url: string, options: any) => {
+      return of(DATA);
+    }) as any); // 'as any' to suppress TSC function prototype mismatch
+    await openMatSelect(fixture);
+    expect(matSel.options.length).toEqual(1 + DATA.length);
+    const SEARCH_STRING = DATA[0].name.split(' ')[0];
+    // First mat-option element is the ngx-mat-select-search.
+    // Simulate user entering into ngx-mat-select-search by setting
+    // the value of the [(ngModel)] variable bound to this component.
+    fixture.componentInstance.filterStr = SEARCH_STRING;
+    fixture.componentInstance.filter$.next(SEARCH_STRING); // case sensitive entry!
+
+    // Wait 400 milliseconds, the debounce timeout for the ngx-mat-select-search
+    // filter string to be processed.
+    await new Promise((r) => setTimeout(r, DEBOUNCE_TIMEOUT));
+    // Verify that the number of mat-options matches the filtered mat-options
+    // count.
+    expect(matSel.options.length).toEqual(
+      DATA.filter((u) => u.name.toLocaleLowerCase().includes(SEARCH_STRING.toLocaleLowerCase()))
+        .length + 1,
+    );
+  });
+
+  it('should load data using the user provided loadFn', async () => {
+    // Make the length of the user provided select options's length
+    // different from USER_DATA so that code logic errors can be easily
+    // identified.
+    const DATA: User[] = JSON.parse(JSON.stringify(USER_DATA)).splice(0, USER_DATA.length / 2);
+    const loadDataFromRemote = () => {
+      return of(DATA);
+    };
+    fixture.componentRef.setInput('url', loadDataFromRemote);
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(By.directive(MatSelect)).componentInstance;
+
+    await openMatSelect(fixture);
+
+    // There should be DATA.length+1 <mat-option /> elements
+    // The +1 is the <mat-option /> for ngx-mat-select-search.
+    expect(matSel.options.length).toEqual(1 + DATA.length);
+  });
+
+  it("should emit 'entitySelected' event", async () => {
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(By.directive(MatSelect)).componentInstance;
+    // Trap HttpClient.get() and return our custom data
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    await openMatSelect(fixture);
+    // There should be USER_DATA.length+1 <mat-option /> elements
+    // The +1 is the <mat-option /> for ngx-mat-select-search.
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
+
+    let selectedEntityId!: User['id'];
+    const sub$ = component.selectionChange
+      .pipe(
+        tap((entity) => {
+          selectedEntityId = (entity as User).id;
+        }),
+      )
+      .subscribe();
+    // Select a random entity
+    const lastOption = matSel.options.last;
+    lastOption.select(true);
+    expect(selectedEntityId).toEqual(lastOption.value);
+    sub$.unsubscribe();
+  });
+
+  it('should allow adding a new entity', async () => {
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(By.directive(MatSelect)).componentInstance;
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    await openMatSelect(fixture);
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
+    const optionsCountBefore = matSel.options.length;
+    component.addEntity({ id: 100000, name: 'Moosa Marikkar' });
+    fixture.detectChanges();
+    expect(matSel.options.length).toEqual(optionsCountBefore + 1);
+  });
+
+  it('should set the current selection to an entity', async () => {
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(By.directive(MatSelect)).componentInstance;
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    await openMatSelect(fixture);
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
+    const optionsCountBefore = matSel.options.length;
+    const DET_MOOSA = { id: 100000, name: 'Moosa Marikkar' };
+    component.addEntity(DET_MOOSA);
+    fixture.detectChanges();
+    expect(matSel.options.length).toEqual(optionsCountBefore + 1);
+    component.writeValue(DET_MOOSA.id);
+    expect(component.value).toEqual(DET_MOOSA.id);
+  });
+
+  it('should have New Item option when inlineNew=true and filterStr length > 0', async () => {
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(By.directive(MatSelect)).componentInstance;
+    fixture.componentRef.setInput('inlineNew', true);
+    fixture.componentInstance.filterStr = '$$'; // to show the New Item option
+    fixture.componentInstance.filter$.next('$$');
+    // fixture.detectChanges();
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockImplementation((url: string, options: any) => {
+      return of(USER_DATA);
+    });
+    await openMatSelect(fixture);
+    await new Promise((r) => setTimeout(r, DEBOUNCE_TIMEOUT));
+    expect(matSel.options.last._getHostElement().innerHTML.includes('create')).toBeTruthy();
+
+    // select the New Item option
+    let createNewItemSelected = false;
+    const sub$ = component.createNewItemSelected
+      .pipe(
+        tap((entity) => {
+          createNewItemSelected = true;
+        }),
+      )
+      .subscribe();
+    matSel.options.last.select(true);
+    expect(createNewItemSelected).toBeTruthy();
+  });
+
+  it('should have New Item option when inlineNew=true and entities at remote length = 0', async () => {
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(By.directive(MatSelect)).componentInstance;
+    fixture.componentRef.setInput('inlineNew', true);
+    // fixture.detectChanges();
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockReturnValue(of([])); // return empty list
+    await openMatSelect(fixture);
+    expect(matSel.options.last._getHostElement().innerHTML.includes('create')).toBeTruthy();
+
+    // select the New Item option
+    let createNewItemSelected = false;
+    const sub$ = component.createNewItemSelected
+      .pipe(
+        tap((entity) => {
+          createNewItemSelected = true;
+        }),
+      )
+      .subscribe();
+    matSel.options.last.select(true);
+    expect(createNewItemSelected).toBeTruthy();
+  });
+
+  it('should maintain current value even when Add Item is selected', async () => {
+    fixture.componentRef.setInput('inlineNew', true);
+    fixture.componentRef.setInput('entityName', 'Item');
+
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(By.directive(MatSelect)).componentInstance;
+
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+
+    fixture.componentInstance.filterStr = 'a'; // to show the New Item option
+    fixture.componentInstance.filter$.next('a');
+    await openMatSelect(fixture);
+
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
+    // console.log(`matSel.options.last._getHostElement().innerHTML: ${matSel.options.last._getHostElement().innerHTML}`);
+    expect(
+      matSel.options.last._getHostElement().innerHTML.includes('spMatSelectEntity.createNew'),
+    ).toBeTruthy();
+    // first select first item
+    const firstOption = matSel.options.get(1);
+    firstOption?.select(true);
+    const currentSel = matSel.value;
+
+    const matOptions = fixture.debugElement.queryAll(By.directive(MatOption));
+    // close the select
+    const firstMatOption = matOptions[1];
+    firstMatOption.children[0].nativeElement.click();
+    // open again, which will update lastSelectValue
+    await openMatSelect(fixture);
+    expect(component.lastSelectValue).toEqual(firstOption?.value);
+
+    // select the New Item option
+    let createNewItemSelected = false;
+    const sub$ = component.createNewItemSelected
+      .pipe(
+        tap((entity) => {
+          console.log('New Item selected:', entity);
+          createNewItemSelected = true;
+        }),
+      )
+      .subscribe();
+    const selectSearch = fixture.debugElement.query(
+      By.directive(MatSelectSearchComponent),
+    ).componentInstance;
+    expect(selectSearch).toBeTruthy();
+    selectSearch.searchSelectInput.nativeElement.value = '$$';
+    selectSearch.searchSelectInput.nativeElement.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.filterStr).toEqual('$$');
+    matSel.options.last.select(true);
+    expect(createNewItemSelected).toBeTruthy();
+    expect(matSel.value).toEqual(currentSel);
+  });
+});
+
+@Component({
+  imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, SPMatSelectEntityComponent],
   selector: 'test-mat-select-entity-demo',
   template: `
     <form [formGroup]="form">
@@ -189,763 +609,302 @@ export class SelectEntityDemoComponent implements OnInit {
   ngOnInit() {}
 }
 
-describe('SPMatSelectEntityComponent', () => {
-  describe(' (single selection)', () => {
-    let component!: SelectEntityComponent;
-    let fixture!: ComponentFixture<SelectEntityComponent>;
-    let matSel!: MatSelect;
+describe('MatSelectEntityComponent Entities Cache', () => {
+  let demoComponent!: SelectEntityDemoComponent;
+  let demoFixture!: ComponentFixture<SelectEntityDemoComponent>;
 
-    beforeEach(async () => {
-      TestBed.configureTestingModule({
-        imports: [
-          FormsModule,
-          getTranslocoModule(),
-          SPMatSelectEntityComponent,
-        ],
-        providers: [provideHttpClient(), provideHttpClientTesting()],
-      });
-      fixture = TestBed.createComponent(SPMatSelectEntityComponent<User>);
-      component = fixture.componentInstance;
-      fixture.componentRef.setInput('entityName', 'user');
-      fixture.componentRef.setInput(
-        'url',
-        'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-      );
-      fixture.componentRef.setInput('labelFn', (user: User) => user.name);
-      fixture.componentRef.setInput(
-        'paginator',
-        new UserDataResponsePaginator(),
-      );
+  beforeEach(async () => {
+    TestBed.configureTestingModule({
+      imports: [FormsModule, SelectEntityDemoComponent, getTranslocoModule()],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     });
-
-    afterEach(() => {
-      document.body.removeChild(fixture.nativeElement);
-    });
-
-    it('should create', () => {
-      fixture.autoDetectChanges();
-      matSel = fixture.debugElement.query(
-        By.directive(MatSelect),
-      ).componentInstance;
-      expect(component).toBeTruthy();
-    });
-
-    it('should show the initial values as options', async () => {
-      fixture.autoDetectChanges();
-      matSel = fixture.debugElement.query(
-        By.directive(MatSelect),
-      ).componentInstance;
-      const DATA: User[] = JSON.parse(JSON.stringify(USER_DATA));
-      fixture.componentRef.setInput('entities', DATA);
-      fixture.detectChanges();
-      // Wait 400 milliseconds, which is the debounceTimeout
-      // for the ngx-mat-select-search filter string
-      await new Promise((r) => setTimeout(r, DEBOUNCE_TIMEOUT));
-      // There should be USER_DATA.length+1 <mat-option /> elements
-      // The +1 is the <mat-option /> for ngx-mat-select-search.
-      expect(matSel.options.length).toEqual(1 + DATA.length);
-      fixture.componentRef.setInput('disabled', true);
-      fixture.detectChanges();
-      expect(matSel.disabled).toBeTruthy();
-      fixture.componentRef.setInput('disabled', false);
-      fixture.detectChanges();
-      expect(matSel.disabled).toBeFalsy();
-      // We can also set readonly to make the mat-select disabled
-      // This is because MatSelect does not have a native readonly property.
-      // So to achieve the same visual effect, we set disabled=true when
-      // readonly=true.
-      fixture.componentRef.setInput('readonly', true);
-      fixture.detectChanges();
-      expect(matSel.disabled).toBeTruthy();
-    });
-
-    it('should display current value as the selection', async () => {
-      fixture.autoDetectChanges();
-      matSel = fixture.debugElement.query(
-        By.directive(MatSelect),
-      ).componentInstance;
-      const DATA: User[] = JSON.parse(JSON.stringify(USER_DATA)).splice(
-        0,
-        USER_DATA.length / 2,
-      );
-      fixture.componentRef.setInput('entities', DATA);
-      component.writeValue(DATA[0].id);
-      fixture.detectChanges();
-      // Wait 400 milliseconds, which is the debounceTimeout
-      // for the ngx-mat-select-search filter string
-      await new Promise((r) => setTimeout(r, DEBOUNCE_TIMEOUT));
-      // There should be USER_DATA.length+1 <mat-option /> elements
-      // The +1 is the <mat-option /> for ngx-mat-select-search.
-      expect(matSel.options.length).toEqual(1 + DATA.length);
-      expect((matSel.selected as MatOption).value).toEqual(DATA[0].id);
-    });
-
-    it('should load data from remote', async () => {
-      fixture.autoDetectChanges();
-      matSel = fixture.debugElement.query(
-        By.directive(MatSelect),
-      ).componentInstance;
-      // Trap HttpClient.get() and return our custom data
-      const http = TestBed.inject(HttpClient);
-      let context!: any;
-      vitest.spyOn(http, 'get').mockImplementation(((
-        url: string,
-        options: any,
-      ) => {
-        context = options.context;
-        return of(USER_DATA);
-      }) as any); // 'as any' to suppress TSC function prototype mismatch
-      await openMatSelect(fixture);
-      // There should be USER_DATA.length+1 <mat-option /> elements
-      // The +1 is the <mat-option /> for ngx-mat-select-search.
-      expect(matSel.options.length).toEqual(1 + USER_DATA.length);
-      // expect((component as any).loaded).toBeTruthy();
-      // verify that HttpRequest context has SP_MAT_SELECT_ENTITY_HTTP_CONTEXT
-      expect(context).toBeTruthy();
-      const selectEntityContext: SPMatSelectEntityHttpContext = context.get(
-        SP_MAT_SELECT_ENTITY_HTTP_CONTEXT,
-      );
-      expect(selectEntityContext).toBeTruthy();
-      // expect(selectEntityContext.endpoint).toEqual('https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
-    });
-
-    it('should support an array of HttpContextToken pairs for httpReqContext input', async () => {
-      const TEST_CONTEXT_TOKEN = new HttpContextToken<string>(() => 'default');
-      fixture.componentRef.setInput(
-        'httpReqContext',
-        new HttpContext().set(TEST_CONTEXT_TOKEN, 'test-value'),
-      );
-      fixture.autoDetectChanges();
-      matSel = fixture.debugElement.query(
-        By.directive(MatSelect),
-      ).componentInstance;
-      // Trap HttpClient.get() and return our custom data
-      const http = TestBed.inject(HttpClient);
-      let context!: any;
-      vitest.spyOn(http, 'get').mockImplementation(((
-        url: string,
-        options: any,
-      ) => {
-        context = options.context;
-        return of(USER_DATA);
-      }) as any); // 'as any' to suppress TSC function prototype mismatch
-      await openMatSelect(fixture);
-      expect(context).toBeTruthy();
-      expect(context.get(TEST_CONTEXT_TOKEN)).toEqual('test-value');
-    });
-
-    it('should support HttpContext object for httpReqContext input', async () => {
-      const TEST_CONTEXT_TOKEN = new HttpContextToken<string>(() => 'default');
-      fixture.componentRef.setInput('httpReqContext', [
-        [TEST_CONTEXT_TOKEN, 'test-value-2'],
-      ]);
-      fixture.autoDetectChanges();
-      matSel = fixture.debugElement.query(
-        By.directive(MatSelect),
-      ).componentInstance;
-      // Trap HttpClient.get() and return our custom data
-      const http = TestBed.inject(HttpClient);
-      let context!: any;
-      vitest.spyOn(http, 'get').mockImplementation(((
-        url: string,
-        options: any,
-      ) => {
-        context = options.context;
-        return of(USER_DATA);
-      }) as any); // 'as any' to suppress TSC function prototype mismatch
-      await openMatSelect(fixture);
-      expect(context).toBeTruthy();
-      expect(context.get(TEST_CONTEXT_TOKEN)).toEqual('test-value-2');
-    });
-
-    it('should use the specified HttpParams to load remote data', async () => {
-      // Trap HttpClient.get() to save the HttpParams to a local variable
-      // and return our custom data. We'll examine this HttpParams to check
-      // if the parameters that we gave to the component were indeed used
-      // to retrieve the remote data.
-      const http = TestBed.inject(HttpClient);
-      let componentsHttpParams!: string;
-      vitest
-        .spyOn(http, 'get')
-        .mockImplementation((url: string, p1: any): Observable<any> => {
-          componentsHttpParams = p1.params.toString();
-          return of(USER_DATA);
-        });
-      let params = new HttpParams();
-      params = params.set('Authorization', 'abcdefg');
-      fixture.componentRef.setInput('httpParams', params);
-
-      fixture.autoDetectChanges();
-      matSel = fixture.debugElement.query(
-        By.directive(MatSelect),
-      ).componentInstance;
-
-      await openMatSelect(fixture);
-      // There should be USER_DATA.length+1 <mat-option /> elements
-      // The +1 is the <mat-option /> for ngx-mat-select-search.
-      expect(matSel.options.length).toEqual(1 + USER_DATA.length);
-      expect(componentsHttpParams).toBeTruthy();
-      const receivedParams = new HttpParams({
-        fromString: componentsHttpParams,
-      });
-      expect(receivedParams.get('Authorization')).toEqual('abcdefg');
-    });
-
-    it('should filter names based on user input', async () => {
-      fixture.autoDetectChanges();
-      matSel = fixture.debugElement.query(
-        By.directive(MatSelect),
-      ).componentInstance;
-
-      const http = TestBed.inject(HttpClient);
-      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
-      await openMatSelect(fixture, false);
-      const SEARCH_STRING = USER_DATA[0].name.split(' ')[0];
-      // First mat-option element is the ngx-mat-select-search.
-      // Simulate user entering into ngx-mat-select-search by setting
-      // the value of the [(ngModel)] variable bound to this component.
-      fixture.componentInstance.filterStr = SEARCH_STRING;
-      fixture.componentInstance.filter$.next(SEARCH_STRING); // case sensitive entry!
-
-      // Wait 400 milliseconds, the debounce timeout for the ngx-mat-select-search
-      // filter string to be processed.
-      await new Promise((r) => setTimeout(r, DEBOUNCE_TIMEOUT));
-      // Verify that the number of mat-options matches the filtered mat-options
-      // count.
-      expect(matSel.options.length).toEqual(
-        USER_DATA.filter((u) =>
-          u.name
-            .toLocaleLowerCase()
-            .includes(SEARCH_STRING.toLocaleLowerCase()),
-        ).length + 1,
-      );
-    });
-
-    it('should load data using the user provided loadFn', async () => {
-      // Make the length of the user provided select options's length
-      // different from USER_DATA so that code logic errors can be easily
-      // identified.
-      const DATA: User[] = JSON.parse(JSON.stringify(USER_DATA)).splice(
-        0,
-        USER_DATA.length / 2,
-      );
-      const loadDataFromRemote = () => {
-        return of(DATA);
-      };
-      fixture.componentRef.setInput('url', loadDataFromRemote);
-      fixture.autoDetectChanges();
-      matSel = fixture.debugElement.query(
-        By.directive(MatSelect),
-      ).componentInstance;
-
-      await openMatSelect(fixture);
-
-      // There should be DATA.length+1 <mat-option /> elements
-      // The +1 is the <mat-option /> for ngx-mat-select-search.
-      expect(matSel.options.length).toEqual(1 + DATA.length);
-    });
-
-    it("should emit 'entitySelected' event", async () => {
-      fixture.autoDetectChanges();
-      matSel = fixture.debugElement.query(
-        By.directive(MatSelect),
-      ).componentInstance;
-      // Trap HttpClient.get() and return our custom data
-      const http = TestBed.inject(HttpClient);
-      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
-      await openMatSelect(fixture);
-      // There should be USER_DATA.length+1 <mat-option /> elements
-      // The +1 is the <mat-option /> for ngx-mat-select-search.
-      expect(matSel.options.length).toEqual(1 + USER_DATA.length);
-
-      let selectedEntityId!: User['id'];
-      const sub$ = component.selectionChange
-        .pipe(
-          tap((entity) => {
-            selectedEntityId = (entity as User).id;
-          }),
-        )
-        .subscribe();
-      // Select a random entity
-      const lastOption = matSel.options.last;
-      lastOption.select(true);
-      expect(selectedEntityId).toEqual(lastOption.value);
-      sub$.unsubscribe();
-    });
-
-    it('should allow adding a new entity', async () => {
-      fixture.autoDetectChanges();
-      matSel = fixture.debugElement.query(
-        By.directive(MatSelect),
-      ).componentInstance;
-      const http = TestBed.inject(HttpClient);
-      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
-      await openMatSelect(fixture);
-      expect(matSel.options.length).toEqual(1 + USER_DATA.length);
-      const optionsCountBefore = matSel.options.length;
-      component.addEntity({ id: 100000, name: 'Moosa Marikkar' });
-      fixture.detectChanges();
-      expect(matSel.options.length).toEqual(optionsCountBefore + 1);
-    });
-
-    it('should set the current selection to an entity', async () => {
-      fixture.autoDetectChanges();
-      matSel = fixture.debugElement.query(
-        By.directive(MatSelect),
-      ).componentInstance;
-      const http = TestBed.inject(HttpClient);
-      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
-      await openMatSelect(fixture);
-      expect(matSel.options.length).toEqual(1 + USER_DATA.length);
-      const optionsCountBefore = matSel.options.length;
-      const DET_MOOSA = { id: 100000, name: 'Moosa Marikkar' };
-      component.addEntity(DET_MOOSA);
-      fixture.detectChanges();
-      expect(matSel.options.length).toEqual(optionsCountBefore + 1);
-      component.writeValue(DET_MOOSA.id);
-      expect(component.value).toEqual(DET_MOOSA.id);
-    });
-
-    it('should have New Item option when inlineNew=true and filterStr length > 0', async () => {
-      fixture.autoDetectChanges();
-      matSel = fixture.debugElement.query(
-        By.directive(MatSelect),
-      ).componentInstance;
-      fixture.componentRef.setInput('inlineNew', true);
-      fixture.componentInstance.filterStr = '$$'; // to show the New Item option
-      fixture.componentInstance.filter$.next('$$');
-      // fixture.detectChanges();
-      const http = TestBed.inject(HttpClient);
-      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
-      await openMatSelect(fixture);
-      expect(
-        matSel.options.last._getHostElement().innerText.includes('create'),
-      ).toBeTruthy();
-
-      // select the New Item option
-      let createNewItemSelected = false;
-      const sub$ = component.createNewItemSelected
-        .pipe(
-          tap((entity) => {
-            createNewItemSelected = true;
-          }),
-        )
-        .subscribe();
-      matSel.options.last.select(true);
-      expect(createNewItemSelected).toBeTruthy();
-    });
-
-    it('should have New Item option when inlineNew=true and entities at remote length = 0', async () => {
-      fixture.autoDetectChanges();
-      matSel = fixture.debugElement.query(
-        By.directive(MatSelect),
-      ).componentInstance;
-      fixture.componentRef.setInput('inlineNew', true);
-      // fixture.detectChanges();
-      const http = TestBed.inject(HttpClient);
-      vitest.spyOn(http, 'get').mockReturnValue(of([])); // return empty list
-      await openMatSelect(fixture);
-      expect(
-        matSel.options.last._getHostElement().innerText.includes('create'),
-      ).toBeTruthy();
-
-      // select the New Item option
-      let createNewItemSelected = false;
-      const sub$ = component.createNewItemSelected
-        .pipe(
-          tap((entity) => {
-            createNewItemSelected = true;
-          }),
-        )
-        .subscribe();
-      matSel.options.last.select(true);
-      expect(createNewItemSelected).toBeTruthy();
-    });
-
-    it('should maintain current value even when Add Item is selected', async () => {
-      fixture.componentRef.setInput('inlineNew', true);
-      fixture.componentRef.setInput('entityName', 'Item');
-
-      fixture.autoDetectChanges();
-      matSel = fixture.debugElement.query(
-        By.directive(MatSelect),
-      ).componentInstance;
-
-      const http = TestBed.inject(HttpClient);
-      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
-
-      fixture.componentInstance.filterStr = 'a'; // to show the New Item option
-      fixture.componentInstance.filter$.next('a');
-      await openMatSelect(fixture);
-
-      expect(matSel.options.length).toEqual(1 + USER_DATA.length);
-      // console.log(`matSel.options.last._getHostElement().innerText: ${matSel.options.last._getHostElement().innerText}`);
-      expect(
-        matSel.options.last
-          ._getHostElement()
-          .innerText.includes('spMatSelectEntity.createNew'),
-      ).toBeTruthy();
-      // first select first item
-      const firstOption = matSel.options.get(1);
-      firstOption?.select(true);
-      const currentSel = matSel.value;
-
-      const matOptions = fixture.debugElement.queryAll(By.directive(MatOption));
-      // close the select
-      const firstMatOption = matOptions[1];
-      firstMatOption.children[0].nativeElement.click();
-      // await openMatSelect(fixture);
-      fixture.detectChanges();
-      // open again, which will update lastSelectValue
-      await openMatSelect(fixture);
-      fixture.detectChanges();
-      expect(component.lastSelectValue).toEqual(firstOption?.value);
-
-      // select the New Item option
-      let createNewItemSelected = false;
-      const sub$ = component.createNewItemSelected
-        .pipe(
-          tap((entity) => {
-            createNewItemSelected = true;
-          }),
-        )
-        .subscribe();
-      fixture.componentInstance.filterStr = '$$'; // to show the New Item option
-      fixture.componentInstance.filter$.next('$$');
-      await new Promise((r) => setTimeout(r, DEBOUNCE_TIMEOUT));
-      matSel.options.last.select(true);
-      fixture.detectChanges();
-      await fixture.whenStable();
-      await new Promise((r) => setTimeout(r, DEBOUNCE_TIMEOUT));
-      expect(createNewItemSelected).toBeTruthy();
-      fixture.detectChanges();
-      await new Promise((r) => setTimeout(r, 100));
-      expect(matSel.value).toEqual(currentSel);
-    });
+    demoFixture = TestBed.createComponent(SelectEntityDemoComponent);
+    demoComponent = demoFixture.componentInstance;
+    await demoFixture.whenStable();
   });
 
-  describe(' (entities cache)', () => {
-    let demoComponent!: SelectEntityDemoComponent;
-    let demoFixture!: ComponentFixture<SelectEntityDemoComponent>;
+  it('should fetch data from the same endpoint only once', async () => {
+    expect(demoComponent).toBeTruthy();
+    const http = TestBed.inject(HttpClient);
+    const getUsersSpy = vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    demoFixture.detectChanges();
+    const spMatSelects = demoFixture.debugElement.queryAll(
+      By.directive(SPMatSelectEntityComponent),
+    );
+    const spMatSelect1 = spMatSelects[0];
+    const spMatSelect2 = spMatSelects[1];
+    const spMatSelect3 = spMatSelects[2];
+    expect(spMatSelect1).toBeTruthy();
+    expect(spMatSelect2).toBeTruthy();
+    await openMatSelect(spMatSelect1);
+    expect(getUsersSpy).toHaveBeenCalled();
+    await openMatSelect(spMatSelect2);
+    expect(getUsersSpy).toHaveBeenCalledTimes(1);
+    // Now open 3rd sp-mat-select-entity. Since it has a different URL than the
+    // first two, it should result in HtttpClient.get being called. Therefore
+    // the get should've been called a total of 2 times - once for the first
+    // two instances of sp-mat-select-entity and once for the third
+    // sp-mat-select-entity.
+    await openMatSelect(spMatSelect3);
+    expect(getUsersSpy).toHaveBeenCalledTimes(2);
+    // Destroy the DemoComponent, causing the two SPMatSelectEntityComponent
+    // instances to be destroyed as well. Verify that the endpoint is removed
+    // from the cache.
+    demoFixture.destroy();
+    expect(SPMatSelectEntityComponent._entitiesCache.size).toEqual(0);
+  });
+});
 
-    beforeEach(async () => {
-      TestBed.configureTestingModule({
-        imports: [FormsModule, SelectEntityDemoComponent, getTranslocoModule()],
-        providers: [provideHttpClient(), provideHttpClientTesting()],
-      });
-      demoFixture = TestBed.createComponent(SelectEntityDemoComponent);
-      demoComponent = demoFixture.componentInstance;
-    });
+/**
+ * Has to be a separate test suite as mat-select [multiple]="true"
+ * has to specified during component creation. That is, this property
+ * cannot be altered once the component has been created.
+ */
+describe('MatSelectEntityComponent (multiple selection)', () => {
+  let component!: SelectEntityComponent;
+  let fixture!: ComponentFixture<SelectEntityComponent>;
+  let matSel!: MatSelect;
 
-    it('should fetch data from the same endpoint only once', async () => {
-      const http = TestBed.inject(HttpClient);
-      const getUsersSpy = vitest
-        .spyOn(http, 'get')
-        .mockReturnValue(of(USER_DATA));
-      demoFixture.autoDetectChanges();
-      const spMatSelects = demoFixture.debugElement.queryAll(
-        By.directive(SPMatSelectEntityComponent),
-      );
-      const spMatSelect1 = spMatSelects[0];
-      const spMatSelect2 = spMatSelects[1];
-      const spMatSelect3 = spMatSelects[2];
-      expect(spMatSelect1).toBeTruthy();
-      expect(spMatSelect2).toBeTruthy();
-      await openMatSelect(spMatSelect1);
-      expect(getUsersSpy).toHaveBeenCalled();
-      await openMatSelect(spMatSelect2);
-      expect(getUsersSpy).toHaveBeenCalledTimes(1);
-      // Now open 3rd sp-mat-select-entity. Since it has a different URL than the
-      // first two, it should result in HtttpClient.get being called. Therefore
-      // the get should've been called a total of 2 times - once for the first
-      // two instances of sp-mat-select-entity and once for the third
-      // sp-mat-select-entity.
-      await openMatSelect(spMatSelect3);
-      expect(getUsersSpy).toHaveBeenCalledTimes(2);
-      // Destroy the DemoComponent, causing the two SPMatSelectEntityComponent
-      // instances to be destroyed as well. Verify that the endpoint is removed
-      // from the cache.
-      demoFixture.destroy();
-      expect(SPMatSelectEntityComponent._entitiesCache.size).toEqual(0);
-    });
+  beforeEach(async () => {
+    TestBed.configureTestingModule({
+      imports: [SPMatSelectEntityComponent, getTranslocoModule()],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+    fixture = TestBed.createComponent(SPMatSelectEntityComponent<User>);
+    fixture.componentRef.setInput('url', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    fixture.componentRef.setInput('entityName', 'user');
+    fixture.componentRef.setInput('multiple', true);
+    fixture.componentRef.setInput('labelFn', (user: User) => user.name);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    matSel = fixture.debugElement.query(By.directive(MatSelect)).componentInstance;
+    component = fixture.componentInstance;
   });
 
-  /**
-   * Has to be a separate test suite as mat-select [multiple]="true"
-   * has to specified during component creation. That is, this property
-   * cannot be altered once the component has been created.
-   */
-  describe(' (multiple selection)', () => {
-    let component!: SelectEntityComponent;
-    let fixture!: ComponentFixture<SelectEntityComponent>;
-    let matSel!: MatSelect;
-
-    beforeEach(async () => {
-      TestBed.configureTestingModule({
-        imports: [SPMatSelectEntityComponent, getTranslocoModule()],
-        providers: [provideHttpClient(), provideHttpClientTesting()],
-      }).compileComponents();
-      fixture = TestBed.createComponent(SPMatSelectEntityComponent<User>);
-      component = fixture.componentInstance;
-      fixture.componentRef.setInput(
-        'url',
-        'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-      );
-      fixture.componentRef.setInput('entityName', 'user');
-      fixture.componentRef.setInput('multiple', true);
-      fixture.componentRef.setInput('labelFn', (user: User) => user.name);
-      fixture.autoDetectChanges();
-      matSel = fixture.debugElement.query(
-        By.directive(MatSelect),
-      ).componentInstance;
-    });
-
-    afterEach(() => {
+  afterEach(() => {
+    if (fixture?.nativeElement) {
       document.body.removeChild(fixture.nativeElement);
-    });
-
-    // MatSelectEntityComponent with multiple selection
-    it('should allow multiple selection', async () => {
-      const http = TestBed.inject(HttpClient);
-      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
-      await openMatSelect(fixture);
-      expect(matSel.options.length).toEqual(1 + USER_DATA.length);
-
-      // Select first and last item. This is equivalent to checking
-      // these two items. The consequence is that MatSelect's value
-      // should be an array, consisting of the ids of the first
-      // and last item.
-      const sel1 = matSel.options.get(1) as MatOption<any>;
-      const sel2 = matSel.options.last as MatOption<any>;
-      sel1.select(true);
-      sel2.select(true);
-      await fixture.whenStable();
-      expect(Array.isArray(matSel.value)).toBeTruthy();
-      const values: number[] = matSel.value;
-      // Sort the array, before comparing them!
-      expect(values.sort()).toEqual([sel1.value, sel2.value].sort());
-    });
-
-    it('should display selection count > 1 as +n', async () => {
-      const http = TestBed.inject(HttpClient);
-      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
-      await openMatSelect(fixture);
-      expect(matSel.options.length).toEqual(1 + USER_DATA.length);
-      const sel1 = matSel.options.get(1) as MatOption<any>;
-      const sel2 = matSel.options.get(2) as MatOption<any>;
-      const sel3 = matSel.options.last;
-      sel1.select(true);
-      sel2.select(true);
-      sel3.select(true);
-      await fixture.whenStable();
-      expect(Array.isArray(matSel.value)).toBeTruthy();
-      const values: number[] = matSel.value;
-      // Sort the array, before comparing them!
-      expect(values.sort()).toEqual(
-        [sel1.value, sel2.value, sel3.value].sort(),
-      );
-      const addlSelectionCount = fixture.debugElement.query(
-        By.css('.addl-selection-count'),
-      );
-      expect(addlSelectionCount).toBeTruthy();
-      expect(
-        (addlSelectionCount.nativeElement as HTMLElement).innerText,
-      ).toEqual('(+2)');
-    });
-
-    it("should emit 'entitySelected' event", async () => {
-      const http = TestBed.inject(HttpClient);
-      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
-      await openMatSelect(fixture);
-      // There should be USER_DATA.length+1 <mat-option /> elements
-      // The +1 is the <mat-option /> for ngx-mat-select-search.
-      expect(matSel.options.length).toEqual(1 + USER_DATA.length);
-
-      let selectedEntities!: User[];
-      const sub$ = component.selectionChange
-        .pipe(
-          tap((entity) => {
-            selectedEntities = entity as User[];
-          }),
-        )
-        .subscribe();
-      const lastOption = matSel.options.last;
-      // MatOption at index 0 is the ngx-select-search. Option at index 1 is
-      // the real selectable mat-option.
-      const firstOption = matSel.options.get(1) as MatOption;
-      lastOption.select(true);
-      expect(selectedEntities.length).toEqual(1);
-      expect(selectedEntities[0].id).toEqual(lastOption.value);
-      firstOption.select(true);
-      expect(selectedEntities.length).toEqual(2);
-      // Selected entities are returned in the ascending order of their ids.
-      // This is because we store the entities as a Map<> indexed by their id.
-      expect(selectedEntities[0].id).toEqual(firstOption.value);
-      expect(selectedEntities[1].id).toEqual(lastOption.value);
-      sub$.unsubscribe();
-    });
-
-    it('should have Add New option even when multiple=true', async () => {
-      fixture.componentRef.setInput('inlineNew', true);
-      fixture.componentInstance.filterStr = '$$'; // to show the New Item option
-      fixture.componentInstance.filter$.next('$$');
-      fixture.detectChanges();
-      const http = TestBed.inject(HttpClient);
-      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
-      await openMatSelect(fixture);
-      expect(matSel.options.length).toEqual(2);
-    });
+    }
   });
 
-  describe(' (grouped entities)', () => {
-    let component!: SelectEntityComponent;
-    let fixture!: ComponentFixture<SelectEntityComponent>;
-    let matSel!: MatSelect;
+  // MatSelectEntityComponent with multiple selection
+  it('should allow multiple selection', async () => {
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    await openMatSelect(fixture);
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
 
-    beforeEach(async () => {
-      TestBed.configureTestingModule({
-        imports: [SPMatSelectEntityComponent, getTranslocoModule()],
-        providers: [provideHttpClient(), provideHttpClientTesting()],
-      }).compileComponents();
-      fixture = TestBed.createComponent(SPMatSelectEntityComponent<User>);
-      component = fixture.componentInstance;
-      fixture.componentRef.setInput('entityName', 'user');
-      fixture.componentRef.setInput(
-        'url',
-        'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-      );
-      fixture.componentRef.setInput('groupOptionsKey', 'users');
-      fixture.componentRef.setInput('labelFn', (user: User) => user.name);
-      fixture.componentRef.setInput('entityName', 'user');
-      fixture.autoDetectChanges();
-      matSel = fixture.debugElement.query(
-        By.directive(MatSelect),
-      ).componentInstance;
-    });
-
-    afterEach(() => {
-      document.body.removeChild(fixture.nativeElement);
-    });
-
-    it("should load options when 'groupOptionsKey' is set to a string", async () => {
-      const http = TestBed.inject(HttpClient);
-      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
-      fixture.componentRef.setInput('groupOptionsKey', 'role');
-      await openMatSelect(fixture);
-      expect(matSel.options.length).toEqual(1 + USER_DATA.length);
-      const matOptGroup = fixture.debugElement.queryAll(
-        By.directive(MatOptgroup),
-      );
-      expect(matOptGroup.length).toEqual(2); // 'Manager' & 'Staff'
-      // verify that the mat-optgroup's label and the length of its child
-      // 'mat-option' elements matches our GROUPED_USERS array.
-      const group1Label = matOptGroup[0].componentInstance.label;
-      const group2Label = matOptGroup[1].componentInstance.label;
-      expect(
-        matOptGroup[0].nativeElement.querySelectorAll('mat-option').length,
-      ).toEqual(USER_DATA.filter((u) => u.role === group1Label).length);
-      expect(
-        matOptGroup[1].nativeElement.querySelectorAll('mat-option').length,
-      ).toEqual(USER_DATA.filter((u) => u.role === group2Label).length);
-
-      // select an entity and check that it emits the 'selectionChange' event.
-      let selectedEntityId!: User['id'];
-      const sub$ = component.selectionChange
-        .pipe(
-          tap((entity) => {
-            selectedEntityId = (entity as User).id;
-          }),
-        )
-        .subscribe();
-      // Select a random entity
-      const lastOption = matSel.options.last;
-      lastOption.select(true);
-      expect(selectedEntityId).toEqual(lastOption.value);
-      sub$.unsubscribe();
-    });
-
-    it('should load options when groupOptionsKey is set to a function', async () => {
-      fixture.componentRef.setInput(
-        'groupOptionsKey',
-        (user: User) => user.role,
-      );
-      const http = TestBed.inject(HttpClient);
-      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
-      await openMatSelect(fixture);
-      expect(matSel.options.length).toEqual(1 + USER_DATA.length);
-      const matOptGroup = fixture.debugElement.queryAll(
-        By.directive(MatOptgroup),
-      );
-      expect(matOptGroup.length).toEqual(2); // 'Manager' & 'Staff'
-      // verify that the mat-optgroup's label and the length of its child
-      // 'mat-option' elements matches our GROUPED_USERS array.
-      const group1Label = matOptGroup[0].componentInstance.label;
-      const group2Label = matOptGroup[1].componentInstance.label;
-      expect(
-        matOptGroup[0].nativeElement.querySelectorAll('mat-option').length,
-      ).toEqual(USER_DATA.filter((u) => u.role === group1Label).length);
-      expect(
-        matOptGroup[1].nativeElement.querySelectorAll('mat-option').length,
-      ).toEqual(USER_DATA.filter((u) => u.role === group2Label).length);
-
-      // select an entity and check that it emits the 'selectionChange' event.
-      let selectedEntityId!: User['id'];
-      const sub$ = component.selectionChange
-        .pipe(
-          tap((entity) => {
-            selectedEntityId = (entity as User).id;
-          }),
-        )
-        .subscribe();
-      // Select a random entity
-      const lastOption = matSel.options.last;
-      lastOption.select(true);
-      expect(selectedEntityId).toEqual(lastOption.value);
-      sub$.unsubscribe();
-    });
+    // Select first and last item. This is equivalent to checking
+    // these two items. The consequence is that MatSelect's value
+    // should be an array, consisting of the ids of the first
+    // and last item.
+    const sel1 = matSel.options.get(1) as MatOption<any>;
+    const sel2 = matSel.options.last as MatOption<any>;
+    sel1.select(true);
+    sel2.select(true);
+    await fixture.whenStable();
+    expect(Array.isArray(matSel.value)).toBeTruthy();
+    const values: number[] = matSel.value;
+    // Sort the array, before comparing them!
+    expect(values.sort()).toEqual([sel1.value, sel2.value].sort());
   });
 
-  describe(' (sideloaded response)', () => {
-    let component!: SelectEntityComponent;
-    let fixture!: ComponentFixture<SelectEntityComponent>;
-    let matSel!: MatSelect;
+  it('should display selection count > 1 as +n', async () => {
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    await openMatSelect(fixture);
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
+    const sel1 = matSel.options.get(1) as MatOption<any>;
+    const sel2 = matSel.options.get(2) as MatOption<any>;
+    const sel3 = matSel.options.last;
+    sel1.select(true);
+    sel2.select(true);
+    sel3.select(true);
+    await fixture.whenStable();
+    expect(Array.isArray(matSel.value)).toBeTruthy();
+    const values: number[] = matSel.value;
+    // Sort the array, before comparing them!
+    expect(values.sort()).toEqual([sel1.value, sel2.value, sel3.value].sort());
+    const addlSelectionCount = fixture.debugElement.query(By.css('.addl-selection-count'));
+    expect(addlSelectionCount).toBeTruthy();
+    expect((addlSelectionCount.nativeElement as HTMLElement).innerHTML).toContain('(+2)');
+  });
 
-    beforeEach(async () => {
-      TestBed.configureTestingModule({
-        imports: [SPMatSelectEntityComponent, getTranslocoModule()],
-        providers: [provideHttpClient(), provideHttpClientTesting()],
-      }).compileComponents();
-      fixture = TestBed.createComponent(SPMatSelectEntityComponent<User>);
-      component = fixture.componentInstance;
-      fixture.componentRef.setInput('entityName', 'user');
-      fixture.componentRef.setInput(
-        'url',
-        'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
-      );
-      fixture.componentRef.setInput('labelFn', (user: User) => user.name);
-    });
+  it("should emit 'entitySelected' event", async () => {
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    await openMatSelect(fixture);
+    // There should be USER_DATA.length+1 <mat-option /> elements
+    // The +1 is the <mat-option /> for ngx-mat-select-search.
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
 
-    afterEach(() => {
-      document.body.removeChild(fixture.nativeElement);
-    });
-
-    it('should load options from sideloaded response', async () => {
-      const http = TestBed.inject(HttpClient);
-      vitest.spyOn(http, 'get').mockReturnValue(
-        of({
-          meta: {
-            total: USER_DATA.length,
-          },
-          users: USER_DATA,
+    let selectedEntities!: User[];
+    const sub$ = component.selectionChange
+      .pipe(
+        tap((entity) => {
+          selectedEntities = entity as User[];
         }),
-      );
-      fixture.autoDetectChanges();
-      matSel = fixture.debugElement.query(
-        By.directive(MatSelect),
-      ).componentInstance;
-      // expect(component._sideloadDataKey()).toEqual('users');
-      await openMatSelect(fixture);
-      expect(matSel.options.length).toEqual(1 + USER_DATA.length);
-    });
+      )
+      .subscribe();
+    const lastOption = matSel.options.last;
+    // MatOption at index 0 is the ngx-select-search. Option at index 1 is
+    // the real selectable mat-option.
+    const firstOption = matSel.options.get(1) as MatOption;
+    lastOption.select(true);
+    expect(selectedEntities.length).toEqual(1);
+    expect(selectedEntities[0].id).toEqual(lastOption.value);
+    firstOption.select(true);
+    expect(selectedEntities.length).toEqual(2);
+    // Selected entities are returned in the ascending order of their ids.
+    // This is because we store the entities as a Map<> indexed by their id.
+    expect(selectedEntities[0].id).toEqual(firstOption.value);
+    expect(selectedEntities[1].id).toEqual(lastOption.value);
+    sub$.unsubscribe();
+  });
+
+  it('should have Add New option even when multiple=true', async () => {
+    fixture.componentRef.setInput('inlineNew', true);
+    fixture.componentInstance.filterStr = '$$'; // to show the New Item option
+    fixture.componentInstance.filter$.next('$$');
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    await openMatSelect(fixture);
+    expect(matSel.options.length).toEqual(2);
+  });
+});
+
+describe('MatEntitySelectComponent (grouped entities)', () => {
+  let component!: SelectEntityComponent;
+  let fixture!: ComponentFixture<SelectEntityComponent>;
+  let matSel!: MatSelect;
+
+  beforeEach(async () => {
+    TestBed.configureTestingModule({
+      imports: [SPMatSelectEntityComponent, getTranslocoModule()],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+    fixture = TestBed.createComponent(SPMatSelectEntityComponent<User>);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('entityName', 'user');
+    fixture.componentRef.setInput('url', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    fixture.componentRef.setInput('groupOptionsKey', 'users');
+    fixture.componentRef.setInput('labelFn', (user: User) => user.name);
+    fixture.componentRef.setInput('entityName', 'user');
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(By.directive(MatSelect)).componentInstance;
+  });
+
+  afterEach(() => {
+    document.body.removeChild(fixture.nativeElement);
+  });
+
+  it("should load options when 'groupOptionsKey' is set to a string", async () => {
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    fixture.componentRef.setInput('groupOptionsKey', 'role');
+    await openMatSelect(fixture);
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
+    const matOptGroup = fixture.debugElement.queryAll(By.directive(MatOptgroup));
+    expect(matOptGroup.length).toEqual(2); // 'Manager' & 'Staff'
+    // verify that the mat-optgroup's label and the length of its child
+    // 'mat-option' elements matches our GROUPED_USERS array.
+    const group1Label = matOptGroup[0].componentInstance.label;
+    const group2Label = matOptGroup[1].componentInstance.label;
+    expect(matOptGroup[0].nativeElement.querySelectorAll('mat-option').length).toEqual(
+      USER_DATA.filter((u) => u.role === group1Label).length,
+    );
+    expect(matOptGroup[1].nativeElement.querySelectorAll('mat-option').length).toEqual(
+      USER_DATA.filter((u) => u.role === group2Label).length,
+    );
+
+    // select an entity and check that it emits the 'selectionChange' event.
+    let selectedEntityId!: User['id'];
+    const sub$ = component.selectionChange
+      .pipe(
+        tap((entity) => {
+          selectedEntityId = (entity as User).id;
+        }),
+      )
+      .subscribe();
+    // Select a random entity
+    const lastOption = matSel.options.last;
+    lastOption.select(true);
+    expect(selectedEntityId).toEqual(lastOption.value);
+    sub$.unsubscribe();
+  });
+
+  it('should load options when groupOptionsKey is set to a function', async () => {
+    fixture.componentRef.setInput('groupOptionsKey', (user: User) => user.role);
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
+    await openMatSelect(fixture);
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
+    const matOptGroup = fixture.debugElement.queryAll(By.directive(MatOptgroup));
+    expect(matOptGroup.length).toEqual(2); // 'Manager' & 'Staff'
+    // verify that the mat-optgroup's label and the length of its child
+    // 'mat-option' elements matches our GROUPED_USERS array.
+    const group1Label = matOptGroup[0].componentInstance.label;
+    const group2Label = matOptGroup[1].componentInstance.label;
+    expect(matOptGroup[0].nativeElement.querySelectorAll('mat-option').length).toEqual(
+      USER_DATA.filter((u) => u.role === group1Label).length,
+    );
+    expect(matOptGroup[1].nativeElement.querySelectorAll('mat-option').length).toEqual(
+      USER_DATA.filter((u) => u.role === group2Label).length,
+    );
+
+    // select an entity and check that it emits the 'selectionChange' event.
+    let selectedEntityId!: User['id'];
+    const sub$ = component.selectionChange
+      .pipe(
+        tap((entity) => {
+          selectedEntityId = (entity as User).id;
+        }),
+      )
+      .subscribe();
+    // Select a random entity
+    const lastOption = matSel.options.last;
+    lastOption.select(true);
+    expect(selectedEntityId).toEqual(lastOption.value);
+    sub$.unsubscribe();
+  });
+});
+
+describe('MatEntitySelectComponent (sideloaded response)', () => {
+  let component!: SelectEntityComponent;
+  let fixture!: ComponentFixture<SelectEntityComponent>;
+  let matSel!: MatSelect;
+
+  beforeEach(async () => {
+    TestBed.configureTestingModule({
+      imports: [SPMatSelectEntityComponent, getTranslocoModule()],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+    fixture = TestBed.createComponent(SPMatSelectEntityComponent<User>);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('entityName', 'user');
+    fixture.componentRef.setInput('url', 'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb');
+    fixture.componentRef.setInput('labelFn', (user: User) => user.name);
+  });
+
+  afterEach(() => {
+    // document.body.removeChild(fixture.nativeElement);
+  });
+
+  it('should load options from sideloaded response', async () => {
+    const http = TestBed.inject(HttpClient);
+    vitest.spyOn(http, 'get').mockReturnValue(
+      of({
+        meta: {
+          total: USER_DATA.length,
+        },
+        users: USER_DATA,
+      }),
+    );
+    fixture.autoDetectChanges();
+    matSel = fixture.debugElement.query(By.directive(MatSelect)).componentInstance;
+    // expect(component._sideloadDataKey()).toEqual('users');
+    await openMatSelect(fixture);
+    expect(matSel.options.length).toEqual(1 + USER_DATA.length);
   });
 });

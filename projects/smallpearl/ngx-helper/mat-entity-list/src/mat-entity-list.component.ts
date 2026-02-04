@@ -1,10 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {
-  HttpClient,
-  HttpContext,
-  HttpContextToken,
-  HttpParams,
-} from '@angular/common/http';
+import { HttpClient, HttpContext, HttpContextToken, HttpParams } from '@angular/common/http';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -53,7 +48,8 @@ import {
 } from '@ngneat/elf-entities';
 import {
   SP_ENTITY_FIELD_CONFIG,
-  SPEntityField, SPEntityFieldSpec
+  SPEntityField,
+  SPEntityFieldSpec,
 } from '@smallpearl/ngx-helper/entity-field';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { plural } from 'pluralize';
@@ -89,9 +85,7 @@ export class HeaderAlignmentDirective implements AfterViewInit {
 
   ngAfterViewInit(): void {
     if (this.headerAlignment()) {
-      const sortHeader = this.el.nativeElement.querySelector(
-        '.mat-sort-header-container',
-      );
+      const sortHeader = this.el.nativeElement.querySelector('.mat-sort-header-container');
       if (sortHeader) {
         sortHeader.style.justifyContent = this.headerAlignment();
       } else {
@@ -153,15 +147,10 @@ class LoadRequest {
       [infiniteScrollThrottle]="infiniteScrollThrottle()"
       [infiniteScrollContainer]="infiniteScrollContainer()"
       [scrollWindow]="infiniteScrollWindow()"
-      [infiniteScrollDisabled]="
-        pagination() !== 'infinite' || !_paginator || !hasMore()
-      "
+      [infiniteScrollDisabled]="pagination() !== 'infinite' || !_paginator || !hasMore()"
       (scrolled)="infiniteScrollLoadNextPage($event)"
     >
-      <div
-        class="busy-overlay"
-        [ngClass]="{ show: pagination() === 'discrete' && loading() }"
-      >
+      <div class="busy-overlay" [ngClass]="{ show: pagination() === 'discrete' && loading() }">
         <ng-container *ngTemplateOutlet="busySpinner"></ng-container>
       </div>
       <table mat-table [dataSource]="dataSource()">
@@ -383,18 +372,13 @@ export class SPMatEntityListComponent<
    * initialize it appropriately.
    */
   httpReqContext = input<
-    | [[HttpContextToken<any>, any]]
-    | [HttpContextToken<any>, any]
-    | HttpContext
-    | undefined
+    [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any] | HttpContext | undefined
   >();
   /* END CLIENT PROVIDED PARAMETERS */
 
   // *** INTERNAL *** //
   _entityNamePlural = computed(() =>
-    this.entityNamePlural()
-      ? (this.entityNamePlural() as string)
-      : plural(this.entityName()),
+    this.entityNamePlural() ? (this.entityNamePlural() as string) : plural(this.entityName()),
   );
 
   _httpReqContext = computed(() => {
@@ -432,15 +416,11 @@ export class SPMatEntityListComponent<
   _displayedColumns = computed(() =>
     this.displayedColumns().length > 0
       ? this.displayedColumns().filter(
-          (colName) =>
-            this.allColumnNames().find((name) => name === colName) !==
-            undefined,
+          (colName) => this.allColumnNames().find((name) => name === colName) !== undefined,
         )
       : this.allColumnNames(),
   );
-  dataSource = signal<MatTableDataSource<TEntity>>(
-    new MatTableDataSource<TEntity>(),
-  );
+  dataSource = signal<MatTableDataSource<TEntity>>(new MatTableDataSource<TEntity>());
 
   table = viewChild(MatTable);
   sort = viewChild(MatSort);
@@ -467,8 +447,7 @@ export class SPMatEntityListComponent<
   _pageSize = computed<number>(() =>
     this.pageSize()
       ? this.pageSize()
-      : (this.entityListConfig.defaultPageSize ??
-        this.lastFetchedEntitiesCount()),
+      : (this.entityListConfig.defaultPageSize ?? this.lastFetchedEntitiesCount()),
   );
   // Effective columns, derived from columns(), which can either be an array
   // of objects of array of strings.
@@ -488,9 +467,7 @@ export class SPMatEntityListComponent<
   });
 
   __columns = computed<SPEntityField<TEntity, IdKey>[]>(() =>
-    this.columns().map(
-      (colDef) => new SPEntityField<TEntity, IdKey>(colDef, this.fieldConfig),
-    ),
+    this.columns().map((colDef) => new SPEntityField<TEntity, IdKey>(colDef, this.fieldConfig)),
   );
 
   // We isolate retrieving items from the remote and providing the items
@@ -529,9 +506,7 @@ export class SPMatEntityListComponent<
 
   activeEntity = signal<TEntity | undefined>(undefined);
   activeEntityId = computed(() =>
-    this.activeEntity()
-      ? (this.activeEntity() as any)[this.idKey()]
-      : undefined,
+    this.activeEntity() ? (this.activeEntity() as any)[this.idKey()] : undefined,
   );
   _prevActiveEntity!: TEntity | undefined;
   _activeEntityChange = effect(() => {
@@ -569,6 +544,11 @@ export class SPMatEntityListComponent<
   loadRequest$ = new Subject<LoadRequest>();
 
   endpointChanged = effect(() => {
+    if (this.endpoint()) {
+      // console.log(`endpointChanged - ${this.endpoint()}`);
+      setTimeout(() => this.refresh());
+    }
+    /*
     runInInjectionContext(this.injector, () => {
       if (this.endpoint()) {
         // console.log(`endpointChanged - ${this.endpoint()}`);
@@ -577,6 +557,7 @@ export class SPMatEntityListComponent<
         });
       }
     });
+    */
   });
 
   constructor(
@@ -593,9 +574,7 @@ export class SPMatEntityListComponent<
       withEntities<TEntity, IdKey>({ idKey: this.idKey() as IdKey }),
     );
     this.entities$ = this.store.pipe(selectAllEntities());
-    this._paginator = this.paginator()
-      ? this.paginator()
-      : this.entityListConfig?.paginator;
+    this._paginator = this.paginator() ? this.paginator() : this.entityListConfig?.paginator;
 
     this.entities$
       .pipe(
@@ -613,9 +592,7 @@ export class SPMatEntityListComponent<
       .pipe(
         takeUntil(this.destroy$),
         filter((lr) => lr.endpoint !== '' || lr.force === true),
-        distinctUntilChanged((prev, current) =>
-          current.isEqualToAndNotForced(prev),
-        ),
+        distinctUntilChanged((prev, current) => current.isEqualToAndNotForced(prev)),
         switchMap((lr: LoadRequest) => this.doActualLoad(lr)),
       )
       .subscribe();
@@ -647,11 +624,7 @@ export class SPMatEntityListComponent<
   addEntity(entity: TEntity) {
     const pagination = this.pagination();
     const count = this.store.query(getEntitiesCount());
-    if (
-      pagination === 'infinite' ||
-      pagination === 'none' ||
-      count < this._pageSize()
-    ) {
+    if (pagination === 'infinite' || pagination === 'none' || count < this._pageSize()) {
       this.store.update(addEntities(entity));
     } else {
       // 'discrete' pagination, refresh the crud items from the beginning.
@@ -739,12 +712,8 @@ export class SPMatEntityListComponent<
 
       this._columns().forEach((colDef) => {
         if (!columnNames.has(colDef.name)) {
-          const matColDef = this.viewColumnDefs().find(
-            (cd) => cd.name === colDef.name,
-          );
-          const clientColDef = this.contentColumnDefs.find(
-            (cd) => cd.name === colDef.name,
-          );
+          const matColDef = this.viewColumnDefs().find((cd) => cd.name === colDef.name);
+          const clientColDef = this.contentColumnDefs.find((cd) => cd.name === colDef.name);
           const columnDef = clientColDef ? clientColDef : matColDef;
           if (columnDef) {
             columnDefs.push(columnDef);
@@ -814,11 +783,7 @@ export class SPMatEntityListComponent<
         });
       });
     }
-    return new LoadRequest(
-      endpoint,
-      httpParams,
-      forceRefresh || !!this.entityLoaderFn(),
-    );
+    return new LoadRequest(endpoint, httpParams, forceRefresh || !!this.entityLoaderFn());
   }
 
   /**
@@ -872,8 +837,7 @@ export class SPMatEntityListComponent<
             const entityCount = this.entityCount();
             if (pageSize > 0) {
               const pageCount =
-                Math.floor(entityCount / pageSize) +
-                (entityCount % pageSize ? 1 : 0);
+                Math.floor(entityCount / pageSize) + (entityCount % pageSize ? 1 : 0);
               this.hasMore.set(this.pageIndex() === pageCount);
             } else {
               this.hasMore.set(false);
@@ -883,9 +847,7 @@ export class SPMatEntityListComponent<
           // TODO: remove as any
           this.store.update(upsertEntities(entities as any));
         } else {
-          this.store.update(
-            upsertEntities(this.findArrayInResult(resp) as TEntity[]),
-          );
+          this.store.update(upsertEntities(this.findArrayInResult(resp) as TEntity[]));
         }
       }),
       finalize(() => this.loading.set(false)),
@@ -937,10 +899,7 @@ export class SPMatEntityListComponent<
         : of(field._fieldSpec.label);
     }
     if (this.entityListConfig && this.entityListConfig.columnLabelFn) {
-      const label = this.entityListConfig.columnLabelFn(
-        this.entityName(),
-        field._fieldSpec.name,
-      );
+      const label = this.entityListConfig.columnLabelFn(this.entityName(), field._fieldSpec.name);
       return label instanceof Observable ? label : of(label);
     }
     return of(field._fieldSpec.name);

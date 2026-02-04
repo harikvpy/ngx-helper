@@ -15,7 +15,7 @@ import {
   NgxMatErrors,
 } from './ngx-mat-errors.component';
 
-xdescribe('NgxMatErrorsForDateRangePicker', () => {
+describe.skip('NgxMatErrorsForDateRangePicker', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [],
