@@ -1,5 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpContext, HttpContextToken, HttpParams } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpContext,
+  HttpContextToken,
+  HttpParams,
+} from '@angular/common/http';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -20,7 +25,7 @@ import {
   runInInjectionContext,
   signal,
   viewChild,
-  viewChildren
+  viewChildren,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
@@ -48,8 +53,7 @@ import {
 } from '@ngneat/elf-entities';
 import {
   SP_ENTITY_FIELD_CONFIG,
-  SPEntityField,
-  SPEntityFieldSpec
+  SPEntityField, SPEntityFieldSpec
 } from '@smallpearl/ngx-helper/entity-field';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { plural } from 'pluralize';
@@ -63,21 +67,20 @@ import {
   Subscription,
   switchMap,
   takeUntil,
-  tap
+  tap,
 } from 'rxjs';
 import { getEntityListConfig } from './config';
 import {
   SP_MAT_ENTITY_LIST_HTTP_CONTEXT,
   SPMatEntityListEntityLoaderFn,
-  SPMatEntityListPaginator
+  SPMatEntityListPaginator,
 } from './mat-entity-list-types';
 
 @Directive({
   selector: '[headerAlignment]',
-  standalone: true
+  standalone: true,
 })
 export class HeaderAlignmentDirective implements AfterViewInit {
-
   headerAlignment = input<string>();
 
   constructor(private el: ElementRef) {
@@ -86,7 +89,9 @@ export class HeaderAlignmentDirective implements AfterViewInit {
 
   ngAfterViewInit(): void {
     if (this.headerAlignment()) {
-      const sortHeader = this.el.nativeElement.querySelector('.mat-sort-header-container');
+      const sortHeader = this.el.nativeElement.querySelector(
+        '.mat-sort-header-container',
+      );
       if (sortHeader) {
         sortHeader.style.justifyContent = this.headerAlignment();
       } else {
@@ -105,7 +110,7 @@ class LoadRequest {
   constructor(
     public endpoint: string,
     public params: HttpParams,
-    public force = false
+    public force = false,
   ) {}
 
   // Returns true if two LoadRequest objects are equal and this object's
@@ -169,17 +174,17 @@ class LoadRequest {
         ></tr>
       </table>
       @if (pagination() == 'discrete' && _paginator) {
-      <mat-paginator
-        showFirstLastButtons
-        [length]="entityCount()"
-        [pageSize]="_pageSize()"
-        [pageIndex]="pageIndex()"
-        [pageSizeOptions]="[]"
-        [hidePageSize]="true"
-        (page)="handlePageEvent($event)"
-        [disabled]="loading()"
-        aria-label="Select page"
-      ></mat-paginator>
+        <mat-paginator
+          showFirstLastButtons
+          [length]="entityCount()"
+          [pageSize]="_pageSize()"
+          [pageIndex]="pageIndex()"
+          [pageSizeOptions]="[]"
+          [hidePageSize]="true"
+          (page)="handlePageEvent($event)"
+          [disabled]="loading()"
+          aria-label="Select page"
+        ></mat-paginator>
       }
       <div
         class="infinite-scroll-loading"
@@ -192,43 +197,44 @@ class LoadRequest {
     be dynamically added to the MatTable. -->
     <span matSort="sorter()">
       @for (column of __columns(); track $index) {
-      <ng-container [matColumnDef]="column.spec.name">
-        @if (disableSort()) {
-        <th
-          [class]="column.class"
-          [headerAlignment]="column.options.alignment"
-          mat-header-cell
-          *matHeaderCellDef
-        >
-          {{ getColumnLabel(column) | async }}
-        </th>
-        } @else {
-        <th
-          [class]="column.class"
-          [headerAlignment]="column.options.alignment"
-          mat-header-cell
-          mat-sort-header
-          *matHeaderCellDef
-        >
-          {{ getColumnLabel(column) | async }}
-        </th>
-        }
-        <td
-          [class]="column.class"
-          [style.text-align]="column.options.alignment"
-          mat-cell
-          *matCellDef="let element"
-          [routerLink]="column.getRouterLink(element)"
-        >
-          @if (column.hasRouterLink(element)) {
-          <a [routerLink]="column.getRouterLink(element)">
-            <span [innerHTML]="column.value(element)"></span>
-          </a>
-          } @else { @let val = column.value(element);
-          <span [innerHTML]="isAsync(val) ? (val | async) : val"></span>
+        <ng-container [matColumnDef]="column.spec.name">
+          @if (disableSort()) {
+            <th
+              [class]="column.class"
+              [headerAlignment]="column.options.alignment"
+              mat-header-cell
+              *matHeaderCellDef
+            >
+              {{ getColumnLabel(column) | async }}
+            </th>
+          } @else {
+            <th
+              [class]="column.class"
+              [headerAlignment]="column.options.alignment"
+              mat-header-cell
+              mat-sort-header
+              *matHeaderCellDef
+            >
+              {{ getColumnLabel(column) | async }}
+            </th>
           }
-        </td>
-      </ng-container>
+          <td
+            [class]="column.class"
+            [style.text-align]="column.options.alignment"
+            mat-cell
+            *matCellDef="let element"
+            [routerLink]="column.getRouterLink(element)"
+          >
+            @if (column.hasRouterLink(element)) {
+              <a [routerLink]="column.getRouterLink(element)">
+                <span [innerHTML]="column.value(element)"></span>
+              </a>
+            } @else {
+              @let val = column.value(element);
+              <span [innerHTML]="isAsync(val) ? (val | async) : val"></span>
+            }
+          </td>
+        </ng-container>
       }
     </span>
     <ng-template #busySpinner>
@@ -277,8 +283,9 @@ class LoadRequest {
 })
 export class SPMatEntityListComponent<
   TEntity extends { [P in IdKey]: PropertyKey },
-  IdKey extends string = 'id'
-> implements OnInit, OnDestroy, AfterViewInit
+  IdKey extends string = 'id',
+>
+  implements OnInit, OnDestroy, AfterViewInit
 {
   /* CLIENT PROVIDED PARAMETERS */
   entityName = input.required<string>();
@@ -376,15 +383,18 @@ export class SPMatEntityListComponent<
    * initialize it appropriately.
    */
   httpReqContext = input<
-    [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any] | HttpContext | undefined
+    | [[HttpContextToken<any>, any]]
+    | [HttpContextToken<any>, any]
+    | HttpContext
+    | undefined
   >();
   /* END CLIENT PROVIDED PARAMETERS */
 
   // *** INTERNAL *** //
   _entityNamePlural = computed(() =>
     this.entityNamePlural()
-      ? this.entityNamePlural() as string
-      : plural(this.entityName())
+      ? (this.entityNamePlural() as string)
+      : plural(this.entityName()),
   );
 
   _httpReqContext = computed(() => {
@@ -423,12 +433,13 @@ export class SPMatEntityListComponent<
     this.displayedColumns().length > 0
       ? this.displayedColumns().filter(
           (colName) =>
-            this.allColumnNames().find((name) => name === colName) !== undefined
+            this.allColumnNames().find((name) => name === colName) !==
+            undefined,
         )
-      : this.allColumnNames()
+      : this.allColumnNames(),
   );
   dataSource = signal<MatTableDataSource<TEntity>>(
-    new MatTableDataSource<TEntity>()
+    new MatTableDataSource<TEntity>(),
   );
 
   table = viewChild(MatTable);
@@ -456,7 +467,8 @@ export class SPMatEntityListComponent<
   _pageSize = computed<number>(() =>
     this.pageSize()
       ? this.pageSize()
-      : this.entityListConfig.defaultPageSize ?? this.lastFetchedEntitiesCount()
+      : (this.entityListConfig.defaultPageSize ??
+        this.lastFetchedEntitiesCount()),
   );
   // Effective columns, derived from columns(), which can either be an array
   // of objects of array of strings.
@@ -477,8 +489,8 @@ export class SPMatEntityListComponent<
 
   __columns = computed<SPEntityField<TEntity, IdKey>[]>(() =>
     this.columns().map(
-      (colDef) => new SPEntityField<TEntity, IdKey>(colDef, this.fieldConfig)
-    )
+      (colDef) => new SPEntityField<TEntity, IdKey>(colDef, this.fieldConfig),
+    ),
   );
 
   // We isolate retrieving items from the remote and providing the items
@@ -502,7 +514,7 @@ export class SPMatEntityListComponent<
   // the sore.
   store = createStore(
     { name: Math.random().toString(36).slice(2) },
-    withEntities<TEntity, IdKey>({ idKey: this.idKey() as IdKey })
+    withEntities<TEntity, IdKey>({ idKey: this.idKey() as IdKey }),
   );
   // We'll initialize this in ngOnInit() when 'store' is initialized with the
   // correct TEntity store that can be safely indexed using IdKey.
@@ -517,7 +529,9 @@ export class SPMatEntityListComponent<
 
   activeEntity = signal<TEntity | undefined>(undefined);
   activeEntityId = computed(() =>
-    this.activeEntity() ? (this.activeEntity() as any)[this.idKey()] : undefined
+    this.activeEntity()
+      ? (this.activeEntity() as any)[this.idKey()]
+      : undefined,
   );
   _prevActiveEntity!: TEntity | undefined;
   _activeEntityChange = effect(() => {
@@ -568,7 +582,7 @@ export class SPMatEntityListComponent<
   constructor(
     protected http: HttpClient,
     private sanitizer: DomSanitizer,
-    private injector: Injector
+    private injector: Injector,
   ) {}
 
   ngOnInit() {
@@ -576,7 +590,7 @@ export class SPMatEntityListComponent<
     // which are reflected in the mat-table.
     this.store = createStore(
       { name: Math.random().toString(36).slice(2) },
-      withEntities<TEntity, IdKey>({ idKey: this.idKey() as IdKey })
+      withEntities<TEntity, IdKey>({ idKey: this.idKey() as IdKey }),
     );
     this.entities$ = this.store.pipe(selectAllEntities());
     this._paginator = this.paginator()
@@ -591,7 +605,7 @@ export class SPMatEntityListComponent<
           // signals resulting in mat-table picking up the changes without
           // requiring us to call cdr.detectChanges() explicitly.
           this.dataSource().data = entities;
-        })
+        }),
       )
       .subscribe();
 
@@ -600,9 +614,9 @@ export class SPMatEntityListComponent<
         takeUntil(this.destroy$),
         filter((lr) => lr.endpoint !== '' || lr.force === true),
         distinctUntilChanged((prev, current) =>
-          current.isEqualToAndNotForced(prev)
+          current.isEqualToAndNotForced(prev),
         ),
-        switchMap((lr: LoadRequest) => this.doActualLoad(lr))
+        switchMap((lr: LoadRequest) => this.doActualLoad(lr)),
       )
       .subscribe();
   }
@@ -726,10 +740,10 @@ export class SPMatEntityListComponent<
       this._columns().forEach((colDef) => {
         if (!columnNames.has(colDef.name)) {
           const matColDef = this.viewColumnDefs().find(
-            (cd) => cd.name === colDef.name
+            (cd) => cd.name === colDef.name,
           );
           const clientColDef = this.contentColumnDefs.find(
-            (cd) => cd.name === colDef.name
+            (cd) => cd.name === colDef.name,
           );
           const columnDef = clientColDef ? clientColDef : matColDef;
           if (columnDef) {
@@ -784,7 +798,7 @@ export class SPMatEntityListComponent<
       pageParams = this._paginator.getRequestPageParams(
         endpoint,
         this.pageIndex(),
-        this.pageSize()
+        this.pageSize(),
       );
     }
     let httpParams = new HttpParams();
@@ -803,7 +817,7 @@ export class SPMatEntityListComponent<
     return new LoadRequest(
       endpoint,
       httpParams,
-      forceRefresh || !!this.entityLoaderFn()
+      forceRefresh || !!this.entityLoaderFn(),
     );
   }
 
@@ -845,7 +859,7 @@ export class SPMatEntityListComponent<
             this._entityNamePlural()!,
             this.endpoint(),
             paramsObj,
-            resp
+            resp,
           );
           this.entityCount.set(total);
           this.lastFetchedEntitiesCount.set(entities.length);
@@ -870,11 +884,11 @@ export class SPMatEntityListComponent<
           this.store.update(upsertEntities(entities as any));
         } else {
           this.store.update(
-            upsertEntities(this.findArrayInResult(resp) as TEntity[])
+            upsertEntities(this.findArrayInResult(resp) as TEntity[]),
           );
         }
       }),
-      finalize(() => this.loading.set(false))
+      finalize(() => this.loading.set(false)),
     );
   }
 
@@ -925,7 +939,7 @@ export class SPMatEntityListComponent<
     if (this.entityListConfig && this.entityListConfig.columnLabelFn) {
       const label = this.entityListConfig.columnLabelFn(
         this.entityName(),
-        field._fieldSpec.name
+        field._fieldSpec.name,
       );
       return label instanceof Observable ? label : of(label);
     }

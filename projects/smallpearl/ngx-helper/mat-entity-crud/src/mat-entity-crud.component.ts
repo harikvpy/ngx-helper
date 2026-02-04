@@ -1,7 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpContext, HttpContextToken, HttpParams } from '@angular/common/http';
 import {
-  AfterViewInit,
+  HttpClient,
+  HttpContext,
+  HttpContextToken,
+  HttpParams,
+} from '@angular/common/http';
+import {
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -16,30 +20,42 @@ import {
   signal,
   TemplateRef,
   viewChild,
-  viewChildren
+  viewChildren,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatSortModule } from '@angular/material/sort';
 import { MatColumnDef, MatTableModule } from '@angular/material/table';
+import { DomSanitizer } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
 import {
-  showBusyWheelUntilComplete,
-  SPMatHostBusyWheelDirective
-} from '@smallpearl/ngx-helper/mat-busy-wheel';
+  provideTranslocoScope,
+  TranslocoModule,
+  TranslocoService,
+} from '@jsverse/transloco';
 import {
-  SPMatContextMenuComponent
-} from '@smallpearl/ngx-helper/mat-context-menu';
+  showBusyWheelUntilComplete,
+  SPMatHostBusyWheelDirective,
+} from '@smallpearl/ngx-helper/mat-busy-wheel';
+import { SPMatContextMenuComponent } from '@smallpearl/ngx-helper/mat-context-menu';
 import { SPMatEntityListComponent } from '@smallpearl/ngx-helper/mat-entity-list';
-
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
-import { DomSanitizer } from '@angular/platform-browser';
-import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { AngularSplitModule } from 'angular-split';
 import { clone, startCase } from 'lodash';
 import { plural } from 'pluralize';
-import { catchError, EMPTY, firstValueFrom, map, Observable, of, Subscription, switchMap, tap, throwError } from 'rxjs';
+import {
+  catchError,
+  EMPTY,
+  firstValueFrom,
+  map,
+  Observable,
+  of,
+  Subscription,
+  switchMap,
+  tap,
+  throwError,
+} from 'rxjs';
 import { convertHttpContextInputToHttpContext } from './convert-context-input-to-http-context';
 import { getEntityCrudConfig } from './default-config';
 import { FormViewHostComponent } from './form-view-host.component';
@@ -87,50 +103,56 @@ import { PreviewHostComponent } from './preview-host.component';
 
           <ng-template #defaultActionButtons>
             <div class="action-bar-actions">
-              @if (!disableCreate()) { @if (newItemSubTypes()) {
-              <!-- New {{item}} displays a dropdown menu from which the subtype can be selected -->
-              <button
-                type="button"
-                mat-raised-button
-                color="primary"
-                [matMenuTriggerFor]="newSubTypesMenu"
-              >
-                {{
-                  newItemLabel() ??
-                    t('spMatEntityCrud.newItem', {
-                      item: _itemLabel() | async
-                    })
-                }}
-                <mat-icon>expand_circle_down</mat-icon>
-              </button>
-              <mat-menu #newSubTypesMenu="matMenu">
-                @for (subtype of newItemSubTypes(); track $index) { @if
-                (subtype.role) {
-                <button mat-menu-item (click)="handleNewItemSubType(subtype)">
-                  {{ subtype.label }}
-                </button>
+              @if (!disableCreate()) {
+                @if (newItemSubTypes()) {
+                  <!-- New {{item}} displays a dropdown menu from which the subtype can be selected -->
+                  <button
+                    type="button"
+                    mat-raised-button
+                    color="primary"
+                    [matMenuTriggerFor]="newSubTypesMenu"
+                  >
+                    {{
+                      newItemLabel() ??
+                        t('spMatEntityCrud.newItem', {
+                          item: _itemLabel() | async,
+                        })
+                    }}
+                    <mat-icon>expand_circle_down</mat-icon>
+                  </button>
+                  <mat-menu #newSubTypesMenu="matMenu">
+                    @for (subtype of newItemSubTypes(); track $index) {
+                      @if (subtype.role) {
+                        <button
+                          mat-menu-item
+                          (click)="handleNewItemSubType(subtype)"
+                        >
+                          {{ subtype.label }}
+                        </button>
+                      } @else {
+                        <div style="padding: .2em 0.5em;">
+                          <strong>{{ subtype.label }}</strong>
+                        </div>
+                      }
+                    }
+                  </mat-menu>
                 } @else {
-                <div style="padding: .2em 0.5em;">
-                  <strong>{{ subtype.label }}</strong>
-                </div>
-                } }
-              </mat-menu>
-              } @else {
-              <button
-                mat-raised-button
-                color="primary"
-                (click)="onCreate($event)"
-                [routerLink]="newItemLink()"
-              >
-                {{
-                  newItemLabel() ??
-                    t('spMatEntityCrud.newItem', {
-                      item: _itemLabel() | async
-                    })
-                }}
-                <mat-icon>add_circle</mat-icon>
-              </button>
-              } }
+                  <button
+                    mat-raised-button
+                    color="primary"
+                    (click)="onCreate($event)"
+                    [routerLink]="newItemLink()"
+                  >
+                    {{
+                      newItemLabel() ??
+                        t('spMatEntityCrud.newItem', {
+                          item: _itemLabel() | async,
+                        })
+                    }}
+                    <mat-icon>add_circle</mat-icon>
+                  </button>
+                }
+              }
             </div>
           </ng-template>
 
@@ -142,9 +164,9 @@ import { PreviewHostComponent } from './preview-host.component';
               <span class="spacer"></span>
               <!-- Hide the action buttons when Preview/Edit pane is active -->
               @if (!entityPaneActive()) {
-              <ng-container
-                [ngTemplateOutlet]="actionsTemplate() || defaultActionButtons"
-              ></ng-container>
+                <ng-container
+                  [ngTemplateOutlet]="actionsTemplate() || defaultActionButtons"
+                ></ng-container>
               }
             </div>
           </ng-template>
@@ -217,46 +239,46 @@ import { PreviewHostComponent } from './preview-host.component';
     </as-split>
   `,
   styles: `
-  .sp-hidden {
-    display: none;
-  }
-  .sp-visible {
-    display: inherit;
-    height: 100% !important;
-    width: 100% !important;
-  }
-  .entity-pane-wrapper {
-    height: 100% !important;
-    width: 100% !important;
-  }
-  .action-bar {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    padding-bottom: 0.5em;
-  }
-  .action-bar-title {
-    font-size: 1.5em;
-    font-weight: 600;
-  }
-  .spacer {
-    flex-grow: 1;
-  }
-  .action-bar-actions {
-    text-align: end;
-  }
-  .active-row {
-    font-weight: bold;
-  }
+    .sp-hidden {
+      display: none;
+    }
+    .sp-visible {
+      display: inherit;
+      height: 100% !important;
+      width: 100% !important;
+    }
+    .entity-pane-wrapper {
+      height: 100% !important;
+      width: 100% !important;
+    }
+    .action-bar {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      padding-bottom: 0.5em;
+    }
+    .action-bar-title {
+      font-size: 1.5em;
+      font-weight: 600;
+    }
+    .spacer {
+      flex-grow: 1;
+    }
+    .action-bar-actions {
+      text-align: end;
+    }
+    .active-row {
+      font-weight: bold;
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SPMatEntityCrudComponent<
-    TEntity extends { [P in IdKey]: PropertyKey },
-    IdKey extends string = 'id'
-  >
+  TEntity extends { [P in IdKey]: PropertyKey },
+  IdKey extends string = 'id',
+>
   extends SPMatEntityListComponent<TEntity, IdKey>
-  implements SPMatEntityCrudComponentBase<TEntity, IdKey>, AfterViewInit
+  implements SPMatEntityCrudComponentBase<TEntity, IdKey>
 {
   // entityName = input.required<string>();
   // entityNamePlural = input<string>();
@@ -436,14 +458,14 @@ export class SPMatEntityCrudComponent<
    * +----------------------------------------+
    */
   previewPaneWrapperClass = input<string>(
-    'sp-mat-crud-entity-pane-wrapper-class'
+    'sp-mat-crud-entity-pane-wrapper-class',
   );
 
   /**
    * The class class that will be applied to the preview pane content.
    */
   previewPaneContentClass = input<string>(
-    'sp-mat-crud-preview-pane-content-class'
+    'sp-mat-crud-preview-pane-content-class',
   );
 
   /**
@@ -565,7 +587,7 @@ export class SPMatEntityCrudComponent<
   // We call it entityPane as it's used to either render a selected entity
   // or to edit one.
   entityPaneActive = computed(
-    () => !!this.previewedEntity() || this.createEditViewActive()
+    () => !!this.previewedEntity() || this.createEditViewActive(),
   );
   // Effective width of the entity pane.
   entityPaneWidth = computed(() =>
@@ -573,23 +595,23 @@ export class SPMatEntityCrudComponent<
       ? !!this.previewedEntity()
         ? this.previewPaneWidth()
         : this.editPaneWidth()
-      : 0
+      : 0,
   );
 
   // Width of the pane showing the list of entities. Calculated as
   entitiesPaneWidth = computed(() => 100 - this.entityPaneWidth());
   entitiesPaneHidden = computed(
-    () => this.entityPaneActive() && this.entityPaneWidth() === 100
+    () => this.entityPaneActive() && this.entityPaneWidth() === 100,
   );
 
   defaultItemCrudActions = signal<MatEntityCrudItemAction<TEntity, IdKey>[]>(
-    []
+    [],
   );
   columnsWithAction = computed(() => {
     const cols = clone(this.columns());
     const actionDefined =
       cols.find((c) =>
-        typeof c === 'string' ? c === 'action' : c.name === 'action'
+        typeof c === 'string' ? c === 'action' : c.name === 'action',
       ) !== undefined;
     if (!actionDefined) {
       cols.push('action');
@@ -611,7 +633,7 @@ export class SPMatEntityCrudComponent<
       ? this.columnsWithAction()
           .map((col) => (typeof col === 'string' ? col : col.name))
           .filter((name) => name !== 'action')
-      : []
+      : [],
   );
   transloco = inject(TranslocoService);
 
@@ -619,7 +641,7 @@ export class SPMatEntityCrudComponent<
     http: HttpClient,
     private snackBar: MatSnackBar,
     sanitizer: DomSanitizer,
-    injector: Injector
+    injector: Injector,
   ) {
     super(http, sanitizer, injector);
     this.crudConfig = getEntityCrudConfig();
@@ -729,7 +751,7 @@ export class SPMatEntityCrudComponent<
     return obs.pipe(
       showBusyWheelUntilComplete('formBusyWheel'),
       switchMap((resp) =>
-        resp ? this.doRefreshAfterEdit(resp, 'create') : of(null)
+        resp ? this.doRefreshAfterEdit(resp, 'create') : of(null),
       ),
       tap((entity) => {
         // If pagination is infinite or if the pagination if none or if the
@@ -742,11 +764,11 @@ export class SPMatEntityCrudComponent<
             this.snackBar.open(
               this.transloco.translate('spMatEntityCrud.createSuccess', {
                 item: itemLabel,
-              })
+              }),
             );
           });
         }
-      })
+      }),
     );
   }
 
@@ -764,7 +786,7 @@ export class SPMatEntityCrudComponent<
     return obs.pipe(
       showBusyWheelUntilComplete('formBusyWheel'),
       switchMap((resp) =>
-        resp ? this.doRefreshAfterEdit(resp, 'update') : of(null)
+        resp ? this.doRefreshAfterEdit(resp, 'update') : of(null),
       ),
       tap((entity) => {
         if (entity) {
@@ -773,11 +795,11 @@ export class SPMatEntityCrudComponent<
             this.snackBar.open(
               this.transloco.translate('spMatEntityCrud.updateSuccess', {
                 item: itemLabel,
-              })
+              }),
             );
           });
         }
-      })
+      }),
     );
   }
   // END SPMatEntityCrudComponentBase METHODS //
@@ -809,7 +831,7 @@ export class SPMatEntityCrudComponent<
       this.entityName(),
       this.idKey(),
       method,
-      resp
+      resp,
     );
     if (refreshAfterEdit === 'object') {
       let obs!: Observable<TEntity>;
@@ -819,12 +841,12 @@ export class SPMatEntityCrudComponent<
           'get',
           (entity as any)[this.idKey()],
           undefined,
-          this
+          this,
         ) as Observable<TEntity>;
       } else {
         obs = this.http.get<TEntity>(
           this.getEntityUrl((entity as any)[this.idKey()]),
-          { context: this.getCrudReqHttpContext('retrieve') }
+          { context: this.getCrudReqHttpContext('retrieve') },
         );
       }
       return obs.pipe(
@@ -833,9 +855,9 @@ export class SPMatEntityCrudComponent<
             this.entityName(),
             this.idKey(),
             'retrieve',
-            entity
+            entity,
           );
-        })
+        }),
       );
     } else if (refreshAfterEdit === 'all') {
       this.refresh(true);
@@ -921,7 +943,7 @@ export class SPMatEntityCrudComponent<
       (entity as any)[this.idKey()],
       verb,
       httpRequestParameters.params || new HttpParams(),
-      httpRequestParameters.body
+      httpRequestParameters.body,
     )
       .pipe(
         tap((response) => {
@@ -941,7 +963,7 @@ export class SPMatEntityCrudComponent<
             return EMPTY;
           }
           return throwError(() => error);
-        })
+        }),
       )
       .subscribe();
   }
@@ -1028,7 +1050,7 @@ export class SPMatEntityCrudComponent<
       firstValueFrom(this._itemLabel()).then((itemLabel) => {
         const deletedItemPrompt = this.transloco.translate(
           'spMatEntityCrud.deleteItemConfirm',
-          { item: itemLabel.toLocaleLowerCase() }
+          { item: itemLabel.toLocaleLowerCase() },
         );
         const yes = confirm(deletedItemPrompt);
         if (yes) {
@@ -1060,13 +1082,13 @@ export class SPMatEntityCrudComponent<
                   firstValueFrom(this._itemLabel()).then((itemLabel) => {
                     const deletedMessage = this.transloco.translate(
                       'spMatEntityCrud.deleteItemSuccess',
-                      { item: itemLabel }
+                      { item: itemLabel },
                     );
                     this.snackBar.open(deletedMessage);
                   });
-                })
+                }),
               )
-              .subscribe()
+              .subscribe(),
           );
         }
       });
@@ -1152,7 +1174,7 @@ export class SPMatEntityCrudComponent<
           // HttpContext specific to this crud operation, 'create'|'retrieve'|'update'|'delete'
           convertHttpContextInputToHttpContext(
             context,
-            crudHttpReqContext[op]!
+            crudHttpReqContext[op]!,
           );
         }
       }
@@ -1204,7 +1226,7 @@ export class SPMatEntityCrudComponent<
           }
           return false;
         };
-      }
+      },
     );
     // If the item actions are disabled, disable all actions. Event user
     // defined actions.
@@ -1251,7 +1273,7 @@ export class SPMatEntityCrudComponent<
     verb: string,
     addlParams: HttpParams,
     data: any,
-    busyWheelName: string = 'formBusyWheel'
+    busyWheelName: string = 'formBusyWheel',
   ) {
     let obs!: Observable<TEntity | null>;
     const crudOpFn = this.crudOpFn();
@@ -1268,13 +1290,13 @@ export class SPMatEntityCrudComponent<
     return obs.pipe(
       showBusyWheelUntilComplete(busyWheelName),
       switchMap((resp) =>
-        resp ? this.doRefreshAfterEdit(resp, 'update') : of(null)
+        resp ? this.doRefreshAfterEdit(resp, 'update') : of(null),
       ),
       tap((entity) => {
         if (entity) {
           this.spEntitiesList()?.updateEntity(id, entity);
         }
-      })
+      }),
     );
   }
 
