@@ -16,7 +16,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatErrorHarness } from '@angular/material/form-field/testing';
 import { MatInputModule } from '@angular/material/input';
 import { MatInputHarness } from '@angular/material/input/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { delay, from, interval, map, of, take, tap, zip } from 'rxjs';
 import { NgxErrorList } from './ngx-error-list.component';
 import { NgxMatErrorDef } from './ngx-mat-error-def.directive';
@@ -68,7 +67,7 @@ describe('NgxMatErrors', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [NoopAnimationsModule],
+      imports: [],
     });
   });
 

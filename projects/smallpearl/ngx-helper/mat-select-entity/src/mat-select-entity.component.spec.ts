@@ -18,7 +18,6 @@ import { MatOptgroup, MatOption } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelect } from '@angular/material/select';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { SPEntityListPaginator } from '@smallpearl/ngx-helper/entities';
 import { SPPageParams } from '@smallpearl/ngx-helper/mat-entity-list';
 import { getTranslocoModule } from '@smallpearl/ngx-helper/src/transloco-testing.module';
@@ -199,7 +198,6 @@ describe('SPMatSelectEntityComponent', () => {
     beforeEach(async () => {
       TestBed.configureTestingModule({
         imports: [
-          NoopAnimationsModule,
           FormsModule,
           getTranslocoModule(),
           SPMatSelectEntityComponent,
@@ -248,17 +246,17 @@ describe('SPMatSelectEntityComponent', () => {
       expect(matSel.options.length).toEqual(1 + DATA.length);
       fixture.componentRef.setInput('disabled', true);
       fixture.detectChanges();
-      expect(matSel.disabled).toBeTrue();
+      expect(matSel.disabled).toBeTruthy();
       fixture.componentRef.setInput('disabled', false);
       fixture.detectChanges();
-      expect(matSel.disabled).toBeFalse();
+      expect(matSel.disabled).toBeFalsy();
       // We can also set readonly to make the mat-select disabled
       // This is because MatSelect does not have a native readonly property.
       // So to achieve the same visual effect, we set disabled=true when
       // readonly=true.
       fixture.componentRef.setInput('readonly', true);
       fixture.detectChanges();
-      expect(matSel.disabled).toBeTrue();
+      expect(matSel.disabled).toBeTruthy();
     });
 
     it('should display current value as the selection', async () => {
@@ -290,7 +288,10 @@ describe('SPMatSelectEntityComponent', () => {
       // Trap HttpClient.get() and return our custom data
       const http = TestBed.inject(HttpClient);
       let context!: any;
-      spyOn(http, 'get').and.callFake(((url: string, options: any) => {
+      vitest.spyOn(http, 'get').mockImplementation(((
+        url: string,
+        options: any,
+      ) => {
         context = options.context;
         return of(USER_DATA);
       }) as any); // 'as any' to suppress TSC function prototype mismatch
@@ -298,7 +299,7 @@ describe('SPMatSelectEntityComponent', () => {
       // There should be USER_DATA.length+1 <mat-option /> elements
       // The +1 is the <mat-option /> for ngx-mat-select-search.
       expect(matSel.options.length).toEqual(1 + USER_DATA.length);
-      // expect((component as any).loaded).toBeTrue();
+      // expect((component as any).loaded).toBeTruthy();
       // verify that HttpRequest context has SP_MAT_SELECT_ENTITY_HTTP_CONTEXT
       expect(context).toBeTruthy();
       const selectEntityContext: SPMatSelectEntityHttpContext = context.get(
@@ -321,7 +322,10 @@ describe('SPMatSelectEntityComponent', () => {
       // Trap HttpClient.get() and return our custom data
       const http = TestBed.inject(HttpClient);
       let context!: any;
-      spyOn(http, 'get').and.callFake(((url: string, options: any) => {
+      vitest.spyOn(http, 'get').mockImplementation(((
+        url: string,
+        options: any,
+      ) => {
         context = options.context;
         return of(USER_DATA);
       }) as any); // 'as any' to suppress TSC function prototype mismatch
@@ -342,7 +346,10 @@ describe('SPMatSelectEntityComponent', () => {
       // Trap HttpClient.get() and return our custom data
       const http = TestBed.inject(HttpClient);
       let context!: any;
-      spyOn(http, 'get').and.callFake(((url: string, options: any) => {
+      vitest.spyOn(http, 'get').mockImplementation(((
+        url: string,
+        options: any,
+      ) => {
         context = options.context;
         return of(USER_DATA);
       }) as any); // 'as any' to suppress TSC function prototype mismatch
@@ -358,12 +365,12 @@ describe('SPMatSelectEntityComponent', () => {
       // to retrieve the remote data.
       const http = TestBed.inject(HttpClient);
       let componentsHttpParams!: string;
-      spyOn(http, 'get').and.callFake(
-        (url: string, p1: any): Observable<any> => {
+      vitest
+        .spyOn(http, 'get')
+        .mockImplementation((url: string, p1: any): Observable<any> => {
           componentsHttpParams = p1.params.toString();
           return of(USER_DATA);
-        },
-      );
+        });
       let params = new HttpParams();
       params = params.set('Authorization', 'abcdefg');
       fixture.componentRef.setInput('httpParams', params);
@@ -391,7 +398,7 @@ describe('SPMatSelectEntityComponent', () => {
       ).componentInstance;
 
       const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(of(USER_DATA));
+      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
       await openMatSelect(fixture, false);
       const SEARCH_STRING = USER_DATA[0].name.split(' ')[0];
       // First mat-option element is the ngx-mat-select-search.
@@ -445,7 +452,7 @@ describe('SPMatSelectEntityComponent', () => {
       ).componentInstance;
       // Trap HttpClient.get() and return our custom data
       const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(of(USER_DATA));
+      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
       await openMatSelect(fixture);
       // There should be USER_DATA.length+1 <mat-option /> elements
       // The +1 is the <mat-option /> for ngx-mat-select-search.
@@ -472,7 +479,7 @@ describe('SPMatSelectEntityComponent', () => {
         By.directive(MatSelect),
       ).componentInstance;
       const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(of(USER_DATA));
+      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
       await openMatSelect(fixture);
       expect(matSel.options.length).toEqual(1 + USER_DATA.length);
       const optionsCountBefore = matSel.options.length;
@@ -487,7 +494,7 @@ describe('SPMatSelectEntityComponent', () => {
         By.directive(MatSelect),
       ).componentInstance;
       const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(of(USER_DATA));
+      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
       await openMatSelect(fixture);
       expect(matSel.options.length).toEqual(1 + USER_DATA.length);
       const optionsCountBefore = matSel.options.length;
@@ -509,11 +516,11 @@ describe('SPMatSelectEntityComponent', () => {
       fixture.componentInstance.filter$.next('$$');
       // fixture.detectChanges();
       const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(of(USER_DATA));
+      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
       await openMatSelect(fixture);
       expect(
         matSel.options.last._getHostElement().innerText.includes('create'),
-      ).toBeTrue();
+      ).toBeTruthy();
 
       // select the New Item option
       let createNewItemSelected = false;
@@ -525,7 +532,7 @@ describe('SPMatSelectEntityComponent', () => {
         )
         .subscribe();
       matSel.options.last.select(true);
-      expect(createNewItemSelected).toBeTrue();
+      expect(createNewItemSelected).toBeTruthy();
     });
 
     it('should have New Item option when inlineNew=true and entities at remote length = 0', async () => {
@@ -536,11 +543,11 @@ describe('SPMatSelectEntityComponent', () => {
       fixture.componentRef.setInput('inlineNew', true);
       // fixture.detectChanges();
       const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(of([])); // return empty list
+      vitest.spyOn(http, 'get').mockReturnValue(of([])); // return empty list
       await openMatSelect(fixture);
       expect(
         matSel.options.last._getHostElement().innerText.includes('create'),
-      ).toBeTrue();
+      ).toBeTruthy();
 
       // select the New Item option
       let createNewItemSelected = false;
@@ -552,7 +559,7 @@ describe('SPMatSelectEntityComponent', () => {
         )
         .subscribe();
       matSel.options.last.select(true);
-      expect(createNewItemSelected).toBeTrue();
+      expect(createNewItemSelected).toBeTruthy();
     });
 
     it('should maintain current value even when Add Item is selected', async () => {
@@ -565,7 +572,7 @@ describe('SPMatSelectEntityComponent', () => {
       ).componentInstance;
 
       const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(of(USER_DATA));
+      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
 
       fixture.componentInstance.filterStr = 'a'; // to show the New Item option
       fixture.componentInstance.filter$.next('a');
@@ -577,7 +584,7 @@ describe('SPMatSelectEntityComponent', () => {
         matSel.options.last
           ._getHostElement()
           .innerText.includes('spMatSelectEntity.createNew'),
-      ).toBeTrue();
+      ).toBeTruthy();
       // first select first item
       const firstOption = matSel.options.get(1);
       firstOption?.select(true);
@@ -610,7 +617,7 @@ describe('SPMatSelectEntityComponent', () => {
       fixture.detectChanges();
       await fixture.whenStable();
       await new Promise((r) => setTimeout(r, DEBOUNCE_TIMEOUT));
-      expect(createNewItemSelected).toBeTrue();
+      expect(createNewItemSelected).toBeTruthy();
       fixture.detectChanges();
       await new Promise((r) => setTimeout(r, 100));
       expect(matSel.value).toEqual(currentSel);
@@ -623,12 +630,7 @@ describe('SPMatSelectEntityComponent', () => {
 
     beforeEach(async () => {
       TestBed.configureTestingModule({
-        imports: [
-          NoopAnimationsModule,
-          FormsModule,
-          SelectEntityDemoComponent,
-          getTranslocoModule(),
-        ],
+        imports: [FormsModule, SelectEntityDemoComponent, getTranslocoModule()],
         providers: [provideHttpClient(), provideHttpClientTesting()],
       });
       demoFixture = TestBed.createComponent(SelectEntityDemoComponent);
@@ -637,7 +639,9 @@ describe('SPMatSelectEntityComponent', () => {
 
     it('should fetch data from the same endpoint only once', async () => {
       const http = TestBed.inject(HttpClient);
-      const getUsersSpy = spyOn(http, 'get').and.returnValue(of(USER_DATA));
+      const getUsersSpy = vitest
+        .spyOn(http, 'get')
+        .mockReturnValue(of(USER_DATA));
       demoFixture.autoDetectChanges();
       const spMatSelects = demoFixture.debugElement.queryAll(
         By.directive(SPMatSelectEntityComponent),
@@ -678,11 +682,7 @@ describe('SPMatSelectEntityComponent', () => {
 
     beforeEach(async () => {
       TestBed.configureTestingModule({
-        imports: [
-          NoopAnimationsModule,
-          SPMatSelectEntityComponent,
-          getTranslocoModule(),
-        ],
+        imports: [SPMatSelectEntityComponent, getTranslocoModule()],
         providers: [provideHttpClient(), provideHttpClientTesting()],
       }).compileComponents();
       fixture = TestBed.createComponent(SPMatSelectEntityComponent<User>);
@@ -707,7 +707,7 @@ describe('SPMatSelectEntityComponent', () => {
     // MatSelectEntityComponent with multiple selection
     it('should allow multiple selection', async () => {
       const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(of(USER_DATA));
+      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
       await openMatSelect(fixture);
       expect(matSel.options.length).toEqual(1 + USER_DATA.length);
 
@@ -720,7 +720,7 @@ describe('SPMatSelectEntityComponent', () => {
       sel1.select(true);
       sel2.select(true);
       await fixture.whenStable();
-      expect(Array.isArray(matSel.value)).toBeTrue();
+      expect(Array.isArray(matSel.value)).toBeTruthy();
       const values: number[] = matSel.value;
       // Sort the array, before comparing them!
       expect(values.sort()).toEqual([sel1.value, sel2.value].sort());
@@ -728,7 +728,7 @@ describe('SPMatSelectEntityComponent', () => {
 
     it('should display selection count > 1 as +n', async () => {
       const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(of(USER_DATA));
+      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
       await openMatSelect(fixture);
       expect(matSel.options.length).toEqual(1 + USER_DATA.length);
       const sel1 = matSel.options.get(1) as MatOption<any>;
@@ -738,7 +738,7 @@ describe('SPMatSelectEntityComponent', () => {
       sel2.select(true);
       sel3.select(true);
       await fixture.whenStable();
-      expect(Array.isArray(matSel.value)).toBeTrue();
+      expect(Array.isArray(matSel.value)).toBeTruthy();
       const values: number[] = matSel.value;
       // Sort the array, before comparing them!
       expect(values.sort()).toEqual(
@@ -755,7 +755,7 @@ describe('SPMatSelectEntityComponent', () => {
 
     it("should emit 'entitySelected' event", async () => {
       const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(of(USER_DATA));
+      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
       await openMatSelect(fixture);
       // There should be USER_DATA.length+1 <mat-option /> elements
       // The +1 is the <mat-option /> for ngx-mat-select-search.
@@ -791,7 +791,7 @@ describe('SPMatSelectEntityComponent', () => {
       fixture.componentInstance.filter$.next('$$');
       fixture.detectChanges();
       const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(of(USER_DATA));
+      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
       await openMatSelect(fixture);
       expect(matSel.options.length).toEqual(2);
     });
@@ -804,11 +804,7 @@ describe('SPMatSelectEntityComponent', () => {
 
     beforeEach(async () => {
       TestBed.configureTestingModule({
-        imports: [
-          NoopAnimationsModule,
-          SPMatSelectEntityComponent,
-          getTranslocoModule(),
-        ],
+        imports: [SPMatSelectEntityComponent, getTranslocoModule()],
         providers: [provideHttpClient(), provideHttpClientTesting()],
       }).compileComponents();
       fixture = TestBed.createComponent(SPMatSelectEntityComponent<User>);
@@ -833,7 +829,7 @@ describe('SPMatSelectEntityComponent', () => {
 
     it("should load options when 'groupOptionsKey' is set to a string", async () => {
       const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(of(USER_DATA));
+      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
       fixture.componentRef.setInput('groupOptionsKey', 'role');
       await openMatSelect(fixture);
       expect(matSel.options.length).toEqual(1 + USER_DATA.length);
@@ -874,7 +870,7 @@ describe('SPMatSelectEntityComponent', () => {
         (user: User) => user.role,
       );
       const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(of(USER_DATA));
+      vitest.spyOn(http, 'get').mockReturnValue(of(USER_DATA));
       await openMatSelect(fixture);
       expect(matSel.options.length).toEqual(1 + USER_DATA.length);
       const matOptGroup = fixture.debugElement.queryAll(
@@ -916,11 +912,7 @@ describe('SPMatSelectEntityComponent', () => {
 
     beforeEach(async () => {
       TestBed.configureTestingModule({
-        imports: [
-          NoopAnimationsModule,
-          SPMatSelectEntityComponent,
-          getTranslocoModule(),
-        ],
+        imports: [SPMatSelectEntityComponent, getTranslocoModule()],
         providers: [provideHttpClient(), provideHttpClientTesting()],
       }).compileComponents();
       fixture = TestBed.createComponent(SPMatSelectEntityComponent<User>);
@@ -939,7 +931,7 @@ describe('SPMatSelectEntityComponent', () => {
 
     it('should load options from sideloaded response', async () => {
       const http = TestBed.inject(HttpClient);
-      spyOn(http, 'get').and.returnValue(
+      vitest.spyOn(http, 'get').mockReturnValue(
         of({
           meta: {
             total: USER_DATA.length,

@@ -5,19 +5,17 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatInputHarness } from '@angular/material/input/testing';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import {
   defaultImports,
   defaultProviders,
 } from './ngx-mat-errors.component.spec';
-
 
 xdescribe('NgxErrorList', () => {
   let loader: HarnessLoader;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [NoopAnimationsModule],
+      imports: [],
     });
   });
 
@@ -38,7 +36,11 @@ xdescribe('NgxErrorList', () => {
   })
   class NgxMatErrorWithoutDef {
     form = new FormGroup({
-      email: new FormControl('', [Validators.required, Validators.minLength(3), Validators.email]),
+      email: new FormControl('', [
+        Validators.required,
+        Validators.minLength(3),
+        Validators.email,
+      ]),
     });
   }
 
@@ -50,11 +52,11 @@ xdescribe('NgxErrorList', () => {
   });
 
   it('should display only one error message when control is touched and invalid', async () => {
-    fixture.componentInstance.form.get('email')?.setErrors({required: true});
+    fixture.componentInstance.form.get('email')?.setErrors({ required: true });
     const matInput = await loader.getHarness(MatInputHarness);
     await matInput.blur();
-    fixture.componentInstance.form.setErrors({required: true, email: true});
-    await new Promise(res => setTimeout(res, 100));
+    fixture.componentInstance.form.setErrors({ required: true, email: true });
+    await new Promise((res) => setTimeout(res, 100));
     fixture.detectChanges();
     const errorList = fixture.debugElement.queryAll(By.css('li'));
     expect(errorList.length).toEqual(2);

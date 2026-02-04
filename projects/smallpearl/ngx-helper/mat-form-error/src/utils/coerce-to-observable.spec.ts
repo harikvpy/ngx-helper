@@ -3,7 +3,7 @@ import { coerceToObservable } from './coerce-to-observable';
 
 describe('coerceToObservable', () => {
   it('should return observable', () => {
-    expect(isObservable(coerceToObservable({}))).toBeTrue();
-    expect(isObservable(coerceToObservable(of({})))).toBeTrue();
+    expect(isObservable(coerceToObservable({}))).toBeTruthy();
+    expect(isObservable(coerceToObservable(of({})))).toBeTruthy();
   });
 });

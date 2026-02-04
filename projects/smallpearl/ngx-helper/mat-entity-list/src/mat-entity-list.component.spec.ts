@@ -253,7 +253,7 @@ describe('SPMatEntityListComponent', () => {
     const paginator =
       fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
-    expect(httpReqContextReceived).toBeTrue();
+    expect(httpReqContextReceived).toBeTruthy();
   });
 
   it('should reload data when endpoint changes', async () => {
@@ -290,7 +290,7 @@ describe('SPMatEntityListComponent', () => {
     const paginator =
       fixture.debugElement.nativeElement.querySelector('mat-paginator');
     expect(paginator).toBeFalsy();
-    expect(httpReqContextReceived).toBeTrue();
+    expect(httpReqContextReceived).toBeTruthy();
     httpGetSpy.calls.reset();
     componentRef.setInput(
       'endpoint',
@@ -535,8 +535,8 @@ describe('SPMatEntityListComponent', () => {
     // +1 for the <tr> in <thead>
     expect(rows.length).toEqual(USER_DATA.length);
     // Verify that global paginator's 'getEntitiesFromResponse' was called.
-    expect(globalPaginatorGetEntitiesFromResponseCalled).toBeTrue();
-    expect(globalUrlResolverCalled).toBeTrue();
+    expect(globalPaginatorGetEntitiesFromResponseCalled).toBeTruthy();
+    expect(globalUrlResolverCalled).toBeTruthy();
 
     // Verify that global value function specified via SPMatEntityListConfig
     // is used for matching columns without any explicit value function or
@@ -551,6 +551,6 @@ describe('SPMatEntityListComponent', () => {
       );
     }
     // global fieldValue function for 'gender' should've been called.
-    expect(globalFieldValueFnsCalled).toBeTrue();
+    expect(globalFieldValueFnsCalled).toBeTruthy();
   });
 });

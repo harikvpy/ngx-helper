@@ -4,10 +4,9 @@
   "compileOnSave": false,
   "compilerOptions": {
     "baseUrl": "./",
+    "types": ["vitest/globals", "node"],
     "paths": {
-      "@smallpearl/ngx-helper/*": [
-        "projects/smallpearl/ngx-helper/*"
-      ]
+      "@smallpearl/ngx-helper/*": ["projects/smallpearl/ngx-helper/*"]
     },
     "outDir": "./dist/out-tsc",
     "strict": true,

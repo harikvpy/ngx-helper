@@ -1,10 +1,10 @@
-import { HttpClient, provideHttpClient } from "@angular/common/http";
-import { provideHttpClientTesting } from "@angular/common/http/testing";
-import { TestBed } from "@angular/core/testing";
-import { getTranslocoModule } from "@smallpearl/ngx-helper/src/transloco-testing.module";
-import { of } from "rxjs";
-import { SPEntityLoaderFn, SPPagedEntityLoader } from "./paged-loader";
-import { SPEntityListPaginator, SPPageParams } from "./paginator";
+import { HttpClient, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { getTranslocoModule } from '@smallpearl/ngx-helper/src/transloco-testing.module';
+import { of } from 'rxjs';
+import { SPEntityLoaderFn, SPPagedEntityLoader } from './paged-loader';
+import { SPEntityListPaginator, SPPageParams } from './paginator';
 
 interface User {
   id: number;
@@ -13,7 +13,7 @@ interface User {
     first: string;
     last: string;
   };
-  phone: string
+  phone: string;
 }
 
 export const USER_DATA: User[] = [
@@ -147,7 +147,7 @@ export const USER_DATA: User[] = [
 function loaderFn(
   page: number,
   pageSize: number,
-  searchValue: string | undefined
+  searchValue: string | undefined,
 ) {
   page = page - 1;
   let filteredData = USER_DATA;
@@ -156,12 +156,12 @@ function loaderFn(
     filteredData = USER_DATA.filter(
       (u) =>
         u.name.first.toLowerCase().indexOf(svLower) >= 0 ||
-        u.name.last.toLowerCase().indexOf(svLower) >= 0
+        u.name.last.toLowerCase().indexOf(svLower) >= 0,
     );
   }
   const startIndex = page * pageSize;
   return of([...filteredData.slice(startIndex, startIndex + pageSize)]);
-};
+}
 
 const REMOTE_USERS_URL = 'https://randomuser.me/api/?nat=us,dk,fr,gb';
 
@@ -169,7 +169,7 @@ class MyPaginator implements SPEntityListPaginator {
   getRequestPageParams(
     endpoint: string,
     pageIndex: number,
-    pageSize: number
+    pageSize: number,
   ): SPPageParams {
     return {
       page: pageIndex + 1,
@@ -179,13 +179,13 @@ class MyPaginator implements SPEntityListPaginator {
 
   parseRequestResponse<
     TEntity extends { [P in IdKey]: PropertyKey },
-    IdKey extends string = 'id'
+    IdKey extends string = 'id',
   >(
     entityName: string,
     entityNamePlural: string,
     endpoint: string,
     params: SPPageParams,
-    resp: any // TEntity[]
+    resp: any, // TEntity[]
   ) {
     const searchStr = params?.['search'] as string;
     let totalUsers = USER_DATA.length;
@@ -196,7 +196,7 @@ class MyPaginator implements SPEntityListPaginator {
         (u) =>
           u.name.title.toLowerCase().indexOf(svLower) >= 0 ||
           u.name.first.toLowerCase().indexOf(svLower) >= 0 ||
-          u.name.last.toLowerCase().indexOf(svLower) >= 0
+          u.name.last.toLowerCase().indexOf(svLower) >= 0,
       );
       totalUsers = allUsers.length;
     }
@@ -226,30 +226,35 @@ xdescribe('SPPagedEntityLoader', () => {
 
     expect(pagedLoader).toBeTruthy();
     expect(pagedLoader.endpoint()).toBe(REMOTE_USERS_URL);
-    expect(pagedLoader.loading()).toBeFalse();
-    expect(pagedLoader.allEntitiesLoaded()).toBeFalse();
+    expect(pagedLoader.loading()).toBeFalsy();
+    expect(pagedLoader.allEntitiesLoaded()).toBeFalsy();
     expect(pagedLoader.totalEntitiesAtRemote()).toBe(0);
 
     // load entities
-    pagedLoader.startLoader()
+    pagedLoader.startLoader();
 
     let searchStr = '';
-    const httpSpy = spyOn(http, 'get').and.callFake((url: string, options: any) => {
-      const params = options?.params;
-      console.log(`HTTP GET called with URL: ${url} and params:`, params.toString());
-      searchStr = params?.get('search') as string;
-      return loaderFn(
-        parseInt(params?.get('page') || '1', 10) - 1,
-        parseInt(params?.get('results') || '50', 10),
-        searchStr
-      ) as any;
-    });
+    const httpSpy = spyOn(http, 'get').and.callFake(
+      (url: string, options: any) => {
+        const params = options?.params;
+        console.log(
+          `HTTP GET called with URL: ${url} and params:`,
+          params.toString(),
+        );
+        searchStr = params?.get('search') as string;
+        return loaderFn(
+          parseInt(params?.get('page') || '1', 10) - 1,
+          parseInt(params?.get('results') || '50', 10),
+          searchStr,
+        ) as any;
+      },
+    );
 
     expect((pagedLoader as any).sub$).toBeDefined();
     pagedLoader.loadNextPage();
     expect(httpSpy).toHaveBeenCalledTimes(1);
-    expect(pagedLoader.loading()).toBeFalse();
-    expect(pagedLoader.allEntitiesLoaded()).toBeTrue();
+    expect(pagedLoader.loading()).toBeFalsy();
+    expect(pagedLoader.allEntitiesLoaded()).toBeTruthy();
     expect(pagedLoader.totalEntitiesAtRemote()).toBe(USER_DATA.length);
     httpSpy.calls.reset();
 
@@ -257,28 +262,29 @@ xdescribe('SPPagedEntityLoader', () => {
     pagedLoader.setSearchParamValue('Ma');
     pagedLoader.loadNextPage();
     expect(httpSpy).toHaveBeenCalledTimes(1);
-    expect(pagedLoader.loading()).toBeFalse();
+    expect(pagedLoader.loading()).toBeFalsy();
     // Will be set only if there are no more entities to load AND no search
     // string is set.
-    expect(pagedLoader.allEntitiesLoaded()).toBeFalse();
-    const filteredUsers = USER_DATA.filter(u =>
-      u.name.title.toLowerCase().indexOf('ma') >= 0 ||
-      u.name.first.toLowerCase().indexOf('ma') >= 0 ||
-      u.name.last.toLowerCase().indexOf('ma') >= 0
+    expect(pagedLoader.allEntitiesLoaded()).toBeFalsy();
+    const filteredUsers = USER_DATA.filter(
+      (u) =>
+        u.name.title.toLowerCase().indexOf('ma') >= 0 ||
+        u.name.first.toLowerCase().indexOf('ma') >= 0 ||
+        u.name.last.toLowerCase().indexOf('ma') >= 0,
     );
     expect(pagedLoader.totalEntitiesAtRemote()).toBe(filteredUsers.length);
     expect(searchStr).toBe('Ma');
 
     pagedLoader.stopLoader();
     expect((pagedLoader as any).sub$).toBeUndefined();
-  })
+  });
 
   it('should create an instance with a loader function', () => {
     let searchStr: string | undefined;
     const loader: SPEntityLoaderFn = (
       page: number,
       pageSize: number,
-      searchValue: string | undefined
+      searchValue: string | undefined,
     ) => {
       searchStr = searchValue;
       return loaderFn(page, pageSize, searchValue);
@@ -296,30 +302,30 @@ xdescribe('SPPagedEntityLoader', () => {
     expect(pagedLoader).toBeTruthy();
     // Since we used a loader function, endpoint should be an empty string
     expect(pagedLoader.endpoint()).toBe('');
-    expect(pagedLoader.loading()).toBeFalse();
-    expect(pagedLoader.allEntitiesLoaded()).toBeFalse();
+    expect(pagedLoader.loading()).toBeFalsy();
+    expect(pagedLoader.allEntitiesLoaded()).toBeFalsy();
     expect(pagedLoader.totalEntitiesAtRemote()).toBe(0);
 
     // load entities
     pagedLoader.startLoader();
     expect((pagedLoader as any).sub$).toBeDefined();
     pagedLoader.loadNextPage();
-    expect(pagedLoader.loading()).toBeFalse();
-    expect(pagedLoader.allEntitiesLoaded()).toBeTrue();
+    expect(pagedLoader.loading()).toBeFalsy();
+    expect(pagedLoader.allEntitiesLoaded()).toBeTruthy();
     expect(pagedLoader.totalEntitiesAtRemote()).toBe(USER_DATA.length);
 
     // Test loading with search string
     pagedLoader.setSearchParamValue('MA');
     pagedLoader.loadNextPage();
-    expect(pagedLoader.loading()).toBeFalse();
+    expect(pagedLoader.loading()).toBeFalsy();
     // Will be set only if there are no more entities to load AND no search
     // string is set.
-    expect(pagedLoader.allEntitiesLoaded()).toBeFalse();
+    expect(pagedLoader.allEntitiesLoaded()).toBeFalsy();
     const filteredUsers = USER_DATA.filter(
       (u) =>
         u.name.title.toLowerCase().indexOf('ma') >= 0 ||
         u.name.first.toLowerCase().indexOf('ma') >= 0 ||
-        u.name.last.toLowerCase().indexOf('ma') >= 0
+        u.name.last.toLowerCase().indexOf('ma') >= 0,
     );
     expect(pagedLoader.totalEntitiesAtRemote()).toBe(filteredUsers.length);
     expect(searchStr).toBe('MA');
@@ -327,5 +333,4 @@ xdescribe('SPPagedEntityLoader', () => {
     pagedLoader.stopLoader();
     expect((pagedLoader as any).sub$).toBeUndefined();
   });
-
 });

@@ -1,6 +1,5 @@
 import { ComponentRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import {
   SPContextMenuItem,
@@ -14,7 +13,7 @@ describe('SPMatContextMenuComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [NoopAnimationsModule, SPMatContextMenuComponent],
+      imports: [SPMatContextMenuComponent],
       providers: [provideRouter([])],
     });
     fixture = TestBed.createComponent(SPMatContextMenuComponent);

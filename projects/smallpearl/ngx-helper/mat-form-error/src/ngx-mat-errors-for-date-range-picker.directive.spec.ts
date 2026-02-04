@@ -8,7 +8,6 @@ import { MatDateRangeInputHarness } from '@angular/material/datepicker/testing';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatErrorHarness } from '@angular/material/form-field/testing';
 import { MatInputModule } from '@angular/material/input';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { NgxMatErrorDef } from './ngx-mat-error-def.directive';
 import { NgxMatErrorsForDateRangePicker } from './ngx-mat-errors-for-date-range-picker.directive';
 import {
@@ -19,7 +18,7 @@ import {
 xdescribe('NgxMatErrorsForDateRangePicker', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [NoopAnimationsModule],
+      imports: [],
     });
   });
   @Component({
@@ -65,12 +64,12 @@ xdescribe('NgxMatErrorsForDateRangePicker', () => {
   }
   it('should assign controls of the MatDateRangePicker to ngx-mat-errors', async () => {
     const fixture = TestBed.createComponent(
-      NgxMatErrorsForDateRangePickerComponent
+      NgxMatErrorsForDateRangePickerComponent,
     );
     fixture.detectChanges();
     const loader = TestbedHarnessEnvironment.loader(fixture);
     const matDateRangeInputHarness = await loader.getHarness(
-      MatDateRangeInputHarness
+      MatDateRangeInputHarness,
     );
     const startInput = await matDateRangeInputHarness.getStartInput();
     startInput.blur();

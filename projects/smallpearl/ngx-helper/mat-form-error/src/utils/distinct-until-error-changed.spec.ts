@@ -1,5 +1,5 @@
 import type { TemplateRef } from '@angular/core';
-import type { MaxError, MinError, ErrorTemplate } from '../types';
+import type { ErrorTemplate, MaxError, MinError } from '../types';
 import { distinctUntilErrorChanged } from './distinct-until-error-changed';
 
 describe('distinctUntilErrorChanged', () => {
@@ -27,29 +27,29 @@ describe('distinctUntilErrorChanged', () => {
   } as ErrorTemplate;
 
   it('should return true if the value is the same', () => {
-    expect(distinctUntilErrorChanged(undefined, undefined)).toBeTrue();
-    expect(distinctUntilErrorChanged(minError, minError)).toBeTrue();
+    expect(distinctUntilErrorChanged(undefined, undefined)).toBeTruthy();
+    expect(distinctUntilErrorChanged(minError, minError)).toBeTruthy();
     expect(
-      distinctUntilErrorChanged(minErrorTemplate, minErrorTemplate)
-    ).toBeTrue();
+      distinctUntilErrorChanged(minErrorTemplate, minErrorTemplate),
+    ).toBeTruthy();
   });
 
   it('should return false if undefined follows other values', () => {
-    expect(distinctUntilErrorChanged(minError, undefined)).toBeFalse();
-    expect(distinctUntilErrorChanged(minErrorTemplate, undefined)).toBeFalse();
+    expect(distinctUntilErrorChanged(minError, undefined)).toBeFalsy();
+    expect(distinctUntilErrorChanged(minErrorTemplate, undefined)).toBeFalsy();
   });
 
   it('should return false if other values follow undefined', () => {
-    expect(distinctUntilErrorChanged(undefined, minError)).toBeFalse();
-    expect(distinctUntilErrorChanged(undefined, minErrorTemplate)).toBeFalse();
+    expect(distinctUntilErrorChanged(undefined, minError)).toBeFalsy();
+    expect(distinctUntilErrorChanged(undefined, minErrorTemplate)).toBeFalsy();
   });
 
   it('should return false if different values follow each other', () => {
-    expect(distinctUntilErrorChanged(minError, maxError)).toBeFalse();
-    expect(distinctUntilErrorChanged(maxError, maxErrorTemplate)).toBeFalse();
+    expect(distinctUntilErrorChanged(minError, maxError)).toBeFalsy();
+    expect(distinctUntilErrorChanged(maxError, maxErrorTemplate)).toBeFalsy();
     expect(
-      distinctUntilErrorChanged(maxErrorTemplate, minErrorTemplate)
-    ).toBeFalse();
-    expect(distinctUntilErrorChanged(minErrorTemplate, minError)).toBeFalse();
+      distinctUntilErrorChanged(maxErrorTemplate, minErrorTemplate),
+    ).toBeFalsy();
+    expect(distinctUntilErrorChanged(minErrorTemplate, minError)).toBeFalsy();
   });
 });

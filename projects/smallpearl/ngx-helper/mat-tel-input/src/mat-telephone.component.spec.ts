@@ -1,8 +1,7 @@
-import { provideHttpClient } from "@angular/common/http";
-import { provideHttpClientTesting } from "@angular/common/http/testing";
-import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { NoopAnimationsModule } from "@angular/platform-browser/animations";
-import { SPMatTelephoneInputComponent } from "./mat-telephone.component";
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { SPMatTelephoneInputComponent } from './mat-telephone.component';
 
 describe('MatTelephoneInputComponent', () => {
   let component: SPMatTelephoneInputComponent;
@@ -10,10 +9,7 @@ describe('MatTelephoneInputComponent', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      imports: [
-        NoopAnimationsModule,
-        SPMatTelephoneInputComponent
-      ],
+      imports: [SPMatTelephoneInputComponent],
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
 
@@ -24,6 +20,5 @@ describe('MatTelephoneInputComponent', () => {
 
   it('should create', () => {
     expect(true).toBeTruthy();
-  })
-
+  });
 });
