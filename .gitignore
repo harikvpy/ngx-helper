@@ -42,3 +42,4 @@ testem.log
 Thumbs.db
 
 src/assets
+projects/smallpearl/ngx-helper/node_modules
