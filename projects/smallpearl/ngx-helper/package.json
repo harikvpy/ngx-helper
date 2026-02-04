@@ -6,7 +6,7 @@
       "path": "src/assets/i18n/"
     }
   ],
-  "version": "20.0.3",
+  "version": "20.0.4",
   "peerDependencies": {
     "@angular/animations": "20.3.16",
     "@angular/cdk": "20.2.14",
