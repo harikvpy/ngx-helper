@@ -1,17 +1,13 @@
 import {
-  ApplicationConfig,
-  isDevMode,
-  provideZoneChangeDetection,
-} from '@angular/core';
-import { provideRouter } from '@angular/router';
-
-import {
   HttpClient,
   provideHttpClient,
   withInterceptorsFromDi,
 } from '@angular/common/http';
+import { ApplicationConfig, isDevMode } from '@angular/core';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideRouter } from '@angular/router';
 import { provideTransloco, TranslocoService } from '@jsverse/transloco';
 import { FORM_ERRORS, provideErrorTailorConfig } from '@ngneat/error-tailor';
 import {
@@ -74,7 +70,10 @@ const zhHant = {};
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideZoneChangeDetection({ eventCoalescing: true }),
+    // if you want to use zone.js for change detection. Remember to
+    // install zone.js and import it in your polyfills.ts (or in angular.json).
+    // provideZoneChangeDetection({ eventCoalescing: true }),
+    provideAnimations(),
     provideRouter(routes),
     provideHttpClient(withInterceptorsFromDi()),
     provideTransloco({
