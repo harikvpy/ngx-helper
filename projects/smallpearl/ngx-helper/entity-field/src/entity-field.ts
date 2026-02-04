@@ -1,7 +1,4 @@
-import {
-  spFormatCurrency,
-  spFormatDate
-} from '@smallpearl/ngx-helper/locale';
+import { spFormatCurrency, spFormatDate } from '@smallpearl/ngx-helper/locale';
 import { Observable, of } from 'rxjs';
 import { SPEntityFieldSpec } from './entity-field-spec';
 import { SPEntityFieldConfig } from './provider';
