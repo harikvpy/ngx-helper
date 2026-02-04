@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import {
@@ -9,10 +9,9 @@ import {
 
 @Component({
     imports: [
-        CommonModule,
-        MatButtonModule,
-        SPMatHostBusyWheelDirective,
-    ],
+    MatButtonModule,
+    SPMatHostBusyWheelDirective
+],
     selector: 'app-busy-wheel-demo',
     template: `
   <h2>Busy Wheel Demo</h2>

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -140,12 +140,11 @@ const BLOCKS: Block[] = [
 @Component({
     selector: 'app-posts',
     imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        MatFormFieldModule,
-        MatSelectModule,
-        InfiniteScrollDirective,
-    ],
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    InfiniteScrollDirective
+],
     template: `
   <!--
     infiniteScrollContainer=".sp-sidenav-content-container"

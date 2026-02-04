@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
     selector: 'app-bookings',
-    imports: [CommonModule],
+    imports: [],
     template: `<h2>Bookings</h2>`,
     styles: []
 })

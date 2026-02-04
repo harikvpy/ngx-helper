@@ -27,31 +27,39 @@ import { NavItem } from './nav-item';
     <div class="menu-pane-wrapper">
       <div class="sidenav-branding mat-toolbar-single-row">
         <div class="branding branding-logo">
-          <img *ngIf="brandingImage" [src]="brandingImage" />
+          @if (brandingImage) {
+            <img [src]="brandingImage" />
+          }
         </div>
         <h4 class="mat-typography branding branding-text">
           {{ brandingText }}
         </h4>
       </div>
       <div class="sidenav-menu">
-        <div *ngIf="menuTitle" class="mat-body title">{{ menuTitle }}</div>
+        @if (menuTitle) {
+          <div class="mat-body title">{{ menuTitle }}</div>
+        }
         <mat-nav-list>
-          <ngx-mat-menu-list-item
-            *ngIf="backButtonNavItem"
-            [item]="backButtonNavItem"
-          ></ngx-mat-menu-list-item>
-          <ngx-mat-menu-list-item
-            *ngFor="let item of menuItems"
-            [item]="item"
-            [showIcon]="showIcons"
-          ></ngx-mat-menu-list-item>
+          @if (backButtonNavItem) {
+            <ngx-mat-menu-list-item
+              [item]="backButtonNavItem"
+            ></ngx-mat-menu-list-item>
+          }
+          @for (item of menuItems; track item) {
+            <ngx-mat-menu-list-item
+              [item]="item"
+              [showIcon]="showIcons"
+            ></ngx-mat-menu-list-item>
+          }
         </mat-nav-list>
       </div>
-      <div class="sidenav-version" *ngIf="menuPaneFooterContent">
-        <ng-container *ngTemplateOutlet="menuPaneFooterContent"> </ng-container>
-      </div>
+      @if (menuPaneFooterContent) {
+        <div class="sidenav-version">
+          <ng-container *ngTemplateOutlet="menuPaneFooterContent"> </ng-container>
+        </div>
+      }
     </div>
-  `,
+    `,
     styleUrls: ['./mat-menu-pane.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: false

@@ -73,18 +73,18 @@ type TelephoneNumberParts = CountryInfo & { nationalNumber: string };
       [attr.aria-labelledby]="_formField?.getLabelId()"
       (focusin)="onFocusIn($event)"
       (focusout)="onFocusOut($event)"
-    >
+      >
       <select
         #countryCodeSelector
         title="Country Code"
         formControlName="country"
         (change)="onCountryChange($event)"
-      >
+        >
         <option
           *ngFor="let c of filteredCountries | async"
           value="{{ c.code }}"
           [attr.data-descr]="c.name + '.' + c.callingCode"
-        >
+          >
           {{ c.name }} +{{ c.callingCode }}
         </option>
       </select>
@@ -93,15 +93,15 @@ type TelephoneNumberParts = CountryInfo & { nationalNumber: string };
         formControlName="national"
         type="tel"
         (input)="onNationalNumberChange($event)"
-      />
+        />
     </div>
--->
+    -->
     <div class="tel-input-wrapper" [formGroup]="parts">
       <mat-select
         #countryCodeSelector
         formControlName="country"
         (selectionChange)="onCountryChange($event)"
-      >
+        >
         <mat-option>
           <ngx-mat-select-search
             [placeholderLabel]="searchText"
@@ -109,13 +109,14 @@ type TelephoneNumberParts = CountryInfo & { nationalNumber: string };
             [formControl]="countryFilterCtrl"
           ></ngx-mat-select-search>
         </mat-option>
-        <mat-option
-          *ngFor="let c of filteredCountries | async"
-          [value]="c"
-          [attr.data-descr]="c.name + '.' + c.callingCode"
-        >
-          {{ c.name }} +{{ c.callingCode }}
-        </mat-option>
+        @for (c of filteredCountries | async; track c) {
+          <mat-option
+            [value]="c"
+            [attr.data-descr]="c.name + '.' + c.callingCode"
+            >
+            {{ c.name }} +{{ c.callingCode }}
+          </mat-option>
+        }
       </mat-select>
       <input
         style="padding-left: 4px"
@@ -123,9 +124,9 @@ type TelephoneNumberParts = CountryInfo & { nationalNumber: string };
         formControlName="national"
         type="tel"
         (input)="onNationalNumberChange($event)"
-      />
+        />
     </div>
-  `,
+    `,
     styles: `
     .tel-input-wrapper {
       display: flex;

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import {
   HttpClient,
   HttpContext,
@@ -16,12 +16,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import {
-  ComponentFixture,
-  fakeAsync,
-  TestBed,
-  tick,
-} from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
   FormControl,
   FormGroup,
@@ -176,7 +171,7 @@ type UserEntityCrudComponent = SPMatEntityCrudComponent<User, 'cell'>;
 
 @Component({
   imports: [
-    CommonModule,
+    AsyncPipe,
     FormsModule,
     ReactiveFormsModule,
     MatFormFieldModule,
@@ -284,7 +279,6 @@ export class CreateEditUserComponent extends SPMatEntityCrudFormBase<
  */
 @Component({
   imports: [
-    CommonModule,
     MatTableModule,
     SPMatEntityCrudComponent,
     CreateEditUserComponent,
@@ -521,7 +515,7 @@ describe('SPMatEntityCrudComponent', () => {
       expect(paginator).toBeFalsy();
     });
 
-    it('should disable all action items if disableItemActions=true', fakeAsync(() => {
+    it('should disable all action items if disableItemActions=true', async () => {
       // await createCrudComponent();
       componentRef.setInput(
         'endpoint',
@@ -536,7 +530,7 @@ describe('SPMatEntityCrudComponent', () => {
       const http = TestBed.inject(HttpClient);
       spyOn(http, 'get').and.returnValue(of(USER_DATA));
       fixture.autoDetectChanges();
-      tick(100);
+      await new Promise((r) => setTimeout(r, 100));
       expect(component).toBeTruthy();
       const rows =
         fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
@@ -553,7 +547,7 @@ describe('SPMatEntityCrudComponent', () => {
       expect(actionBtn).toBeTruthy();
       actionBtn.click();
       fixture.detectChanges();
-      tick(100);
+      await new Promise((r) => setTimeout(r, 100));
       const matMenu = fixture.debugElement.query(By.directive(MatMenu));
       expect(matMenu).toBeTruthy();
       // mat-menu-item buttons are dynamically crated in the document root
@@ -563,9 +557,9 @@ describe('SPMatEntityCrudComponent', () => {
       );
       // one for "Update" and one for "Delete"
       expect(menuItems.length).toEqual(2);
-    }));
+    });
 
-    it('should invoke custom action handlers', fakeAsync(() => {
+    it('should invoke custom action handlers', async () => {
       // await createCrudComponent();
       componentRef.setInput(
         'endpoint',
@@ -616,7 +610,7 @@ describe('SPMatEntityCrudComponent', () => {
       const http = TestBed.inject(HttpClient);
       spyOn(http, 'get').and.returnValue(of(USER_DATA));
       fixture.autoDetectChanges();
-      tick(100);
+      await new Promise((r) => setTimeout(r, 100));
       expect(component).toBeTruthy();
       const rows =
         fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
@@ -702,7 +696,7 @@ describe('SPMatEntityCrudComponent', () => {
         fixture.detectChanges();
         expect(customAction3Called).toBeTrue();
       }
-    }));
+    });
 
     it('should not display "New Item" button disableCreate = true', async () => {
       // await createCrudComponent();
@@ -1026,7 +1020,7 @@ describe('SPMatEntityCrudComponent', () => {
       expect(httpGETReqContextReceived).toBeTrue();
     });
 
-    it("should refresh all entities after CREATE when refreshAfterEdit='all'", fakeAsync(() => {
+    it("should refresh all entities after CREATE when refreshAfterEdit='all'", async () => {
       componentRef.setInput(
         'endpoint',
         'https://randomuser.me/api/?results=100&nat=us,dk,fr,gb',
@@ -1039,15 +1033,17 @@ describe('SPMatEntityCrudComponent', () => {
       // componentRef.setInput('crudOpFn', crudOpFn);
       componentRef.setInput('refreshAfterEdit', 'all');
       fixture.autoDetectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
       expect(getSpy).toHaveBeenCalledTimes(1);
       // Mocking object UPDATE by calling the bridge method directly
       // This should result in another call to load all entities as we have
       // set refreshAfterEdit='all'
-      firstValueFrom(component.update(USER_DATA[0]['cell'], { gender: 'M' }));
-      tick();
+      await firstValueFrom(
+        component.update(USER_DATA[0]['cell'], { gender: 'M' }),
+      );
+      await new Promise((r) => setTimeout(r));
       expect(getSpy).toHaveBeenCalledTimes(2);
-    }));
+    });
 
     it("should call crudResponseParser after CREATE/UPDATE when refreshAfterEdit='object'", async () => {
       componentRef.setInput(
@@ -1107,7 +1103,7 @@ describe('SPMatEntityCrudComponent', () => {
     let component!: UserEntityCrudComponent;
     let componentRef!: ComponentRef<UserEntityCrudComponent>;
 
-    beforeEach(fakeAsync(() => {
+    beforeEach(async () => {
       TestBed.configureTestingModule({
         imports: [SPMatEntityCrudTestComponent, getTranslocoModule()],
         providers: [
@@ -1130,10 +1126,10 @@ describe('SPMatEntityCrudComponent', () => {
       const http = TestBed.inject(HttpClient);
       spyOn(http, 'get').and.returnValue(of(USER_DATA));
       testComponentFixture.autoDetectChanges();
-      tick(100);
-    }));
+      await new Promise((r) => setTimeout(r, 100));
+    });
 
-    it('should take matColumnDef from projected content', fakeAsync(() => {
+    it('should take matColumnDef from projected content', async () => {
       const rows =
         testComponentFixture.debugElement.nativeElement.querySelectorAll('tr');
       // +1 for the <tr> in <thead>
@@ -1157,9 +1153,9 @@ describe('SPMatEntityCrudComponent', () => {
           'div.my-list-pane-wrapper-class',
         );
       expect(wrapperDiv).toBeTruthy();
-    }));
+    });
 
-    it('should show preview pane when a row is clicked', fakeAsync(() => {
+    it('should show preview pane when a row is clicked', async () => {
       expect(component).toBeTruthy();
       let createEditActivatedEvents: Array<{
         activated: boolean;
@@ -1181,7 +1177,7 @@ describe('SPMatEntityCrudComponent', () => {
       expect(rows.length).toEqual(USER_DATA.length);
       rows[0].click(); // click the first row
       testComponentFixture.detectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
       const previewPane =
         testComponentFixture.debugElement.nativeElement.querySelector(
           'sp-mat-entity-crud-preview-pane',
@@ -1210,7 +1206,7 @@ describe('SPMatEntityCrudComponent', () => {
         button.click();
       }
       testComponentFixture.autoDetectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
       // Test that createEditActivatedEvent was received with the correct args
       expect(createEditActivatedEvents.length).toEqual(2);
       expect(createEditActivatedEvents[0].activated).toBeTrue();
@@ -1221,9 +1217,9 @@ describe('SPMatEntityCrudComponent', () => {
       expect(createEditActivatedEvents[1].cancelled).toEqual(undefined);
 
       sub.unsubscribe();
-    }));
+    });
 
-    it('should show the create form when New button is selected', fakeAsync(() => {
+    it('should show the create form when New button is selected', async () => {
       const http = TestBed.inject(HttpClient);
       const JOHN_SMITH: User = {
         name: { title: 'mr', first: 'John', last: 'Smith' },
@@ -1244,7 +1240,7 @@ describe('SPMatEntityCrudComponent', () => {
       );
       matButton.nativeElement.click();
       testComponentFixture.detectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
       const createEditHost = testComponentFixture.debugElement.query(
         By.directive(CreateEditUserComponent),
       );
@@ -1281,9 +1277,9 @@ describe('SPMatEntityCrudComponent', () => {
           ?.store.query(getEntitiesCount());
         expect(newCount).toEqual(USER_DATA.length + 1);
       }
-    }));
+    });
 
-    it('should set form control errors when form control validation fails', fakeAsync(() => {
+    it('should set form control errors when form control validation fails', async () => {
       const http = TestBed.inject(HttpClient);
       const JOHN_SMITH: User = {
         name: { title: 'mr', first: 'John', last: 'Smith' },
@@ -1304,7 +1300,7 @@ describe('SPMatEntityCrudComponent', () => {
       );
       matButton.nativeElement.click();
       testComponentFixture.detectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
       const createEditHost = testComponentFixture.debugElement.query(
         By.directive(CreateEditUserComponent),
       );
@@ -1349,9 +1345,9 @@ describe('SPMatEntityCrudComponent', () => {
           ?.store.query(getEntitiesCount());
         expect(newCount).toEqual(USER_DATA.length);
       }
-    }));
+    });
 
-    it('should close the form when Bridge.close() is called', fakeAsync(() => {
+    it('should close the form when Bridge.close() is called', async () => {
       const http = TestBed.inject(HttpClient);
       const JOHN_SMITH: User = {
         name: { title: 'mr', first: 'John', last: 'Smith' },
@@ -1385,7 +1381,7 @@ describe('SPMatEntityCrudComponent', () => {
       );
       matButton.nativeElement.click();
       testComponentFixture.detectChanges();
-      tick(100);
+      await new Promise((r) => setTimeout(r, 100));
       const createEditHost = testComponentFixture.debugElement.query(
         By.directive(CreateEditUserComponent),
       );
@@ -1436,9 +1432,9 @@ describe('SPMatEntityCrudComponent', () => {
       expect(createEditActivatedEvents[1].mode).toEqual('edit');
       expect(createEditActivatedEvents[1].cancelled).toBeFalse();
       sub?.unsubscribe();
-    }));
+    });
 
-    it('should show the new subtypes when New button is selected', fakeAsync(() => {
+    it('should show the new subtypes when New button is selected', async () => {
       const http = TestBed.inject(HttpClient);
       const JOHN_SMITH: User = {
         name: { title: 'mr', first: 'John', last: 'Smith' },
@@ -1482,21 +1478,21 @@ describe('SPMatEntityCrudComponent', () => {
       expect(testComponent.lastAction.role).toEqual('car');
       (matMenuItems[1].nativeElement as HTMLElement).click();
       expect(testComponent.lastAction.role).toEqual('bike');
-    }));
+    });
 
-    it('should show the edit form when Edit context menu item is selected', fakeAsync(() => {
+    it('should show the edit form when Edit context menu item is selected', async () => {
       let editFormComponent = testComponentFixture.debugElement.query(
         By.directive(CreateEditUserComponent),
       );
       expect(editFormComponent).toBeFalsy();
       // simulate item action by calling the mat-context-menu method directly
       component.onItemAction('_update_', USER_DATA[0]);
-      tick();
+      await new Promise((r) => setTimeout(r));
       editFormComponent = testComponentFixture.debugElement.query(
         By.directive(CreateEditUserComponent),
       );
       expect(editFormComponent).toBeTruthy();
-    }));
+    });
   });
 
   //  * Tests that the CreateEditUserComponent works in standalone mode. That is
@@ -1511,14 +1507,14 @@ describe('SPMatEntityCrudComponent', () => {
     let fixture!: ComponentFixture<CreateEditUserComponent>;
     let component!: CreateEditUserComponent;
 
-    beforeEach(fakeAsync(() => {
+    beforeEach(async () => {
       TestBed.configureTestingModule({
         imports: [CreateEditUserComponent, getTranslocoModule()],
         providers: [provideHttpClient(), provideHttpClientTesting()],
       });
       fixture = TestBed.createComponent(CreateEditUserComponent);
       component = fixture.componentInstance;
-    }));
+    });
 
     it('should validate baseUrl and entityName inputs are defined', () => {
       fixture.componentRef.setInput('entity', undefined);
@@ -1556,7 +1552,7 @@ describe('SPMatEntityCrudComponent', () => {
       );
     });
 
-    it('should create a user', fakeAsync(() => {
+    it('should create a user', async () => {
       fixture.componentRef.setInput('entity', undefined);
       fixture.componentRef.setInput('bridge', undefined);
       fixture.componentRef.setInput('entityName', 'user');
@@ -1590,7 +1586,7 @@ describe('SPMatEntityCrudComponent', () => {
       const matButton = fixture.debugElement.query(By.directive(MatButton));
       matButton.nativeElement.click();
       fixture.detectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
       const inputs =
         fixture.debugElement.nativeElement.querySelectorAll('input');
       inputs[0].value = JOHN_SMITH.name.first;
@@ -1605,7 +1601,7 @@ describe('SPMatEntityCrudComponent', () => {
       // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
       component.form().controls['gender'].setValue('female');
       fixture.detectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
       expect(component.form().valid).toBeTrue();
       const submitButton = fixture.debugElement.nativeElement.querySelector(
         "button[type='submit']",
@@ -1613,11 +1609,11 @@ describe('SPMatEntityCrudComponent', () => {
       expect(submitButton).toBeTruthy();
       submitButton.click();
       fixture.detectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
       expect(postSpy).toHaveBeenCalled();
-    }));
+    });
 
-    it('should update a user', fakeAsync(() => {
+    it('should update a user', async () => {
       const JOHN_SMITH: User = {
         name: { title: 'mr', first: 'John', last: 'Smith' },
         gender: 'female',
@@ -1640,7 +1636,7 @@ describe('SPMatEntityCrudComponent', () => {
       );
 
       fixture.autoDetectChanges();
-      tick(); // trigger loadEntity$
+      await new Promise((r) => setTimeout(r)); // trigger loadEntity$
       expect(getSpy).toHaveBeenCalled();
       const inputs =
         fixture.debugElement.nativeElement.querySelectorAll('input');
@@ -1655,7 +1651,7 @@ describe('SPMatEntityCrudComponent', () => {
         input.dispatchEvent(new Event('input'));
       });
       fixture.detectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
       expect(component.form().valid).toBeTrue();
 
       let patchData: any = null;
@@ -1679,7 +1675,7 @@ describe('SPMatEntityCrudComponent', () => {
       expect(submitButton).toBeTruthy();
       submitButton.click();
       fixture.detectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
       expect(patchSpy).toHaveBeenCalled();
       // Verify that patch request data is correct
       expect(patchData).toEqual({
@@ -1693,9 +1689,9 @@ describe('SPMatEntityCrudComponent', () => {
           last: EXISTING_USER.name.last + 'Edited',
         },
       });
-    }));
+    });
 
-    it('should load entity based on loadEntityRequired returns value', fakeAsync(() => {
+    it('should load entity based on loadEntityRequired returns value', async () => {
       const JOHN_SMITH: User = {
         name: { title: 'mr', first: 'John', last: 'Smith' },
         gender: 'female',
@@ -1717,7 +1713,7 @@ describe('SPMatEntityCrudComponent', () => {
         },
       );
       fixture.autoDetectChanges();
-      tick(); // trigger loadEntity$
+      await new Promise((r) => setTimeout(r)); // trigger loadEntity$
       expect(getSpy).toHaveBeenCalledTimes(0);
 
       // Now set loadEntityRequired to return true so that we can force
@@ -1732,11 +1728,11 @@ describe('SPMatEntityCrudComponent', () => {
       fixture.componentRef.setInput('baseUrl', 'http://randomuser.me/api/');
       fixture.componentRef.setInput('idKey', 'cell');
       fixture.autoDetectChanges();
-      tick(); // trigger loadEntity$
+      await new Promise((r) => setTimeout(r)); // trigger loadEntity$
       expect(getSpy).toHaveBeenCalledTimes(1);
-    }));
+    });
 
-    it('should set httpReqContext input in HTTP requests', fakeAsync(() => {
+    it('should set httpReqContext input in HTTP requests', async () => {
       const JOHN_SMITH: User = {
         name: { title: 'mr', first: 'John', last: 'Smith' },
         gender: 'female',
@@ -1772,7 +1768,7 @@ describe('SPMatEntityCrudComponent', () => {
       const matButton = fixture.debugElement.query(By.directive(MatButton));
       matButton.nativeElement.click();
       fixture.detectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
       const inputs =
         fixture.debugElement.nativeElement.querySelectorAll('input');
       inputs[0].value = JOHN_SMITH.name.first;
@@ -1787,7 +1783,7 @@ describe('SPMatEntityCrudComponent', () => {
       // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
       component.form().controls['gender'].setValue('female');
       fixture.detectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
       expect(component.form().valid).toBeTrue();
       const submitButton = fixture.debugElement.nativeElement.querySelector(
         "button[type='submit']",
@@ -1795,12 +1791,12 @@ describe('SPMatEntityCrudComponent', () => {
       expect(submitButton).toBeTruthy();
       submitButton.click();
       fixture.detectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
       expect(postSpy).toHaveBeenCalled();
       expect(httpPOSTReqContextReceived).toBeTrue();
-    }));
+    });
 
-    it('should convert sideloaded CREATE entity response into entity object', fakeAsync(() => {
+    it('should convert sideloaded CREATE entity response into entity object', async () => {
       const JOHN_SMITH: User = {
         name: { title: 'mr', first: 'John', last: 'Smith' },
         gender: 'female',
@@ -1840,7 +1836,7 @@ describe('SPMatEntityCrudComponent', () => {
       const matButton = fixture.debugElement.query(By.directive(MatButton));
       matButton.nativeElement.click();
       fixture.detectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
       const inputs =
         fixture.debugElement.nativeElement.querySelectorAll('input');
       inputs[0].value = JOHN_SMITH.name.first;
@@ -1855,7 +1851,7 @@ describe('SPMatEntityCrudComponent', () => {
       // (select.componentInstance as MatSelect).writeValue(JOHN_SMITH.gender);
       component.form().controls['gender'].setValue('female');
       fixture.detectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
       expect(component.form().valid).toBeTrue();
       const submitButton = fixture.debugElement.nativeElement.querySelector(
         "button[type='submit']",
@@ -1863,13 +1859,13 @@ describe('SPMatEntityCrudComponent', () => {
       expect(submitButton).toBeTruthy();
       submitButton.click();
       fixture.detectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
       expect(postSpy).toHaveBeenCalled();
       expect(httpPOSTReqContextReceived).toBeTrue();
       expect(postCreateSpy).toHaveBeenCalledOnceWith(CREATE_RESPONSE.user);
-    }));
+    });
 
-    it('should convert sideloaded UPDATE entity response into entity object', fakeAsync(() => {
+    it('should convert sideloaded UPDATE entity response into entity object', async () => {
       const JOHN_SMITH: User = {
         name: { title: 'mr', first: 'John', last: 'Smith' },
         gender: 'female',
@@ -1892,7 +1888,7 @@ describe('SPMatEntityCrudComponent', () => {
       );
 
       fixture.autoDetectChanges();
-      tick(); // trigger loadEntity$
+      await new Promise((r) => setTimeout(r)); // trigger loadEntity$
       expect(getSpy).toHaveBeenCalled();
       const inputs =
         fixture.debugElement.nativeElement.querySelectorAll('input');
@@ -1907,7 +1903,7 @@ describe('SPMatEntityCrudComponent', () => {
         input.dispatchEvent(new Event('input'));
       });
       fixture.detectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
       expect(component.form().valid).toBeTrue();
 
       const postUpdateSpy = spyOn(component, 'onPostUpdate').and.callThrough();
@@ -1930,7 +1926,7 @@ describe('SPMatEntityCrudComponent', () => {
       expect(submitButton).toBeTruthy();
       submitButton.click();
       fixture.detectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
       expect(patchSpy).toHaveBeenCalled();
       // Verify that patch request data is correct
       expect(patchData).toEqual({
@@ -1945,9 +1941,9 @@ describe('SPMatEntityCrudComponent', () => {
         },
       });
       expect(postUpdateSpy).toHaveBeenCalledOnceWith(PATCHED_USER);
-    }));
+    });
 
-    it('should reset the form when reset button is clicked', fakeAsync(() => {
+    it('should reset the form when reset button is clicked', async () => {
       const JOHN_SMITH: User = {
         name: { title: 'mr', first: 'John', last: 'Smith' },
         gender: 'female',
@@ -1970,7 +1966,7 @@ describe('SPMatEntityCrudComponent', () => {
       );
 
       fixture.autoDetectChanges();
-      tick(); // trigger loadEntity$
+      await new Promise((r) => setTimeout(r)); // trigger loadEntity$
       expect(getSpy).toHaveBeenCalled();
       const inputs =
         fixture.debugElement.nativeElement.querySelectorAll('input');
@@ -1986,7 +1982,7 @@ describe('SPMatEntityCrudComponent', () => {
         input.dispatchEvent(new Event('input'));
       });
       fixture.detectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
       expect(component.form().valid).toBeTrue();
       const resetButton = fixture.debugElement.nativeElement.querySelector(
         "button[type='button']",
@@ -1994,12 +1990,12 @@ describe('SPMatEntityCrudComponent', () => {
       expect(resetButton).toBeTruthy();
       resetButton.click();
       fixture.detectChanges();
-      tick();
+      await new Promise((r) => setTimeout(r));
 
       // Reset should revert values back to the original values
       expect(inputs[0].value).toEqual(JOHN_SMITH.name.first);
       expect(inputs[1].value).toEqual(JOHN_SMITH.name.last);
       expect(inputs[2].value).toEqual(JOHN_SMITH.cell);
-    }));
+    });
   });
 });

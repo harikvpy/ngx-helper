@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
@@ -7,7 +7,7 @@ import { SPMatMenuLayoutComponent } from '@smallpearl/ngx-helper/mat-side-menu-l
 
 @Component({
     selector: 'app-toolbar-end-buttons',
-    imports: [CommonModule, MatIconModule, MatButtonModule, MatMenuModule],
+    imports: [MatIconModule, MatButtonModule, MatMenuModule],
     template: `
     <button mat-icon-button (click)="onNotificationsToggle()">
       <mat-icon>notifications</mat-icon>

@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
     selector: 'app-flights',
-    imports: [CommonModule],
+    imports: [],
     template: `<h2>Flights</h2>`,
     styles: []
 })

@@ -10,7 +10,7 @@ import {
   defaultImports,
   defaultProviders,
 } from './ngx-mat-errors.component.spec';
-import { NgIf } from '@angular/common';
+
 
 xdescribe('NgxErrorList', () => {
   let loader: HarnessLoader;
@@ -23,7 +23,7 @@ xdescribe('NgxErrorList', () => {
 
   @Component({
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [...defaultImports, NgIf],
+    imports: [...defaultImports],
     providers: [...defaultProviders],
     template: `
       <form [formGroup]="form">

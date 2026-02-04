@@ -73,21 +73,21 @@ function isImageFileExt(filename: string): boolean {
           [multiple]="false"
           (change)="onFileSelected($event)"
           #input
-        />
+          />
         <div tabindex="0">{{ fileName || placeholder }}</div>
       </div>
       <div class="thumbnail-wrapper">
-        <div
-          class="thumbnail"
-          *ngIf="thumbnailImageUrl; else paperClipIcon"
-          [ngStyle]="{ 'background-image': 'url(' + thumbnailImageUrl + ')' }"
-        ></div>
-        <ng-template #paperClipIcon>
+        @if (thumbnailImageUrl) {
+          <div
+            class="thumbnail"
+            [ngStyle]="{ 'background-image': 'url(' + thumbnailImageUrl + ')' }"
+          ></div>
+        } @else {
           <mat-icon fontIcon="attach_file"></mat-icon>
-        </ng-template>
+        }
       </div>
     </div>
-  `,
+    `,
     styles: [
         `
       .wrapper {

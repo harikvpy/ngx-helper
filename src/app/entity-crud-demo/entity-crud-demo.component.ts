@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import {
   ChangeDetectionStrategy,
   Component,
@@ -36,7 +36,6 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
 
 @Component({
   imports: [
-    CommonModule,
     FormsModule,
     MatTableModule,
     MatSortModule,
@@ -49,8 +48,8 @@ import { PreviewInvoiceComponent } from './preview-demo.component';
     SPMatEntityCrudComponent,
     CreateEditEntityDemoComponent,
     SPMatEntityCrudPreviewPaneComponent,
-    PreviewInvoiceComponent,
-  ],
+    PreviewInvoiceComponent
+],
   selector: 'app-entity-crud-demo',
   template: `
     <ng-container *transloco="let t">

@@ -23,58 +23,63 @@ import { NavItem } from './nav-item';
 @Component({
     selector: 'ngx-mat-menu-list-item',
     template: `
-    <a
-      *ngIf="item.children || item.route; else divider"
-      mat-list-item
-      [ngStyle]="{ 'padding-left': depth * 8 + 'px' }"
-      [disabled]="item.disabled"
-      [attr.routerLink]="!item.children ? item.route : null"
-      class="menu-list-item pl-8"
+    @if (item.children || item.route) {
+      <a
+        mat-list-item
+        [ngStyle]="{ 'padding-left': depth * 8 + 'px' }"
+        [disabled]="item.disabled"
+        [attr.routerLink]="!item.children ? item.route : null"
+        class="menu-list-item pl-8"
       [ngClass]="{
         highlighted: this.highlighted,
         'not-highlighted': !this.highlighted,
       }"
-      routerLinkActive="is-active"
-      (click)="onItemSelected($event, item)"
-    >
-      <mat-icon
-        *ngIf="
-          (item.icon && showIcon && !item.iconType) || item.iconType == 'mat'
-        "
-        class="menu-item-color"
-        matListItemIcon
-        >{{ item.icon }}</mat-icon
-      >
-      <i
-        *ngIf="item.icon && showIcon && item.iconType != 'mat'"
-        [class]="'menu-item-color ' + item.icon"
-      ></i>
-      <span class="menu-item-color">{{ item.text }}</span>
-      <span class="twistie-separator"></span>
-      <span *ngIf="item.children && item.children.length">
-        <mat-icon
-          class="menu-twistie menu-item-color"
-          [@indicatorRotate]="expanded ? 'expanded' : 'collapsed'"
+        routerLinkActive="is-active"
+        (click)="onItemSelected($event, item)"
         >
-          expand_more
-        </mat-icon>
-      </span>
-    </a>
-    <div>
-      <ngx-mat-menu-list-item
-        class="menu-child"
-        [showIcon]="showIcon"
-        [ngStyle]="{ display: expanded ? 'inherit' : 'none' }"
-        *ngFor="let child of item.children"
-        [item]="child"
-        [parent]="this"
-        [depth]="depth + 1"
-      ></ngx-mat-menu-list-item>
-    </div>
-    <ng-template #divider>
-      <div class="menu-divider"></div>
-    </ng-template>
-  `,
+        @if (
+          (item.icon && showIcon && !item.iconType) || item.iconType == 'mat'
+          ) {
+          <mat-icon
+            class="menu-item-color"
+            matListItemIcon
+            >{{ item.icon }}</mat-icon
+            >
+          }
+          @if (item.icon && showIcon && item.iconType != 'mat') {
+            <i
+              [class]="'menu-item-color ' + item.icon"
+            ></i>
+          }
+          <span class="menu-item-color">{{ item.text }}</span>
+          <span class="twistie-separator"></span>
+          @if (item.children && item.children.length) {
+            <span>
+              <mat-icon
+                class="menu-twistie menu-item-color"
+                [@indicatorRotate]="expanded ? 'expanded' : 'collapsed'"
+                >
+                expand_more
+              </mat-icon>
+            </span>
+          }
+        </a>
+      } @else {
+        <div class="menu-divider"></div>
+      }
+      <div>
+        @for (child of item.children; track child) {
+          <ngx-mat-menu-list-item
+            class="menu-child"
+            [showIcon]="showIcon"
+            [ngStyle]="{ display: expanded ? 'inherit' : 'none' }"
+            [item]="child"
+            [parent]="this"
+            [depth]="depth + 1"
+          ></ngx-mat-menu-list-item>
+        }
+      </div>
+    `,
   styleUrls: ['./mat-menu-list-item.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [

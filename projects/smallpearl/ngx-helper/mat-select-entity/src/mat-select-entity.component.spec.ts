@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import {
   HttpClient,
   HttpContext,
@@ -137,7 +136,6 @@ async function openMatSelect(
 
 @Component({
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     MatFormFieldModule,
     SPMatSelectEntityComponent,
@@ -614,7 +612,7 @@ describe('SPMatSelectEntityComponent', () => {
       await new Promise((r) => setTimeout(r, DEBOUNCE_TIMEOUT));
       expect(createNewItemSelected).toBeTrue();
       fixture.detectChanges();
-      await new Promise((r) => setTimeout(r, 200));
+      await new Promise((r) => setTimeout(r, 100));
       expect(matSel.value).toEqual(currentSel);
     });
   });

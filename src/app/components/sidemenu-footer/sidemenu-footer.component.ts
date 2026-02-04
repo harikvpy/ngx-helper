@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { TranslocoService } from '@jsverse/transloco';
 
 @Component({
     selector: 'app-sidemenu-footer',
-    imports: [CommonModule],
+    imports: [],
     template: `
     <div style="text-align: center; font-size: 0.8em;">
       <select name="language" id="language" (change)="changeLanguage($event)">

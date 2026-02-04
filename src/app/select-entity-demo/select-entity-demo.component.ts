@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -210,13 +210,12 @@ class StaticUserDataPaginator implements SPEntityListPaginator {
 @Component({
   selector: 'app-select-entity-demo',
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     MatButtonModule,
     MatFormFieldModule,
     MatSelectModule,
-    SPMatSelectEntityComponent,
-  ],
+    SPMatSelectEntityComponent
+],
   template: `
     <div class="select-entity-demo-wrapper">
       <div class="select-entity-demo-scroller">

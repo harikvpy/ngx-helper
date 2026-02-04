@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
     selector: 'app-sidemenu-info-pane',
-    imports: [CommonModule],
+    imports: [],
     template: `
     <div class="mat-body info-pane-content">
       <h2>Notifications</h2>

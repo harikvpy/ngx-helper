@@ -1,8 +1,11 @@
 import { ComponentRef } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
-import { SPContextMenuItem, SPMatContextMenuComponent } from './mat-context-menu.component';
+import {
+  SPContextMenuItem,
+  SPMatContextMenuComponent,
+} from './mat-context-menu.component';
 
 describe('SPMatContextMenuComponent', () => {
   let fixture!: ComponentFixture<SPMatContextMenuComponent>;
@@ -23,9 +26,9 @@ describe('SPMatContextMenuComponent', () => {
 
   it('should create', async () => {
     expect(component).toBeTruthy();
-  })
+  });
 
-  it('should show menu items on click', fakeAsync(() => {
+  it('should show menu items on click', async () => {
     const menuItems: SPContextMenuItem[] = [
       {
         label: 'Edit',
@@ -38,23 +41,26 @@ describe('SPMatContextMenuComponent', () => {
     ];
     // Test with menuItems as an array of SPContextMenuItem
     componentRef.setInput('menuItems', menuItems);
-    fixture.detectChanges()
+    fixture.detectChanges();
     const items = fixture.debugElement.nativeElement.querySelectorAll('button');
     items[0].click();
-    fixture.detectChanges()
-    const menuButtons1 = document.querySelector('div.mat-mdc-menu-content')!.children;
+    fixture.detectChanges();
+    const menuButtons1 = document.querySelector(
+      'div.mat-mdc-menu-content',
+    )!.children;
     expect(menuButtons1.length).toEqual(menuItems.length);
 
     // Test with menuItems as a function returning an array of SPContextMenuItem
     const fn = () => menuItems;
     componentRef.setInput('menuItems', fn);
-    fixture.detectChanges()
+    fixture.detectChanges();
     fixture.debugElement.nativeElement.querySelectorAll('button');
     items[0].click();
-    fixture.detectChanges()
+    fixture.detectChanges();
     // await new Promise(res => setTimeout(res, 100));
-    const menuButtons2 = document.querySelector('div.mat-mdc-menu-content')!.children;
+    const menuButtons2 = document.querySelector(
+      'div.mat-mdc-menu-content',
+    )!.children;
     expect(menuButtons2.length).toEqual(menuItems.length);
-
-  }));
+  });
 });
