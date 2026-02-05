@@ -6,10 +6,26 @@ import {
 } from '@angular/common/http';
 import { computed, Directive, inject, input } from '@angular/core';
 import { createStore, select, setProps, withProps } from '@ngneat/elf';
-import { getAllEntities, getEntitiesCount, getEntity, upsertEntities, withEntities } from '@ngneat/elf-entities';
-import { getPaginationData, setPage, skipWhilePageExists, updatePaginationData, withPagination } from '@ngneat/elf-pagination';
-import { SP_MAT_ENTITY_LIST_CONFIG, SPMatEntityListPaginator, SPPageParams } from '@smallpearl/ngx-helper/mat-entity-list';
-import { capitalize } from 'lodash';
+import {
+  getAllEntities,
+  getEntitiesCount,
+  getEntity,
+  upsertEntities,
+  withEntities,
+} from '@ngneat/elf-entities';
+import {
+  getPaginationData,
+  setPage,
+  skipWhilePageExists,
+  updatePaginationData,
+  withPagination,
+} from '@ngneat/elf-pagination';
+import {
+  SP_MAT_ENTITY_LIST_CONFIG,
+  SPMatEntityListPaginator,
+  SPPageParams,
+} from '@smallpearl/ngx-helper/mat-entity-list';
+import { capitalize } from 'lodash-es';
 import { plural } from 'pluralize';
 import {
   distinctUntilChanged,
@@ -20,7 +36,7 @@ import {
   Subject,
   Subscription,
   switchMap,
-  tap
+  tap,
 } from 'rxjs';
 
 /**
@@ -39,7 +55,7 @@ import {
 export type SPEntityLoaderFn = (
   page: number,
   pageSize: number,
-  searchValue: string | undefined
+  searchValue: string | undefined,
 ) => Observable<any>;
 
 /**
@@ -52,7 +68,7 @@ class LoadRequest {
     public endpoint: string | SPEntityLoaderFn,
     public pageNumber: number,
     public searchStr: string | undefined,
-    public force = false
+    public force = false,
   ) {}
 
   // Returns true if two LoadRequest objects are equal and this object's
@@ -75,14 +91,14 @@ class LoadRequest {
 type StateProps = {
   allEntitiesLoaded: boolean;
   loading: boolean;
-  loaded: boolean
+  loaded: boolean;
 };
 
 const DEFAULT_STATE_PROPS: StateProps = {
   allEntitiesLoaded: false,
   loading: false,
-  loaded: false
-}
+  loaded: false,
+};
 
 // Default paginator implementation. This can handle dynamic-rest and DRF
 // native pagination schemes. It also has a fallback to handle response conists
@@ -91,7 +107,7 @@ class DefaultPaginator implements SPMatEntityListPaginator {
   getRequestPageParams(
     endpoint: string,
     page: number,
-    pageSize: number
+    pageSize: number,
   ): SPPageParams {
     return {
       page: page + 1,
@@ -101,13 +117,13 @@ class DefaultPaginator implements SPMatEntityListPaginator {
 
   parseRequestResponse<
     TEntity extends { [P in IdKey]: PropertyKey },
-    IdKey extends string = 'id'
+    IdKey extends string = 'id',
   >(
     entityName: string,
     entityNamePlural: string,
     endpoint: string,
     params: SPPageParams,
-    resp: any
+    resp: any,
   ) {
     if (Array.isArray(resp)) {
       return {
@@ -209,7 +225,7 @@ class DefaultPaginator implements SPMatEntityListPaginator {
 })
 export abstract class SPPagedEntityLoader<
   TEntity extends { [P in IdKey]: PropertyKey },
-  IdKey extends string = 'id'
+  IdKey extends string = 'id',
 > {
   // We cache the entities that we fetch from remote here. Cache is indexed
   // by the endpoint. Each endpoint also keeps a refCount, which is incremented
@@ -273,7 +289,10 @@ export abstract class SPPagedEntityLoader<
   pluralEntityName = input<string | undefined>(undefined); // defaults to pluralized entityName
 
   httpReqContext = input<
-    [[HttpContextToken<any>, any]] | [HttpContextToken<any>, any] | HttpContext | undefined
+    | [[HttpContextToken<any>, any]]
+    | [HttpContextToken<any>, any]
+    | HttpContext
+    | undefined
   >(undefined); // defaults to empty context
 
   // Parameters to be added to the HTTP request to retrieve data from
@@ -284,7 +303,7 @@ export abstract class SPPagedEntityLoader<
   protected loadRequest$ = new Subject<LoadRequest>();
   protected sub$: Subscription | undefined;
   protected _pageSize = computed<number>(() =>
-    this.pageSize() ? this.pageSize() : 50
+    this.pageSize() ? this.pageSize() : 50,
   );
 
   protected _pluralEntityName = computed<string>(() => {
@@ -293,7 +312,7 @@ export abstract class SPPagedEntityLoader<
   });
 
   protected _capitalizedEntityName = computed<string>(() =>
-    capitalize(this.entityName())
+    capitalize(this.entityName()),
   );
 
   protected _httpReqContext = computed(() => {
@@ -333,8 +352,8 @@ export abstract class SPPagedEntityLoader<
     return paginator
       ? paginator
       : entityListConfigPaginator
-      ? entityListConfigPaginator
-      : new DefaultPaginator();
+        ? entityListConfigPaginator
+        : new DefaultPaginator();
   });
 
   // We create it here so that store member variable will have the correct
@@ -347,7 +366,7 @@ export abstract class SPPagedEntityLoader<
     withProps<StateProps>(DEFAULT_STATE_PROPS),
     withPagination({
       initialPage: 0,
-    })
+    }),
   );
 
   protected http = inject(HttpClient);
@@ -371,16 +390,16 @@ export abstract class SPPagedEntityLoader<
       withProps<StateProps>(DEFAULT_STATE_PROPS),
       withPagination({
         initialPage: 0,
-      })
+      }),
     );
 
     this.sub$ = this.loadRequest$
       .pipe(
         filter((lr) => lr.endpoint !== '' || lr.force === true),
         distinctUntilChanged((prev, current) =>
-          current.isEqualToAndNotForced(prev)
+          current.isEqualToAndNotForced(prev),
         ),
-        switchMap((lr: LoadRequest) => this.doActualLoad(lr))
+        switchMap((lr: LoadRequest) => this.doActualLoad(lr)),
       )
       .subscribe();
   }
@@ -464,7 +483,7 @@ export abstract class SPPagedEntityLoader<
   get loading$() {
     return this.store.pipe(
       select((state) => state.loading),
-      distinctUntilChanged()
+      distinctUntilChanged(),
     );
   }
 
@@ -492,7 +511,7 @@ export abstract class SPPagedEntityLoader<
    */
   loadPage(pageNumber: number) {
     this.loadRequest$.next(
-      new LoadRequest(this.url(), pageNumber, this.searchParamValue, false)
+      new LoadRequest(this.url(), pageNumber, this.searchParamValue, false),
     );
   }
 
@@ -528,8 +547,8 @@ export abstract class SPPagedEntityLoader<
         this.url(),
         paginationData.currentPage,
         this.searchParamValue,
-        false
-      )
+        false,
+      ),
     );
   }
 
@@ -576,7 +595,7 @@ export abstract class SPPagedEntityLoader<
       obs = (loaderFn as SPEntityLoaderFn)(
         lr.pageNumber,
         pageSize,
-        lr.searchStr
+        lr.searchStr,
       );
       paramsObj = {
         page: lr.pageNumber,
@@ -593,7 +612,7 @@ export abstract class SPPagedEntityLoader<
       const pageParams = this._paginator().getRequestPageParams(
         urlParts[0],
         lr.pageNumber,
-        pageSize
+        pageSize,
       );
       if (lr.searchStr) {
         pageParams[this.searchParamName()] = lr.searchStr || '';
@@ -642,7 +661,7 @@ export abstract class SPPagedEntityLoader<
       setProps((state) => ({
         ...state,
         loading: true,
-      }))
+      })),
     );
     return obs.pipe(
       // skipWhilePageExistsInCacheOrCache(cacheKey, resp),
@@ -665,7 +684,7 @@ export abstract class SPPagedEntityLoader<
             this._pluralEntityName()!,
             this.endpoint(),
             paramsObj,
-            resp
+            resp,
           );
           total = result.total;
           entities = result.entities as unknown as TEntity[];
@@ -685,8 +704,8 @@ export abstract class SPPagedEntityLoader<
           }),
           setPage(
             lr.pageNumber,
-            entities.map((e) => (e as any)[this.idKey()])
-          )
+            entities.map((e) => (e as any)[this.idKey()]),
+          ),
         );
       }),
       finalize(() => {
@@ -696,9 +715,9 @@ export abstract class SPPagedEntityLoader<
             allEntitiesLoaded: !this.hasMore() && !this.searchParamValue,
             loading: false,
             loaded: true,
-          }))
+          })),
         );
-      })
+      }),
     );
   }
 

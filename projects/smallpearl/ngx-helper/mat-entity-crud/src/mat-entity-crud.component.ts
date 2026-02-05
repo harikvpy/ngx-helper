@@ -42,7 +42,7 @@ import {
 import { SPMatContextMenuComponent } from '@smallpearl/ngx-helper/mat-context-menu';
 import { SPMatEntityListComponent } from '@smallpearl/ngx-helper/mat-entity-list';
 import { AngularSplitModule } from 'angular-split';
-import { clone, startCase } from 'lodash';
+import { clone, startCase } from 'lodash-es';
 import { plural } from 'pluralize';
 import {
   catchError,
